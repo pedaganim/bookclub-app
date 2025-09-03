@@ -1,0 +1,116 @@
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, LoginResponse } from '../types';
+import { apiService } from '../services/api';
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: {
+    email: string;
+    name: string;
+    password: string;
+    bio?: string;
+  }) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const savedUser = localStorage.getItem('user');
+        
+        if (token && savedUser) {
+          setUser(JSON.parse(savedUser));
+          // Optionally verify token is still valid
+          try {
+            const currentUser = await apiService.getCurrentUser();
+            setUser(currentUser);
+            localStorage.setItem('user', JSON.stringify(currentUser));
+          } catch (error) {
+            // Token is invalid, clear storage
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      const response: LoginResponse = await apiService.login(email, password);
+      
+      // Store tokens and user data
+      localStorage.setItem('accessToken', response.tokens.accessToken);
+      localStorage.setItem('refreshToken', response.tokens.refreshToken);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      setUser(response.user);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const register = async (userData: {
+    email: string;
+    name: string;
+    password: string;
+    bio?: string;
+  }): Promise<void> => {
+    try {
+      await apiService.register(userData);
+      // After successful registration, automatically log in
+      await login(userData.email, userData.password);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  const value: AuthContextType = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    isAuthenticated: !!user,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
