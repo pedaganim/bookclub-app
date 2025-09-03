@@ -1,0 +1,132 @@
+const { v4: uuidv4 } = require('uuid');
+const { getTableName } = require('../lib/table-names');
+const dynamoDb = require('../lib/dynamodb');
+
+class Book {
+  static async create(bookData, userId) {
+    const bookId = uuidv4();
+    const timestamp = new Date().toISOString();
+    
+    const book = {
+      bookId,
+      userId,
+      title: bookData.title,
+      author: bookData.author,
+      description: bookData.description || '',
+      coverImage: bookData.coverImage || null,
+      status: bookData.status || 'available', // available, borrowed, reading
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    await dynamoDb.put(getTableName('books'), book);
+    return book;
+  }
+
+  static async getById(bookId) {
+    return dynamoDb.get(getTableName('books'), { bookId });
+  }
+
+  static async listByUser(userId, limit = 10, nextToken = null) {
+    const params = {
+      TableName: getTableName('books'),
+      IndexName: 'UserIdIndex',
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+      },
+      Limit: limit,
+      ScanIndexForward: false, // Sort by most recent first
+    };
+
+    if (nextToken) {
+      params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+    }
+
+    const result = await dynamoDb.query(params);
+    
+    return {
+      items: result.Items,
+      nextToken: result.LastEvaluatedKey 
+        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+        : null,
+    };
+  }
+
+  static async listAll(limit = 10, nextToken = null) {
+    const params = {
+      TableName: getTableName('books'),
+      Limit: limit,
+      ScanIndexForward: false,
+    };
+
+    if (nextToken) {
+      params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+    }
+
+    const result = await dynamoDb.scan(params);
+    
+    return {
+      items: result.Items || [],
+      nextToken: result.LastEvaluatedKey 
+        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+        : null,
+    };
+  }
+
+  static async update(bookId, userId, updates) {
+    const timestamp = new Date().toISOString();
+    const updateData = {
+      ...updates,
+      updatedAt: timestamp,
+    };
+
+    const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } = 
+      dynamoDb.generateUpdateExpression(updateData);
+
+    const params = {
+      TableName: getTableName('books'),
+      Key: { bookId },
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      ConditionExpression: 'userId = :userId',
+      ReturnValues: 'ALL_NEW',
+    };
+
+    ExpressionAttributeValues[':userId'] = userId;
+
+    try {
+      const result = await dynamoDb.update(params);
+      return result.Attributes;
+    } catch (error) {
+      if (error.code === 'ConditionalCheckFailedException') {
+        throw new Error('Book not found or you do not have permission to update it');
+      }
+      throw error;
+    }
+  }
+
+  static async delete(bookId, userId) {
+    const params = {
+      TableName: getTableName('books'),
+      Key: { bookId },
+      ConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId,
+      },
+    };
+
+    try {
+      await dynamoDb.deleteItem(params);
+      return { success: true };
+    } catch (error) {
+      if (error.code === 'ConditionalCheckFailedException') {
+        throw new Error('Book not found or you do not have permission to delete it');
+      }
+      throw error;
+    }
+  }
+}
+
+module.exports = Book;

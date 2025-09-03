@@ -1,0 +1,45 @@
+# Node
+node_modules/
+**/node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Builds / Coverage
+**/dist/
+**/build/
+**/.next/
+**/.cache/
+**/coverage/
+
+# Serverless
+**/.serverless/
+**/.webpack/
+
+# Local dev storage
+bookclub-app/backend/.local-storage/
+
+# Env files
+*.env
+*.env.*
+bookclub-app/frontend/.env.development
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# AWS/Secrets (if any dumps)
+**/.aws/
+
+# S3 uploads temp
+**/uploads/
+
+# Misc
+*.local
+*.tmp

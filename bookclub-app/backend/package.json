@@ -1,0 +1,30 @@
+{
+  "name": "bookclub-backend",
+  "version": "1.0.0",
+  "description": "Serverless backend for BookClub application",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "offline": "serverless offline start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "serverless",
+    "aws",
+    "lambda",
+    "bookclub"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.8.0"
+  }
+}

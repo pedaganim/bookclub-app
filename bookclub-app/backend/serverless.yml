@@ -1,0 +1,265 @@
+service: bookclub-app
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  environment:
+    STAGE: ${self:provider.stage}
+    COGNITO_USER_POOL_ID: !Ref UserPool
+    COGNITO_CLIENT_ID: !Ref UserPoolClient
+    BOOK_COVERS_BUCKET: !Ref BookCoversBucket
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt BooksTable.Arn
+            - !GetAtt UsersTable.Arn
+            - !Sub "${BooksTable.Arn}/index/*"
+            - !Sub "${UsersTable.Arn}/index/*"
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+        - Effect: Allow
+          Action:
+            - cognito-idp:AdminConfirmSignUp
+            - cognito-idp:AdminDeleteUser
+            - cognito-idp:GetUser
+          Resource: !GetAtt UserPool.Arn
+
+custom:
+  serverless-offline:
+    httpPort: 4000
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+  customDomain:
+    domainName: api.bookclub.example.com
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+
+plugins:
+  - serverless-offline
+
+functions:
+  # Book-related functions
+  createBook:
+    handler: src/handlers/books/create.handler
+    events:
+      - http:
+          method: POST
+          path: /books
+          cors: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
+  getBook:
+    handler: src/handlers/books/get.handler
+    events:
+      - http:
+          method: GET
+          path: /books/{bookId}
+          cors: true
+  
+  listBooks:
+    handler: src/handlers/books/list.handler
+    events:
+      - http:
+          method: GET
+          path: /books
+          cors: true
+  
+  updateBook:
+    handler: src/handlers/books/update.handler
+    events:
+      - http:
+          method: PUT
+          path: /books/{bookId}
+          cors: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
+  deleteBook:
+    handler: src/handlers/books/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /books/{bookId}
+          cors: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
+  # User-related functions
+  registerUser:
+    handler: src/handlers/users/register.handler
+    events:
+      - http:
+          method: POST
+          path: /auth/register
+          cors: true
+  
+  loginUser:
+    handler: src/handlers/users/login.handler
+    events:
+      - http:
+          method: POST
+          path: /auth/login
+          cors: true
+  
+  getUserProfile:
+    handler: src/handlers/users/getProfile.handler
+    events:
+      - http:
+          method: GET
+          path: /users/me
+          cors: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
+  # File upload
+  generateUploadUrl:
+    handler: src/handlers/files/generateUploadUrl.handler
+    events:
+      - http:
+          method: POST
+          path: /upload-url
+          cors: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+resources:
+  Resources:
+    BooksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-books-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: bookId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: bookId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-users-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: EmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    BookCoversBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${self:provider.stage}-book-covers
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ["*"]
+              AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+              AllowedOrigins: ["*"]
+              ExposedHeaders: []
+
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-user-pool-${self:provider.stage}
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireUppercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+        AutoVerifiedAttributes:
+          - email
+
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-client-${self:provider.stage}
+        UserPoolId: !Ref UserPool
+        GenerateSecret: false
+        ExplicitAuthFlows:
+          - ADMIN_NO_SRP_AUTH
+          - USER_PASSWORD_AUTH
+        PreventUserExistenceErrors: ENABLED
+
+    UserPoolDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties:
+        Domain: ${self:service}-${self:provider.stage}
+        UserPoolId: !Ref UserPool
+
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: CognitoAuthorizer
+        Type: COGNITO_USER_POOLS
+        IdentitySource: method.request.header.Authorization
+        RestApiId: !Ref ApiGatewayRestApi
+        ProviderARNs:
+          - !GetAtt UserPool.Arn
+
+outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Value: !Ref UserPoolClient
+  ApiUrl:
+    Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
+  BookCoversBucketName:
+    Value: !Ref BookCoversBucket
