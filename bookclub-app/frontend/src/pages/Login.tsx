@@ -1,7 +1,16 @@
+/**
+ * Login page component for user authentication
+ * Provides a form for users to sign in to the application
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * Login component that renders the authentication form
+ * Handles user login with email and password validation
+ * @returns JSX element containing the login form
+ */
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,6 +19,10 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Handles form submission for user login
+   * @param e - Form submission event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

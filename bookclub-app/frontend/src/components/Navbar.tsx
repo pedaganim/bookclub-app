@@ -1,7 +1,16 @@
+/**
+ * Navigation bar component for the application
+ * Displays application branding and user authentication controls
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * Navbar component that renders the top navigation bar
+ * Shows different content based on authentication status
+ * @returns JSX element containing the navigation bar
+ */
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
 

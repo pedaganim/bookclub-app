@@ -1,3 +1,7 @@
+/**
+ * TailwindCSS configuration for the BookClub application
+ * Defines content sources and theme customizations for utility-first CSS
+ */
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [

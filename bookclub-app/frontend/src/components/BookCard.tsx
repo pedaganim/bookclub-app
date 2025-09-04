@@ -1,7 +1,14 @@
+/**
+ * BookCard component for displaying individual book information
+ * Provides a card-based UI for book display with management actions
+ */
 import React, { useState } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
 
+/**
+ * Props interface for BookCard component
+ */
 interface BookCardProps {
   book: Book;
   onDelete: (bookId: string) => void;
@@ -9,6 +16,16 @@ interface BookCardProps {
   showActions: boolean;
 }
 
+/**
+ * BookCard component that renders a single book in card format
+ * Displays book information and provides management actions for book owners
+ * @param props - Component props
+ * @param props.book - Book object to display
+ * @param props.onDelete - Callback function when book is deleted
+ * @param props.onUpdate - Callback function when book is updated
+ * @param props.showActions - Whether to show edit/delete actions
+ * @returns JSX element containing the book card
+ */
 const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActions }) => {
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);

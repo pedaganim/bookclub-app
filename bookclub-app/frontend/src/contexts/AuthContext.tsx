@@ -1,7 +1,14 @@
+/**
+ * Authentication context for managing user authentication state
+ * Provides authentication functionality throughout the React application
+ */
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, LoginResponse } from '../types';
 import { apiService } from '../services/api';
 
+/**
+ * Type definition for the authentication context
+ */
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -18,6 +25,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Custom hook to access authentication context
+ * @returns AuthContextType object with authentication state and methods
+ * @throws Error if used outside of AuthProvider
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -26,10 +38,20 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Props interface for AuthProvider component
+ */
 interface AuthProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Authentication provider component that wraps the application
+ * Manages authentication state and provides auth methods to child components
+ * @param props - Component props
+ * @param props.children - Child components to wrap with auth context
+ * @returns JSX element providing authentication context
+ */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +88,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  /**
+   * Authenticates a user with email and password
+   * Stores authentication tokens and user data in localStorage
+   * @param email - User's email address
+   * @param password - User's password
+   * @throws Error if login fails
+   */
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response: LoginResponse = await apiService.login(email, password);
@@ -81,6 +110,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Registers a new user account and automatically logs them in
+   * @param userData - User registration data
+   * @param userData.email - User's email address
+   * @param userData.name - User's display name
+   * @param userData.password - User's password
+   * @param userData.bio - Optional user biography
+   * @throws Error if registration or login fails
+   */
   const register = async (userData: {
     email: string;
     name: string;
@@ -96,6 +134,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Logs out the current user
+   * Clears all authentication tokens and user data from localStorage
+   */
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');

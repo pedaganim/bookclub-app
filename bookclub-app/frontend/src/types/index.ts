@@ -1,3 +1,11 @@
+/**
+ * TypeScript type definitions for the BookClub application
+ * Contains interfaces for all data models and API responses
+ */
+
+/**
+ * User entity interface
+ */
 export interface User {
   userId: string;
   email: string;
@@ -7,6 +15,9 @@ export interface User {
   createdAt: string;
 }
 
+/**
+ * Book entity interface
+ */
 export interface Book {
   bookId: string;
   userId: string;
@@ -19,6 +30,9 @@ export interface Book {
   updatedAt: string;
 }
 
+/**
+ * Authentication tokens interface
+ */
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
@@ -26,11 +40,18 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
+/**
+ * Login API response interface
+ */
 export interface LoginResponse {
   user: User;
   tokens: AuthTokens;
 }
 
+/**
+ * Generic API response wrapper interface
+ * @template T - Type of the data payload
+ */
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -41,11 +62,17 @@ export interface ApiResponse<T> {
   };
 }
 
+/**
+ * Book list API response interface
+ */
 export interface BookListResponse {
   items: Book[];
   nextToken?: string;
 }
 
+/**
+ * File upload URL response interface
+ */
 export interface UploadUrlResponse {
   uploadUrl: string;
   fileUrl: string;

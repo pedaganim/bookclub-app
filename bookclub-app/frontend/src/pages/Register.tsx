@@ -1,7 +1,16 @@
+/**
+ * User registration page component
+ * Provides a form for new users to create accounts in the application
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * Register component that renders the user registration form
+ * Handles user account creation with validation and error handling
+ * @returns JSX element containing the registration form
+ */
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',

@@ -1,3 +1,7 @@
+/**
+ * Application entry point for the React BookClub application
+ * Initializes React DOM rendering and performance monitoring
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

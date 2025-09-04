@@ -137,6 +137,15 @@ class LocalStorage {
   }
 
   // Book operations
+  /**
+   * Creates a new book in local storage
+   * @param {Object} book - Book object to store
+   * @param {string} book.bookId - Unique book identifier
+   * @param {string} book.userId - ID of the user who owns the book
+   * @param {string} book.title - Book title
+   * @param {string} book.author - Book author
+   * @returns {Promise<Object>} The created book object
+   */
   static async createBook(book) {
     const books = this.loadBooks();
     books[book.bookId] = book;
@@ -144,11 +153,21 @@ class LocalStorage {
     return book;
   }
 
+  /**
+   * Retrieves a book by its unique identifier
+   * @param {string} bookId - Unique book identifier
+   * @returns {Promise<Object|null>} Book object if found, null otherwise
+   */
   static async getBook(bookId) {
     const books = this.loadBooks();
     return books[bookId] || null;
   }
 
+  /**
+   * Lists books with optional user filtering
+   * @param {string|null} userId - Optional user ID to filter books by
+   * @returns {Promise<Array>} Array of book objects
+   */
   static async listBooks(userId = null) {
     const books = this.loadBooks();
     const allBooks = Object.values(books);
@@ -158,6 +177,12 @@ class LocalStorage {
     return allBooks;
   }
 
+  /**
+   * Updates an existing book in local storage
+   * @param {string} bookId - Unique book identifier
+   * @param {Object} updates - Object containing fields to update
+   * @returns {Promise<Object|null>} Updated book object if found, null otherwise
+   */
   static async updateBook(bookId, updates) {
     const books = this.loadBooks();
     const book = books[bookId];
@@ -170,6 +195,11 @@ class LocalStorage {
     return null;
   }
 
+  /**
+   * Deletes a book from local storage
+   * @param {string} bookId - Unique book identifier
+   * @returns {Promise<boolean>} True if book was deleted, false if not found
+   */
   static async deleteBook(bookId) {
     const books = this.loadBooks();
     if (books[bookId]) {
@@ -181,6 +211,12 @@ class LocalStorage {
   }
 
   // Simple authentication
+  /**
+   * Authenticates a user with email and password
+   * @param {string} email - User's email address
+   * @param {string} password - User's password
+   * @returns {Promise<Object|null>} Authentication result with user data and tokens, or null if failed
+   */
   static async authenticateUser(email, password) {
     console.log('Authenticating user:', email);
     const users = this.loadUsers();
@@ -204,6 +240,11 @@ class LocalStorage {
     return null;
   }
 
+  /**
+   * Verifies a local authentication token
+   * @param {string} token - Authentication token to verify
+   * @returns {Promise<Object|null>} User object if token is valid, null otherwise
+   */
   static async verifyToken(token) {
     if (token.startsWith('local-token-')) {
       const userId = token.replace('local-token-', '');

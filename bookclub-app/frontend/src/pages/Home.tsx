@@ -1,3 +1,7 @@
+/**
+ * Home page component displaying the main book library interface
+ * Shows all books with filtering and management capabilities
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
@@ -5,6 +9,11 @@ import BookCard from '../components/BookCard';
 import AddBookModal from '../components/AddBookModal';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * Home component that renders the main application dashboard
+ * Displays books with filtering options and management tools
+ * @returns JSX element containing the home page interface
+ */
 const Home: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);

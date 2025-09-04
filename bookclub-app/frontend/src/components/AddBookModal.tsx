@@ -1,12 +1,27 @@
+/**
+ * AddBookModal component for creating new book entries
+ * Provides a modal dialog with form for adding books to the library
+ */
 import React, { useState } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
 
+/**
+ * Props interface for AddBookModal component
+ */
 interface AddBookModalProps {
   onClose: () => void;
   onBookAdded: (book: Book) => void;
 }
 
+/**
+ * AddBookModal component that renders a modal form for adding new books
+ * Handles book creation with file upload for cover images
+ * @param props - Component props
+ * @param props.onClose - Callback function to close the modal
+ * @param props.onBookAdded - Callback function when book is successfully added
+ * @returns JSX element containing the add book modal
+ */
 const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => {
   const [formData, setFormData] = useState({
     title: '',
