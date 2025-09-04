@@ -1,3 +1,7 @@
+/**
+ * User model class for authentication and user management
+ * Handles both Cognito (production) and local storage (development) authentication
+ */
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
@@ -7,9 +11,27 @@ const AWS = require('aws-sdk');
 // Initialize Cognito
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
+/**
+ * Determines if the application is running in offline/development mode
+ * @returns {boolean} True if offline, false if production
+ */
 const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
 
+/**
+ * User model class providing authentication and user management operations
+ */
 class User {
+  /**
+   * Registers a new user account
+   * @param {Object} userData - User registration data
+   * @param {string} userData.email - User's email address
+   * @param {string} userData.name - User's display name
+   * @param {string} userData.password - User's password
+   * @param {string} userData.bio - User's biography (optional)
+   * @param {string} userData.profilePicture - User's profile picture URL (optional)
+   * @returns {Promise<Object>} Created user object without password
+   * @throws {Error} If user already exists or registration fails
+   */
   static async register(userData) {
     const userId = uuidv4();
     const timestamp = new Date().toISOString();
@@ -72,6 +94,13 @@ class User {
     }
   }
 
+  /**
+   * Authenticates a user with email and password
+   * @param {string} email - User's email address
+   * @param {string} password - User's password
+   * @returns {Promise<Object>} User object with authentication tokens
+   * @throws {Error} If credentials are invalid
+   */
   static async login(email, password) {
     if (isOffline()) {
       const result = await LocalStorage.authenticateUser(email, password);
@@ -106,6 +135,11 @@ class User {
     }
   }
 
+  /**
+   * Retrieves a user by their unique identifier
+   * @param {string} userId - Unique user identifier
+   * @returns {Promise<Object|null>} User object if found, null otherwise
+   */
   static async getById(userId) {
     if (isOffline()) {
       return LocalStorage.getUserById(userId);
@@ -113,6 +147,11 @@ class User {
     return dynamoDb.get(getTableName('users'), { userId });
   }
 
+  /**
+   * Retrieves a user by their email address
+   * @param {string} email - User's email address
+   * @returns {Promise<Object|null>} User object if found, null otherwise
+   */
   static async getByEmail(email) {
     if (isOffline()) {
       return LocalStorage.getUserByEmail(email);
@@ -128,6 +167,12 @@ class User {
     return result[0] || null;
   }
 
+  /**
+   * Updates an existing user's information
+   * @param {string} userId - Unique user identifier
+   * @param {Object} updates - Object containing fields to update
+   * @returns {Promise<Object|null>} Updated user object without password, null if user not found
+   */
   static async update(userId, updates) {
     const timestamp = new Date().toISOString();
     if (isOffline()) {
@@ -154,6 +199,12 @@ class User {
     return result.Attributes;
   }
 
+  /**
+   * Retrieves current user information from access token
+   * @param {string} accessToken - JWT access token or local token
+   * @returns {Promise<Object>} Current user object
+   * @throws {Error} If token is invalid or expired
+   */
   static async getCurrentUser(accessToken) {
     if (isOffline()) {
       const user = await LocalStorage.verifyToken(accessToken);

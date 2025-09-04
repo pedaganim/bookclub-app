@@ -1,8 +1,26 @@
+/**
+ * Book model class for DynamoDB operations
+ * Handles CRUD operations for book entities in the database
+ */
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 
+/**
+ * Book model class providing database operations for book entities
+ */
 class Book {
+  /**
+   * Creates a new book in the database
+   * @param {Object} bookData - Book information
+   * @param {string} bookData.title - Book title
+   * @param {string} bookData.author - Book author
+   * @param {string} bookData.description - Book description (optional)
+   * @param {string} bookData.coverImage - Book cover image URL (optional)
+   * @param {string} bookData.status - Book status, defaults to 'available'
+   * @param {string} userId - ID of the user creating the book
+   * @returns {Promise<Object>} Created book object with generated ID and timestamps
+   */
   static async create(bookData, userId) {
     const bookId = uuidv4();
     const timestamp = new Date().toISOString();
@@ -23,10 +41,22 @@ class Book {
     return book;
   }
 
+  /**
+   * Retrieves a book by its ID
+   * @param {string} bookId - Unique identifier of the book
+   * @returns {Promise<Object|null>} Book object if found, null otherwise
+   */
   static async getById(bookId) {
     return dynamoDb.get(getTableName('books'), { bookId });
   }
 
+  /**
+   * Lists books belonging to a specific user with pagination
+   * @param {string} userId - User ID to filter books by
+   * @param {number} limit - Maximum number of books to return, defaults to 10
+   * @param {string|null} nextToken - Pagination token for next page
+   * @returns {Promise<Object>} Object containing books array and next page token
+   */
   static async listByUser(userId, limit = 10, nextToken = null) {
     const params = {
       TableName: getTableName('books'),
@@ -53,6 +83,12 @@ class Book {
     };
   }
 
+  /**
+   * Lists all books in the database with pagination
+   * @param {number} limit - Maximum number of books to return, defaults to 10
+   * @param {string|null} nextToken - Pagination token for next page
+   * @returns {Promise<Object>} Object containing books array and next page token
+   */
   static async listAll(limit = 10, nextToken = null) {
     const params = {
       TableName: getTableName('books'),
@@ -74,6 +110,14 @@ class Book {
     };
   }
 
+  /**
+   * Updates an existing book with new data
+   * @param {string} bookId - Unique identifier of the book to update
+   * @param {string} userId - ID of the user requesting the update (must be book owner)
+   * @param {Object} updates - Object containing fields to update
+   * @returns {Promise<Object>} Updated book object
+   * @throws {Error} If book not found or user lacks permission
+   */
   static async update(bookId, userId, updates) {
     const timestamp = new Date().toISOString();
     const updateData = {
@@ -107,6 +151,13 @@ class Book {
     }
   }
 
+  /**
+   * Deletes a book from the database
+   * @param {string} bookId - Unique identifier of the book to delete
+   * @param {string} userId - ID of the user requesting the deletion (must be book owner)
+   * @returns {Promise<Object>} Success confirmation object
+   * @throws {Error} If book not found or user lacks permission
+   */
   static async delete(bookId, userId) {
     const params = {
       TableName: getTableName('books'),

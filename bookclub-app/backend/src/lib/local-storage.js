@@ -1,3 +1,7 @@
+/**
+ * Local file-based storage utility for development and testing
+ * Provides persistent storage using JSON files as a DynamoDB alternative
+ */
 const fs = require('fs');
 const path = require('path');
 
@@ -18,7 +22,14 @@ if (!fs.existsSync(STORAGE_DIR)) {
   console.log('[LocalStorage] Using storage dir:', STORAGE_DIR);
 }
 
+/**
+ * Local storage class providing file-based database operations for development
+ */
 class LocalStorage {
+  /**
+   * Loads users from the local JSON file
+   * @returns {Object} Object containing user data keyed by email
+   */
   static loadUsers() {
     try {
       const exists = fs.existsSync(USERS_FILE);
@@ -33,6 +44,10 @@ class LocalStorage {
     return {};
   }
 
+  /**
+   * Saves users data to the local JSON file
+   * @param {Object} users - Object containing user data keyed by email
+   */
   static saveUsers(users) {
     try {
       console.log('[LocalStorage] saveUsers path:', USERS_FILE);
@@ -42,6 +57,10 @@ class LocalStorage {
     }
   }
 
+  /**
+   * Loads books from the local JSON file
+   * @returns {Object} Object containing book data keyed by bookId
+   */
   static loadBooks() {
     try {
       const exists = fs.existsSync(BOOKS_FILE);
@@ -56,6 +75,10 @@ class LocalStorage {
     return {};
   }
 
+  /**
+   * Saves books data to the local JSON file
+   * @param {Object} books - Object containing book data keyed by bookId
+   */
   static saveBooks(books) {
     try {
       console.log('[LocalStorage] saveBooks path:', BOOKS_FILE);
@@ -66,6 +89,15 @@ class LocalStorage {
   }
 
   // User operations
+  /**
+   * Creates a new user in local storage
+   * @param {Object} user - User object to store
+   * @param {string} user.email - User's email address (used as key)
+   * @param {string} user.userId - Unique user identifier
+   * @param {string} user.name - User's display name
+   * @param {string} user.password - User's password
+   * @returns {Promise<Object>} The created user object
+   */
   static async createUser(user) {
     console.log('Creating user:', user.email);
     const users = this.loadUsers();
@@ -75,6 +107,11 @@ class LocalStorage {
     return user;
   }
 
+  /**
+   * Retrieves a user by email address
+   * @param {string} email - User's email address
+   * @returns {Promise<Object|null>} User object if found, null otherwise
+   */
   static async getUserByEmail(email) {
     console.log('Looking for user:', email);
     const users = this.loadUsers();
@@ -84,6 +121,11 @@ class LocalStorage {
     return user || null;
   }
 
+  /**
+   * Retrieves a user by their unique identifier
+   * @param {string} userId - Unique user identifier
+   * @returns {Promise<Object|null>} User object if found, null otherwise
+   */
   static async getUserById(userId) {
     const users = this.loadUsers();
     for (const user of Object.values(users)) {

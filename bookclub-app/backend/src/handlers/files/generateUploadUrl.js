@@ -1,3 +1,7 @@
+/**
+ * AWS Lambda handler for generating pre-signed S3 upload URLs
+ * Creates secure URLs for uploading book cover images to S3
+ */
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const response = require('../../lib/response');
@@ -5,6 +9,16 @@ const response = require('../../lib/response');
 const s3 = new AWS.S3();
 const BUCKET_NAME = process.env.BOOK_COVERS_BUCKET;
 
+/**
+ * Lambda handler function for generating file upload URLs
+ * @param {Object} event - AWS Lambda event object containing HTTP request data
+ * @param {Object} event.requestContext.authorizer.claims - JWT claims containing user info
+ * @param {string} event.requestContext.authorizer.claims.sub - User ID from JWT token
+ * @param {Object} event.body - JSON string containing upload request data
+ * @param {string} event.body.fileType - MIME type of file to upload (required)
+ * @param {string} event.body.fileName - Optional custom filename
+ * @returns {Promise<Object>} HTTP response with pre-signed URL and file metadata
+ */
 module.exports.handler = async (event) => {
   try {
     const userId = event.requestContext.authorizer.claims.sub;

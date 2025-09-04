@@ -1,3 +1,7 @@
+/**
+ * AWS SDK configuration for development and production environments
+ * Handles local DynamoDB setup for offline development
+ */
 const AWS = require('aws-sdk');
 
 // Configure AWS for local development

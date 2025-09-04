@@ -1,7 +1,21 @@
+/**
+ * AWS Lambda handler for retrieving user profile information
+ * Returns current user's profile data with support for both Cognito and local auth
+ */
 const User = require('../../models/user');
 const response = require('../../lib/response');
 const LocalStorage = require('../../lib/local-storage');
 
+/**
+ * Lambda handler function for getting user profile
+ * @param {Object} event - AWS Lambda event object containing HTTP request data
+ * @param {Object} event.requestContext - Request context containing authorizer claims
+ * @param {Object} event.requestContext.authorizer.claims - JWT claims (Cognito auth)
+ * @param {string} event.requestContext.authorizer.claims.sub - User ID from Cognito
+ * @param {Object} event.headers - HTTP headers including Authorization (local auth)
+ * @param {string} event.headers.Authorization - Bearer token for local authentication
+ * @returns {Promise<Object>} HTTP response with user profile data or error
+ */
 module.exports.handler = async (event) => {
   try {
     let userId;

@@ -1,7 +1,22 @@
+/**
+ * AWS Lambda handler for local user registration (development/offline mode)
+ * Creates new user accounts in local storage for testing and development
+ */
 const { v4: uuidv4 } = require('uuid');
 const LocalStorage = require('../../lib/local-storage');
 const response = require('../../lib/response');
 
+/**
+ * Lambda handler function for local user registration
+ * @param {Object} event - AWS Lambda event object containing HTTP request data
+ * @param {Object} event.body - JSON string containing user registration data
+ * @param {string} event.body.email - User's email address (required)
+ * @param {string} event.body.name - User's display name (required)
+ * @param {string} event.body.password - User's password (required, min 8 characters)
+ * @param {string} event.body.bio - User's biography (optional)
+ * @param {string} event.body.profilePicture - User's profile picture URL (optional)
+ * @returns {Promise<Object>} HTTP response with created user data or validation error
+ */
 module.exports.handler = async (event) => {
   try {
     const data = JSON.parse(event.body);
