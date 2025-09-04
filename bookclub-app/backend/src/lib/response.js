@@ -1,4 +1,14 @@
+/**
+ * Response utility module for standardized API responses
+ * Provides consistent HTTP response formatting for AWS Lambda functions
+ */
 const response = {
+  /**
+   * Creates a successful HTTP response
+   * @param {*} data - The data to include in the response body
+   * @param {number} statusCode - HTTP status code, defaults to 200
+   * @returns {Object} Formatted HTTP response object with CORS headers
+   */
   success(data = null, statusCode = 200) {
     return {
       statusCode,
@@ -13,6 +23,12 @@ const response = {
     };
   },
 
+  /**
+   * Creates an error HTTP response
+   * @param {Error} error - The error object containing message and optional code
+   * @param {number} statusCode - HTTP status code, defaults to 400
+   * @returns {Object} Formatted HTTP error response with CORS headers
+   */
   error(error, statusCode = 400) {
     console.error('Error:', error);
     
@@ -36,6 +52,11 @@ const response = {
     };
   },
 
+  /**
+   * Creates a validation error response
+   * @param {Object} errors - Object containing field validation errors
+   * @returns {Object} Formatted HTTP validation error response with 400 status
+   */
   validationError(errors) {
     return {
       statusCode: 400,
@@ -54,6 +75,11 @@ const response = {
     };
   },
 
+  /**
+   * Creates a not found error response
+   * @param {string} message - Custom error message, defaults to 'Resource not found'
+   * @returns {Object} Formatted HTTP 404 response
+   */
   notFound(message = 'Resource not found') {
     return {
       statusCode: 404,
@@ -71,6 +97,11 @@ const response = {
     };
   },
 
+  /**
+   * Creates an unauthorized error response
+   * @param {string} message - Custom error message, defaults to 'Unauthorized'
+   * @returns {Object} Formatted HTTP 401 response
+   */
   unauthorized(message = 'Unauthorized') {
     return {
       statusCode: 401,
@@ -88,6 +119,10 @@ const response = {
     };
   },
 
+  /**
+   * Creates a method not allowed error response
+   * @returns {Object} Formatted HTTP 405 response with allowed methods header
+   */
   methodNotAllowed() {
     return {
       statusCode: 405,

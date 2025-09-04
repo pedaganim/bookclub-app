@@ -1,6 +1,18 @@
+/**
+ * AWS Lambda handler for user login functionality
+ * Authenticates users using email and password
+ */
 const LocalStorage = require('../../lib/local-storage');
 const response = require('../../lib/response');
 
+/**
+ * Lambda handler function for user authentication
+ * @param {Object} event - AWS Lambda event object containing HTTP request data
+ * @param {Object} event.body - JSON string containing login credentials
+ * @param {string} event.body.email - User's email address
+ * @param {string} event.body.password - User's password
+ * @returns {Promise<Object>} HTTP response with authentication tokens or error
+ */
 module.exports.handler = async (event) => {
   try {
     const data = JSON.parse(event.body);
