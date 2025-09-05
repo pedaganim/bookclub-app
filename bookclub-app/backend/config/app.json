@@ -2,6 +2,10 @@
   "region": "us-east-1",
   "apiCustomDomain": "api.bookclub.example.com",
   "userPoolDomainPrefix": "bookclub-app-dev",
+  "oauth": {
+    "redirectSignIn": "http://localhost:3000/auth/callback",
+    "redirectSignOut": "http://localhost:3000/"
+  },
   "local": {
     "dynamodbEndpoint": "http://localhost:8000",
     "awsAccessKeyId": "local",

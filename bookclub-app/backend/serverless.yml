@@ -238,12 +238,40 @@ resources:
           - ADMIN_NO_SRP_AUTH
           - USER_PASSWORD_AUTH
         PreventUserExistenceErrors: ENABLED
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthFlows:
+          - code
+        AllowedOAuthScopes:
+          - openid
+          - email
+          - profile
+        SupportedIdentityProviders:
+          - COGNITO
+          - Google
+        CallbackURLs:
+          - ${self:custom.appConfig.oauth.redirectSignIn}
+        LogoutURLs:
+          - ${self:custom.appConfig.oauth.redirectSignOut}
 
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
       Properties:
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
+
+    GoogleIdentityProvider:
+      Type: AWS::Cognito::UserPoolIdentityProvider
+      Properties:
+        ProviderName: Google
+        ProviderType: Google
+        UserPoolId: !Ref UserPool
+        ProviderDetails:
+          client_id: ${ssm:/bookclub/oauth/google_client_id~true}
+          client_secret: ${ssm:/bookclub/oauth/google_client_secret~true}
+          authorize_scopes: 'openid profile email'
+        AttributeMapping:
+          email: email
+          name: name
 
     ApiGatewayAuthorizer:
       Type: AWS::ApiGateway::Authorizer
