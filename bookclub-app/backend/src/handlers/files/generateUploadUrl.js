@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const AWS = require('../../lib/aws-config');
 const { v4: uuidv4 } = require('uuid');
 const response = require('../../lib/response');
 

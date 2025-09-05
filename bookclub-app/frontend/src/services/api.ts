@@ -1,12 +1,13 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse } from '../types';
+import { config } from '../config';
 
 class ApiService {
   private api: AxiosInstance;
   private baseURL: string;
 
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:4000/dev';
+    this.baseURL = config.apiBaseUrl;
     this.api = axios.create({
       baseURL: this.baseURL,
       headers: {

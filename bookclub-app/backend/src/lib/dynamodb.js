@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const AWS = require('./aws-config');
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 

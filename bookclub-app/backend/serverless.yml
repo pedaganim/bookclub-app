@@ -5,7 +5,7 @@ provider:
   name: aws
   runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
-  region: us-east-1
+  region: ${self:custom.appConfig.region}
   environment:
     STAGE: ${self:provider.stage}
     COGNITO_USER_POOL_ID: !Ref UserPool
@@ -41,6 +41,7 @@ provider:
           Resource: !GetAtt UserPool.Arn
 
 custom:
+  appConfig: ${file(./config/app.json)}
   serverless-offline:
     httpPort: 4000
   dynamodb:
@@ -51,7 +52,7 @@ custom:
       inMemory: true
       migrate: true
   customDomain:
-    domainName: api.bookclub.example.com
+    domainName: ${self:custom.appConfig.apiCustomDomain}
     stage: ${self:provider.stage}
     createRoute53Record: true
 
@@ -241,7 +242,7 @@ resources:
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
       Properties:
-        Domain: ${self:service}-${self:provider.stage}
+        Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
 
     ApiGatewayAuthorizer:

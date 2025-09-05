@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 const LocalStorage = require('../lib/local-storage');
-const AWS = require('aws-sdk');
+const AWS = require('../lib/aws-config');
 
 // Initialize Cognito
 const cognito = new AWS.CognitoIdentityServiceProvider();

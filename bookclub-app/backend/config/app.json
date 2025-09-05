@@ -1,0 +1,10 @@
+{
+  "region": "us-east-1",
+  "apiCustomDomain": "api.bookclub.example.com",
+  "userPoolDomainPrefix": "bookclub-app-dev",
+  "local": {
+    "dynamodbEndpoint": "http://localhost:8000",
+    "awsAccessKeyId": "local",
+    "awsSecretAccessKey": "local"
+  }
+}
