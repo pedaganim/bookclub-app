@@ -10,7 +10,7 @@ provider:
     STAGE: ${self:provider.stage}
     COGNITO_USER_POOL_ID: !Ref UserPool
     COGNITO_CLIENT_ID: !Ref UserPoolClient
-    BOOK_COVERS_BUCKET: !Ref BookCoversBucket
+    BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
   iam:
     role:
       statements:
@@ -23,10 +23,10 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - !GetAtt BooksTable.Arn
-            - !GetAtt UsersTable.Arn
-            - !Sub "${BooksTable.Arn}/index/*"
-            - !Sub "${UsersTable.Arn}/index/*"
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -41,7 +41,7 @@ provider:
           Resource: !GetAtt UserPool.Arn
 
 custom:
-  appConfig: ${file(./config/app.json)}
+  appConfig: ${file(./config/app.${self:provider.stage}.json)}
   serverless-offline:
     httpPort: 4000
   dynamodb:
@@ -51,10 +51,6 @@ custom:
       port: 8000
       inMemory: true
       migrate: true
-  customDomain:
-    domainName: ${self:custom.appConfig.apiCustomDomain}
-    stage: ${self:provider.stage}
-    createRoute53Record: true
 
 plugins:
   - serverless-offline
@@ -157,59 +153,6 @@ functions:
 
 resources:
   Resources:
-    BooksTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}-books-${self:provider.stage}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: bookId
-            AttributeType: S
-          - AttributeName: userId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: bookId
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: UserIdIndex
-            KeySchema:
-              - AttributeName: userId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-
-    UsersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}-users-${self:provider.stage}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: userId
-            AttributeType: S
-          - AttributeName: email
-            AttributeType: S
-        KeySchema:
-          - AttributeName: userId
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: EmailIndex
-            KeySchema:
-              - AttributeName: email
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-
-    BookCoversBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:service}-${self:provider.stage}-book-covers
-        CorsConfiguration:
-          CorsRules:
-            - AllowedHeaders: ["*"]
-              AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
-              AllowedOrigins: ["*"]
-              ExposedHeaders: []
-
     UserPool:
       Type: AWS::Cognito::UserPool
       Properties:
@@ -286,9 +229,18 @@ resources:
 outputs:
   UserPoolId:
     Value: !Ref UserPool
+    Export:
+      Name: ${self:service}-${self:provider.stage}-UserPoolId
   UserPoolClientId:
     Value: !Ref UserPoolClient
+    Export:
+      Name: ${self:service}-${self:provider.stage}-UserPoolClientId
+  RestApiId:
+    Value: !Ref ApiGatewayRestApi
+    Export:
+      Name: ${self:service}-${self:provider.stage}-RestApiId
   ApiUrl:
     Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
   BookCoversBucketName:
-    Value: !Ref BookCoversBucket
+    Value: ${self:service}-${self:provider.stage}-book-covers
+

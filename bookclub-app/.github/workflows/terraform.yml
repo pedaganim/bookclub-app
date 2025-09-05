@@ -1,0 +1,70 @@
+name: Terraform Infra
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'bookclub-app/backend/terraform/**'
+      - 'bookclub-app/backend/serverless.yml'
+      - '.github/workflows/terraform.yml'
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init (S3 backend)
+        working-directory: bookclub-app/backend/terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_BACKEND_DYNAMODB_TABLE }}" \
+            -backend-config="key=${{ secrets.TF_BACKEND_KEY }}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -input=false
+
+      - name: Terraform plan
+        working-directory: bookclub-app/backend/terraform
+        env:
+          TF_VAR_google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          TF_VAR_google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          TF_VAR_api_fqdn: api.booklub.shop
+          TF_VAR_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
+          TF_VAR_service_name: bookclub-app
+          TF_VAR_stage: prod
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+          TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
+        run: terraform plan -input=false
+
+      - name: Terraform apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: bookclub-app/backend/terraform
+        env:
+          TF_VAR_google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
+          TF_VAR_google_client_secret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          TF_VAR_api_fqdn: api.booklub.shop
+          TF_VAR_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
+          TF_VAR_service_name: bookclub-app
+          TF_VAR_stage: prod
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+          TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
+        run: terraform apply -auto-approve -input=false

@@ -1,0 +1,67 @@
+name: Deploy Booklub Prod
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Serverless
+        run: npm i -g serverless@3
+
+      - name: Backend deps
+        working-directory: bookclub-app/backend
+        run: npm ci
+
+      - name: Deploy backend (Serverless)
+        working-directory: bookclub-app/backend
+        run: npx serverless deploy --stage prod
+
+      - name: Build frontend
+        working-directory: bookclub-app/frontend
+        env:
+          # Use API custom domain; the deploy script also writes .env.production but we set here explicitly for CI
+          REACT_APP_API_URL: https://api.booklub.shop
+          REACT_APP_COGNITO_REGION: us-east-1
+          # Optional: You can fetch these dynamically via serverless info if desired
+          # For simplicity in CI, you may store them as secrets
+          REACT_APP_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
+          REACT_APP_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
+          REACT_APP_COGNITO_DOMAIN: booklub-prod.auth.us-east-1.amazoncognito.com
+          REACT_APP_OAUTH_REDIRECT_SIGNIN: https://booklub.shop/auth/callback
+          REACT_APP_OAUTH_REDIRECT_SIGNOUT: https://booklub.shop/
+          REACT_APP_OAUTH_SCOPES: "openid email profile"
+          REACT_APP_OAUTH_RESPONSE_TYPE: code
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload frontend to S3
+        run: |
+          aws s3 sync bookclub-app/frontend/build s3://${{ secrets.FRONTEND_S3_BUCKET }} --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

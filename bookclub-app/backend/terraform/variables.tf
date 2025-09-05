@@ -20,3 +20,30 @@ variable "google_client_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "service_name" {
+  description = "Service name used for CloudFormation export lookups (must match serverless service)"
+  type        = string
+  default     = "bookclub-app"
+}
+
+variable "stage" {
+  description = "Deployment stage (e.g., dev, prod)"
+  type        = string
+  default     = "prod"
+}
+
+variable "api_fqdn" {
+  description = "API custom domain FQDN, e.g., api.booklub.shop"
+  type        = string
+}
+
+variable "hosted_zone_id" {
+  description = "Route53 hosted zone ID for the apex domain (e.g., Z123ABCXYZ)"
+  type        = string
+}
+
+variable "frontend_bucket_name" {
+  description = "S3 bucket name for hosting the frontend build (synced from CI)"
+  type        = string
+}
