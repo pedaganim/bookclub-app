@@ -71,7 +71,13 @@ jobs:
         working-directory: bookclub-app/backend
         run: |
           set -euo pipefail
-          EXEC_API=$(npx serverless info --stage prod --verbose | awk '/ServiceEndpoint:/{print $2; exit}')
+          # Try to extract the execute-api endpoint, but do not fail the step on 'serverless info' error.
+          EXEC_API=$(npx serverless info --stage prod --verbose | awk '/ServiceEndpoint:/{print $2; exit}' || echo "")
+          if [ -z "$EXEC_API" ]; then
+            echo "Failed to detect ServiceEndpoint from 'serverless info'."
+            echo "Check the 'Deploy backend (Serverless)' step above for errors, or verify AWS credentials/role."
+            exit 1
+          fi
           CUSTOM_DOMAIN=${{ env.AWS_REGION }}
           # Custom API domain from app config
           CUSTOM_DOMAIN=$(jq -r '.apiCustomDomain // ""' config/app.prod.json)
