@@ -43,6 +43,12 @@ variable "hosted_zone_id" {
   type        = string
 }
 
+variable "hosted_zone_name" {
+  description = "Optional Route53 hosted zone name (e.g., booklub.shop). Used if hosted_zone_id is not provided."
+  type        = string
+  default     = ""
+}
+
 variable "frontend_bucket_name" {
   description = "S3 bucket name for hosting the frontend build (synced from CI)"
   type        = string
@@ -52,4 +58,16 @@ variable "enable_api_mapping" {
   description = "Whether to create API Gateway base path mapping (requires Serverless CFN exports to exist)"
   type        = bool
   default     = true
+}
+
+variable "manage_frontend_bucket" {
+  description = "Whether Terraform should create/manage the frontend S3 bucket. Set to true only if bucket does not already exist."
+  type        = bool
+  default     = false
+}
+
+variable "manage_dns" {
+  description = "Whether Terraform should manage Route53 records and ACM validation for the API custom domain. If false, Terraform will not create Route53 records or the API Gateway custom domain; you'll create DNS CNAMEs manually and can enable later."
+  type        = bool
+  default     = false
 }

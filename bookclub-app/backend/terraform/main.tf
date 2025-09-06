@@ -13,33 +13,23 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Google OAuth SSM Parameters
-resource "aws_ssm_parameter" "google_client_id" {
-  name  = "${var.ssm_path_prefix}/google_client_id"
-  type  = "String"
-  value = var.google_client_id
-}
-
-resource "aws_ssm_parameter" "google_client_secret" {
-  name  = "${var.ssm_path_prefix}/google_client_secret"
-  type  = "SecureString"
-  value = var.google_client_secret
-}
-
 # Frontend hosting S3 bucket (private; served via CloudFront)
 resource "aws_s3_bucket" "frontend" {
+  count  = var.manage_frontend_bucket ? 1 : 0
   bucket = var.frontend_bucket_name
 }
 
 resource "aws_s3_bucket_ownership_controls" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
+  count = var.manage_frontend_bucket ? 1 : 0
+  bucket = aws_s3_bucket.frontend[0].id
   rule {
     object_ownership = "BucketOwnerEnforced"
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket                  = aws_s3_bucket.frontend.id
+  count                  = var.manage_frontend_bucket ? 1 : 0
+  bucket                  = aws_s3_bucket.frontend[0].id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
