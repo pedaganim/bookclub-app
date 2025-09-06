@@ -1,0 +1,9 @@
+{
+  "region": "us-east-1",
+  "apiCustomDomain": "api.booklub.shop",
+  "userPoolDomainPrefix": "booklub",
+  "oauth": {
+    "redirectSignIn": "https://booklub.shop/auth/callback",
+    "redirectSignOut": "https://booklub.shop/"
+  }
+}
