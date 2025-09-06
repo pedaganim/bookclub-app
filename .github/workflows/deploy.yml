@@ -66,6 +66,17 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: npx serverless deploy --stage prod
 
+      - name: Diagnostics: CFN state and Serverless info (non-blocking)
+        working-directory: bookclub-app/backend
+        run: |
+          set +e
+          echo "=== CFN: describe-stacks (bookclub-app-prod) ==="
+          aws cloudformation describe-stacks --stack-name bookclub-app-prod --output table
+          echo "\n=== CFN: recent stack events (bookclub-app-prod) ==="
+          aws cloudformation describe-stack-events --stack-name bookclub-app-prod --max-items 25 --output table
+          echo "\n=== Serverless info (prod) ==="
+          npx serverless info --stage prod --verbose || true
+
       - name: Check CloudFormation stack status
         working-directory: bookclub-app/backend
         run: |
