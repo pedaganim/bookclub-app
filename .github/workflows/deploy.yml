@@ -66,6 +66,28 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: npx serverless deploy --stage prod
 
+      - name: Check CloudFormation stack status
+        working-directory: bookclub-app/backend
+        run: |
+          set -euo pipefail
+          STACK_NAME="bookclub-app-prod"
+          STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --query 'Stacks[0].StackStatus' --output text || echo "")
+          echo "StackStatus=$STATUS"
+          if [ -z "$STATUS" ]; then
+            echo "Stack $STACK_NAME not found. The deploy step may have failed before stack creation." >&2
+            exit 1
+          fi
+          case "$STATUS" in
+            *_IN_PROGRESS) echo "Stack update in progress; continuing" ;;
+            *_COMPLETE) echo "Stack is complete: $STATUS" ;;
+            *)
+              echo "Stack is in error state: $STATUS" >&2
+              echo "Recent events:" >&2
+              aws cloudformation describe-stack-events --stack-name "$STACK_NAME" --max-items 15 --output table || true
+              exit 1
+              ;;
+          esac
+
       - name: Detect API URL (prefer custom domain, fallback to execute-api)
         id: detect_api
         working-directory: bookclub-app/backend
@@ -74,9 +96,16 @@ jobs:
           # Try to extract the execute-api endpoint, but do not fail the step on 'serverless info' error.
           EXEC_API=$(npx serverless info --stage prod --verbose | awk '/ServiceEndpoint:/{print $2; exit}' || echo "")
           if [ -z "$EXEC_API" ]; then
-            echo "Failed to detect ServiceEndpoint from 'serverless info'."
-            echo "Check the 'Deploy backend (Serverless)' step above for errors, or verify AWS credentials/role."
-            exit 1
+            echo "serverless info did not return a ServiceEndpoint; attempting CloudFormation export fallback..."
+            REST_API_ID=$(aws cloudformation list-exports --query "Exports[?Name=='bookclub-app-prod-RestApiId'].Value | [0]" --output text || echo "")
+            if [ -n "$REST_API_ID" ] && [ "$REST_API_ID" != "None" ]; then
+              EXEC_API="https://${REST_API_ID}.execute-api.${AWS_REGION}.amazonaws.com/prod"
+              echo "Constructed EXEC_API from export: $EXEC_API"
+            else
+              echo "Failed to detect ServiceEndpoint from both 'serverless info' and CFN exports."
+              echo "Check the 'Deploy backend (Serverless)' step above for errors, or verify AWS credentials/role."
+              exit 1
+            fi
           fi
           CUSTOM_DOMAIN=${{ env.AWS_REGION }}
           # Custom API domain from app config
