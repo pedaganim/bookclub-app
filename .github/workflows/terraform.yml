@@ -37,6 +37,31 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Decide enable_api_mapping (auto-detect CFN exports)
+        if: github.event_name == 'workflow_run'
+        env:
+          SERVICE_NAME: bookclub-app
+          STAGE: prod
+        run: |
+          set -euo pipefail
+          need_exports=(
+            "${SERVICE_NAME}-${STAGE}-RestApiId"
+            "${SERVICE_NAME}-${STAGE}-UserPoolId"
+            "${SERVICE_NAME}-${STAGE}-UserPoolClientId"
+          )
+          found_all=true
+          for name in "${need_exports[@]}"; do
+            if ! aws cloudformation list-exports --query "Exports[?Name=='${name}'] | length(@)" --output text | grep -q '^1$'; then
+              echo "Missing export: ${name}" >&2
+              found_all=false
+            fi
+          done
+          if [ "$found_all" = true ]; then
+            echo "TF_VAR_enable_api_mapping=true" >> "$GITHUB_ENV"
+          else
+            echo "TF_VAR_enable_api_mapping=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Ensure Terraform backend S3 bucket exists
         shell: bash
         env:
@@ -91,7 +116,7 @@ jobs:
           TF_VAR_stage: prod
           TF_VAR_aws_region: ${{ env.AWS_REGION }}
           TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
-          TF_VAR_enable_api_mapping: ${{ github.event.inputs.enable_api_mapping || 'true' }}
+          TF_VAR_enable_api_mapping: ${{ env.TF_VAR_enable_api_mapping || github.event.inputs.enable_api_mapping || 'true' }}
         run: terraform plan -input=false
 
       - name: Terraform apply
@@ -106,5 +131,5 @@ jobs:
           TF_VAR_stage: prod
           TF_VAR_aws_region: ${{ env.AWS_REGION }}
           TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
-          TF_VAR_enable_api_mapping: ${{ github.event.inputs.enable_api_mapping || 'true' }}
+          TF_VAR_enable_api_mapping: ${{ env.TF_VAR_enable_api_mapping || github.event.inputs.enable_api_mapping || 'true' }}
         run: terraform apply -auto-approve -input=false
