@@ -1,0 +1,39 @@
+name: Terraform Backend Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-actions-tf-backend
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: bookclub-app/backend/terraform-backend
+        run: terraform init -input=false
+
+      - name: Terraform apply (create S3 state bucket + DynamoDB lock table)
+        working-directory: bookclub-app/backend/terraform-backend
+        env:
+          TF_VAR_tf_backend_bucket: ${{ secrets.TF_BACKEND_BUCKET }}
+          TF_VAR_tf_backend_lock_table: ${{ secrets.TF_BACKEND_DYNAMODB_TABLE }}
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+        run: terraform apply -auto-approve -input=false
