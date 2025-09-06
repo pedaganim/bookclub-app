@@ -61,6 +61,9 @@ jobs:
 
       - name: Deploy backend (Serverless)
         working-directory: bookclub-app/backend
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: npx serverless deploy --stage prod
 
       - name: Build frontend
