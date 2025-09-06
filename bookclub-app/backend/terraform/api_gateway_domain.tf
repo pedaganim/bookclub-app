@@ -4,15 +4,18 @@
 # These export names come from backend/serverless.yml outputs
 
 data "aws_cloudformation_export" "rest_api_id" {
-  name = "${var.service_name}-${var.stage}-RestApiId"
+  count = var.enable_api_mapping ? 1 : 0
+  name  = "${var.service_name}-${var.stage}-RestApiId"
 }
 
 data "aws_cloudformation_export" "user_pool_id" {
-  name = "${var.service_name}-${var.stage}-UserPoolId"
+  count = var.enable_api_mapping ? 1 : 0
+  name  = "${var.service_name}-${var.stage}-UserPoolId"
 }
 
 data "aws_cloudformation_export" "user_pool_client_id" {
-  name = "${var.service_name}-${var.stage}-UserPoolClientId"
+  count = var.enable_api_mapping ? 1 : 0
+  name  = "${var.service_name}-${var.stage}-UserPoolClientId"
 }
 
 # ACM certificate for the API custom domain (must be in us-east-1 for EDGE)
@@ -54,8 +57,10 @@ resource "aws_api_gateway_domain_name" "api_domain" {
 
 # Base path mapping to the deployed REST API and stage
 resource "aws_api_gateway_base_path_mapping" "api_mapping" {
-  api_id      = data.aws_cloudformation_export.rest_api_id.value
-  stage_name  = var.stage
+  count      = var.enable_api_mapping ? 1 : 0
+  api_id     = data.aws_cloudformation_export.rest_api_id[0].value
+  stage_name = var.stage
+  # When count is 0, we don't evaluate below references
   domain_name = aws_api_gateway_domain_name.api_domain.domain_name
   base_path   = "" # root
 }

@@ -47,3 +47,9 @@ variable "frontend_bucket_name" {
   description = "S3 bucket name for hosting the frontend build (synced from CI)"
   type        = string
 }
+
+variable "enable_api_mapping" {
+  description = "Whether to create API Gateway base path mapping (requires Serverless CFN exports to exist)"
+  type        = bool
+  default     = true
+}

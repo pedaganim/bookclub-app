@@ -2,6 +2,11 @@ name: Terraform Infra
 
 on:
   workflow_dispatch:
+    inputs:
+      enable_api_mapping:
+        description: "Create API Gateway base path mapping (requires Serverless exports)"
+        type: boolean
+        default: true
   # Run automatically after app deploy succeeds so Serverless stack exports exist
   workflow_run:
     workflows: ["Deploy Booklub Prod"]
@@ -86,6 +91,7 @@ jobs:
           TF_VAR_stage: prod
           TF_VAR_aws_region: ${{ env.AWS_REGION }}
           TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
+          TF_VAR_enable_api_mapping: ${{ github.event.inputs.enable_api_mapping || 'true' }}
         run: terraform plan -input=false
 
       - name: Terraform apply
@@ -100,4 +106,5 @@ jobs:
           TF_VAR_stage: prod
           TF_VAR_aws_region: ${{ env.AWS_REGION }}
           TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
+          TF_VAR_enable_api_mapping: ${{ github.event.inputs.enable_api_mapping || 'true' }}
         run: terraform apply -auto-approve -input=false
