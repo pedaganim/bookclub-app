@@ -66,17 +66,47 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: npx serverless deploy --stage prod
 
+      - name: Detect API URL (prefer custom domain, fallback to execute-api)
+        id: detect_api
+        working-directory: bookclub-app/backend
+        run: |
+          set -euo pipefail
+          EXEC_API=$(npx serverless info --stage prod --verbose | awk '/ServiceEndpoint:/{print $2; exit}')
+          CUSTOM_DOMAIN=${{ env.AWS_REGION }}
+          # Custom API domain from app config
+          CUSTOM_DOMAIN=$(jq -r '.apiCustomDomain // ""' config/app.prod.json)
+          if [ -n "$CUSTOM_DOMAIN" ] && host "$CUSTOM_DOMAIN" >/dev/null 2>&1; then
+            API_URL="https://$CUSTOM_DOMAIN"
+          else
+            API_URL="$EXEC_API"
+          fi
+          echo "API_URL=$API_URL" | tee -a "$GITHUB_ENV"
+
+      - name: Fetch Cognito IDs from CloudFormation exports
+        working-directory: bookclub-app/backend
+        run: |
+          set -euo pipefail
+          SERVICE=bookclub-app
+          STAGE=prod
+          USER_POOL_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolId'].Value | [0]" --output text)
+          CLIENT_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolClientId'].Value | [0]" --output text)
+          DOMAIN_PREFIX=$(jq -r '.userPoolDomainPrefix' config/app.prod.json)
+          COGNITO_DOMAIN="${DOMAIN_PREFIX}-${STAGE}.auth.${AWS_REGION}.amazoncognito.com"
+          echo "REACT_APP_COGNITO_USER_POOL_ID=$USER_POOL_ID" >> "$GITHUB_ENV"
+          echo "REACT_APP_COGNITO_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
+          echo "REACT_APP_COGNITO_DOMAIN=$COGNITO_DOMAIN" >> "$GITHUB_ENV"
+
       - name: Build frontend
         working-directory: bookclub-app/frontend
         env:
-          # Use API custom domain; the deploy script also writes .env.production but we set here explicitly for CI
-          REACT_APP_API_URL: https://api.booklub.shop
+          # Prefer detected API URL; falls back to execute-api if custom domain not live yet
+          REACT_APP_API_URL: ${{ env.API_URL }}
           REACT_APP_COGNITO_REGION: us-east-1
           # Optional: You can fetch these dynamically via serverless info if desired
           # For simplicity in CI, you may store them as secrets
-          REACT_APP_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
-          REACT_APP_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
-          REACT_APP_COGNITO_DOMAIN: booklub-prod.auth.us-east-1.amazoncognito.com
+          REACT_APP_COGNITO_USER_POOL_ID: ${{ env.REACT_APP_COGNITO_USER_POOL_ID }}
+          REACT_APP_COGNITO_CLIENT_ID: ${{ env.REACT_APP_COGNITO_CLIENT_ID }}
+          REACT_APP_COGNITO_DOMAIN: ${{ env.REACT_APP_COGNITO_DOMAIN }}
           REACT_APP_OAUTH_REDIRECT_SIGNIN: https://booklub.shop/auth/callback
           REACT_APP_OAUTH_REDIRECT_SIGNOUT: https://booklub.shop/
           REACT_APP_OAUTH_SCOPES: "openid email profile"
