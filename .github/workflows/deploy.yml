@@ -32,6 +32,29 @@ jobs:
       - name: Install Serverless
         run: npm i -g serverless@3
 
+      - name: Ensure Google OAuth SSM parameters exist
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          if ! aws ssm get-parameter --name "/bookclub/oauth/google_client_id" >/dev/null 2>&1; then
+            aws ssm put-parameter \
+              --name "/bookclub/oauth/google_client_id" \
+              --type String \
+              --value "$GOOGLE_CLIENT_ID"
+          else
+            echo "SSM parameter /bookclub/oauth/google_client_id already exists; not overwriting to preserve version 1"
+          fi
+          if ! aws ssm get-parameter --name "/bookclub/oauth/google_client_secret" --with-decryption >/dev/null 2>&1; then
+            aws ssm put-parameter \
+              --name "/bookclub/oauth/google_client_secret" \
+              --type SecureString \
+              --value "$GOOGLE_CLIENT_SECRET"
+          else
+            echo "SSM parameter /bookclub/oauth/google_client_secret already exists; not overwriting to preserve version 1"
+          fi
+
       - name: Backend deps
         working-directory: bookclub-app/backend
         run: npm ci

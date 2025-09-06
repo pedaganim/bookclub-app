@@ -210,7 +210,7 @@ resources:
         UserPoolId: !Ref UserPool
         ProviderDetails:
           client_id: !Sub '{{resolve:ssm:/bookclub/oauth/google_client_id}}'
-          client_secret: !Sub '{{resolve:ssm-secure:/bookclub/oauth/google_client_secret:1}}'
+          client_secret: !Sub '{{resolve:ssm-secure:/bookclub/oauth/google_client_secret}}'
           authorize_scopes: 'openid profile email'
         AttributeMapping:
           email: email
