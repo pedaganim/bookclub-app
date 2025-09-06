@@ -173,6 +173,8 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
+      DependsOn:
+        - GoogleIdentityProvider
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
