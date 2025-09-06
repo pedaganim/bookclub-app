@@ -2,12 +2,10 @@ name: Terraform Infra
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'bookclub-app/backend/terraform/**'
-      - 'bookclub-app/backend/serverless.yml'
-      - '.github/workflows/terraform.yml'
-    branches: [ main ]
+  # Run automatically after app deploy succeeds so Serverless stack exports exist
+  workflow_run:
+    workflows: ["Deploy Booklub Prod"]
+    types: ["completed"]
 
 permissions:
   id-token: write
@@ -15,6 +13,7 @@ permissions:
 
 jobs:
   terraform:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
       AWS_REGION: us-east-1
