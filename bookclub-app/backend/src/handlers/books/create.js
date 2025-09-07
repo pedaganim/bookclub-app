@@ -1,5 +1,6 @@
 const response = require('../../lib/response');
 const Book = require('../../models/book');
+const bookMetadataService = require('../../lib/book-metadata');
 
 module.exports.handler = async (event) => {
   try {
@@ -20,13 +21,51 @@ module.exports.handler = async (event) => {
       });
     }
 
-    const created = await Book.create({
+    // Prepare book data
+    let bookData = {
       title: data.title,
       author: data.author,
       description: data.description,
       coverImage: data.coverImage,
       status: data.status,
-    }, userId);
+    };
+
+    // Optional metadata enrichment
+    if (data.enrichWithMetadata || data.isbn) {
+      try {
+        console.log('[BookCreate] Attempting metadata enrichment...');
+        const metadata = await bookMetadataService.searchBookMetadata({
+          isbn: data.isbn,
+          title: data.title,
+          author: data.author,
+        });
+
+        if (metadata) {
+          console.log('[BookCreate] Metadata found, enriching book data');
+          // Enrich with metadata, but preserve user input if provided
+          bookData = {
+            ...bookData,
+            // Only use metadata for empty fields
+            description: bookData.description || metadata.description,
+            coverImage: bookData.coverImage || metadata.thumbnail,
+            // Add metadata fields that weren't in original schema
+            isbn10: metadata.isbn10,
+            isbn13: metadata.isbn13,
+            publishedDate: metadata.publishedDate,
+            pageCount: metadata.pageCount,
+            categories: metadata.categories,
+            language: metadata.language,
+            publisher: metadata.publisher,
+            metadataSource: metadata.source,
+          };
+        }
+      } catch (error) {
+        console.error('[BookCreate] Metadata enrichment failed:', error);
+        // Continue with original data - metadata enrichment failure shouldn't break book creation
+      }
+    }
+
+    const created = await Book.create(bookData, userId);
 
     return response.success(created, 201);
   } catch (error) {

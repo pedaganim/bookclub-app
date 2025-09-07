@@ -15,6 +15,15 @@ class Book {
       description: bookData.description || '',
       coverImage: bookData.coverImage || null,
       status: bookData.status || 'available', // available, borrowed, reading
+      // Additional metadata fields (optional)
+      isbn10: bookData.isbn10 || null,
+      isbn13: bookData.isbn13 || null,
+      publishedDate: bookData.publishedDate || null,
+      pageCount: bookData.pageCount || null,
+      categories: bookData.categories || null,
+      language: bookData.language || null,
+      publisher: bookData.publisher || null,
+      metadataSource: bookData.metadataSource || null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };

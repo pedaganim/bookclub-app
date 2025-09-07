@@ -77,10 +77,31 @@ class ApiService {
     description?: string;
     coverImage?: string;
     status?: string;
+    isbn?: string;
+    enrichWithMetadata?: boolean;
   }): Promise<Book> {
     const response: AxiosResponse<ApiResponse<Book>> = await this.api.post('/books', bookData);
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to create book');
+    }
+    return response.data.data!;
+  }
+
+  async searchBookMetadata(params: {
+    isbn?: string;
+    title?: string;
+    author?: string;
+  }): Promise<BookMetadata> {
+    const queryParams = new URLSearchParams();
+    if (params.isbn) queryParams.append('isbn', params.isbn);
+    if (params.title) queryParams.append('title', params.title);
+    if (params.author) queryParams.append('author', params.author);
+
+    const response: AxiosResponse<ApiResponse<BookMetadata>> = await this.api.get(
+      `/books/metadata?${queryParams.toString()}`
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to search book metadata');
     }
     return response.data.data!;
   }
