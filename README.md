@@ -164,7 +164,7 @@ This script will:
 
 ## Cost Effectiveness
 
-This BookClub application is engineered for maximum cost efficiency through strategic technology choices and cloud-native architecture:
+This BookClub application is designed for maximum cost efficiency through strategic technology choices and cloud-native architecture:
 
 **Pay-Per-Use Model**: All AWS services operate on consumption-based pricing, meaning you only pay for actual usage rather than provisioned capacity. When the application is idle, costs drop to nearly zero.
 
