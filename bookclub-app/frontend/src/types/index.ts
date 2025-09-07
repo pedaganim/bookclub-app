@@ -19,6 +19,24 @@ export interface Book {
   updatedAt: string;
 }
 
+export interface Group {
+  groupId: string;
+  name: string;
+  description?: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
+  createdBy: string;
+  memberCount: number;
+  members: string[];
+  isPublic: boolean;
+  maxMembers: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
@@ -46,8 +64,19 @@ export interface BookListResponse {
   nextToken?: string;
 }
 
+export interface GroupListResponse {
+  items: Group[];
+  nextToken?: string;
+}
+
 export interface UploadUrlResponse {
   uploadUrl: string;
   fileUrl: string;
   fileKey: string;
+}
+
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  address?: string;
 }

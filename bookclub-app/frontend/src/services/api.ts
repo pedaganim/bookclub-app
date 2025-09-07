@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse } from '../types';
+import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse, Group, GroupListResponse } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -145,6 +145,87 @@ class ApiService {
         'Content-Type': file.type,
       },
     });
+  }
+
+  // Group methods
+  async createGroup(groupData: {
+    name: string;
+    description?: string;
+    location: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+    };
+    isPublic?: boolean;
+    maxMembers?: number;
+  }): Promise<Group> {
+    const response: AxiosResponse<ApiResponse<Group>> = await this.api.post('/groups', groupData);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to create group');
+    }
+    return response.data.data!;
+  }
+
+  async getGroup(groupId: string): Promise<Group> {
+    const response: AxiosResponse<ApiResponse<Group>> = await this.api.get(`/groups/${groupId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to get group');
+    }
+    return response.data.data!;
+  }
+
+  async listGroups(params?: {
+    limit?: number;
+    nextToken?: string;
+  }): Promise<GroupListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
+
+    const response: AxiosResponse<ApiResponse<GroupListResponse>> = await this.api.get(
+      `/groups?${queryParams.toString()}`
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list groups');
+    }
+    return response.data.data!;
+  }
+
+  async getNearbyGroups(params: {
+    latitude: number;
+    longitude: number;
+    radius?: number;
+    limit?: number;
+  }): Promise<GroupListResponse> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('latitude', params.latitude.toString());
+    queryParams.append('longitude', params.longitude.toString());
+    if (params.radius) queryParams.append('radius', params.radius.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+
+    const response: AxiosResponse<ApiResponse<GroupListResponse>> = await this.api.get(
+      `/groups/nearby?${queryParams.toString()}`
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to get nearby groups');
+    }
+    return response.data.data!;
+  }
+
+  async joinGroup(groupId: string): Promise<Group> {
+    const response: AxiosResponse<ApiResponse<Group>> = await this.api.post(`/groups/${groupId}/join`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to join group');
+    }
+    return response.data.data!;
+  }
+
+  async leaveGroup(groupId: string): Promise<Group> {
+    const response: AxiosResponse<ApiResponse<Group>> = await this.api.post(`/groups/${groupId}/leave`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to leave group');
+    }
+    return response.data.data!;
   }
 }
 

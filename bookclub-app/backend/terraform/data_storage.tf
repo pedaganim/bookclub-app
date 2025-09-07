@@ -45,6 +45,28 @@ resource "aws_dynamodb_table" "users" {
   }
 }
 
+resource "aws_dynamodb_table" "groups" {
+  name         = "${var.service_name}-groups-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "groupId"
+
+  attribute {
+    name = "groupId"
+    type = "S"
+  }
+
+  attribute {
+    name = "createdBy"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "CreatedByIndex"
+    hash_key        = "createdBy"
+    projection_type = "ALL"
+  }
+}
+
 # S3 bucket for book covers
 resource "aws_s3_bucket" "book_covers" {
   bucket = "${var.service_name}-${var.stage}-book-covers"
@@ -80,6 +102,12 @@ resource "aws_ssm_parameter" "users_table_name" {
   name  = "/${var.service_name}/${var.stage}/users_table_name"
   type  = "String"
   value = aws_dynamodb_table.users.name
+}
+
+resource "aws_ssm_parameter" "groups_table_name" {
+  name  = "/${var.service_name}/${var.stage}/groups_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.groups.name
 }
 
 resource "aws_ssm_parameter" "book_covers_bucket_name" {

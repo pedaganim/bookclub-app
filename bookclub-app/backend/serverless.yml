@@ -25,8 +25,10 @@ provider:
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-groups-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-groups-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -209,6 +211,115 @@ functions:
       - http:
           method: POST
           path: /upload-url
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  # Group-related functions
+  createGroup:
+    handler: src/handlers/groups/create.handler
+    events:
+      - http:
+          method: POST
+          path: /groups
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
+  getGroup:
+    handler: src/handlers/groups/get.handler
+    events:
+      - http:
+          method: GET
+          path: /groups/{groupId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  listGroups:
+    handler: src/handlers/groups/list.handler
+    events:
+      - http:
+          method: GET
+          path: /groups
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  getNearbyGroups:
+    handler: src/handlers/groups/nearby.handler
+    events:
+      - http:
+          method: GET
+          path: /groups/nearby
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  joinGroup:
+    handler: src/handlers/groups/join.handler
+    events:
+      - http:
+          method: POST
+          path: /groups/{groupId}/join
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
+  leaveGroup:
+    handler: src/handlers/groups/leave.handler
+    events:
+      - http:
+          method: POST
+          path: /groups/{groupId}/leave
           cors:
             origin: '*'
             headers:
