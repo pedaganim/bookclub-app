@@ -1,18 +1,13 @@
-const { v4: uuidv4 } = require('uuid');
-const LocalStorage = require('../../lib/local-storage');
 const response = require('../../lib/response');
+const Book = require('../../models/book');
 
 module.exports.handler = async (event) => {
   try {
-    // For local development, extract userId from Authorization header
-    const authHeader = event.headers.Authorization || event.headers.authorization;
-    let userId = 'local-user';
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      if (token.startsWith('local-token-')) {
-        userId = token.replace('local-token-', '');
-      }
+    // Derive userId from Cognito authorizer claims (configured in API Gateway)
+    const claims = event?.requestContext?.authorizer?.claims;
+    const userId = claims?.sub || null;
+    if (!userId) {
+      return response.unauthorized('Missing or invalid authentication');
     }
 
     const data = JSON.parse(event.body);
@@ -25,23 +20,15 @@ module.exports.handler = async (event) => {
       });
     }
 
-    const bookId = uuidv4();
-    const timestamp = new Date().toISOString();
-    
-    const book = {
-      bookId,
-      userId,
+    const created = await Book.create({
       title: data.title,
       author: data.author,
-      description: data.description || '',
-      coverImage: data.coverImage || null,
-      status: data.status || 'available',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
+      description: data.description,
+      coverImage: data.coverImage,
+      status: data.status,
+    }, userId);
 
-    await LocalStorage.createBook(book);
-    return response.success(book, 201);
+    return response.success(created, 201);
   } catch (error) {
     return response.error(error);
   }
