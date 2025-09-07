@@ -3,10 +3,10 @@ const Book = require('../../models/book');
 
 module.exports.handler = async (event) => {
   try {
-    const { queryStringParameters = {} } = event || {};
-    let userId = queryStringParameters.userId || null;
-    const limit = queryStringParameters.limit ? parseInt(queryStringParameters.limit, 10) : 10;
-    const nextToken = queryStringParameters.nextToken || null;
+    const qs = (event && event.queryStringParameters) ? event.queryStringParameters : {};
+    let userId = qs && typeof qs.userId === 'string' ? qs.userId : null;
+    const limit = qs && qs.limit ? parseInt(qs.limit, 10) : 10;
+    const nextToken = qs && typeof qs.nextToken === 'string' ? qs.nextToken : null;
 
     // If no userId specified, try to use Cognito claims (authenticated user)
     if (!userId && event?.requestContext?.authorizer?.claims?.sub) {
