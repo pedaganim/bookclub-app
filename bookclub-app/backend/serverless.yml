@@ -63,7 +63,15 @@ functions:
       - http:
           method: POST
           path: /books
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
           authorizer: 
             type: COGNITO_USER_POOLS
             authorizerId: 
@@ -75,7 +83,15 @@ functions:
       - http:
           method: GET
           path: /books/{bookId}
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
   
   listBooks:
     handler: src/handlers/books/list.handler
@@ -83,7 +99,15 @@ functions:
       - http:
           method: GET
           path: /books
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
   
   updateBook:
     handler: src/handlers/books/update.handler
@@ -91,7 +115,15 @@ functions:
       - http:
           method: PUT
           path: /books/{bookId}
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
           authorizer: 
             type: COGNITO_USER_POOLS
             authorizerId: 
@@ -103,7 +135,15 @@ functions:
       - http:
           method: DELETE
           path: /books/{bookId}
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
           authorizer: 
             type: COGNITO_USER_POOLS
             authorizerId: 
@@ -116,7 +156,15 @@ functions:
       - http:
           method: POST
           path: /auth/register
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
   
   loginUser:
     handler: src/handlers/users/login.handler
@@ -124,7 +172,15 @@ functions:
       - http:
           method: POST
           path: /auth/login
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
   
   getUserProfile:
     handler: src/handlers/users/getProfile.handler
@@ -132,7 +188,15 @@ functions:
       - http:
           method: GET
           path: /users/me
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
           authorizer: 
             type: COGNITO_USER_POOLS
             authorizerId: 
@@ -145,7 +209,15 @@ functions:
       - http:
           method: POST
           path: /upload-url
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
           authorizer: 
             type: COGNITO_USER_POOLS
             authorizerId: 
