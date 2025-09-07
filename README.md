@@ -186,7 +186,7 @@ This BookClub application is engineered for maximum cost efficiency through stra
 - **Managed Services**: AWS handles scaling, security patches, and maintenance automatically
 - **TypeScript**: Reduces debugging time and improves development velocity through type safety
 
-For most small to medium book clubs, the application will operate entirely within AWS free tier limits, resulting in near-zero operational costs while maintaining enterprise-grade scalability and reliability.
+For most small to medium-sized book clubs, the application will operate entirely within AWS free tier limits, resulting in near-zero operational costs while maintaining enterprise-grade scalability and reliability.
 
 ## Security Features
 
