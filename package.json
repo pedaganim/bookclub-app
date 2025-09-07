@@ -6,7 +6,7 @@
     "setup": "./dev-setup.sh",
     "install": "cd bookclub-app/backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd bookclub-app/backend && npm run dev",
+    "dev:backend": "cd bookclub-app/backend && SLS_TELEMETRY_DISABLED=1 npm run dev",
     "dev:frontend": "cd bookclub-app/frontend && npm start",
     "seed": "cd bookclub-app/backend && npm run seed",
     "validate": "./validate-dev-env.sh",

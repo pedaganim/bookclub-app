@@ -19,6 +19,10 @@ custom:
     httpPort: 4000
     # Skip resource routes for local development
     resourceRoutes: false
+    # Disable external requests during offline development
+    skipCacheInvalidation: true
+    disableCookieValidation: true
+    noAuth: true
   dynamodb:
     stages:
       - dev
