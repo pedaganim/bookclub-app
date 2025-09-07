@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, LoginResponse } from '../types';
+import { User, LoginResponse, ProfileUpdateData } from '../types';
 import { apiService } from '../services/api';
 
 interface AuthContextType {
@@ -13,12 +13,7 @@ interface AuthContextType {
     bio?: string;
     timezone?: string;
   }) => Promise<void>;
-  updateProfile: (updates: {
-    name?: string;
-    bio?: string;
-    profilePicture?: string;
-    timezone?: string;
-  }) => Promise<void>;
+  updateProfile: (updates: ProfileUpdateData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -101,12 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const updateProfile = async (updates: {
-    name?: string;
-    bio?: string;
-    profilePicture?: string;
-    timezone?: string;
-  }): Promise<void> => {
+  const updateProfile = async (updates: ProfileUpdateData): Promise<void> => {
     try {
       const updatedUser = await apiService.updateProfile(updates);
       setUser(updatedUser);

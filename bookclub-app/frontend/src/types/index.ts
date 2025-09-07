@@ -52,3 +52,10 @@ export interface UploadUrlResponse {
   fileUrl: string;
   fileKey: string;
 }
+
+export interface ProfileUpdateData {
+  name?: string;
+  bio?: string;
+  profilePicture?: string;
+  timezone?: string;
+}

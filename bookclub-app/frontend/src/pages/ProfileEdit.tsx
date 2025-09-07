@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { ProfileUpdateData } from '../types';
+import { TIMEZONE_OPTIONS } from '../constants/timezones';
 
 const ProfileEdit: React.FC = () => {
   const { user, updateProfile } = useAuth();
@@ -14,21 +16,6 @@ const ProfileEdit: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-
-  // Common timezone options
-  const timezoneOptions = [
-    'UTC',
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Paris',
-    'Europe/Berlin',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney',
-  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -83,7 +70,7 @@ const ProfileEdit: React.FC = () => {
 
     try {
       // Only send fields that have actually changed
-      const updates: any = {};
+      const updates: ProfileUpdateData = {};
       if (formData.name !== user?.name) updates.name = formData.name;
       if (formData.bio !== user?.bio) updates.bio = formData.bio;
       if (formData.profilePicture !== user?.profilePicture) updates.profilePicture = formData.profilePicture;
@@ -164,7 +151,7 @@ const ProfileEdit: React.FC = () => {
               onChange={handleInputChange}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             >
-              {timezoneOptions.map(tz => (
+              {TIMEZONE_OPTIONS.map(tz => (
                 <option key={tz} value={tz}>
                   {tz}
                 </option>
