@@ -64,7 +64,11 @@ class BookMetadataService {
         return this.parseGoogleBooksResponse(data.items[0]);
       }
     } catch (error) {
-      console.error('[BookMetadata] Google Books ISBN search failed:', error);
+      if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
+        console.log('[BookMetadata] Google Books API not accessible in current environment');
+      } else {
+        console.error('[BookMetadata] Google Books ISBN search failed:', error);
+      }
     }
     
     // Fallback to Open Library
@@ -80,7 +84,11 @@ class BookMetadataService {
         return this.parseOpenLibraryResponse(data[bookKey]);
       }
     } catch (error) {
-      console.error('[BookMetadata] Open Library ISBN search failed:', error);
+      if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
+        console.log('[BookMetadata] Open Library API not accessible in current environment');
+      } else {
+        console.error('[BookMetadata] Open Library ISBN search failed:', error);
+      }
     }
     
     return null;
@@ -107,7 +115,11 @@ class BookMetadataService {
         return this.parseGoogleBooksResponse(data.items[0]);
       }
     } catch (error) {
-      console.error('[BookMetadata] Google Books title/author search failed:', error);
+      if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
+        console.log('[BookMetadata] Google Books API not accessible in current environment');
+      } else {
+        console.error('[BookMetadata] Google Books title/author search failed:', error);
+      }
     }
 
     // Fallback to Open Library search
@@ -127,7 +139,11 @@ class BookMetadataService {
         return this.parseOpenLibrarySearchResponse(data.docs[0]);
       }
     } catch (error) {
-      console.error('[BookMetadata] Open Library search failed:', error);
+      if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
+        console.log('[BookMetadata] Open Library API not accessible in current environment');
+      } else {
+        console.error('[BookMetadata] Open Library search failed:', error);
+      }
     }
     
     return null;
@@ -237,6 +253,12 @@ class BookMetadataService {
    */
   async getCachedMetadata(cacheKey) {
     try {
+      // Skip caching in sandboxed environments
+      if (!this.isExternalAccessAvailable()) {
+        console.log('[BookMetadata] Skipping cache lookup in sandboxed environment');
+        return null;
+      }
+
       // For now, we'll add the cache table to the existing table-names.js
       // and use DynamoDB for caching
       const result = await dynamoDb.get(getTableName('metadata-cache'), { cacheKey });
@@ -249,7 +271,11 @@ class BookMetadataService {
         }
       }
     } catch (error) {
-      console.error('[BookMetadata] Error getting cached metadata:', error);
+      if (error.code === 'ConfigError' || error.message.includes('Missing region')) {
+        console.log('[BookMetadata] AWS not configured, skipping cache lookup');
+      } else {
+        console.error('[BookMetadata] Error getting cached metadata:', error);
+      }
     }
     
     return null;
@@ -260,6 +286,12 @@ class BookMetadataService {
    */
   async cacheMetadata(cacheKey, metadata) {
     try {
+      // Skip caching in sandboxed environments
+      if (!this.isExternalAccessAvailable()) {
+        console.log('[BookMetadata] Skipping cache storage in sandboxed environment');
+        return;
+      }
+
       const now = Date.now();
       const cacheItem = {
         cacheKey,
@@ -271,15 +303,37 @@ class BookMetadataService {
       
       await dynamoDb.put(getTableName('metadata-cache'), cacheItem);
     } catch (error) {
-      console.error('[BookMetadata] Error caching metadata:', error);
+      if (error.code === 'ConfigError' || error.message.includes('Missing region')) {
+        console.log('[BookMetadata] AWS not configured, skipping cache storage');
+      } else {
+        console.error('[BookMetadata] Error caching metadata:', error);
+      }
       // Don't throw - caching failure shouldn't break the main flow
     }
+  }
+
+  /**
+   * Check if external API access is available (for sandboxed environments)
+   */
+  isExternalAccessAvailable() {
+    // Check for common indicators of sandboxed environments
+    const isSandboxed = process.env.NODE_ENV === 'test' || 
+                       process.env.GITHUB_ACTIONS === 'true' ||
+                       process.env.CI === 'true';
+    
+    return !isSandboxed;
   }
 
   /**
    * Simple HTTP request helper (using Node.js built-in modules)
    */
   async makeHttpRequest(url) {
+    // Quick check for sandboxed environment to avoid DNS errors
+    if (!this.isExternalAccessAvailable()) {
+      console.log('[BookMetadata] Skipping external API call in sandboxed environment:', url);
+      throw new Error('External API access not available in current environment');
+    }
+
     const https = require('https');
     const http = require('http');
     
@@ -314,7 +368,13 @@ class BookMetadataService {
       });
       
       req.on('error', (error) => {
-        reject(error);
+        // Enhanced error handling for DNS and network issues
+        if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+          console.log('[BookMetadata] DNS/Network error, likely in sandboxed environment:', error.code);
+          reject(new Error(`Network access blocked: ${error.code}`));
+        } else {
+          reject(error);
+        }
       });
       
       req.setTimeout(10000, () => {

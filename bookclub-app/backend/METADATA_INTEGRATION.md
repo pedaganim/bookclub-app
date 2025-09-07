@@ -92,7 +92,9 @@ Example request:
 - API rate limiting
 - Invalid responses
 - DNS resolution failures
+- AWS configuration errors in sandboxed environments
 - Graceful fallback to basic book creation
+- **Sandboxed Environment Detection**: Automatically detects CI/test environments and skips external API calls to prevent DNS blocking issues
 
 ### Caching Strategy
 - **Cache Key**: Based on ISBN or title+author combination
@@ -140,6 +142,33 @@ const metadata = await bookMetadataService.searchBookMetadata({
   author: ocrResult.author
 });
 ```
+
+## Testing and Development
+
+### Sandboxed Environment Support
+The metadata service automatically detects sandboxed environments (CI, testing, GitHub Actions) and gracefully skips external API calls to prevent DNS blocking issues. This ensures that:
+
+- Tests can run in isolated environments without network access
+- Build processes don't fail due to DNS restrictions
+- Development continues to work in restricted environments
+- The service gracefully degrades without causing errors
+
+### Local Testing
+```bash
+# Test in sandboxed mode
+NODE_ENV=test node your-test-file.js
+
+# Test with external access
+NODE_ENV=development node your-test-file.js
+```
+
+### Environment Detection
+The service checks for these environment indicators:
+- `NODE_ENV === 'test'`
+- `GITHUB_ACTIONS === 'true'`
+- `CI === 'true'`
+
+When any of these are detected, external API calls are skipped and appropriate log messages are generated.
 
 ## Cost Optimization
 
