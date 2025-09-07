@@ -1,6 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
+const LocalStorage = require('../lib/local-storage');
+
+const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
 
 class Book {
   static async create(bookData, userId) {
@@ -19,11 +22,19 @@ class Book {
       updatedAt: timestamp,
     };
 
+    if (isOffline()) {
+      return await LocalStorage.createBook(book);
+    }
+
     await dynamoDb.put(getTableName('books'), book);
     return book;
   }
 
   static async getById(bookId) {
+    if (isOffline()) {
+      return await LocalStorage.getBook(bookId);
+    }
+    
     return dynamoDb.get(getTableName('books'), { bookId });
   }
 

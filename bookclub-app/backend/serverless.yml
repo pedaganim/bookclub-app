@@ -25,8 +25,10 @@ provider:
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-notifications-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-notifications-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -39,6 +41,11 @@ provider:
             - cognito-idp:AdminDeleteUser
             - cognito-idp:GetUser
           Resource: !GetAtt UserPool.Arn
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: "*"
 
 custom:
   appConfig: ${file(./config/app.${self:provider.stage}.json)}
@@ -223,6 +230,107 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+  # Notification-related functions
+  listNotifications:
+    handler: src/handlers/notifications/list.handler
+    events:
+      - http:
+          method: GET
+          path: /notifications
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  markNotificationRead:
+    handler: src/handlers/notifications/markRead.handler
+    events:
+      - http:
+          method: PUT
+          path: /notifications/{notificationId}/read
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  getUnreadNotificationCount:
+    handler: src/handlers/notifications/unreadCount.handler
+    events:
+      - http:
+          method: GET
+          path: /notifications/unread-count
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  getNotificationPreferences:
+    handler: src/handlers/notifications/getPreferences.handler
+    events:
+      - http:
+          method: GET
+          path: /notifications/preferences
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  updateNotificationPreferences:
+    handler: src/handlers/notifications/updatePreferences.handler
+    events:
+      - http:
+          method: PUT
+          path: /notifications/preferences
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
 resources:
   Resources:
     UserPool:
@@ -319,6 +427,32 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
+    # DynamoDB Tables
+    NotificationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-notifications-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: notificationId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: notificationId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
 
 outputs:
   UserPoolId:

@@ -5,6 +5,7 @@ const path = require('path');
 const STORAGE_DIR = path.join(__dirname, '../../.local-storage');
 const USERS_FILE = path.join(STORAGE_DIR, 'users.json');
 const BOOKS_FILE = path.join(STORAGE_DIR, 'books.json');
+const NOTIFICATIONS_FILE = path.join(STORAGE_DIR, 'notifications.json');
 
 // Ensure storage directory exists
 if (!fs.existsSync(STORAGE_DIR)) {
@@ -168,6 +169,76 @@ class LocalStorage {
       return this.getUserById(userId);
     }
     return null;
+  }
+
+  // Notification operations
+  static loadNotifications() {
+    try {
+      const exists = fs.existsSync(NOTIFICATIONS_FILE);
+      if (exists) {
+        const data = fs.readFileSync(NOTIFICATIONS_FILE, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading notifications:', error);
+    }
+    return {};
+  }
+
+  static saveNotifications(notifications) {
+    try {
+      fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving notifications:', error);
+    }
+  }
+
+  static async createNotification(notification) {
+    console.log('Creating notification:', notification.notificationId);
+    const notifications = this.loadNotifications();
+    notifications[notification.notificationId] = notification;
+    this.saveNotifications(notifications);
+    console.log('Total notifications:', Object.keys(notifications).length);
+    return notification;
+  }
+
+  static async getNotification(notificationId) {
+    const notifications = this.loadNotifications();
+    return notifications[notificationId] || null;
+  }
+
+  static async listNotificationsByUser(userId, limit = 20, nextToken = null) {
+    const notifications = this.loadNotifications();
+    const userNotifications = Object.values(notifications)
+      .filter(n => n.userId === userId)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const startIndex = nextToken ? parseInt(nextToken, 10) : 0;
+    const endIndex = startIndex + limit;
+    const items = userNotifications.slice(startIndex, endIndex);
+    
+    return {
+      items,
+      nextToken: endIndex < userNotifications.length ? endIndex.toString() : null,
+    };
+  }
+
+  static async updateNotification(notificationId, updates) {
+    const notifications = this.loadNotifications();
+    const existing = notifications[notificationId];
+    if (!existing) return null;
+    
+    const updated = { ...existing, ...updates };
+    notifications[notificationId] = updated;
+    this.saveNotifications(notifications);
+    return updated;
+  }
+
+  static async getUnreadNotificationCount(userId) {
+    const notifications = this.loadNotifications();
+    return Object.values(notifications)
+      .filter(n => n.userId === userId && !n.read)
+      .length;
   }
 }
 

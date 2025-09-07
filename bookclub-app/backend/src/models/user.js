@@ -22,6 +22,14 @@ class User {
         password: userData.password,
         bio: userData.bio || '',
         profilePicture: userData.profilePicture || null,
+        notificationPreferences: {
+          email: true,
+          inApp: true,
+          bookProposals: true,
+          votes: true,
+          meetingReminders: true,
+          discussionReplies: true,
+        },
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -53,6 +61,14 @@ class User {
         name: userData.name,
         bio: userData.bio || '',
         profilePicture: userData.profilePicture || null,
+        notificationPreferences: {
+          email: true,
+          inApp: true,
+          bookProposals: true,
+          votes: true,
+          meetingReminders: true,
+          discussionReplies: true,
+        },
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -188,6 +204,14 @@ class User {
       name,
       bio: '',
       profilePicture: null,
+      notificationPreferences: {
+        email: true,
+        inApp: true,
+        bookProposals: true,
+        votes: true,
+        meetingReminders: true,
+        discussionReplies: true,
+      },
       createdAt: timestamp,
       updatedAt: timestamp,
     };
