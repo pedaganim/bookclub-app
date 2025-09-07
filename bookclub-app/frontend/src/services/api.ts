@@ -43,6 +43,7 @@ class ApiService {
     name: string;
     password: string;
     bio?: string;
+    dateOfBirth?: string;
   }): Promise<User> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.post('/auth/register', userData);
     if (!response.data.success) {

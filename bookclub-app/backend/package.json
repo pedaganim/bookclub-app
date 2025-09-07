@@ -8,7 +8,9 @@
     "deploy:dev": "serverless deploy --stage dev",
     "deploy:prod": "serverless deploy --stage prod",
     "offline": "serverless offline start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "serverless",
@@ -24,7 +26,10 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.1.3",
     "serverless": "^3.38.0",
-    "serverless-offline": "^13.8.0"
+    "serverless-offline": "^13.8.0",
+    "supertest": "^7.1.4"
   }
 }

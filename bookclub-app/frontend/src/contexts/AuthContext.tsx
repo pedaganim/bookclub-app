@@ -11,6 +11,7 @@ interface AuthContextType {
     name: string;
     password: string;
     bio?: string;
+    dateOfBirth?: string;
   }) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -83,6 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name: string;
     password: string;
     bio?: string;
+    dateOfBirth?: string;
   }): Promise<void> => {
     try {
       await apiService.register(userData);

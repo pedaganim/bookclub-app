@@ -41,6 +41,7 @@ module.exports.handler = async (event) => {
       name: data.name,
       password: data.password,
       bio: data.bio || '',
+      dateOfBirth: data.dateOfBirth || null,
       profilePicture: data.profilePicture || null,
       createdAt: timestamp,
       updatedAt: timestamp,

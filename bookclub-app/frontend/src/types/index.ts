@@ -4,6 +4,7 @@ export interface User {
   name: string;
   bio?: string;
   profilePicture?: string;
+  dateOfBirth?: string; // ISO date string (YYYY-MM-DD)
   createdAt: string;
 }
 

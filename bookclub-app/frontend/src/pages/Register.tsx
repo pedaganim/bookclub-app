@@ -9,6 +9,7 @@ const Register: React.FC = () => {
     password: '',
     confirmPassword: '',
     bio: '',
+    dateOfBirth: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,6 +45,7 @@ const Register: React.FC = () => {
         email: formData.email,
         password: formData.password,
         bio: formData.bio,
+        dateOfBirth: formData.dateOfBirth,
       });
       navigate('/');
     } catch (err: any) {
@@ -151,6 +153,19 @@ const Register: React.FC = () => {
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Tell us about yourself and your reading interests..."
                 value={formData.bio}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
+                Date of Birth (Optional)
+              </label>
+              <input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                value={formData.dateOfBirth}
                 onChange={handleChange}
               />
             </div>
