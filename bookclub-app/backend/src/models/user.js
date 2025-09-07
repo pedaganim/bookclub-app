@@ -168,6 +168,32 @@ class User {
       throw new Error('Invalid or expired token');
     }
   }
+
+  // Ensure a user record exists for a Cognito-hosted/IdP sign-in using claims
+  // If not present, create a minimal record keyed by the Cognito 'sub'
+  static async ensureExistsFromClaims(claims) {
+    if (!claims || !claims.sub) return null;
+    const userId = claims.sub;
+    // Try by userId first
+    let existing = await this.getById(userId);
+    if (existing) return existing;
+
+    // Derive fields from claims
+    const email = claims.email || null;
+    const name = claims.name || claims.given_name || (email ? email.split('@')[0] : 'User');
+    const timestamp = new Date().toISOString();
+    const user = {
+      userId,
+      email,
+      name,
+      bio: '',
+      profilePicture: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    await dynamoDb.put(getTableName('users'), user);
+    return user;
+  }
 }
 
 module.exports = User;

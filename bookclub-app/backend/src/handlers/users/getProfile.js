@@ -5,9 +5,11 @@ const LocalStorage = require('../../lib/local-storage');
 module.exports.handler = async (event) => {
   try {
     let userId;
+    let claims = null;
     // Prefer Cognito claims when available
     if (event.requestContext && event.requestContext.authorizer && event.requestContext.authorizer.claims && event.requestContext.authorizer.claims.sub) {
-      userId = event.requestContext.authorizer.claims.sub;
+      claims = event.requestContext.authorizer.claims;
+      userId = claims.sub;
     } else {
       // Fallback for local/offline: parse Bearer token and verify via LocalStorage
       const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
@@ -22,10 +24,16 @@ module.exports.handler = async (event) => {
       userId = user.userId;
     }
 
-    const user = await User.getById(userId);
+    let user = await User.getById(userId);
     
     if (!user) {
-      return response.notFound('User not found');
+      // If authenticated via Cognito but user record is missing, create one from claims
+      if (claims) {
+        user = await User.ensureExistsFromClaims(claims);
+      }
+      if (!user) {
+        return response.notFound('User not found');
+      }
     }
 
     // Return only necessary user data
