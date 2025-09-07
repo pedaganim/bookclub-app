@@ -11,6 +11,13 @@ interface AuthContextType {
     name: string;
     password: string;
     bio?: string;
+    timezone?: string;
+  }) => Promise<void>;
+  updateProfile: (updates: {
+    name?: string;
+    bio?: string;
+    profilePicture?: string;
+    timezone?: string;
   }) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -83,11 +90,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name: string;
     password: string;
     bio?: string;
+    timezone?: string;
   }): Promise<void> => {
     try {
       await apiService.register(userData);
       // After successful registration, automatically log in
       await login(userData.email, userData.password);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const updateProfile = async (updates: {
+    name?: string;
+    bio?: string;
+    profilePicture?: string;
+    timezone?: string;
+  }): Promise<void> => {
+    try {
+      const updatedUser = await apiService.updateProfile(updates);
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (error) {
       throw error;
     }
@@ -105,6 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     login,
     register,
+    updateProfile,
     logout,
     isAuthenticated: !!user,
   };

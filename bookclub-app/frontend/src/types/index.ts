@@ -4,6 +4,7 @@ export interface User {
   name: string;
   bio?: string;
   profilePicture?: string;
+  timezone?: string;
   createdAt: string;
 }
 

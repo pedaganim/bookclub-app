@@ -42,6 +42,7 @@ module.exports.handler = async (event) => {
       password: data.password, // In production, this would be hashed
       bio: data.bio || '',
       profilePicture: data.profilePicture || null,
+      timezone: data.timezone || 'UTC',
       createdAt: timestamp,
       updatedAt: timestamp,
     };

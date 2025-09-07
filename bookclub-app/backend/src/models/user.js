@@ -22,6 +22,7 @@ class User {
         password: userData.password,
         bio: userData.bio || '',
         profilePicture: userData.profilePicture || null,
+        timezone: userData.timezone || 'UTC',
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -53,6 +54,7 @@ class User {
         name: userData.name,
         bio: userData.bio || '',
         profilePicture: userData.profilePicture || null,
+        timezone: userData.timezone || 'UTC',
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -188,6 +190,7 @@ class User {
       name,
       bio: '',
       profilePicture: null,
+      timezone: 'UTC',
       createdAt: timestamp,
       updatedAt: timestamp,
     };

@@ -19,6 +19,12 @@ const Navbar: React.FC = () => {
             {isAuthenticated ? (
               <>
                 <span className="text-gray-700">Welcome, {user?.name}</span>
+                <Link
+                  to="/profile"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Profile
+                </Link>
                 <button
                   onClick={logout}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md text-sm font-medium"
