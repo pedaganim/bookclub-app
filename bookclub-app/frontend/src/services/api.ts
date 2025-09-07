@@ -27,17 +27,11 @@ class ApiService {
       return config;
     });
 
-    // Add response interceptor to handle errors
+    // Add response interceptor to handle errors (do not auto-redirect on 401)
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-        }
+        // Let calling code decide how to handle 401s to avoid login bounce loops
         return Promise.reject(error);
       }
     );

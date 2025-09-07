@@ -43,17 +43,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         if (token && savedUser) {
           setUser(JSON.parse(savedUser));
-          // Optionally verify token is still valid
+          // Optionally verify token is still valid; do not force logout on transient failure
           try {
             const currentUser = await apiService.getCurrentUser();
             setUser(currentUser);
             localStorage.setItem('user', JSON.stringify(currentUser));
           } catch (error) {
-            // Token is invalid, clear storage
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-            setUser(null);
+            console.warn('Token verification failed; keeping local session and proceeding', error);
+            // Keep existing tokens and user to avoid bounce back to /login; user can retry actions
           }
         }
       } catch (error) {

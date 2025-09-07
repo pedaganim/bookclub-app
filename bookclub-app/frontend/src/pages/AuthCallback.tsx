@@ -69,7 +69,10 @@ const AuthCallback: React.FC = () => {
 
           setStatus('success');
           setMessage('Signed in successfully. Redirecting…');
-          const timer = setTimeout(() => navigate('/'), 800);
+          // Force a full reload so AuthProvider initializes with stored tokens before route guards run
+          const timer = setTimeout(() => {
+            window.location.replace('/');
+          }, 400);
           return () => clearTimeout(timer);
         } catch (e: any) {
           console.error(e);
