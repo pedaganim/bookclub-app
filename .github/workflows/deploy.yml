@@ -216,6 +216,29 @@ jobs:
         run: |
           aws s3 sync bookclub-app/frontend/build s3://${{ secrets.FRONTEND_S3_BUCKET }} --delete
 
+      - name: Configure CloudFront SPA error responses (403/404 -> /index.html)
+        env:
+          DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          id="$DISTRIBUTION_ID"
+          # Fetch current distribution config and ETag
+          aws cloudfront get-distribution-config --id "$id" --output json > cfg.json
+          etag=$(jq -r '.ETag' cfg.json)
+          # Build updated DistributionConfig with SPA error responses
+          jq '.DistributionConfig
+            | .DefaultRootObject = "index.html"
+            | .CustomErrorResponses = (.CustomErrorResponses // {Quantity:0, Items:[]})
+            | .CustomErrorResponses.Items = ((.CustomErrorResponses.Items // [])
+                | map(select(.ErrorCode != 403 and .ErrorCode != 404))
+                + [
+                    {"ErrorCode":403, "ResponsePagePath":"/index.html", "ResponseCode":"200", "ErrorCachingMinTTL":0},
+                    {"ErrorCode":404, "ResponsePagePath":"/index.html", "ResponseCode":"200", "ErrorCachingMinTTL":0}
+                  ])
+            | .CustomErrorResponses.Quantity = (.CustomErrorResponses.Items | length)
+          ' cfg.json > distconfig.json
+          aws cloudfront update-distribution --id "$id" --if-match "$etag" --distribution-config file://distconfig.json
+
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
