@@ -1,17 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, LoginResponse } from '../types';
+import { User } from '../types';
 import { apiService } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: {
-    email: string;
-    name: string;
-    password: string;
-    bio?: string;
-  }) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -63,6 +56,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Commented out local auth methods - using Google OAuth only
+  /*
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response: LoginResponse = await apiService.login(email, password);
@@ -92,6 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
+  */
 
   const logout = () => {
     localStorage.removeItem('accessToken');
@@ -103,8 +99,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     loading,
-    login,
-    register,
     logout,
     isAuthenticated: !!user,
   };
