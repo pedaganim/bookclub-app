@@ -68,6 +68,9 @@ jobs:
 
       - name: Diagnostics CFN state and Serverless info (non-blocking)
         working-directory: bookclub-app/backend
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           set +e
           echo "=== CFN: describe-stacks (bookclub-app-prod) ==="
@@ -102,10 +105,18 @@ jobs:
       - name: Detect API URL (prefer custom domain, fallback to execute-api)
         id: detect_api
         working-directory: bookclub-app/backend
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          # Try to extract the execute-api endpoint, but do not fail the step on 'serverless info' error.
-          EXEC_API=$(npx serverless info --stage prod --verbose | awk '/ServiceEndpoint:/{print $2; exit}' || echo "")
+          # 1) Prefer CFN Outputs.ServiceEndpoint
+          EXEC_API=$(aws cloudformation describe-stacks --stack-name bookclub-app-prod \
+            --query "Stacks[0].Outputs[?OutputKey=='ServiceEndpoint'].OutputValue | [0]" --output text 2>/dev/null | sed 's/None//')
+          # 2) Fallback to serverless info (ensure env for variable resolution)
+          if [ -z "${EXEC_API}" ]; then
+            EXEC_API=$(npx serverless info --stage prod --verbose | awk '/ServiceEndpoint:/{print $2; exit}' || echo "")
+          fi
           if [ -z "$EXEC_API" ]; then
             echo "serverless info did not return a ServiceEndpoint; attempting CloudFormation export fallback..."
             REST_API_ID=$(aws cloudformation list-exports --query "Exports[?Name=='bookclub-app-prod-RestApiId'].Value | [0]" --output text || echo "")
