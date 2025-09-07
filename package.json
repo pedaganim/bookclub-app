@@ -9,6 +9,7 @@
     "dev:backend": "cd bookclub-app/backend && npm run dev",
     "dev:frontend": "cd bookclub-app/frontend && npm start",
     "seed": "cd bookclub-app/backend && npm run seed",
+    "validate": "./validate-dev-env.sh",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
