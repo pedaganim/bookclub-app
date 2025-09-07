@@ -13,6 +13,15 @@ module.exports.handler = async (event) => {
       userId = event.requestContext.authorizer.claims.sub;
     }
 
+    console.log('listBooks handler', {
+      stage: process.env.STAGE,
+      region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION,
+      derivedUserId: userId || null,
+      hasClaims: !!(event?.requestContext?.authorizer?.claims),
+      limit,
+      hasNextToken: !!nextToken,
+    });
+
     let result;
     if (userId) {
       result = await Book.listByUser(userId, limit, nextToken);

@@ -14,12 +14,12 @@ module.exports = {
 
   async query(params) {
     const result = await dynamoDb.query(params).promise();
-    return result.Items || [];
+    return result; // includes Items and LastEvaluatedKey
   },
 
   async scan(params) {
     const result = await dynamoDb.scan(params).promise();
-    return result.Items || [];
+    return result; // includes Items and LastEvaluatedKey
   },
 
   async put(tableName, item) {
