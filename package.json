@@ -4,7 +4,7 @@
   "description": "Bookclub App - Development Environment Scripts",
   "scripts": {
     "setup": "./dev-setup.sh",
-    "install": "cd bookclub-app/backend && npm install && cd ../frontend && npm install",
+    "install": "cd bookclub-app/backend && npm install --ignore-scripts && cd ../frontend && npm install --ignore-scripts",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd bookclub-app/backend && SLS_TELEMETRY_DISABLED=1 npm run dev",
     "dev:frontend": "cd bookclub-app/frontend && npm start",

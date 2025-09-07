@@ -90,13 +90,13 @@ install_dependencies() {
     # Backend dependencies
     print_status "Installing backend dependencies..."
     cd bookclub-app/backend
-    npm install
+    npm install --ignore-scripts
     cd ../..
     
     # Frontend dependencies
     print_status "Installing frontend dependencies..."
     cd bookclub-app/frontend
-    npm install
+    npm install --ignore-scripts
     cd ../..
     
     print_success "Dependencies installed successfully!"
