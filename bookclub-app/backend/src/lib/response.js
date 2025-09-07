@@ -106,7 +106,6 @@ const response = {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Allow': 'GET, POST, PUT, DELETE, OPTIONS',
       },
       body: JSON.stringify({
         success: false,
