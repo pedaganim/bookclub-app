@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { config } from '../config';
 
 // Minimal stub page to handle Cognito Hosted UI redirect (Authorization Code Grant)
-// For now, we just parse the `code` from the query string and show a friendly message.
-// You can extend this to exchange the code for tokens via your backend if needed.
+// Exchanges the authorization code for tokens using PKCE, stores them, and redirects home.
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -24,14 +24,60 @@ const AuthCallback: React.FC = () => {
     }
 
     if (code) {
-      // Store code temporarily (demo). Replace with a real token exchange flow.
-      localStorage.setItem('oauth_code', code);
-      setStatus('success');
-      setMessage('Signed in with Google successfully.');
+      const doExchange = async () => {
+        try {
+          const code_verifier = sessionStorage.getItem('pkce_code_verifier');
+          if (!code_verifier) {
+            throw new Error('Missing PKCE code_verifier. Please start sign-in again.');
+          }
+          // Exchange code for tokens
+          const body = new URLSearchParams({
+            grant_type: 'authorization_code',
+            client_id: config.cognito.userPoolClientId,
+            code,
+            redirect_uri: config.cognito.redirectSignIn,
+            code_verifier,
+          });
+          const resp = await fetch(`https://${config.cognito.domain}/oauth2/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+          });
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(`Token exchange failed: ${resp.status} ${text}`);
+          }
+          const tokens = await resp.json();
+          const accessToken = tokens.access_token as string;
+          const idToken = tokens.id_token as string;
+          const refreshToken = tokens.refresh_token as string | undefined;
+          // Fetch user info from Cognito
+          const uresp = await fetch(`https://${config.cognito.domain}/oauth2/userInfo`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const profile = await uresp.json();
 
-      // Redirect to home after a short delay
-      const timer = setTimeout(() => navigate('/'), 1200);
-      return () => clearTimeout(timer);
+          // Persist tokens and user
+          localStorage.setItem('accessToken', accessToken);
+          if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+          localStorage.setItem('idToken', idToken);
+          localStorage.setItem('user', JSON.stringify({
+            email: profile.email,
+            name: profile.name || profile.given_name || profile.email,
+            sub: profile.sub,
+          }));
+
+          setStatus('success');
+          setMessage('Signed in successfully. Redirecting…');
+          const timer = setTimeout(() => navigate('/'), 800);
+          return () => clearTimeout(timer);
+        } catch (e: any) {
+          console.error(e);
+          setStatus('error');
+          setMessage(e?.message || 'Authentication failed.');
+        }
+      };
+      doExchange();
     } else {
       setStatus('error');
       setMessage('Missing authorization code in callback URL.');
