@@ -8,6 +8,9 @@
     "deploy:dev": "serverless deploy --stage dev",
     "deploy:prod": "serverless deploy --stage prod",
     "offline": "serverless offline start",
+    "dev": "IS_OFFLINE=true NODE_ENV=development AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_REGION=us-east-1 serverless offline start --config serverless-offline.yml --stage dev",
+    "seed": "node scripts/seed-data.js",
+    "dev:seed": "npm run seed && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

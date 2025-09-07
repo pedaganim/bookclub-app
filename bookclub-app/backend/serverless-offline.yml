@@ -1,0 +1,179 @@
+service: bookclub-app
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ${self:custom.appConfig.region}
+  environment:
+    STAGE: ${self:provider.stage}
+    # These will be mocked in local development
+    COGNITO_USER_POOL_ID: ${opt:cognito-user-pool-id, 'local-user-pool'}
+    COGNITO_CLIENT_ID: ${opt:cognito-client-id, 'local-client-id'}
+    BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
+
+custom:
+  appConfig: ${file(./config/app.${self:provider.stage}.json)}
+  serverless-offline:
+    httpPort: 4000
+    # Skip resource routes for local development
+    resourceRoutes: false
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+
+plugins:
+  - serverless-offline
+
+functions:
+  # Book-related functions
+  createBook:
+    handler: src/handlers/books/create.handler
+    events:
+      - http:
+          method: POST
+          path: /books
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  getBook:
+    handler: src/handlers/books/get.handler
+    events:
+      - http:
+          method: GET
+          path: /books/{bookId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  listBooks:
+    handler: src/handlers/books/list.handler
+    events:
+      - http:
+          method: GET
+          path: /books
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  updateBook:
+    handler: src/handlers/books/update.handler
+    events:
+      - http:
+          method: PUT
+          path: /books/{bookId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  deleteBook:
+    handler: src/handlers/books/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /books/{bookId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  # User-related functions
+  registerUser:
+    handler: src/handlers/users/register.handler
+    events:
+      - http:
+          method: POST
+          path: /auth/register
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  loginUser:
+    handler: src/handlers/users/login.handler
+    events:
+      - http:
+          method: POST
+          path: /auth/login
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  getUserProfile:
+    handler: src/handlers/users/getProfile.handler
+    events:
+      - http:
+          method: GET
+          path: /users/me
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
+  # File upload
+  generateUploadUrl:
+    handler: src/handlers/files/generateUploadUrl.handler
+    events:
+      - http:
+          method: POST
+          path: /upload-url
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true

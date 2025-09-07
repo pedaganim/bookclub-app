@@ -1,0 +1,20 @@
+{
+  "name": "bookclub-app-root",
+  "version": "1.0.0",
+  "description": "Bookclub App - Development Environment Scripts",
+  "scripts": {
+    "setup": "./dev-setup.sh",
+    "install": "cd bookclub-app/backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd bookclub-app/backend && npm run dev",
+    "dev:frontend": "cd bookclub-app/frontend && npm start",
+    "seed": "cd bookclub-app/backend && npm run seed",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "private": true
+}
