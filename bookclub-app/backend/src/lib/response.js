@@ -1,11 +1,16 @@
+// Shared CORS headers for all responses
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Credentials': true,
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+};
+
 const response = {
   success(data = null, statusCode = 200) {
     return {
       statusCode,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
         data,
@@ -21,10 +26,7 @@ const response = {
     
     return {
       statusCode: error.statusCode || statusCode,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
         error: {
@@ -39,10 +41,7 @@ const response = {
   validationError(errors) {
     return {
       statusCode: 400,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
         error: {
@@ -57,10 +56,7 @@ const response = {
   notFound(message = 'Resource not found') {
     return {
       statusCode: 404,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
         error: {
@@ -74,10 +70,7 @@ const response = {
   unauthorized(message = 'Unauthorized') {
     return {
       statusCode: 401,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
         error: {
@@ -91,11 +84,7 @@ const response = {
   methodNotAllowed() {
     return {
       statusCode: 405,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Credentials': true,
-        'Allow': 'GET, POST, PUT, DELETE, OPTIONS',
-      },
+      headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
         error: {
