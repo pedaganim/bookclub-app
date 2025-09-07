@@ -5,6 +5,9 @@ const tableNames = {
   books: `${SERVICE_NAME}-books-${STAGE}`,
   users: `${SERVICE_NAME}-users-${STAGE}`,
   notifications: `${SERVICE_NAME}-notifications-${STAGE}`,
+  clubs: `${SERVICE_NAME}-clubs-${STAGE}`,
+  meetings: `${SERVICE_NAME}-meetings-${STAGE}`,
+  votes: `${SERVICE_NAME}-votes-${STAGE}`,
 };
 
 function getTableName(key) {

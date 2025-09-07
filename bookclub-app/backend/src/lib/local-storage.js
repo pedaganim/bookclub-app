@@ -6,6 +6,9 @@ const STORAGE_DIR = path.join(__dirname, '../../.local-storage');
 const USERS_FILE = path.join(STORAGE_DIR, 'users.json');
 const BOOKS_FILE = path.join(STORAGE_DIR, 'books.json');
 const NOTIFICATIONS_FILE = path.join(STORAGE_DIR, 'notifications.json');
+const CLUBS_FILE = path.join(STORAGE_DIR, 'clubs.json');
+const MEETINGS_FILE = path.join(STORAGE_DIR, 'meetings.json');
+const VOTES_FILE = path.join(STORAGE_DIR, 'votes.json');
 
 // Ensure storage directory exists
 if (!fs.existsSync(STORAGE_DIR)) {
@@ -239,6 +242,136 @@ class LocalStorage {
     return Object.values(notifications)
       .filter(n => n.userId === userId && !n.read)
       .length;
+  }
+
+  // Club operations
+  static loadClubs() {
+    try {
+      const exists = fs.existsSync(CLUBS_FILE);
+      if (exists) {
+        const data = fs.readFileSync(CLUBS_FILE, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading clubs:', error);
+    }
+    return {};
+  }
+
+  static saveClubs(clubs) {
+    try {
+      fs.writeFileSync(CLUBS_FILE, JSON.stringify(clubs, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving clubs:', error);
+    }
+  }
+
+  static async createClub(club) {
+    console.log('Creating club:', club.name);
+    const clubs = this.loadClubs();
+    clubs[club.clubId] = club;
+    this.saveClubs(clubs);
+    console.log('Total clubs:', Object.keys(clubs).length);
+    return club;
+  }
+
+  static async getClub(clubId) {
+    const clubs = this.loadClubs();
+    return clubs[clubId] || null;
+  }
+
+  static async addClubMember(clubId, userId) {
+    const clubs = this.loadClubs();
+    const club = clubs[clubId];
+    if (!club) return null;
+    
+    if (!club.members.includes(userId)) {
+      club.members.push(userId);
+      club.updatedAt = new Date().toISOString();
+      clubs[clubId] = club;
+      this.saveClubs(clubs);
+    }
+    return club;
+  }
+
+  // Meeting operations
+  static loadMeetings() {
+    try {
+      const exists = fs.existsSync(MEETINGS_FILE);
+      if (exists) {
+        const data = fs.readFileSync(MEETINGS_FILE, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading meetings:', error);
+    }
+    return {};
+  }
+
+  static saveMeetings(meetings) {
+    try {
+      fs.writeFileSync(MEETINGS_FILE, JSON.stringify(meetings, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving meetings:', error);
+    }
+  }
+
+  static async createMeeting(meeting) {
+    console.log('Creating meeting:', meeting.title);
+    const meetings = this.loadMeetings();
+    meetings[meeting.meetingId] = meeting;
+    this.saveMeetings(meetings);
+    console.log('Total meetings:', Object.keys(meetings).length);
+    return meeting;
+  }
+
+  static async getMeeting(meetingId) {
+    const meetings = this.loadMeetings();
+    return meetings[meetingId] || null;
+  }
+
+  // Vote operations
+  static loadVotes() {
+    try {
+      const exists = fs.existsSync(VOTES_FILE);
+      if (exists) {
+        const data = fs.readFileSync(VOTES_FILE, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading votes:', error);
+    }
+    return {};
+  }
+
+  static saveVotes(votes) {
+    try {
+      fs.writeFileSync(VOTES_FILE, JSON.stringify(votes, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving votes:', error);
+    }
+  }
+
+  static async createVote(vote) {
+    console.log('Creating vote for book:', vote.bookTitle);
+    const votes = this.loadVotes();
+    votes[vote.voteId] = vote;
+    this.saveVotes(votes);
+    console.log('Total votes:', Object.keys(votes).length);
+    return vote;
+  }
+
+  // Discussion operations
+  static async createDiscussionReply(reply) {
+    console.log('Creating discussion reply');
+    // For simplicity, we'll just store replies in memory for this demo
+    // In a real app, these would be in a proper discussion storage
+    if (!this.discussionReplies) {
+      this.discussionReplies = {};
+    }
+    this.discussionReplies[reply.replyId] = reply;
+    console.log('Total discussion replies:', Object.keys(this.discussionReplies).length);
+    return reply;
   }
 }
 
