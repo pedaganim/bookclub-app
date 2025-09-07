@@ -196,14 +196,15 @@ create_tables() {
     fi
 }
 
-# Install Serverless Framework globally if not present
-install_serverless() {
-    if ! command -v serverless >/dev/null 2>&1; then
-        print_status "Installing Serverless Framework..."
-        npm install -g serverless
-        print_success "Serverless Framework installed globally"
+# Check if Serverless Framework is available (via npx or global install)
+check_serverless() {
+    if command -v serverless >/dev/null 2>&1; then
+        print_success "Serverless Framework available globally"
+    elif command -v npx >/dev/null 2>&1; then
+        print_success "Serverless Framework will be used via npx"
     else
-        print_success "Serverless Framework already installed"
+        print_error "Neither Serverless Framework nor npx is available. Please install Node.js or Serverless Framework."
+        return 1
     fi
 }
 
@@ -215,7 +216,7 @@ main() {
     echo ""
     
     check_prerequisites
-    install_serverless
+    check_serverless
     install_dependencies
     setup_environment
     start_services

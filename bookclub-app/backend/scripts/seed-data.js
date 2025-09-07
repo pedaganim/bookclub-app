@@ -1,31 +1,42 @@
 const LocalStorage = require('../src/lib/local-storage');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 /**
  * Seed script to populate local development environment with test data
  * This creates sample users and books for testing
  */
 
+/**
+ * Simple password hashing for development seed data
+ * Using SHA-256 with salt for better security than plain text
+ * Note: In production, use bcrypt or similar proper password hashing libraries
+ */
+function hashPassword(password) {
+  const salt = 'dev-seed-salt-2023'; // Fixed salt for consistent development data
+  return crypto.createHash('sha256').update(password + salt).digest('hex');
+}
+
 const SAMPLE_USERS = [
   {
     userId: 'user-1',
     email: 'alice@example.com',
     name: 'Alice Johnson',
-    password: 'password123', // In real implementation, this would be hashed
+    password: hashPassword('password123'), // Hashed for security
     createdAt: new Date().toISOString()
   },
   {
     userId: 'user-2',
     email: 'bob@example.com',
     name: 'Bob Smith',
-    password: 'password123',
+    password: hashPassword('password123'), // Hashed for security
     createdAt: new Date().toISOString()
   },
   {
     userId: 'user-3',
     email: 'carol@example.com',
     name: 'Carol Davis',
-    password: 'password123',
+    password: hashPassword('password123'), // Hashed for security
     createdAt: new Date().toISOString()
   }
 ];
