@@ -145,8 +145,35 @@ jobs:
           set -euo pipefail
           SERVICE=bookclub-app
           STAGE=prod
-          USER_POOL_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolId'].Value | [0]" --output text)
-          CLIENT_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolClientId'].Value | [0]" --output text)
+          # Try CFN exports first (may print 'None' when missing)
+          USER_POOL_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolId'].Value | [0]" --output text | sed 's/None//')
+          CLIENT_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolClientId'].Value | [0]" --output text | sed 's/None//')
+
+          # If exports missing, fall back to resolving from stack resources + Cognito APIs
+          if [ -z "$USER_POOL_ID" ] || [ -z "$CLIENT_ID" ]; then
+            echo "CFN exports for UserPoolId/ClientId not found; falling back to stack resources..."
+            # Find the physical user pool id from the stack resources
+            USER_POOL_ID=${USER_POOL_ID:-$(aws cloudformation describe-stack-resources \
+              --stack-name "${SERVICE}-${STAGE}" \
+              --query "StackResources[?LogicalResourceId=='UserPool'].PhysicalResourceId | [0]" --output text 2>/dev/null | sed 's/None//')}
+
+            if [ -n "$USER_POOL_ID" ]; then
+              # Try to find an app client by name first, then default to the first client
+              CLIENT_NAME="${SERVICE}-client-${STAGE}"
+              CLIENT_ID=${CLIENT_ID:-$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --max-results 60 \
+                --query "UserPoolClients[?ClientName=='${CLIENT_NAME}'].ClientId | [0]" --output text 2>/dev/null | sed 's/None//')}
+              if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
+                CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --max-results 60 \
+                  --query "UserPoolClients[0].ClientId" --output text 2>/dev/null | sed 's/None//')
+              fi
+            fi
+          fi
+
+          if [ -z "$USER_POOL_ID" ] || [ -z "$CLIENT_ID" ]; then
+            echo "Failed to resolve Cognito UserPoolId/ClientId from both CFN exports and Cognito APIs." >&2
+            echo "Check that the Serverless stack created the User Pool and App Client successfully." >&2
+            exit 1
+          fi
           DOMAIN_PREFIX=$(jq -r '.userPoolDomainPrefix' config/app.prod.json)
           COGNITO_DOMAIN="${DOMAIN_PREFIX}-${STAGE}.auth.${AWS_REGION}.amazoncognito.com"
           echo "REACT_APP_COGNITO_USER_POOL_ID=$USER_POOL_ID" >> "$GITHUB_ENV"
