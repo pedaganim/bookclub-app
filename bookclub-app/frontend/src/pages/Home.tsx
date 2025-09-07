@@ -18,7 +18,7 @@ const Home: React.FC = () => {
       setLoading(true);
       const params = filter === 'my-books' && user ? { userId: user.userId } : {};
       const response = await apiService.listBooks(params);
-      setBooks(response.items);
+      setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
@@ -105,7 +105,7 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        {books.length === 0 ? (
+        {(!Array.isArray(books) || books?.length === 0) ? (
           <div className="text-center py-12">
             <div className="text-gray-500">
               {filter === 'my-books' 

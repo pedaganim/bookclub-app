@@ -44,9 +44,9 @@ class Book {
     }
 
     const result = await dynamoDb.query(params);
-    
+
     return {
-      items: result.Items,
+      items: result.Items || [],
       nextToken: result.LastEvaluatedKey 
         ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
         : null,
