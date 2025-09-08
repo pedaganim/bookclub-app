@@ -46,6 +46,11 @@ custom:
   appConfig: ${file(./config/app.${self:provider.stage}.json)}
   serverless-offline:
     httpPort: 4000
+    resourceRoutes: true
+    # Mock AWS services for offline development
+    environment:
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
   dynamodb:
     stages:
       - dev
@@ -305,8 +310,11 @@ resources:
         ProviderType: Google
         UserPoolId: !Ref UserPool
         ProviderDetails:
-          client_id: ${env:GOOGLE_CLIENT_ID}
-          client_secret: ${env:GOOGLE_CLIENT_SECRET}
+          # SECURITY: Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
+          # Empty defaults prevent deployment with placeholder values
+          # For development without Google OAuth, leave these empty
+          client_id: ${env:GOOGLE_CLIENT_ID, ''}
+          client_secret: ${env:GOOGLE_CLIENT_SECRET, ''}
           authorize_scopes: 'openid profile email'
         AttributeMapping:
           email: email

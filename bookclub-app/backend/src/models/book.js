@@ -1,6 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
+const LocalStorage = require('../lib/local-storage');
+
+const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
 
 class Book {
   static async create(bookData, userId) {
@@ -28,15 +31,32 @@ class Book {
       updatedAt: timestamp,
     };
 
+    if (isOffline()) {
+      await LocalStorage.createBook(book);
+      return book;
+    }
+
     await dynamoDb.put(getTableName('books'), book);
     return book;
   }
 
   static async getById(bookId) {
+    if (isOffline()) {
+      return LocalStorage.getBook(bookId);
+    }
     return dynamoDb.get(getTableName('books'), { bookId });
   }
 
   static async listByUser(userId, limit = 10, nextToken = null) {
+    if (isOffline()) {
+      const result = await LocalStorage.listBooks(userId);
+      // For offline mode, we'll implement simple pagination later if needed
+      return {
+        items: result.slice(0, limit),
+        nextToken: result.length > limit ? 'has-more' : null,
+      };
+    }
+
     const params = {
       TableName: getTableName('books'),
       IndexName: 'UserIdIndex',
@@ -63,6 +83,15 @@ class Book {
   }
 
   static async listAll(limit = 10, nextToken = null) {
+    if (isOffline()) {
+      const result = await LocalStorage.listBooks();
+      // For offline mode, we'll implement simple pagination later if needed
+      return {
+        items: result.slice(0, limit),
+        nextToken: result.length > limit ? 'has-more' : null,
+      };
+    }
+
     const params = {
       TableName: getTableName('books'),
       Limit: limit,
@@ -89,6 +118,10 @@ class Book {
       ...updates,
       updatedAt: timestamp,
     };
+
+    if (isOffline()) {
+      return LocalStorage.updateBook(bookId, updateData);
+    }
 
     const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } = 
       dynamoDb.generateUpdateExpression(updateData);
@@ -117,6 +150,10 @@ class Book {
   }
 
   static async delete(bookId, userId) {
+    if (isOffline()) {
+      return LocalStorage.deleteBook(bookId);
+    }
+
     const params = {
       TableName: getTableName('books'),
       Key: { bookId },
