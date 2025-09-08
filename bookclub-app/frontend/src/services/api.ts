@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -38,6 +38,8 @@ class ApiService {
   }
 
   // Auth methods
+  // Commented out local register method - using Google OAuth only
+  /*
   async register(userData: {
     email: string;
     name: string;
@@ -50,7 +52,10 @@ class ApiService {
     }
     return response.data.data!;
   }
+  */
 
+  // Commented out local login method - using Google OAuth only  
+  /*
   async login(email: string, password: string): Promise<LoginResponse> {
     const response: AxiosResponse<ApiResponse<LoginResponse>> = await this.api.post('/auth/login', {
       email,
@@ -61,6 +66,7 @@ class ApiService {
     }
     return response.data.data!;
   }
+  */
 
   async getCurrentUser(): Promise<User> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.get('/users/me');
