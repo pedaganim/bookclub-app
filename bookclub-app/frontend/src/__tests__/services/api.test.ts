@@ -1,5 +1,8 @@
 // Simple utility tests for core functions without external dependencies
 
+// Export to make this file a module for TypeScript isolatedModules
+export {};
+
 describe('API Service Configuration', () => {
   // Mock localStorage
   const localStorageMock = {
@@ -17,7 +20,7 @@ describe('API Service Configuration', () => {
 
   describe('LocalStorage token handling', () => {
     it('should prioritize idToken over accessToken', () => {
-      localStorageMock.getItem.mockImplementation((key) => {
+      localStorageMock.getItem.mockImplementation((key: string) => {
         if (key === 'idToken') return 'id-token-123';
         if (key === 'accessToken') return 'access-token-123';
         return null;
@@ -31,7 +34,7 @@ describe('API Service Configuration', () => {
     });
 
     it('should fall back to accessToken when idToken is not available', () => {
-      localStorageMock.getItem.mockImplementation((key) => {
+      localStorageMock.getItem.mockImplementation((key: string) => {
         if (key === 'idToken') return null;
         if (key === 'accessToken') return 'access-token-123';
         return null;
