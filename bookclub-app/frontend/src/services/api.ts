@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, BookMetadata } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -45,6 +45,7 @@ class ApiService {
     name: string;
     password: string;
     bio?: string;
+    timezone?: string;
   }): Promise<User> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.post('/auth/register', userData);
     if (!response.data.success) {
@@ -72,6 +73,14 @@ class ApiService {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.get('/users/me');
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to get user profile');
+    }
+    return response.data.data!;
+  }
+
+  async updateProfile(updates: ProfileUpdateData): Promise<User> {
+    const response: AxiosResponse<ApiResponse<User>> = await this.api.put('/users/me', updates);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to update profile');
     }
     return response.data.data!;
   }

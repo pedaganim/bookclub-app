@@ -24,31 +24,54 @@ module.exports.handler = async (event) => {
       userId = user.userId;
     }
 
-    let user = await User.getById(userId);
+    const data = JSON.parse(event.body);
+
+    // Validate input - only allow certain fields to be updated
+    const allowedUpdates = ['name', 'bio', 'profilePicture', 'timezone'];
+    const updates = {};
+
+    Object.keys(data).forEach(key => {
+      if (allowedUpdates.includes(key) && data[key] !== undefined) {
+        updates[key] = data[key];
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return response.validationError({
+        message: 'No valid fields to update',
+      });
+    }
+
+    // Validate timezone if provided
+    if (updates.timezone) {
+      const validTimezones = Intl.supportedValuesOf('timeZone');
+      if (!validTimezones.includes(updates.timezone)) {
+        return response.validationError({
+          timezone: 'Invalid timezone',
+        });
+      }
+    }
+
+    const updatedUser = await User.update(userId, updates);
     
-    if (!user) {
-      // If authenticated via Cognito but user record is missing, create one from claims
-      if (claims) {
-        user = await User.ensureExistsFromClaims(claims);
-      }
-      if (!user) {
-        return response.notFound('User not found');
-      }
+    if (!updatedUser) {
+      return response.notFound('User not found');
     }
 
     // Return only necessary user data
     const userData = {
-      userId: user.userId,
-      email: user.email,
-      name: user.name,
-      bio: user.bio,
-      profilePicture: user.profilePicture,
-      timezone: user.timezone,
-      createdAt: user.createdAt,
+      userId: updatedUser.userId,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      bio: updatedUser.bio,
+      profilePicture: updatedUser.profilePicture,
+      timezone: updatedUser.timezone,
+      createdAt: updatedUser.createdAt,
     };
 
     return response.success(userData);
   } catch (error) {
+    console.error('Error updating profile:', error);
     return response.error(error);
   }
 };

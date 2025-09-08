@@ -4,6 +4,7 @@ export interface User {
   name: string;
   bio?: string;
   profilePicture?: string;
+  timezone?: string;
   createdAt: string;
 }
 
@@ -78,4 +79,11 @@ export interface UploadUrlResponse {
   uploadUrl: string;
   fileUrl: string;
   fileKey: string;
+}
+
+export interface ProfileUpdateData {
+  name?: string;
+  bio?: string;
+  profilePicture?: string;
+  timezone?: string;
 }
