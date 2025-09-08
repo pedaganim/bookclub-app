@@ -1,18 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, LoginResponse, ProfileUpdateData } from '../types';
+import { User, ProfileUpdateData } from '../types';
 import { apiService } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: {
-    email: string;
-    name: string;
-    password: string;
-    bio?: string;
-    timezone?: string;
-  }) => Promise<void>;
   updateProfile: (updates: ProfileUpdateData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -119,8 +111,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     loading,
-    login,
-    register,
     updateProfile,
     logout,
     isAuthenticated: !!user,

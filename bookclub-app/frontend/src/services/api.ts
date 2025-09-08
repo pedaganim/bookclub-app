@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse, ProfileUpdateData } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata } from '../types';
 import { config } from '../config';
 
 class ApiService {
