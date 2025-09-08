@@ -45,6 +45,31 @@ export interface BookMetadata {
   source?: string;
 }
 
+export interface OCRResult {
+  isbn?: string;
+  title?: string;
+  author?: string;
+  confidence: 'low' | 'medium' | 'high';
+  rawText: string;
+}
+
+export interface OCRMetadataResult {
+  ocr: OCRResult;
+  metadata?: BookMetadata;
+  suggestions: {
+    title?: string;
+    author?: string;
+    description?: string;
+    isbn?: string;
+    coverImage?: string;
+    publisher?: string;
+    publishedDate?: string;
+    pageCount?: number;
+    categories?: string[];
+    language?: string;
+  };
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;

@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../helpers/test-app');
+const { testApp } = require('../helpers/test-app');
 const fs = require('fs');
 const path = require('path');
 
@@ -99,9 +99,14 @@ jest.mock('../../src/lib/local-storage', () => {
 });
 
 describe('Auth Integration Tests', () => {
+  let app;
+
   beforeEach(() => {
     // Set environment to offline mode
     process.env.IS_OFFLINE = 'true';
+    
+    // Create test app
+    app = testApp();
     
     // Clean up test storage
     if (fs.existsSync(TEST_STORAGE_DIR)) {

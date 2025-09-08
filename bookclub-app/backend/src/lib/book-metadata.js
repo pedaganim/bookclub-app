@@ -9,14 +9,18 @@ class BookMetadataService {
 
   /**
    * Search for book metadata using various APIs
+   * Enhanced to handle incomplete/noisy OCR results
    * @param {Object} searchParams - ISBN, title, author, or combination
    * @returns {Promise<Object|null>} Book metadata or null if not found
    */
   async searchBookMetadata(searchParams) {
     const { isbn, title, author } = searchParams;
     
+    // Clean and preprocess search parameters for better OCR handling
+    const cleanParams = this.preprocessSearchParams(searchParams);
+    
     // Create a cache key based on search parameters
-    const cacheKey = this.generateCacheKey(searchParams);
+    const cacheKey = this.generateCacheKey(cleanParams);
     
     try {
       // Check cache first
@@ -26,17 +30,22 @@ class BookMetadataService {
         return cachedResult.metadata;
       }
 
-      // Try multiple search strategies
+      // Try multiple search strategies with fallbacks for OCR issues
       let metadata = null;
       
       // Strategy 1: Search by ISBN if available (most accurate)
-      if (isbn) {
-        metadata = await this.searchByISBN(isbn);
+      if (cleanParams.isbn) {
+        metadata = await this.searchByISBN(cleanParams.isbn);
       }
       
       // Strategy 2: Search by title and author if ISBN search fails
+      if (!metadata && (cleanParams.title || cleanParams.author)) {
+        metadata = await this.searchByTitleAuthor(cleanParams.title, cleanParams.author);
+      }
+      
+      // Strategy 3: Try fuzzy matching if exact search fails (for OCR errors)
       if (!metadata && (title || author)) {
-        metadata = await this.searchByTitleAuthor(title, author);
+        metadata = await this.searchWithFuzzyMatching(cleanParams);
       }
       
       // Cache the result (even if null to avoid repeated API calls)
@@ -47,6 +56,118 @@ class BookMetadataService {
       console.error('[BookMetadata] Error searching metadata:', error);
       return null; // Graceful degradation
     }
+  }
+
+  /**
+   * Preprocess search parameters to handle OCR artifacts
+   */
+  preprocessSearchParams(params) {
+    const cleaned = {};
+    
+    if (params.isbn) {
+      // Clean ISBN - remove all non-digits except X
+      cleaned.isbn = params.isbn.replace(/[^0-9X]/g, '');
+    }
+    
+    if (params.title) {
+      // Clean title - remove common OCR artifacts
+      cleaned.title = this.cleanOCRText(params.title);
+    }
+    
+    if (params.author) {
+      // Clean author - remove common OCR artifacts
+      cleaned.author = this.cleanOCRText(params.author);
+    }
+    
+    return cleaned;
+  }
+
+  /**
+   * Clean OCR text to handle common extraction errors
+   */
+  cleanOCRText(text) {
+    if (!text) return text;
+    
+    return text
+      // Remove common OCR artifacts
+      .replace(/[|]/g, 'I') // Vertical bars often mistaken for I
+      .replace(/[0]/g, 'O') // Zero often mistaken for O in titles
+      .replace(/[5]/g, 'S') // 5 often mistaken for S
+      .replace(/[1]/g, 'I') // 1 often mistaken for I
+      .replace(/[€]/g, 'C') // Euro symbol for C
+      .replace(/[®]/g, '') // Remove registered trademark
+      .replace(/[™]/g, '') // Remove trademark
+      // Clean up spacing and punctuation
+      .replace(/\s+/g, ' ') // Multiple spaces to single
+      .replace(/[^\w\s\-',.]/g, ' ') // Remove unusual characters
+      .replace(/\s+/g, ' ') // Clean up any double spaces from previous replacements
+      .trim();
+  }
+
+  /**
+   * Search with fuzzy matching for OCR errors
+   */
+  async searchWithFuzzyMatching(cleanParams) {
+    console.log('[BookMetadata] Attempting fuzzy matching for OCR errors');
+    
+    // Try variations of the title/author to handle OCR mistakes
+    const variations = this.generateSearchVariations(cleanParams);
+    
+    for (const variation of variations) {
+      try {
+        const metadata = await this.searchByTitleAuthor(variation.title, variation.author);
+        if (metadata) {
+          console.log('[BookMetadata] Found match with variation:', variation);
+          return metadata;
+        }
+      } catch (error) {
+        // Continue to next variation
+        console.log('[BookMetadata] Variation search failed:', error.message);
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Generate search variations to handle OCR errors
+   */
+  generateSearchVariations(params) {
+    const variations = [];
+    
+    if (params.title) {
+      const title = params.title;
+      
+      // Try with simplified title (first few words)
+      const titleWords = title.split(' ');
+      if (titleWords.length > 2) {
+        variations.push({
+          title: titleWords.slice(0, 2).join(' '),
+          author: params.author
+        });
+      }
+      
+      // Try with title containing only alphanumeric characters
+      variations.push({
+        title: title.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim(),
+        author: params.author
+      });
+    }
+    
+    if (params.author) {
+      const author = params.author;
+      
+      // Try with last name only (common format)
+      const authorWords = author.split(' ');
+      if (authorWords.length > 1) {
+        variations.push({
+          title: params.title,
+          author: authorWords[authorWords.length - 1] // Last word as surname
+        });
+      }
+    }
+    
+    return variations;
   }
 
   /**

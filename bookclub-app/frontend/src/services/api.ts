@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, OCRMetadataResult } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -117,6 +117,20 @@ class ApiService {
     );
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to search book metadata');
+    }
+    return response.data.data!;
+  }
+
+  async extractBookMetadataFromImage(params: {
+    bucket: string;
+    key: string;
+  }): Promise<OCRMetadataResult> {
+    const response: AxiosResponse<ApiResponse<OCRMetadataResult>> = await this.api.post(
+      '/books/ocr-metadata',
+      params
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to extract metadata from image');
     }
     return response.data.data!;
   }
