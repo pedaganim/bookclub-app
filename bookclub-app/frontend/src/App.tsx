@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
+import TestModal from './TestModal';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Navigate to="/login" replace />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/test" element={<TestModal />} />
             <Route
               path="/"
               element={
