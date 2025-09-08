@@ -1,6 +1,23 @@
-# Getting Started with Create React App
+# BookClub Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the React frontend for the BookClub application, featuring a modern, responsive design for managing book collections.
+
+## Features
+
+### Enhanced Book Upload
+- **📷 Camera Integration**: Take photos of book covers directly from your device
+- **📁 File Upload**: Upload existing images from your device
+- **🔍 OCR Technology**: Automatic text extraction from book cover images using Tesseract.js
+- **⚡ Auto-Population**: Automatically fills in book details (title, author, description) from extracted text
+- **🔗 Metadata Enrichment**: Integrates with Google Books API and Open Library for additional book information
+- **✏️ Manual Editing**: Full control to edit auto-populated fields before saving
+
+### Core Functionality
+- User authentication with AWS Cognito
+- Book CRUD operations
+- Image upload to S3
+- Responsive design with Tailwind CSS
+- Real-time updates
 
 ## Available Scripts
 
@@ -44,3 +61,29 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+## Image Scan/Upload Feature
+
+### How It Works
+
+1. **Image Capture**: Users can either take a photo using their device camera or upload an existing image
+2. **OCR Processing**: The image is processed using Tesseract.js to extract text content
+3. **Text Analysis**: Extracted text is analyzed to identify book title, author, and ISBN
+4. **Metadata Lookup**: If an ISBN is found, the app queries Google Books API or Open Library for detailed information
+5. **Auto-Population**: Form fields are automatically filled with extracted and enriched data
+6. **User Review**: Users can edit any auto-populated fields before saving
+
+### Technical Implementation
+
+- **Client-side OCR**: Uses Tesseract.js for text extraction to avoid backend complexity
+- **Camera API**: Leverages HTML5 `navigator.mediaDevices.getUserMedia` for photo capture
+- **Progressive Enhancement**: Gracefully degrades to manual entry if automated features fail
+- **Error Handling**: Comprehensive error handling for camera access, OCR processing, and network issues
+- **Performance**: Lazy loading of OCR engine and efficient image processing
+
+### Dependencies
+
+- `tesseract.js`: Client-side OCR text extraction
+- `react`: UI framework
+- `tailwindcss`: Styling
+- Existing backend APIs for metadata and file upload
