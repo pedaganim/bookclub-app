@@ -20,11 +20,15 @@ Object.defineProperty(window, 'alert', { value: mockAlert });
 describe('BookCard', () => {
   const mockBook = {
     bookId: 'book123',
+    userId: 'user456',
     title: 'Test Book',
     author: 'Test Author',
     description: 'A test book description',
-    genre: 'Fiction',
-    isbn: '1234567890',
+    status: 'available' as const,
+    isbn10: '1234567890',
+    categories: ['Fiction'],
+    createdAt: '2023-01-01T00:00:00Z',
+    updatedAt: '2023-01-01T00:00:00Z',
   };
 
   const mockOnDelete = jest.fn();
