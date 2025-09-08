@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse } from '../types';
+import { ApiResponse, Book, BookListResponse, LoginResponse, User, UploadUrlResponse, ProfileUpdateData } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -71,12 +71,7 @@ class ApiService {
     return response.data.data!;
   }
 
-  async updateProfile(updates: {
-    name?: string;
-    bio?: string;
-    profilePicture?: string;
-    timezone?: string;
-  }): Promise<User> {
+  async updateProfile(updates: ProfileUpdateData): Promise<User> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.put('/users/me', updates);
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to update profile');
