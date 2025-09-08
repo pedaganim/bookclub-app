@@ -80,11 +80,11 @@ test.describe('BookClub App - Authentication Flow', () => {
   test('should handle user registration flow', async ({ page }) => {
     await page.goto('/register');
     
-    // Wait for navigation to complete
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for navigation and network to be idle, ensuring React has rendered
+    await page.waitForLoadState('networkidle');
     
     // Wait for form to load with longer timeout
-    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 20000 });
     
     // Fill out registration form
     await page.fill('input[name="email"][type="email"]', 'newuser@example.com');
@@ -108,11 +108,11 @@ test.describe('BookClub App - Authentication Flow', () => {
   test('should handle existing email registration error', async ({ page }) => {
     await page.goto('/register');
     
-    // Wait for navigation to complete
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for navigation and network to be idle
+    await page.waitForLoadState('networkidle');
     
     // Wait for form to load with longer timeout
-    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 20000 });
     
     // Fill out registration form with existing email
     await page.fill('input[name="email"][type="email"]', 'existing@example.com');
@@ -130,11 +130,11 @@ test.describe('BookClub App - Authentication Flow', () => {
   test('should handle successful login flow', async ({ page }) => {
     await page.goto('/login');
     
-    // Wait for navigation to complete
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for navigation and network to be idle
+    await page.waitForLoadState('networkidle');
     
     // Wait for form to load with longer timeout
-    await expect(page.locator('h2:has-text("Sign in to BookClub")')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Sign in to BookClub")')).toBeVisible({ timeout: 20000 });
     
     // Fill out login form
     await page.fill('input[name="email"][type="email"]', 'test@example.com');
@@ -154,11 +154,11 @@ test.describe('BookClub App - Authentication Flow', () => {
   test('should handle invalid login credentials', async ({ page }) => {
     await page.goto('/login');
     
-    // Wait for navigation to complete
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for navigation and network to be idle
+    await page.waitForLoadState('networkidle');
     
     // Wait for form to load with longer timeout
-    await expect(page.locator('h2:has-text("Sign in to BookClub")')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Sign in to BookClub")')).toBeVisible({ timeout: 20000 });
     
     // Fill out login form with invalid credentials
     await page.fill('input[name="email"][type="email"]', 'wrong@example.com');
@@ -174,11 +174,11 @@ test.describe('BookClub App - Authentication Flow', () => {
   test('should validate required fields in registration', async ({ page }) => {
     await page.goto('/register');
     
-    // Wait for navigation to complete
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for navigation and network to be idle
+    await page.waitForLoadState('networkidle');
     
     // Wait for form to load with longer timeout
-    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 20000 });
     
     // Try to submit empty form - using actual button text
     await page.click('button[type="submit"]:has-text("Create account")');
@@ -198,11 +198,11 @@ test.describe('BookClub App - Authentication Flow', () => {
   test('should validate email format in registration', async ({ page }) => {
     await page.goto('/register');
     
-    // Wait for navigation to complete
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for navigation and network to be idle
+    await page.waitForLoadState('networkidle');
     
     // Wait for form to load with longer timeout
-    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2:has-text("Join BookClub")')).toBeVisible({ timeout: 20000 });
     
     // Fill form with invalid email
     await page.fill('input[name="email"][type="email"]', 'invalid-email');

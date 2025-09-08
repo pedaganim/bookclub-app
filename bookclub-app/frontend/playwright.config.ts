@@ -24,13 +24,13 @@ export default defineConfig({
     trace: 'on-first-retry',
     
     /* Global timeout for each action */
-    actionTimeout: 15000,
+    actionTimeout: 20000,
     
     /* Global timeout for navigation */
     navigationTimeout: 30000,
     
     /* Global timeout for each assertion */
-    expect: { timeout: 15000 },
+    expect: { timeout: 20000 },
   },
 
   /* Configure projects for major browsers */
@@ -65,7 +65,7 @@ export default defineConfig({
     command: 'npm start',
     url: 'http://localhost:3000',
     reuseExistingServer: !!process.env.CI,
-    timeout: 60 * 1000, // Reduced from 120s to 60s
+    timeout: 90 * 1000, // Increased to 90s to allow React dev server to fully start
     stdout: 'ignore',
     stderr: 'pipe',
   },
