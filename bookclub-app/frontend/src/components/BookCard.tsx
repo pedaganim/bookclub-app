@@ -108,10 +108,16 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
     title: book.title,
     author: book.author,
     description: book.description || '',
-    status: book.status,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasImage, setHasImage] = useState(!!book.coverImage);
+  const [imageDeleted, setImageDeleted] = useState(false);
+
+  const handleDeleteImage = () => {
+    setImageDeleted(true);
+    setHasImage(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +125,14 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
     setError('');
 
     try {
-      const updatedBook = await apiService.updateBook(book.bookId, formData);
+      const updates: any = { ...formData };
+      
+      // If image was deleted, include coverImage: null in updates
+      if (imageDeleted) {
+        updates.coverImage = null;
+      }
+      
+      const updatedBook = await apiService.updateBook(book.bookId, updates);
       onUpdate(updatedBook);
       onClose();
     } catch (err: any) {
@@ -141,8 +154,9 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">Title</label>
               <input
+                id="edit-title"
                 type="text"
                 required
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -151,8 +165,9 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Author</label>
+              <label htmlFor="edit-author" className="block text-sm font-medium text-gray-700">Author</label>
               <input
+                id="edit-author"
                 type="text"
                 required
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -161,26 +176,47 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
+                id="edit-description"
                 rows={3}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-              >
-                <option value="available">Available</option>
-                <option value="borrowed">Borrowed</option>
-                <option value="reading">Reading</option>
-              </select>
-            </div>
+            
+            {/* Image section */}
+            {(hasImage || book.coverImage) && !imageDeleted && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Cover Image</label>
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={book.coverImage}
+                    alt={`${book.title} (edit preview)`}
+                    className="w-16 h-20 object-cover rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleDeleteImage}
+                    className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                  >
+                    Delete Image
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Image can only be deleted, not replaced. Add a new image when creating a book.
+                </p>
+              </div>
+            )}
+            
+            {imageDeleted && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm text-yellow-700">
+                  Cover image will be removed when you save changes.
+                </p>
+              </div>
+            )}
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
