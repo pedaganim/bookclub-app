@@ -26,7 +26,7 @@ resource "aws_acm_certificate" "api_cert" {
 }
 
 data "aws_route53_zone" "selected" {
-  count = var.hosted_zone_id == "" && var.hosted_zone_name != "" ? 1 : 0
+  count        = var.hosted_zone_id == "" && var.hosted_zone_name != "" ? 1 : 0
   name         = var.hosted_zone_name
   private_zone = false
 }
@@ -53,16 +53,16 @@ resource "aws_route53_record" "api_cert_validation" {
 
 # Validate the certificate
 resource "aws_acm_certificate_validation" "api_cert_validation" {
-  count                    = var.manage_dns ? 1 : 0
+  count                   = var.manage_dns ? 1 : 0
   certificate_arn         = aws_acm_certificate.api_cert[0].arn
   validation_record_fqdns = [for r in aws_route53_record.api_cert_validation : r.fqdn]
 }
 
 # API Gateway custom domain (edge-optimized)
 resource "aws_api_gateway_domain_name" "api_domain" {
-  count                    = var.manage_dns ? 1 : 0
-  domain_name              = var.api_fqdn
-  certificate_arn          = aws_acm_certificate_validation.api_cert_validation[0].certificate_arn
+  count           = var.manage_dns ? 1 : 0
+  domain_name     = var.api_fqdn
+  certificate_arn = aws_acm_certificate_validation.api_cert_validation[0].certificate_arn
   endpoint_configuration {
     types = ["EDGE"]
   }
@@ -80,7 +80,7 @@ resource "aws_api_gateway_base_path_mapping" "api_mapping" {
 
 # Route53 alias for the API custom domain to API Gateway CloudFront distribution
 resource "aws_route53_record" "api_alias" {
-  count  = var.manage_dns ? 1 : 0
+  count   = var.manage_dns ? 1 : 0
   zone_id = local.r53_zone_id
   name    = var.api_fqdn
   type    = "A"

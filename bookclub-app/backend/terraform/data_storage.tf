@@ -81,9 +81,9 @@ resource "aws_s3_bucket_cors_configuration" "book_covers" {
 resource "aws_s3_bucket_public_access_block" "book_covers" {
   bucket                  = aws_s3_bucket.book_covers.id
   block_public_acls       = true
-  block_public_policy     = false  # Allow bucket policies for public read access
+  block_public_policy     = false # Allow bucket policies for public read access
   ignore_public_acls      = true
-  restrict_public_buckets = false  # Allow public access through bucket policy
+  restrict_public_buckets = false # Allow public access through bucket policy
 }
 
 # Bucket policy to allow public read access to book covers
@@ -94,6 +94,8 @@ resource "aws_s3_bucket_public_access_block" "book_covers" {
 # - Upload access still controlled through signed URLs in generateUploadUrl handler
 resource "aws_s3_bucket_policy" "book_covers_policy" {
   bucket = aws_s3_bucket.book_covers.id
+
+  depends_on = [aws_s3_bucket_public_access_block.book_covers]
 
   policy = jsonencode({
     Version = "2012-10-17"
