@@ -1,9 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import AddBookModal from '../components/AddBookModal';
 
-// Mock Tesseract.js
-jest.mock('tesseract.js', () => ({
-  createWorker: jest.fn()
+// Mock OCR service
+jest.mock('../services/ocrService', () => ({
+  ocrService: {
+    extractText: jest.fn(),
+    extractBookDetails: jest.fn(),
+    cleanup: jest.fn().mockResolvedValue(undefined)
+  }
 }));
 
 // Mock API service
@@ -16,12 +20,16 @@ jest.mock('../services/api', () => ({
   }
 }));
 
+// Get the mocked OCR service
+const { ocrService } = jest.requireMock('../services/ocrService');
+
 describe('Enhanced AddBookModal', () => {
   const mockOnClose = jest.fn();
   const mockOnBookAdded = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    ocrService.cleanup.mockResolvedValue(undefined);
   });
 
   test('renders enhanced UI with photo capture options', () => {
@@ -44,13 +52,15 @@ describe('Enhanced AddBookModal', () => {
     expect(screen.getByText('Add Book')).toBeInTheDocument();
   });
 
-  test('shows image capture buttons', () => {
+  test('shows accessible image capture buttons with proper ARIA labels', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
-    const takePhotoButton = screen.getByRole('button', { name: '📷 Take Photo' });
-    const uploadButton = screen.getByRole('button', { name: '📁 Upload Image' });
+    const takePhotoButton = screen.getByRole('button', { name: /take a photo of the book cover using your camera/i });
+    const uploadButton = screen.getByRole('button', { name: /upload an image of the book cover from your device/i });
     
     expect(takePhotoButton).toBeInTheDocument();
     expect(uploadButton).toBeInTheDocument();
+    expect(takePhotoButton).toHaveClass('focus:ring-2', 'focus:ring-blue-500');
+    expect(uploadButton).toHaveClass('focus:ring-2', 'focus:ring-green-500');
   });
 });
