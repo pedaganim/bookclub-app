@@ -77,7 +77,7 @@ const ProfileEdit: React.FC = () => {
       if (formData.timezone !== user?.timezone) updates.timezone = formData.timezone;
 
       if (Object.keys(updates).length === 0) {
-        setError('No changes to save');
+        setSuccess('No changes detected');
         return;
       }
 
