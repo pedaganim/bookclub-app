@@ -89,10 +89,13 @@ test.describe('BookClub App - Authentication Flow', () => {
     await page.click('button[type="submit"], button:has-text("Register"), button:has-text("Sign up")');
     
     // Wait for response and check for success (this might redirect or show success message)
-    await page.waitForTimeout(1000); // Give time for API call
-    
     // The behavior after successful registration depends on the app implementation
+    await page.waitForLoadState('networkidle');
+    
     // Could be redirect to login, redirect to dashboard, or success message
+    // Just ensure we're not on the same form anymore or there's no error
+    const hasError = await page.locator(':has-text("error"), :has-text("failed"), .error').isVisible();
+    expect(hasError).toBeFalsy();
   });
 
   test('should handle existing email registration error', async ({ page }) => {
@@ -121,7 +124,7 @@ test.describe('BookClub App - Authentication Flow', () => {
     await page.click('button[type="submit"], button:has-text("Login"), button:has-text("Sign in")');
     
     // Wait for response and potential redirect to dashboard
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
     
     // After successful login, should redirect to main app or dashboard
     // The exact behavior depends on the app implementation

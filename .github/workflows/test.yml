@@ -87,7 +87,7 @@ jobs:
     
     - name: Install Playwright browsers
       working-directory: ./bookclub-app/frontend
-      run: npx playwright install --with-deps chromium
+      run: npx playwright install --with-deps
     
     - name: Build frontend
       working-directory: ./bookclub-app/frontend
@@ -100,6 +100,8 @@ jobs:
         sleep 10
       env:
         IS_OFFLINE: true
+        GOOGLE_CLIENT_ID: test_client_id
+        GOOGLE_CLIENT_SECRET: test_client_secret
     
     - name: Start frontend server
       working-directory: ./bookclub-app/frontend
