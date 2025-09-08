@@ -13,7 +13,7 @@ const crypto = require('crypto');
  * Note: In production, use bcrypt or similar proper password hashing libraries
  */
 function hashPassword(password) {
-  const salt = 'dev-seed-salt-2023'; // Fixed salt for consistent development data
+  const salt = 'dev-seed-salt'; // Fixed salt for consistent development data (generic, not year-specific)
   return crypto.createHash('sha256').update(password + salt).digest('hex');
 }
 
