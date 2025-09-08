@@ -94,11 +94,17 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     setError('');
     
     try {
-      setOCRProgress('Extracting text from image...');
-      const { text, confidence } = await ocrService.extractText(file);
+      setOCRProgress('Preprocessing image for optimal text recognition...');
       
+      const { text, confidence } = await ocrService.extractText(file, true);
+      
+      // Enhanced confidence feedback
       if (confidence < 30) {
-        setError('Low confidence in text extraction. Please try with a clearer image or fill in details manually.');
+        setError(`Low confidence in text extraction (${Math.round(confidence)}%). Please try with a clearer image or fill in details manually.`);
+      } else if (confidence < 60) {
+        setError(`Moderate confidence in text extraction (${Math.round(confidence)}%). Please review the extracted details carefully.`);
+      } else {
+        console.log(`High confidence OCR result: ${Math.round(confidence)}%`);
       }
       
       setOCRProgress('Analyzing book details...');
