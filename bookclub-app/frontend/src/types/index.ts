@@ -26,10 +26,13 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
+// Commented out LoginResponse type - using Google OAuth only
+/*
 export interface LoginResponse {
   user: User;
   tokens: AuthTokens;
 }
+*/
 
 export interface ApiResponse<T> {
   success: boolean;
