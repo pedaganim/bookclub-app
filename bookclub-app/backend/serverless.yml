@@ -283,8 +283,8 @@ resources:
         ProviderType: Google
         UserPoolId: !Ref UserPool
         ProviderDetails:
-          client_id: ${env:GOOGLE_CLIENT_ID}
-          client_secret: ${env:GOOGLE_CLIENT_SECRET}
+          client_id: ${env:GOOGLE_CLIENT_ID, 'test_client_id'}
+          client_secret: ${env:GOOGLE_CLIENT_SECRET, 'test_client_secret'}
           authorize_scopes: 'openid profile email'
         AttributeMapping:
           email: email
