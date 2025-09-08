@@ -81,9 +81,32 @@ resource "aws_s3_bucket_cors_configuration" "book_covers" {
 resource "aws_s3_bucket_public_access_block" "book_covers" {
   bucket                  = aws_s3_bucket.book_covers.id
   block_public_acls       = true
-  block_public_policy     = true
+  block_public_policy     = false  # Allow bucket policies for public read access
   ignore_public_acls      = true
-  restrict_public_buckets = true
+  restrict_public_buckets = false  # Allow public access through bucket policy
+}
+
+# Bucket policy to allow public read access to book covers
+# This policy allows anyone to read book cover images under the book-covers/ prefix
+# while maintaining security by:
+# - Only allowing read access (s3:GetObject)
+# - Restricting access to the book-covers/ prefix only
+# - Upload access still controlled through signed URLs in generateUploadUrl handler
+resource "aws_s3_bucket_policy" "book_covers_policy" {
+  bucket = aws_s3_bucket.book_covers.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadBookCovers"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.book_covers.arn}/book-covers/*"
+      }
+    ]
+  })
 }
 
 # Expose names via SSM (optional, for other systems)
