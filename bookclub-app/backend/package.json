@@ -7,7 +7,10 @@
     "deploy": "serverless deploy",
     "deploy:dev": "serverless deploy --stage dev",
     "deploy:prod": "serverless deploy --stage prod",
-    "offline": "serverless offline start",
+    "offline": "SLS_TELEMETRY_DISABLED=1 serverless offline start",
+    "dev": "SLS_TELEMETRY_DISABLED=1 IS_OFFLINE=true NODE_ENV=development AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_REGION=us-east-1 AWS_DEFAULT_REGION=us-east-1 AWS_SDK_LOAD_CONFIG=0 serverless offline start --config serverless-offline.yml --stage dev",
+    "seed": "node scripts/seed-data.js",
+    "dev:seed": "npm run seed && npm run dev",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
