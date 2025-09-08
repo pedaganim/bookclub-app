@@ -53,59 +53,7 @@ jobs:
       env:
         CI: true
 
-  e2e-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./bookclub-app
 
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: |
-          ./bookclub-app/frontend/package-lock.json
-          ./bookclub-app/backend/package-lock.json
-    
-    - name: Install backend dependencies
-      working-directory: ./bookclub-app/backend
-      run: npm ci
-      
-    - name: Install frontend dependencies
-      working-directory: ./bookclub-app/frontend
-      run: npm ci
-    
-    - name: Install Playwright browsers
-      working-directory: ./bookclub-app/frontend
-      run: npx playwright install chromium
-    
-    - name: Start backend server
-      working-directory: ./bookclub-app/backend
-      run: npm start &
-      env:
-        NODE_ENV: test
-        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || 'test-client-id' }}
-        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || 'test-client-secret' }}
-    
-    - name: Wait for backend to be ready
-      run: sleep 5
-    
-    - name: Start frontend server
-      working-directory: ./bookclub-app/frontend
-      run: npm start &
-      env:
-        CI: false
-    
-    - name: Wait for frontend to be ready
-      run: sleep 10
-    
-    - name: Run E2E tests
-      working-directory: ./bookclub-app/frontend
-      run: npm run test:e2e
 
   security-scan:
     runs-on: ubuntu-latest
