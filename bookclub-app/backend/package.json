@@ -13,7 +13,8 @@
     "dev:seed": "npm run seed && npm run dev",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:coverage:open": "npm run test:coverage && open coverage/lcov-report/index.html"
   },
   "keywords": [
     "serverless",
@@ -49,6 +50,15 @@
       "src/**/*.js",
       "!src/**/*.test.js",
       "!src/**/__tests__/**"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 30,
+        "branches": 21,
+        "functions": 27,
+        "lines": 29
+      }
+    },
+    "coverageReporters": ["text", "html", "lcov", "json-summary"]
   }
 }

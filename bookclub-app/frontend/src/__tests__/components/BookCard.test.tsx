@@ -1,0 +1,149 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import BookCard from '../../components/BookCard';
+import { apiService } from '../../services/api';
+
+// Mock the API service
+jest.mock('../../services/api', () => ({
+  apiService: {
+    deleteBook: jest.fn(),
+  },
+}));
+
+// Mock window.confirm and window.alert
+const mockConfirm = jest.fn();
+const mockAlert = jest.fn();
+Object.defineProperty(window, 'confirm', { value: mockConfirm });
+Object.defineProperty(window, 'alert', { value: mockAlert });
+
+describe('BookCard', () => {
+  const mockBook = {
+    bookId: 'book123',
+    title: 'Test Book',
+    author: 'Test Author',
+    description: 'A test book description',
+    genre: 'Fiction',
+    isbn: '1234567890',
+  };
+
+  const mockOnDelete = jest.fn();
+  const mockOnUpdate = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockConfirm.mockReturnValue(true);
+    // Mock console.error to avoid noise in tests
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('should render book information correctly', () => {
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={false} 
+      />
+    );
+
+    expect(screen.getByText('Test Book')).toBeInTheDocument();
+    expect(screen.getByText('by Test Author')).toBeInTheDocument();
+  });
+
+  it('should show action buttons when showActions is true', () => {
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={true} 
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  });
+
+  it('should not show action buttons when showActions is false', () => {
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={false} 
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('should handle delete when user confirms', async () => {
+    (apiService.deleteBook as jest.Mock).mockResolvedValue({});
+    mockConfirm.mockReturnValue(true);
+
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={true} 
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+
+    expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to delete this book?');
+    
+    await waitFor(() => {
+      expect(apiService.deleteBook).toHaveBeenCalledWith('book123');
+    });
+    expect(mockOnDelete).toHaveBeenCalledWith('book123');
+  });
+
+  it('should not delete when user cancels confirmation', async () => {
+    mockConfirm.mockReturnValue(false);
+
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={true} 
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+
+    expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to delete this book?');
+    expect(apiService.deleteBook).not.toHaveBeenCalled();
+    expect(mockOnDelete).not.toHaveBeenCalled();
+  });
+
+  it('should handle delete error gracefully', async () => {
+    const error = new Error('Delete failed');
+    (apiService.deleteBook as jest.Mock).mockRejectedValue(error);
+    mockConfirm.mockReturnValue(true);
+
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={true} 
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+
+    await waitFor(() => {
+      expect(mockAlert).toHaveBeenCalledWith('Failed to delete book');
+    });
+    expect(mockOnDelete).not.toHaveBeenCalled();
+  });
+});
