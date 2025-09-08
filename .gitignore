@@ -15,6 +15,10 @@ pnpm-debug.log*
 **/.cache/
 **/coverage/
 
+# Test results
+**/test-results/
+**/playwright-report/
+
 # Serverless
 **/.serverless/
 **/.webpack/
@@ -43,3 +47,4 @@ Thumbs.db
 # Misc
 *.local
 *.tmp
+/tmp/

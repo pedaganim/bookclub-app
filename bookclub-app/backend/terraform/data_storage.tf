@@ -45,6 +45,23 @@ resource "aws_dynamodb_table" "users" {
   }
 }
 
+resource "aws_dynamodb_table" "metadata_cache" {
+  name         = "${var.service_name}-metadata-cache-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "cacheKey"
+
+  attribute {
+    name = "cacheKey"
+    type = "S"
+  }
+
+  # TTL for cache entries to automatically expire old data
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+}
+
 # S3 bucket for book covers
 resource "aws_s3_bucket" "book_covers" {
   bucket = "${var.service_name}-${var.stage}-book-covers"
@@ -86,4 +103,10 @@ resource "aws_ssm_parameter" "book_covers_bucket_name" {
   name  = "/${var.service_name}/${var.stage}/book_covers_bucket_name"
   type  = "String"
   value = aws_s3_bucket.book_covers.bucket
+}
+
+resource "aws_ssm_parameter" "metadata_cache_table_name" {
+  name  = "/${var.service_name}/${var.stage}/metadata_cache_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.metadata_cache.name
 }

@@ -65,6 +65,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Commented out local auth methods - using Google OAuth only
+  /*
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response: LoginResponse = await apiService.login(email, password);
@@ -95,6 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
+  */
 
   const updateProfile = async (updates: ProfileUpdateData): Promise<void> => {
     try {

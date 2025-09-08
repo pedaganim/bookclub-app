@@ -17,6 +17,13 @@ module.exports.handler = async (event) => {
     }
 
     // Additional validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return response.validationError({
+        email: 'Please enter a valid email address',
+      });
+    }
+    
     if (data.password.length < 8) {
       return response.validationError({
         password: 'Password must be at least 8 characters long',

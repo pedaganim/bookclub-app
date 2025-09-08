@@ -7,8 +7,13 @@
     "deploy": "serverless deploy",
     "deploy:dev": "serverless deploy --stage dev",
     "deploy:prod": "serverless deploy --stage prod",
-    "offline": "serverless offline start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "offline": "SLS_TELEMETRY_DISABLED=1 serverless offline start",
+    "dev": "SLS_TELEMETRY_DISABLED=1 IS_OFFLINE=true NODE_ENV=development AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_REGION=us-east-1 AWS_DEFAULT_REGION=us-east-1 AWS_SDK_LOAD_CONFIG=0 serverless offline start --config serverless-offline.yml --stage dev",
+    "seed": "node scripts/seed-data.js",
+    "dev:seed": "npm run seed && npm run dev",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "serverless",
@@ -24,7 +29,26 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.5",
+    "@types/supertest": "^2.0.15",
+    "express": "^4.21.2",
+    "jest": "^29.7.0",
     "serverless": "^3.38.0",
-    "serverless-offline": "^13.8.0"
+    "serverless-offline": "^13.8.0",
+    "supertest": "^6.3.3"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js",
+      "**/tests/**/*.test.js"
+    ],
+    "testPathIgnorePatterns": ["/node_modules/", "/__tests__/helpers/"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js",
+      "!src/**/__tests__/**"
+    ]
   }
 }

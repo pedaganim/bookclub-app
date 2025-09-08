@@ -4,6 +4,7 @@ const SERVICE_NAME = 'bookclub-app';
 const tableNames = {
   books: `${SERVICE_NAME}-books-${STAGE}`,
   users: `${SERVICE_NAME}-users-${STAGE}`,
+  'metadata-cache': `${SERVICE_NAME}-metadata-cache-${STAGE}`,
 };
 
 function getTableName(key) {

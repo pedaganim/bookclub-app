@@ -1,0 +1,96 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bookclub-app/backend
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: ./bookclub-app/backend/package-lock.json
+    
+    - name: Install backend dependencies
+      run: npm ci
+    
+    - name: Run backend tests with coverage
+      run: npm run test:coverage
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bookclub-app/frontend
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: ./bookclub-app/frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: npm ci
+    
+    - name: Run frontend unit tests
+      run: npm test -- --watchAll=false --coverage
+      env:
+        CI: true
+
+
+
+  security-scan:
+    runs-on: ubuntu-latest
+    # Only run security scan on main branch pushes to save time on PRs
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run npm audit on backend
+      working-directory: ./bookclub-app/backend
+      run: npm audit --audit-level=moderate
+      continue-on-error: true
+    
+    - name: Run npm audit on frontend
+      working-directory: ./bookclub-app/frontend
+      run: npm audit --audit-level=moderate
+      continue-on-error: true
+
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install frontend dependencies
+      working-directory: ./bookclub-app/frontend
+      run: npm ci
+    
+    - name: Check TypeScript types
+      working-directory: ./bookclub-app/frontend
+      run: npx tsc --noEmit
+    
+    - name: Run ESLint (if configured)
+      working-directory: ./bookclub-app/frontend
+      run: npm run lint || echo "ESLint not configured"
+      continue-on-error: true

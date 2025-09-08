@@ -33,20 +33,12 @@ const Navbar: React.FC = () => {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Sign Up
-                </Link>
-              </>
+              <Link
+                to="/login"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Sign In
+              </Link>
             )}
           </div>
         </div>
