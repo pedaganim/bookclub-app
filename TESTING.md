@@ -39,7 +39,6 @@ bookclub-app/
 │   │       └── auth-flow.spec.ts
 │   ├── playwright.config.ts
 │   └── package.json
-├── tests/ (shared test structure)
 └── .github/workflows/test.yml
 ```
 
@@ -98,10 +97,13 @@ cd bookclub-app/frontend
 npm test
 
 # Run E2E tests (requires backend running)
-npm run test:e2e
+npx playwright test
 
 # E2E tests with UI
-npm run test:e2e:ui
+npx playwright test --ui
+
+# Install Playwright browsers (one time setup)
+npx playwright install
 ```
 
 ### Test Coverage:
@@ -174,7 +176,7 @@ cd bookclub-app/backend && npm run offline
 cd bookclub-app/frontend && npm start
 
 # Terminal 3:
-cd bookclub-app/frontend && npm run test:e2e
+cd bookclub-app/frontend && npx playwright test
 ```
 
 ### Production Testing:
@@ -249,8 +251,8 @@ npm test -- --verbose
 npm test -- --testNamePattern="specific test name"
 
 # E2E debug mode
-npm run test:e2e -- --debug
+npx playwright test --debug
 
 # Playwright UI mode
-npm run test:e2e:ui
+npx playwright test --ui
 ```
