@@ -5,6 +5,11 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+    # Run tests when PRs are assigned or review is requested to ensure code quality
+    # before assignment/review and provide feedback to assignees/reviewers
+    types:
+      - assigned
+      - review_requested
 
 jobs:
   backend-tests:
