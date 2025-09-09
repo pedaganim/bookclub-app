@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -181,6 +181,53 @@ class ApiService {
         'Content-Type': file.type,
       },
     });
+  }
+
+  // Club methods
+  async createClub(clubData: {
+    name: string;
+    description?: string;
+    isPrivate?: boolean;
+    memberLimit?: number;
+  }): Promise<BookClub> {
+    const response: AxiosResponse<ApiResponse<BookClub>> = await this.api.post('/clubs', clubData);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to create club');
+    }
+    return response.data.data!;
+  }
+
+  async getUserClubs(): Promise<BookClubListResponse> {
+    const response: AxiosResponse<ApiResponse<BookClubListResponse>> = await this.api.get('/clubs');
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to get clubs');
+    }
+    return response.data.data!;
+  }
+
+  async getClub(clubId: string): Promise<BookClub> {
+    const response: AxiosResponse<ApiResponse<BookClub>> = await this.api.get(`/clubs/${clubId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to get club');
+    }
+    return response.data.data!;
+  }
+
+  async joinClub(inviteCode: string): Promise<BookClub> {
+    const response: AxiosResponse<ApiResponse<BookClub>> = await this.api.post('/clubs/join', {
+      inviteCode,
+    });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to join club');
+    }
+    return response.data.data!;
+  }
+
+  async leaveClub(clubId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(`/clubs/${clubId}/leave`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to leave club');
+    }
   }
 }
 

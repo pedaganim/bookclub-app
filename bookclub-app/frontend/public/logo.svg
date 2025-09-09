@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <style>
+      .logo-text { 
+        font-family: 'Arial', sans-serif; 
+        font-weight: bold; 
+        fill: #A8B5A3; 
+        text-anchor: middle;
+      }
+      .logo-element { fill: #A8B5A3; }
+    </style>
+  </defs>
+  
+  <!-- Left book -->
+  <g class="logo-element">
+    <path d="M140 160 L140 280 L200 280 L200 260 L220 260 L220 160 Z" />
+    <rect x="145" y="165" width="5" height="90" fill="#fff" opacity="0.3"/>
+    <rect x="155" y="165" width="40" height="5" fill="#fff" opacity="0.5"/>
+  </g>
+  
+  <!-- Right book -->
+  <g class="logo-element">
+    <path d="M372 160 L292 160 L292 260 L312 260 L312 280 L372 280 Z" />
+    <rect x="362" y="165" width="5" height="90" fill="#fff" opacity="0.3"/>
+    <rect x="297" y="165" width="40" height="5" fill="#fff" opacity="0.5"/>
+  </g>
+  
+  <!-- Center - Person reading -->
+  <g class="logo-element">
+    <!-- Head -->
+    <circle cx="256" cy="120" r="35"/>
+    <!-- Body/torso -->
+    <path d="M220 160 Q220 150 230 150 L282 150 Q292 150 292 160 L292 220 Q292 230 282 230 L230 230 Q220 230 220 220 Z"/>
+    <!-- Book in hands -->
+    <path d="M200 190 L200 260 L312 260 L312 190 L256 180 Z" fill="#fff"/>
+    <path d="M256 180 L256 260" stroke="#A8B5A3" stroke-width="2" fill="none"/>
+    <!-- Reading lines -->
+    <rect x="210" y="200" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="210" y="210" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="210" y="220" width="30" height="2" fill="#A8B5A3"/>
+    <rect x="267" y="200" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="267" y="210" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="267" y="220" width="30" height="2" fill="#A8B5A3"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="256" y="340" class="logo-text" font-size="56">BOOK</text>
+  <text x="256" y="410" class="logo-text" font-size="56">CLUB</text>
+</svg>

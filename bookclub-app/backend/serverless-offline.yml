@@ -181,3 +181,84 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
+
+  # Club-related functions
+  createClub:
+    handler: src/handlers/clubs/create.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  getClub:
+    handler: src/handlers/clubs/get.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  listUserClubs:
+    handler: src/handlers/clubs/list.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  joinClub:
+    handler: src/handlers/clubs/join.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/join
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  leaveClub:
+    handler: src/handlers/clubs/leave.handler
+    events:
+      - http:
+          method: DELETE
+          path: /clubs/{clubId}/leave
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true

@@ -26,9 +26,13 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-metadata-cache-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-metadata-cache-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -296,6 +300,107 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+# Club-related functions
+  createClub:
+    handler: src/handlers/clubs/create.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  getClub:
+    handler: src/handlers/clubs/get.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  listUserClubs:
+    handler: src/handlers/clubs/list.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  joinClub:
+    handler: src/handlers/clubs/join.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/join
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  leaveClub:
+    handler: src/handlers/clubs/leave.handler
+    events:
+      - http:
+          method: DELETE
+          path: /clubs/{clubId}/leave
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
 resources:
   Resources:
     UserPool:
@@ -318,8 +423,6 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
-      DependsOn:
-        - GoogleIdentityProvider
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -337,7 +440,6 @@ resources:
           - profile
         SupportedIdentityProviders:
           - COGNITO
-          - Google
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
         LogoutURLs:
@@ -348,23 +450,6 @@ resources:
       Properties:
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
-
-    GoogleIdentityProvider:
-      Type: AWS::Cognito::UserPoolIdentityProvider
-      Properties:
-        ProviderName: Google
-        ProviderType: Google
-        UserPoolId: !Ref UserPool
-        ProviderDetails:
-          # SECURITY: Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
-          # Empty defaults prevent deployment with placeholder values
-          # For development without Google OAuth, leave these empty
-          client_id: ${env:GOOGLE_CLIENT_ID, ''}
-          client_secret: ${env:GOOGLE_CLIENT_SECRET, ''}
-          authorize_scopes: 'openid profile email'
-        AttributeMapping:
-          email: email
-          name: name
 
     ApiGatewayAuthorizer:
       Type: AWS::ApiGateway::Authorizer

@@ -10,8 +10,12 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold text-indigo-600">
-              BookClub
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/logo-navbar.svg" 
+                alt="Book Club" 
+                className="h-8 w-auto"
+              />
             </Link>
           </div>
           
@@ -21,9 +25,22 @@ const Navbar: React.FC = () => {
                 <span className="text-gray-700">Welcome, {user?.name}</span>
                 <Link
                   to="/profile"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Profile
+                  {user?.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={`${user.name}'s avatar`}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-600">
+                        {user?.name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <span>Profile</span>
                 </Link>
                 <button
                   onClick={logout}
