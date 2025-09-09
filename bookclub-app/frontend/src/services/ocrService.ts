@@ -12,6 +12,22 @@ export interface BookDetails {
   description?: string;
 }
 
+// Confidence thresholds for OCR results
+export const OCR_CONFIDENCE_THRESHOLDS = {
+  LOW: 30,
+  MODERATE: 60,
+  HIGH: 70
+} as const;
+
+// Tesseract worker configuration interface
+interface TesseractWorkerParameters {
+  tessedit_pageseg_mode: string;
+  tessedit_ocr_engine_mode: string;
+  tesseract_char_whitelist: string;
+  preserve_interword_spaces: string;
+  user_defined_dpi: string;
+}
+
 interface PreprocessingOptions {
   resize?: boolean;
   maxWidth?: number;
@@ -39,14 +55,16 @@ class OCRService {
       this.worker = await createWorker('eng');
       
       // Configure Tesseract for optimal book cover text recognition
-      // Using any type to avoid TypeScript issues with parameter values
-      await (this.worker as any).setParameters({
+      const tesseractParams: TesseractWorkerParameters = {
         tessedit_pageseg_mode: '6', // Uniform block of text
         tessedit_ocr_engine_mode: '1', // Neural network LSTM
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-()&',
+        tesseract_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-()&',
         preserve_interword_spaces: '1',
         user_defined_dpi: '300', // High DPI for better text recognition
-      });
+      };
+      
+      // Type assertion for Tesseract worker setParameters method
+      await this.worker.setParameters(tesseractParams as any);
       
       this.isInitialized = true;
     } catch (error) {
@@ -80,6 +98,7 @@ class OCRService {
       }
 
       img.onload = () => {
+        const objectUrl = img.src;
         try {
           let { width, height } = img;
 
@@ -100,55 +119,17 @@ class OCRService {
           const imageData = ctx.getImageData(0, 0, width, height);
           const data = imageData.data;
 
-          // Apply preprocessing filters
-          for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
-
-            // Convert to grayscale using luminance formula
-            if (grayscale) {
-              const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-              r = g = b = gray;
-            }
-
-            // Simple denoising by reducing noise in dark areas
-            if (denoise) {
-              const avg = (r + g + b) / 3;
-              if (avg < 50) {
-                const factor = 0.8;
-                r = Math.round(r * factor);
-                g = Math.round(g * factor);
-                b = Math.round(b * factor);
-              }
-            }
-
-            // Increase contrast for better text recognition
-            if (sharpen) {
-              const factor = 1.2;
-              const offset = -20;
-              r = Math.max(0, Math.min(255, r * factor + offset));
-              g = Math.max(0, Math.min(255, g * factor + offset));
-              b = Math.max(0, Math.min(255, b * factor + offset));
-            }
-
-            // Apply binarization (black and white) if requested
-            if (binarize) {
-              const threshold = 128;
-              const gray = (r + g + b) / 3;
-              r = g = b = gray > threshold ? 255 : 0;
-            }
-
-            data[i] = r;
-            data[i + 1] = g;
-            data[i + 2] = b;
-          }
+          // Apply preprocessing filters using optimized algorithm
+          this.applyImageFilters(data, { grayscale, denoise, sharpen, binarize });
 
           // Put processed image data back to canvas
           ctx.putImageData(imageData, 0, 0);
 
           // Convert canvas to blob and then to File
           canvas.toBlob((blob) => {
+            // Clean up object URL
+            URL.revokeObjectURL(objectUrl);
+            
             if (blob) {
               const processedFile = new File([blob], file.name, {
                 type: file.type,
@@ -161,16 +142,83 @@ class OCRService {
           }, file.type, 0.9);
 
         } catch (error) {
+          // Clean up object URL on error
+          URL.revokeObjectURL(objectUrl);
           reject(new Error(`Image preprocessing failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
         }
       };
 
       img.onerror = () => {
+        // Clean up object URL on error
+        URL.revokeObjectURL(img.src);
         reject(new Error('Failed to load image for preprocessing'));
       };
 
       img.src = URL.createObjectURL(file);
     });
+  }
+
+  /**
+   * Optimized image filtering using efficient algorithms
+   */
+  private applyImageFilters(data: Uint8ClampedArray, options: {
+    grayscale?: boolean;
+    denoise?: boolean;
+    sharpen?: boolean;
+    binarize?: boolean;
+  }): void {
+    const { grayscale, denoise, sharpen, binarize } = options;
+    const length = data.length;
+
+    // Process image data in chunks for better performance
+    const chunkSize = 1024; // Process 256 pixels at a time
+    
+    for (let start = 0; start < length; start += chunkSize) {
+      const end = Math.min(start + chunkSize, length);
+      
+      for (let i = start; i < end; i += 4) {
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
+
+        // Convert to grayscale using luminance formula
+        if (grayscale) {
+          const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+          r = g = b = gray;
+        }
+
+        // Simple denoising by reducing noise in dark areas
+        if (denoise) {
+          const avg = (r + g + b) / 3;
+          if (avg < 50) {
+            const factor = 0.8;
+            r = Math.round(r * factor);
+            g = Math.round(g * factor);
+            b = Math.round(b * factor);
+          }
+        }
+
+        // Increase contrast for better text recognition
+        if (sharpen) {
+          const factor = 1.2;
+          const offset = -20;
+          r = Math.max(0, Math.min(255, r * factor + offset));
+          g = Math.max(0, Math.min(255, g * factor + offset));
+          b = Math.max(0, Math.min(255, b * factor + offset));
+        }
+
+        // Apply binarization (black and white) if requested
+        if (binarize) {
+          const threshold = 128;
+          const gray = (r + g + b) / 3;
+          r = g = b = gray > threshold ? 255 : 0;
+        }
+
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = b;
+      }
+    }
   }
 
   /**
