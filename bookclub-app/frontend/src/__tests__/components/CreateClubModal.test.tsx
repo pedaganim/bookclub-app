@@ -11,6 +11,14 @@ jest.mock('../../services/api', () => ({
   },
 }));
 
+// Mock geolocation
+const mockGeolocation = {
+  getCurrentPosition: jest.fn(),
+};
+
+// Mock fetch for reverse geocoding
+global.fetch = jest.fn();
+
 describe('CreateClubModal', () => {
   const mockOnClose = jest.fn();
   const mockOnClubCreated = jest.fn();
@@ -19,6 +27,15 @@ describe('CreateClubModal', () => {
     jest.clearAllMocks();
     mockOnClose.mockClear();
     mockOnClubCreated.mockClear();
+    
+    // Reset geolocation mock
+    Object.defineProperty(global.navigator, 'geolocation', {
+      value: mockGeolocation,
+      configurable: true,
+    });
+    
+    // Reset fetch mock
+    (global.fetch as jest.Mock).mockClear();
   });
 
   it('should render modal with form fields', () => {
@@ -347,5 +364,323 @@ describe('CreateClubModal', () => {
     const memberLimitInput = screen.getByLabelText(/member limit/i);
     expect(memberLimitInput).toHaveAttribute('min', '2');
     expect(memberLimitInput).toHaveAttribute('max', '1000');
+  });
+
+  describe('Location Auto-Discovery', () => {
+    it('should render "Use My Location" button', () => {
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: /use my location/i })).toBeInTheDocument();
+    });
+
+    it('should show message when geolocation is not supported', () => {
+      // Mock unsupported geolocation
+      Object.defineProperty(global.navigator, 'geolocation', {
+        value: undefined,
+        configurable: true,
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      expect(screen.getByText('Geolocation is not supported by this browser')).toBeInTheDocument();
+    });
+
+    it('should successfully get location and populate field', async () => {
+      const mockPosition = {
+        coords: {
+          latitude: 40.7128,
+          longitude: -74.0060,
+        },
+      };
+
+      const mockGeocodingResponse = {
+        address: {
+          city: 'New York',
+          state: 'New York',
+          country: 'United States',
+        },
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success) => {
+        success(mockPosition);
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockGeocodingResponse),
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('New York, New York')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Location detected successfully!')).toBeInTheDocument();
+    });
+
+    it('should handle permission denied error', async () => {
+      const mockError = {
+        code: 1, // PERMISSION_DENIED
+        message: 'User denied geolocation',
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3,
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success, error) => {
+        error(mockError);
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Location access denied. Please enter location manually.')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle position unavailable error', async () => {
+      const mockError = {
+        code: 2, // POSITION_UNAVAILABLE
+        message: 'Position unavailable',
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3,
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success, error) => {
+        error(mockError);
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Location information unavailable. Please enter manually.')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle timeout error', async () => {
+      const mockError = {
+        code: 3, // TIMEOUT
+        message: 'Timeout',
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3,
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success, error) => {
+        error(mockError);
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Location request timed out. Please try again or enter manually.')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle geocoding failure and use coordinates as fallback', async () => {
+      const mockPosition = {
+        coords: {
+          latitude: 40.7128,
+          longitude: -74.0060,
+        },
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success) => {
+        success(mockPosition);
+      });
+
+      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('40.7128, -74.0060')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Location detected successfully!')).toBeInTheDocument();
+    });
+
+    it('should show loading state while getting location', async () => {
+      let resolveGeolocation: (position: any) => void;
+      const geolocationPromise = new Promise((resolve) => {
+        resolveGeolocation = resolve;
+      });
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success) => {
+        geolocationPromise.then(success);
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      // Check loading state
+      expect(screen.getByText(/getting.../i)).toBeInTheDocument();
+      expect(locationButton).toBeDisabled();
+
+      // Resolve the geolocation
+      resolveGeolocation!({
+        coords: { latitude: 40.7128, longitude: -74.0060 },
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText(/getting.../i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should handle different address formats from geocoding', async () => {
+      const mockPosition = {
+        coords: {
+          latitude: 40.7128,
+          longitude: -74.0060,
+        },
+      };
+
+      const mockGeocodingResponse = {
+        address: {
+          town: 'Brooklyn',
+          state: 'New York',
+          country: 'United States',
+        },
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success) => {
+        success(mockPosition);
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockGeocodingResponse),
+      });
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Brooklyn, New York')).toBeInTheDocument();
+      });
+    });
+
+    it('should clear location message after 3 seconds on success', async () => {
+      jest.useFakeTimers();
+
+      const mockPosition = {
+        coords: {
+          latitude: 40.7128,
+          longitude: -74.0060,
+        },
+      };
+
+      const mockGeocodingResponse = {
+        address: {
+          city: 'New York',
+          state: 'New York',
+        },
+      };
+
+      mockGeolocation.getCurrentPosition.mockImplementation((success) => {
+        success(mockPosition);
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockGeocodingResponse),
+      });
+
+      const { act } = require('@testing-library/react');
+
+      render(
+        <CreateClubModal 
+          onClose={mockOnClose} 
+          onClubCreated={mockOnClubCreated}
+        />
+      );
+
+      const locationButton = screen.getByRole('button', { name: /use my location/i });
+      fireEvent.click(locationButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Location detected successfully!')).toBeInTheDocument();
+      });
+
+      // Fast forward 3 seconds
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Location detected successfully!')).not.toBeInTheDocument();
+      });
+
+      jest.useRealTimers();
+    });
   });
 });

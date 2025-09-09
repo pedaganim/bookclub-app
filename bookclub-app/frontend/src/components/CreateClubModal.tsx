@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookClub } from '../types';
 import { apiService } from '../services/api';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
 interface CreateClubModalProps {
   onClose: () => void;
@@ -18,6 +18,8 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationMessage, setLocationMessage] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -27,6 +29,102 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+  };
+
+  const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error('Location not found');
+      }
+
+      // Extract city, state/country from the response
+      const address = data.address || {};
+      const city = address.city || address.town || address.village || address.municipality;
+      const state = address.state || address.region;
+      const country = address.country;
+
+      if (city && state) {
+        return `${city}, ${state}`;
+      } else if (city && country) {
+        return `${city}, ${country}`;
+      } else if (state && country) {
+        return `${state}, ${country}`;
+      } else if (country) {
+        return country;
+      } else {
+        return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Reverse geocoding failed:', error);
+      // Fallback to coordinates if geocoding fails
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationMessage('Geolocation is not supported by this browser');
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationMessage('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const address = await reverseGeocode(latitude, longitude);
+          
+          setFormData(prev => ({
+            ...prev,
+            location: address,
+          }));
+          
+          setLocationMessage('Location detected successfully!');
+          setTimeout(() => setLocationMessage(''), 3000);
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('Error getting location details:', error);
+          setLocationMessage('Could not get location details. Please enter manually.');
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        setLocationLoading(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationMessage('Location access denied. Please enter location manually.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationMessage('Location information unavailable. Please enter manually.');
+            break;
+          case error.TIMEOUT:
+            setLocationMessage('Location request timed out. Please try again or enter manually.');
+            break;
+          default:
+            setLocationMessage('An error occurred while getting location. Please enter manually.');
+            break;
+        }
+      },
+      {
+        timeout: 10000,
+        enableHighAccuracy: true,
+        maximumAge: 300000, // 5 minutes
+      }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,17 +212,44 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
               Location *
             </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Enter city, state/country (e.g., New York, NY)"
-              maxLength={100}
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Enter city, state/country (e.g., New York, NY)"
+                maxLength={100}
+                required
+              />
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={locationLoading}
+                className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                title="Use my current location"
+              >
+                {locationLoading ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                ) : (
+                  <MapPinIcon className="h-4 w-4" />
+                )}
+                <span className="text-sm hidden sm:inline">
+                  {locationLoading ? 'Getting...' : 'Use My Location'}
+                </span>
+              </button>
+            </div>
+            {locationMessage && (
+              <div className={`text-sm mt-1 ${
+                locationMessage.includes('successfully') || locationMessage.includes('detected') 
+                  ? 'text-green-600' 
+                  : 'text-orange-600'
+              }`}>
+                {locationMessage}
+              </div>
+            )}
           </div>
 
           <div>
