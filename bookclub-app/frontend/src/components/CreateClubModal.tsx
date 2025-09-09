@@ -169,6 +169,7 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            aria-label="Close modal"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>

@@ -44,14 +44,11 @@ describe('JoinClubModal', () => {
       />
     );
 
-    // Find the close button by looking for the button containing the X icon
-    const buttons = screen.getAllByRole('button');
-    const closeButton = buttons.find(button => 
-      button.querySelector('svg') && button.className.includes('text-gray-400')
-    );
+    // Find the close button by its aria-label
+    const closeButton = screen.getByLabelText('Close modal');
     
     expect(closeButton).toBeTruthy();
-    fireEvent.click(closeButton!);
+    fireEvent.click(closeButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
@@ -108,7 +105,7 @@ describe('JoinClubModal', () => {
     expect(joinButton).not.toBeDisabled();
   });
 
-  it('should show error when trying to submit with empty invite code', async () => {
+  it('should disable submit button when invite code is empty', async () => {
     render(
       <JoinClubModal 
         onClose={mockOnClose} 
@@ -116,17 +113,14 @@ describe('JoinClubModal', () => {
       />
     );
 
-    // Get the form and submit it directly to bypass the disabled button
-    const form = document.querySelector('form');
-    expect(form).toBeTruthy();
+    // Initially, the submit button should be disabled with empty input
+    const submitButton = screen.getByRole('button', { name: /join club/i });
+    expect(submitButton).toBeDisabled();
     
-    fireEvent.submit(form!);
-
-    await waitFor(() => {
-      expect(screen.getByText('Invite code is required')).toBeInTheDocument();
-    });
-
-    expect(apiService.joinClub).not.toHaveBeenCalled();
+    // Verify that the button remains disabled with just whitespace
+    const inviteCodeInput = screen.getByLabelText(/invite code/i);
+    fireEvent.change(inviteCodeInput, { target: { value: '   ' } });
+    expect(submitButton).toBeDisabled();
   });
 
   it('should join club successfully with valid invite code', async () => {

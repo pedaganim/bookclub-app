@@ -64,14 +64,11 @@ describe('CreateClubModal', () => {
       />
     );
 
-    // Find the close button by looking for the button containing the X icon
-    const buttons = screen.getAllByRole('button');
-    const closeButton = buttons.find(button => 
-      button.querySelector('svg') && button.className.includes('text-gray-400')
-    );
+    // Find the close button by its aria-label
+    const closeButton = screen.getByLabelText('Close modal');
     
     expect(closeButton).toBeTruthy();
-    fireEvent.click(closeButton!);
+    fireEvent.click(closeButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 
