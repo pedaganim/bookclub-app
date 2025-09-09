@@ -2,6 +2,7 @@ const response = require('../../lib/response');
 const Book = require('../../models/book');
 const bookMetadataService = require('../../lib/book-metadata');
 const textractService = require('../../lib/textract-service');
+const imageMetadataService = require('../../lib/image-metadata-service');
 
 /**
  * Helper function to assign ISBN based on extracted metadata
@@ -99,8 +100,17 @@ module.exports.handler = async (event) => {
     // Textract image metadata extraction
     if (data.extractFromImage && data.s3Bucket && data.s3Key) {
       try {
-        console.log('[BookCreate] Attempting Textract metadata extraction...');
-        const extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
+        console.log('[BookCreate] Attempting to retrieve pre-extracted metadata...');
+        
+        // First, check if we have pre-extracted metadata from automatic processing
+        let extractionResult = await imageMetadataService.getExtractedMetadata(data.s3Bucket, data.s3Key);
+        
+        if (!extractionResult) {
+          console.log('[BookCreate] No pre-extracted metadata found, running Textract extraction...');
+          extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
+        } else {
+          console.log('[BookCreate] Using pre-extracted metadata from automatic processing');
+        }
         
         if (extractionResult && extractionResult.bookMetadata) {
           const { bookMetadata, extractedText } = extractionResult;
@@ -123,9 +133,11 @@ module.exports.handler = async (event) => {
             isbn13: isbnAssignment.isbn13,
             publisher: bookData.publisher || bookMetadata.publisher,
             publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
-            textractExtractedText: extractedText.fullText,
+            textractExtractedText: extractedText.fullText || extractedText,
             textractConfidence: extractionResult.confidence,
             textractSource: bookMetadata.extractionSource,
+            textractExtractedAt: extractionResult.extractedAt,
+            isPreExtracted: extractionResult.isPreExtracted || false,
           };
         }
       } catch (error) {
