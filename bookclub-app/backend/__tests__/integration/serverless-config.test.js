@@ -106,4 +106,29 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('AllowedMethods:');
     expect(serverlessConfigContent).toContain('AllowedOrigins:');
   });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for all DynamoDB tables', () => {
+    // This test ensures that all DynamoDB tables have retention policies
+    // to prevent deployment conflicts when tables already exist
+    const tableNames = [
+      'BooksTable',
+      'UsersTable', 
+      'MetadataCacheTable',
+      'BookclubGroupsTable',
+      'BookclubMembersTable'
+    ];
+
+    tableNames.forEach(tableName => {
+      // Find the table definition section
+      const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:`, 'g');
+      const tableMatch = serverlessConfigContent.match(tableDefRegex);
+      
+      expect(tableMatch).toBeTruthy();
+      if (tableMatch) {
+        const tableSection = tableMatch[0];
+        expect(tableSection).toContain('DeletionPolicy: Retain');
+        expect(tableSection).toContain('UpdateReplacePolicy: Retain');
+      }
+    });
+  });
 });
