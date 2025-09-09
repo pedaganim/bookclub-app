@@ -10,6 +10,55 @@ interface BookCardProps {
   listView?: boolean;
 }
 
+// Reusable Status Badge Component
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'bg-green-100 text-green-800';
+      case 'borrowed':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'reading':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}
+    >
+      {status}
+    </span>
+  );
+};
+
+// Reusable Action Buttons Component
+const ActionButtons: React.FC<{
+  onEdit: () => void;
+  onDelete: () => void;
+  loading: boolean;
+}> = ({ onEdit, onDelete, loading }) => {
+  return (
+    <div className="flex space-x-2">
+      <button
+        onClick={onEdit}
+        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+      >
+        Edit
+      </button>
+      <button
+        onClick={onDelete}
+        disabled={loading}
+        className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+      >
+        {loading ? 'Deleting...' : 'Delete'}
+      </button>
+    </div>
+  );
+};
+
 const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActions, listView = false }) => {
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -27,19 +76,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       alert('Failed to delete book');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'borrowed':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'reading':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -68,58 +104,26 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
           )}
           {!listView && (
             <div className="flex items-center justify-between">
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                  book.status
-                )}`}
-              >
-                {book.status}
-              </span>
+              <StatusBadge status={book.status} />
               {showActions && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    disabled={loading}
-                    className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
-                  >
-                    {loading ? 'Deleting...' : 'Delete'}
-                  </button>
-                </div>
+                <ActionButtons
+                  onEdit={() => setShowEditModal(true)}
+                  onDelete={handleDelete}
+                  loading={loading}
+                />
               )}
             </div>
           )}
         </div>
         {listView && (
           <div className="ml-4 flex flex-col items-end space-y-2">
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                book.status
-              )}`}
-            >
-              {book.status}
-            </span>
+            <StatusBadge status={book.status} />
             {showActions && (
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={loading}
-                  className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
-                >
-                  {loading ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
+              <ActionButtons
+                onEdit={() => setShowEditModal(true)}
+                onDelete={handleDelete}
+                loading={loading}
+              />
             )}
           </div>
         )}
