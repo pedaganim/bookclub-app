@@ -614,7 +614,6 @@ resources:
           BlockPublicAcls: false
           BlockPublicPolicy: false
           IgnorePublicAcls: false
-          RestrictPublicReadAcl: false
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:
