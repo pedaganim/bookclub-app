@@ -46,11 +46,11 @@ describe('generateUploadUrl handler', () => {
     expect(body.data).toHaveProperty('fileUrl');
     expect(body.data).toHaveProperty('fileKey');
     
-    // Verify file URL format for public access
-    expect(body.data.fileUrl).toMatch(/^https:\/\/test-book-covers-bucket\.s3\.amazonaws\.com\/book-covers\/test-user-id\/.*\.jpeg$/);
+    // Verify file URL format for public access (updated path structure)
+    expect(body.data.fileUrl).toMatch(/^https:\/\/test-book-covers-bucket\.s3\.amazonaws\.com\/book-images\/test-user-id\/.*\.jpeg$/);
     
-    // Verify file key includes user ID and is in book-covers directory
-    expect(body.data.fileKey).toMatch(/^book-covers\/test-user-id\/.*\.jpeg$/);
+    // Verify file key includes user ID and is in book-images directory
+    expect(body.data.fileKey).toMatch(/^book-images\/test-user-id\/.*\.jpeg$/);
   });
 
   test('should reject invalid file types', async () => {
@@ -67,7 +67,7 @@ describe('generateUploadUrl handler', () => {
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
-    expect(body.error.errors.fileType).toContain('Invalid file type');
+    expect(body.error.errors['files[0].fileType']).toContain('Invalid file type');
   });
 
   test('should reject missing file type', async () => {
@@ -83,11 +83,11 @@ describe('generateUploadUrl handler', () => {
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
-    expect(body.error.errors.fileType).toContain('File type is required');
+    expect(body.error.errors['files[0].fileType']).toContain('File type is required');
   });
 
   test('should accept all valid image types', async () => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     
     for (const fileType of validTypes) {
       const testEvent = {

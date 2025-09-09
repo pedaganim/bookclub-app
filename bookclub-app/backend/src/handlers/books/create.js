@@ -57,7 +57,8 @@ module.exports.handler = async (event) => {
       title: data.title,
       author: data.author,
       description: data.description,
-      coverImage: data.coverImage,
+      coverImage: data.coverImage, // Legacy field for backward compatibility
+      images: data.images || (data.coverImage ? [data.coverImage] : []), // Multi-image support
       status: data.status,
     };
 

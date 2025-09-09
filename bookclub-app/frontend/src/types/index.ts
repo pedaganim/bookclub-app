@@ -14,7 +14,8 @@ export interface Book {
   title: string;
   author: string;
   description?: string;
-  coverImage?: string;
+  coverImage?: string; // Legacy field for backward compatibility
+  images?: string[]; // New multi-image support (up to 25 images)
   status: 'available' | 'borrowed' | 'reading';
   // Extended metadata fields
   isbn10?: string;

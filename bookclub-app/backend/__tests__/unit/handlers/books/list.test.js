@@ -36,7 +36,16 @@ describe('listBooks handler', () => {
 
     expect(Book.listByUser).toHaveBeenCalledWith('user123', 5, null);
     expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
+      items: [{
+        bookId: undefined,
+        userId: undefined,
+        title: 'Test Book',
+        author: undefined,
+        status: undefined,
+        images: [],
+        createdAt: undefined,
+        updatedAt: undefined,
+      }],
       nextToken: mockBooks.nextToken
     });
     expect(result.statusCode).toBe(200);
@@ -66,7 +75,16 @@ describe('listBooks handler', () => {
 
     expect(Book.listByUser).toHaveBeenCalledWith('cognito-user-123', 10, null);
     expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
+      items: [{
+        bookId: undefined,
+        userId: undefined,
+        title: 'Another Book',
+        author: undefined,
+        status: undefined,
+        images: [],
+        createdAt: undefined,
+        updatedAt: undefined,
+      }],
       nextToken: null
     });
   });
@@ -88,7 +106,16 @@ describe('listBooks handler', () => {
 
     expect(Book.listAll).toHaveBeenCalledWith(10, null);
     expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
+      items: [{
+        bookId: undefined,
+        userId: undefined,
+        title: 'Public Book',
+        author: undefined,
+        status: undefined,
+        images: [],
+        createdAt: undefined,
+        updatedAt: undefined,
+      }],
       nextToken: null
     });
   });

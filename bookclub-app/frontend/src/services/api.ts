@@ -175,12 +175,88 @@ class ApiService {
     return response.data.data!;
   }
 
+  // Bulk upload URL generation for multiple images
+  async generateBulkUploadUrls(files: Array<{ fileType: string; fileName?: string }>): Promise<{
+    uploads: UploadUrlResponse[];
+    totalUploads: number;
+    maxImagesPerBook: number;
+  }> {
+    const response: AxiosResponse<ApiResponse<{
+      uploads: UploadUrlResponse[];
+      totalUploads: number;
+      maxImagesPerBook: number;
+    }>> = await this.api.post('/upload-url', {
+      files,
+    });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to generate bulk upload URLs');
+    }
+    return response.data.data!;
+  }
+
   async uploadFile(uploadUrl: string, file: File): Promise<void> {
     await axios.put(uploadUrl, file, {
       headers: {
         'Content-Type': file.type,
       },
     });
+  }
+
+  // Search books by text
+  async searchBooks(query: string, limit?: number, nextToken?: string): Promise<{
+    items: Book[];
+    count: number;
+    query: string;
+    nextToken?: string;
+  }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('q', query);
+    if (limit) queryParams.append('limit', limit.toString());
+    if (nextToken) queryParams.append('nextToken', nextToken);
+
+    const response: AxiosResponse<ApiResponse<{
+      items: Book[];
+      count: number;
+      query: string;
+      nextToken?: string;
+    }>> = await this.api.get(`/books/search?${queryParams.toString()}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to search books');
+    }
+    return response.data.data!;
+  }
+
+  // Extract metadata from multiple images
+  async extractImageMetadata(images: Array<{ s3Bucket: string; s3Key: string }>): Promise<{
+    results: Array<{
+      imageIndex: number;
+      s3Key: string;
+      success: boolean;
+      metadata?: any;
+      extractedText?: string;
+      confidence?: number;
+      isBook?: boolean;
+      error?: string;
+    }>;
+    summary: {
+      totalImages: number;
+      bookImages: number;
+      nonBookImages: number;
+      failedImages: number;
+      bestMetadata?: any;
+      highestConfidence: number;
+    };
+    recommendations: Array<{
+      type: string;
+      message: string;
+      imageIndices: number[];
+    }>;
+  }> {
+    const response = await this.api.post('/images/extract-metadata', { images });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to extract image metadata');
+    }
+    return response.data.data!;
   }
 
   // Club methods

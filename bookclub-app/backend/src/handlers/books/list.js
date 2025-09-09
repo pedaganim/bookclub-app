@@ -30,8 +30,21 @@ module.exports.handler = async (event) => {
       result = await Book.listAll(limit, nextToken);
     }
 
+    // Transform books to show images only for listing (as per requirements)
+    const booksWithImagesOnly = result.items.map(book => ({
+      bookId: book.bookId,
+      userId: book.userId,
+      title: book.title,
+      author: book.author,
+      status: book.status,
+      // Return images array, falling back to coverImage for backward compatibility
+      images: book.images || (book.coverImage ? [book.coverImage] : []),
+      createdAt: book.createdAt,
+      updatedAt: book.updatedAt,
+    }));
+
     return response.success({
-      items: result.items,
+      items: booksWithImagesOnly,
       nextToken: result.nextToken || null,
     });
   } catch (error) {

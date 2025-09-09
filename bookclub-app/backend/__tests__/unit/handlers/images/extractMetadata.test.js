@@ -55,6 +55,7 @@ describe('Extract Image Metadata Handler', () => {
     expect(responseBody.data.metadata.author).toBe('Robert Martin');
     expect(responseBody.data.metadata.isbn).toBe('9780132350884');
     expect(responseBody.data.confidence).toBe(92);
+    expect(responseBody.data.isBook).toBe(true); // New field for non-book detection
     expect(responseBody.data.summary.hasTitle).toBe(true);
     expect(responseBody.data.summary.hasAuthor).toBe(true);
     expect(responseBody.data.summary.hasISBN).toBe(true);
@@ -95,7 +96,7 @@ describe('Extract Image Metadata Handler', () => {
 
     expect(result.statusCode).toBe(400);
     const responseBody = JSON.parse(result.body);
-    expect(responseBody.error.errors.s3Key).toBe('S3 key is required');
+    expect(responseBody.error.errors['images[0]']).toBe('Both s3Bucket and s3Key are required for each image');
   });
 
   it('should handle Textract extraction failure', async () => {
@@ -110,7 +111,7 @@ describe('Extract Image Metadata Handler', () => {
 
     expect(result.statusCode).toBe(500);
     const responseBody = JSON.parse(result.body);
-    expect(responseBody.error.message).toBe('Failed to extract text from image. Please try again or upload a different image.');
+    expect(responseBody.error.message).toBe('Failed to extract text from image');
   });
 
   it('should handle Textract service errors', async () => {
@@ -123,7 +124,7 @@ describe('Extract Image Metadata Handler', () => {
 
     const result = await handler(event);
 
-    expect(result.statusCode).toBe(400);
+    expect(result.statusCode).toBe(500);
     const responseBody = JSON.parse(result.body);
     expect(responseBody.error.message).toBe('Textract service error');
   });

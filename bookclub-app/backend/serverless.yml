@@ -184,6 +184,22 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId: 
               Ref: ApiGatewayAuthorizer
+
+  searchBooks:
+    handler: src/handlers/books/search.handler
+    events:
+      - http:
+          method: GET
+          path: /books/search
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
   
   # User-related functions
   registerUser:
