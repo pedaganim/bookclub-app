@@ -4,11 +4,19 @@ const { success, error } = require('../../lib/response');
 
 exports.handler = async (event) => {
   try {
-    const { name, description, isPrivate, memberLimit } = JSON.parse(event.body);
+    const { name, description, location, isPrivate, memberLimit } = JSON.parse(event.body);
 
     // Validate required fields
     if (!name || name.trim().length === 0) {
       return error('Club name is required', 400);
+    }
+
+    if (!location || location.trim().length === 0) {
+      return error('Location is required', 400);
+    }
+
+    if (location.length > 100) {
+      return error('Location must be 100 characters or less', 400);
     }
 
     if (name.length > 100) {
@@ -44,6 +52,7 @@ exports.handler = async (event) => {
     const clubData = {
       name: name.trim(),
       description: description?.trim() || '',
+      location: location.trim(),
       isPrivate: !!isPrivate,
       memberLimit: memberLimit || null,
     };

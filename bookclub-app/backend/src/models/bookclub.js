@@ -15,6 +15,7 @@ class BookClub {
       clubId,
       name: clubData.name,
       description: clubData.description || '',
+      location: clubData.location,
       createdBy,
       inviteCode,
       isPrivate: clubData.isPrivate || false,

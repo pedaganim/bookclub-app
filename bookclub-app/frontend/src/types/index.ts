@@ -92,6 +92,7 @@ export interface BookClub {
   clubId: string;
   name: string;
   description?: string;
+  location: string;
   createdBy: string;
   inviteCode: string;
   isPrivate: boolean;

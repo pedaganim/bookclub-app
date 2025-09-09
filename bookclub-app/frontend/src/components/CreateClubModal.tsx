@@ -12,6 +12,7 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    location: '',
     isPrivate: false,
     memberLimit: '',
   });
@@ -36,6 +37,11 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
       return;
     }
 
+    if (!formData.location.trim()) {
+      setError('Location is required');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -43,6 +49,7 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
       const clubData = {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
+        location: formData.location.trim(),
         isPrivate: formData.isPrivate,
         memberLimit: formData.memberLimit ? parseInt(formData.memberLimit, 10) : undefined,
       };
@@ -100,6 +107,23 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="Describe your book club (optional)"
               maxLength={500}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+              Location *
+            </label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Enter city, state/country (e.g., New York, NY)"
+              maxLength={100}
+              required
             />
           </div>
 

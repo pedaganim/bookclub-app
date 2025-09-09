@@ -4,7 +4,8 @@ import {
   UserGroupIcon, 
   ClipboardDocumentIcon, 
   ArrowRightOnRectangleIcon, 
-  StarIcon 
+  StarIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
 
 interface ClubCardProps {
@@ -48,6 +49,11 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, onLeave, onCopyInvite }) => {
             <div className="flex items-center gap-1">
               <UserGroupIcon className="h-4 w-4" />
               <span>Members</span>
+            </div>
+            <span>•</span>
+            <div className="flex items-center gap-1">
+              <MapPinIcon className="h-4 w-4" />
+              <span>{club.location}</span>
             </div>
             <span>•</span>
             <span>Joined {new Date(club.joinedAt || club.createdAt).toLocaleDateString()}</span>
