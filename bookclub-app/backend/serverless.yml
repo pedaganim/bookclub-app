@@ -501,12 +501,7 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        BillingMode: PAY_PER_REQUEST
 
     UsersTable:
       Type: AWS::DynamoDB::Table
@@ -527,12 +522,7 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        BillingMode: PAY_PER_REQUEST
 
     MetadataCacheTable:
       Type: AWS::DynamoDB::Table
@@ -547,9 +537,7 @@ resources:
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        BillingMode: PAY_PER_REQUEST
 
     BookclubGroupsTable:
       Type: AWS::DynamoDB::Table
@@ -570,12 +558,7 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        BillingMode: PAY_PER_REQUEST
 
     BookclubMembersTable:
       Type: AWS::DynamoDB::Table
@@ -598,12 +581,7 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        BillingMode: PAY_PER_REQUEST
 
     # S3 Bucket for book covers
     BookCoversBucket:
@@ -615,6 +593,21 @@ resources:
           BlockPublicPolicy: false
           IgnorePublicAcls: false
           RestrictPublicReadAcl: false
+        LifecycleConfiguration:
+          Rules:
+            - Id: DeleteOldImages
+              Status: Enabled
+              ExpirationInDays: 2555  # ~7 years - reasonable for book covers
+            - Id: TransitionToIA
+              Status: Enabled
+              Transition:
+                TransitionInDays: 30  # Move to IA after 30 days
+                StorageClass: STANDARD_IA
+            - Id: TransitionToGlacier
+              Status: Enabled 
+              Transition:
+                TransitionInDays: 365 # Move to Glacier after 1 year
+                StorageClass: GLACIER
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:

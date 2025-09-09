@@ -8,7 +8,7 @@ const BUCKET_NAME = process.env.BOOK_COVERS_BUCKET;
 module.exports.handler = async (event) => {
   try {
     const userId = event.requestContext.authorizer.claims.sub;
-    const { fileType, fileName } = JSON.parse(event.body);
+    const { fileType, fileName, fileSize } = JSON.parse(event.body);
 
     if (!fileType) {
       return response.validationError({
@@ -24,16 +24,27 @@ module.exports.handler = async (event) => {
       });
     }
 
+    // Validate file size (max 10MB for cost optimization)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (fileSize && fileSize > MAX_FILE_SIZE) {
+      return response.validationError({
+        fileSize: 'File size must be less than 10MB. Please compress your image before uploading.',
+      });
+    }
+
     // Generate a unique file key
     const fileExtension = fileType.split('/')[1];
     const fileKey = `book-covers/${userId}/${uuidv4()}.${fileExtension}`;
 
-    // Generate pre-signed URL
+    // Generate pre-signed URL with size constraint
     const params = {
       Bucket: BUCKET_NAME,
       Key: fileKey,
       Expires: 300, // 5 minutes
       ContentType: fileType,
+      Conditions: [
+        ['content-length-range', 0, MAX_FILE_SIZE] // Enforce size limit
+      ],
       Metadata: {
         'uploaded-by': userId,
       },
@@ -46,6 +57,11 @@ module.exports.handler = async (event) => {
       uploadUrl,
       fileUrl,
       fileKey,
+      maxFileSize: MAX_FILE_SIZE,
+      recommendations: {
+        optimalSize: '< 2MB for best performance',
+        acceptedFormats: validFileTypes
+      }
     });
   } catch (error) {
     console.error('Error generating upload URL:', error);

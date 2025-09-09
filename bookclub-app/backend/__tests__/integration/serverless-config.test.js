@@ -90,7 +90,9 @@ describe('Serverless Configuration', () => {
     // Check that tables have proper key schemas
     expect(serverlessConfigContent).toContain('KeySchema:');
     expect(serverlessConfigContent).toContain('AttributeDefinitions:');
-    expect(serverlessConfigContent).toContain('ProvisionedThroughput:');
+    
+    // Check for cost-optimized billing mode (PAY_PER_REQUEST instead of ProvisionedThroughput)
+    expect(serverlessConfigContent).toContain('BillingMode: PAY_PER_REQUEST');
     
     // Check for Global Secondary Indexes where needed
     expect(serverlessConfigContent).toContain('GlobalSecondaryIndexes:');
@@ -105,5 +107,15 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('AllowedHeaders:');
     expect(serverlessConfigContent).toContain('AllowedMethods:');
     expect(serverlessConfigContent).toContain('AllowedOrigins:');
+  });
+
+  test('should have cost-optimized S3 lifecycle configuration', () => {
+    // Check for lifecycle configuration to reduce storage costs
+    expect(serverlessConfigContent).toContain('LifecycleConfiguration:');
+    expect(serverlessConfigContent).toContain('Rules:');
+    expect(serverlessConfigContent).toContain('TransitionToIA');
+    expect(serverlessConfigContent).toContain('TransitionToGlacier');
+    expect(serverlessConfigContent).toContain('STANDARD_IA');
+    expect(serverlessConfigContent).toContain('GLACIER');
   });
 });
