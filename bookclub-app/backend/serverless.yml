@@ -397,8 +397,6 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
-      DependsOn:
-        - GoogleIdentityProvider
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -416,7 +414,6 @@ resources:
           - profile
         SupportedIdentityProviders:
           - COGNITO
-          - Google
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
         LogoutURLs:
@@ -427,23 +424,6 @@ resources:
       Properties:
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
-
-    GoogleIdentityProvider:
-      Type: AWS::Cognito::UserPoolIdentityProvider
-      Properties:
-        ProviderName: Google
-        ProviderType: Google
-        UserPoolId: !Ref UserPool
-        ProviderDetails:
-          # SECURITY: Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
-          # Empty defaults prevent deployment with placeholder values
-          # For development without Google OAuth, leave these empty
-          client_id: ${env:GOOGLE_CLIENT_ID, ''}
-          client_secret: ${env:GOOGLE_CLIENT_SECRET, ''}
-          authorize_scopes: 'openid profile email'
-        AttributeMapping:
-          email: email
-          name: name
 
     ApiGatewayAuthorizer:
       Type: AWS::ApiGateway::Authorizer

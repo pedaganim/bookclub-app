@@ -18,7 +18,7 @@ const AvatarDisplay = ({ user }: { user: any }) => (
         className="h-6 w-6 rounded-full object-cover"
       />
     ) : (
-      <div className="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center">
+      <div className="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center" data-testid="avatar-fallback">
         <span className="text-xs font-medium text-gray-600">
           {user?.name?.charAt(0)?.toUpperCase()}
         </span>
@@ -60,6 +60,9 @@ describe('Logo and Avatar Components', () => {
     
     const avatarFallback = screen.getByText('J');
     expect(avatarFallback).toBeInTheDocument();
-    expect(avatarFallback.closest('div')).toHaveClass('h-6', 'w-6', 'rounded-full', 'bg-gray-300');
+    
+    // Check the avatar fallback div has the expected styling
+    const avatarDiv = screen.getByTestId('avatar-fallback');
+    expect(avatarDiv).toHaveClass('h-6', 'w-6', 'rounded-full', 'bg-gray-300');
   });
 });
