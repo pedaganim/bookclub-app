@@ -25,6 +25,7 @@ describe('BookCard', () => {
     author: 'Test Author',
     description: 'A test book description',
     status: 'available' as const,
+    coverImage: 'https://example.com/test-cover.jpg',
     isbn10: '1234567890',
     categories: ['Fiction'],
     createdAt: '2023-01-01T00:00:00Z',
@@ -56,7 +57,10 @@ describe('BookCard', () => {
     );
 
     expect(screen.getByText('Test Book')).toBeInTheDocument();
-    expect(screen.getByText('by Test Author')).toBeInTheDocument();
+    // Author is no longer displayed in image-only view
+    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
+    // Cover image should be present
+    expect(screen.getByAltText('Test Book')).toBeInTheDocument();
   });
 
   it('should render in grid view by default', () => {
@@ -69,12 +73,15 @@ describe('BookCard', () => {
       />
     );
 
-    // In grid view, the layout should be vertical (no flex class on main container)
-    // We can test this by checking that elements are arranged vertically
+    // In grid view, check that image is displayed with correct styling
+    const image = screen.getByAltText('Test Book');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveClass('w-full', 'h-64', 'object-cover');
+    
+    // Title should be displayed
     const title = screen.getByText('Test Book');
-    const author = screen.getByText('by Test Author');
     expect(title).toBeInTheDocument();
-    expect(author).toBeInTheDocument();
+    expect(title).toHaveClass('text-center');
   });
 
   it('should render in list view when listView prop is true', () => {
@@ -88,12 +95,15 @@ describe('BookCard', () => {
       />
     );
 
-    // In list view, the layout should be horizontal (flex layout)
-    // We can test this by checking that elements are arranged properly
+    // In list view, check that image is displayed with correct styling
+    const image = screen.getByAltText('Test Book');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveClass('w-20', 'h-28', 'object-cover');
+    
+    // Title should be displayed but not author
     const title = screen.getByText('Test Book');
-    const author = screen.getByText('by Test Author');
     expect(title).toBeInTheDocument();
-    expect(author).toBeInTheDocument();
+    expect(title).toHaveClass('truncate');
   });
 
   it('should render book cover image correctly in grid view', () => {
@@ -110,7 +120,7 @@ describe('BookCard', () => {
     const image = screen.getByAltText('Test Book');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://example.com/cover.jpg');
-    expect(image).toHaveClass('w-full', 'h-48', 'object-cover');
+    expect(image).toHaveClass('w-full', 'h-64', 'object-cover');
   });
 
   it('should render book cover image correctly in list view', () => {
@@ -128,7 +138,7 @@ describe('BookCard', () => {
     const image = screen.getByAltText('Test Book');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://example.com/cover.jpg');
-    expect(image).toHaveClass('w-20', 'h-28', 'object-cover', 'flex-shrink-0');
+    expect(image).toHaveClass('w-20', 'h-28', 'object-cover');
   });
 
   it('should show action buttons when showActions is true', () => {

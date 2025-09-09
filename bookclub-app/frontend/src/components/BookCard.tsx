@@ -10,55 +10,6 @@ interface BookCardProps {
   listView?: boolean;
 }
 
-// Reusable Status Badge Component
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'borrowed':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'reading':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}
-    >
-      {status}
-    </span>
-  );
-};
-
-// Reusable Action Buttons Component
-const ActionButtons: React.FC<{
-  onEdit: () => void;
-  onDelete: () => void;
-  loading: boolean;
-}> = ({ onEdit, onDelete, loading }) => {
-  return (
-    <div className="flex space-x-2">
-      <button
-        onClick={onEdit}
-        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-      >
-        Edit
-      </button>
-      <button
-        onClick={onDelete}
-        disabled={loading}
-        className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
-      >
-        {loading ? 'Deleting...' : 'Delete'}
-      </button>
-    </div>
-  );
-};
-
 const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActions, listView = false }) => {
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -80,54 +31,84 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${
-      listView ? 'flex' : ''
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group relative ${
+      listView ? 'flex items-center' : ''
     }`}>
-      {book.coverImage && (
+      {/* Cover Image - always present since we filter for images */}
+      <div className={listView ? "flex-shrink-0" : "relative"}>
         <img
           src={book.coverImage}
           alt={book.title}
           className={listView 
-            ? "w-20 h-28 object-cover flex-shrink-0" 
-            : "w-full h-48 object-cover"
+            ? "w-20 h-28 object-cover" 
+            : "w-full h-64 object-cover"
           }
         />
-      )}
-      <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
-        <div className={listView ? "flex-1" : ""}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{book.title}</h3>
-          <p className="text-gray-600 mb-2">by {book.author}</p>
-          {book.description && (
-            <p className={`text-gray-500 text-sm mb-3 ${listView ? 'line-clamp-2' : 'line-clamp-3'}`}>
-              {book.description}
-            </p>
-          )}
-          {!listView && (
-            <div className="flex items-center justify-between">
-              <StatusBadge status={book.status} />
-              {showActions && (
-                <ActionButtons
-                  onEdit={() => setShowEditModal(true)}
-                  onDelete={handleDelete}
-                  loading={loading}
-                />
-              )}
+        
+        {/* Action buttons overlay for grid view */}
+        {!listView && showActions && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex space-x-1">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 p-1.5 rounded-full shadow-sm text-xs"
+                title="Edit book"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={loading}
+                className="bg-white bg-opacity-90 hover:bg-opacity-100 text-red-600 p-1.5 rounded-full shadow-sm text-xs disabled:opacity-50"
+                title="Delete book"
+              >
+                {loading ? (
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+              </button>
             </div>
-          )}
-        </div>
-        {listView && (
-          <div className="ml-4 flex flex-col items-end space-y-2">
-            <StatusBadge status={book.status} />
-            {showActions && (
-              <ActionButtons
-                onEdit={() => setShowEditModal(true)}
-                onDelete={handleDelete}
-                loading={loading}
-              />
-            )}
           </div>
         )}
       </div>
+
+      {/* Minimal content - only show title if available */}
+      {(book.title || (listView && showActions)) && (
+        <div className={listView ? "flex-1 px-3 py-2 flex justify-between items-center min-w-0" : "p-3"}>
+          {book.title && (
+            <h3 className={`font-medium text-gray-900 ${listView ? 'text-sm truncate' : 'text-center text-sm'}`}>
+              {book.title}
+            </h3>
+          )}
+          
+          {/* Action buttons for list view */}
+          {listView && showActions && (
+            <div className="flex space-x-2 ml-2 flex-shrink-0">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="text-indigo-600 hover:text-indigo-900 text-xs font-medium"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={loading}
+                className="text-red-600 hover:text-red-900 text-xs font-medium disabled:opacity-50"
+              >
+                {loading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       
       {showEditModal && (
         <EditBookModal

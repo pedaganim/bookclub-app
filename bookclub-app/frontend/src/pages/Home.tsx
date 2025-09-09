@@ -34,7 +34,10 @@ const Home: React.FC = () => {
       setLoading(true);
       const params = filter === 'my-books' && user ? { userId: user.userId } : {};
       const response = await apiService.listBooks(params);
-      setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
+      const allBooks = Array.isArray((response as any)?.items) ? (response as any).items : [];
+      // Filter to show only books with valid cover images
+      const booksWithImages = allBooks.filter((book: Book) => book.coverImage && book.coverImage.trim() !== '');
+      setBooks(booksWithImages);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
@@ -242,8 +245,8 @@ const Home: React.FC = () => {
               <div className="text-center py-12">
                 <div className="text-gray-500">
                   {filter === 'my-books' 
-                    ? "You haven't added any books yet. Click 'Add Book' to get started!"
-                    : "No books available. Be the first to add one!"
+                    ? "You haven't added any books with cover images yet. Click 'Add Book' to get started!"
+                    : "No books with cover images available. Be the first to add one!"
                   }
                 </div>
               </div>
