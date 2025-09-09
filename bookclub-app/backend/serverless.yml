@@ -41,6 +41,11 @@ provider:
             - cognito-idp:AdminDeleteUser
             - cognito-idp:GetUser
           Resource: !GetAtt UserPool.Arn
+        - Effect: Allow
+          Action:
+            - textract:DetectDocumentText
+            - textract:AnalyzeDocument
+          Resource: "*"
 
 custom:
   appConfig: ${file(./config/app.${self:provider.stage}.json)}
@@ -256,6 +261,27 @@ functions:
       - http:
           method: POST
           path: /upload-url
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  # Image metadata extraction
+  extractImageMetadata:
+    handler: src/handlers/images/extractMetadata.handler
+    events:
+      - http:
+          method: POST
+          path: /images/extract-metadata
           cors:
             origin: '*'
             headers:
