@@ -22,21 +22,21 @@ const SAMPLE_USERS = [
     userId: 'user-1',
     email: 'alice@example.com',
     name: 'Alice Johnson',
-    password: hashPassword('password123'), // Hashed for security
+    password: 'password123', // Plain password for development
     createdAt: new Date().toISOString()
   },
   {
     userId: 'user-2',
     email: 'bob@example.com',
     name: 'Bob Smith',
-    password: hashPassword('password123'), // Hashed for security
+    password: 'password123', // Plain password for development
     createdAt: new Date().toISOString()
   },
   {
     userId: 'user-3',
     email: 'carol@example.com',
     name: 'Carol Davis',
-    password: hashPassword('password123'), // Hashed for security
+    password: 'password123', // Plain password for development
     createdAt: new Date().toISOString()
   }
 ];

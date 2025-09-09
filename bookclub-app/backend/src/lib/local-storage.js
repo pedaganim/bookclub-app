@@ -5,6 +5,8 @@ const path = require('path');
 const STORAGE_DIR = path.join(__dirname, '../../.local-storage');
 const USERS_FILE = path.join(STORAGE_DIR, 'users.json');
 const BOOKS_FILE = path.join(STORAGE_DIR, 'books.json');
+const CLUBS_FILE = path.join(STORAGE_DIR, 'clubs.json');
+const CLUB_MEMBERS_FILE = path.join(STORAGE_DIR, 'club-members.json');
 
 // Ensure storage directory exists
 if (!fs.existsSync(STORAGE_DIR)) {
@@ -62,6 +64,48 @@ class LocalStorage {
       fs.writeFileSync(BOOKS_FILE, JSON.stringify(books, null, 2));
     } catch (error) {
       console.error('[LocalStorage] Error saving books:', error);
+    }
+  }
+
+  static loadClubs() {
+    try {
+      const exists = fs.existsSync(CLUBS_FILE);
+      if (exists) {
+        const data = fs.readFileSync(CLUBS_FILE, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading clubs:', error);
+    }
+    return {};
+  }
+
+  static saveClubs(clubs) {
+    try {
+      fs.writeFileSync(CLUBS_FILE, JSON.stringify(clubs, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving clubs:', error);
+    }
+  }
+
+  static loadClubMembers() {
+    try {
+      const exists = fs.existsSync(CLUB_MEMBERS_FILE);
+      if (exists) {
+        const data = fs.readFileSync(CLUB_MEMBERS_FILE, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading club members:', error);
+    }
+    return {};
+  }
+
+  static saveClubMembers(members) {
+    try {
+      fs.writeFileSync(CLUB_MEMBERS_FILE, JSON.stringify(members, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving club members:', error);
     }
   }
 
@@ -168,6 +212,91 @@ class LocalStorage {
       return this.getUserById(userId);
     }
     return null;
+  }
+
+  // Club operations
+  static async createClub(club) {
+    const clubs = this.loadClubs();
+    clubs[club.clubId] = club;
+    this.saveClubs(clubs);
+    return club;
+  }
+
+  static async getClubById(clubId) {
+    const clubs = this.loadClubs();
+    return clubs[clubId] || null;
+  }
+
+  static async getClubByInviteCode(inviteCode) {
+    const clubs = this.loadClubs();
+    for (const club of Object.values(clubs)) {
+      if (club.inviteCode === inviteCode) {
+        return club;
+      }
+    }
+    return null;
+  }
+
+  static async deleteClub(clubId) {
+    const clubs = this.loadClubs();
+    if (clubs[clubId]) {
+      delete clubs[clubId];
+      this.saveClubs(clubs);
+      return true;
+    }
+    return false;
+  }
+
+  // Club member operations
+  static async createClubMember(membership) {
+    const members = this.loadClubMembers();
+    const key = `${membership.clubId}:${membership.userId}`;
+    members[key] = membership;
+    this.saveClubMembers(members);
+    return membership;
+  }
+
+  static async getClubMember(clubId, userId) {
+    const members = this.loadClubMembers();
+    const key = `${clubId}:${userId}`;
+    return members[key] || null;
+  }
+
+  static async deleteClubMember(clubId, userId) {
+    const members = this.loadClubMembers();
+    const key = `${clubId}:${userId}`;
+    if (members[key]) {
+      delete members[key];
+      this.saveClubMembers(members);
+      return true;
+    }
+    return false;
+  }
+
+  static async getClubMembers(clubId) {
+    const members = this.loadClubMembers();
+    return Object.values(members).filter(member => member.clubId === clubId);
+  }
+
+  static async getUserClubs(userId) {
+    const members = this.loadClubMembers();
+    return Object.values(members).filter(member => member.userId === userId);
+  }
+
+  static async isClubMember(clubId, userId) {
+    const member = await this.getClubMember(clubId, userId);
+    return member !== null;
+  }
+
+  static async deleteAllClubMembers(clubId) {
+    const members = this.loadClubMembers();
+    const filtered = {};
+    for (const [key, member] of Object.entries(members)) {
+      if (member.clubId !== clubId) {
+        filtered[key] = member;
+      }
+    }
+    this.saveClubMembers(filtered);
   }
 }
 
