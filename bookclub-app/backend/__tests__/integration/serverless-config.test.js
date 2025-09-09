@@ -107,18 +107,39 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('AllowedOrigins:');
   });
 
+  test('should have custom resource function for DynamoDB table management', () => {
+    // Check that the custom resource Lambda function is defined
+    expect(serverlessConfigContent).toContain('dynamoTableManager:');
+    expect(serverlessConfigContent).toContain('handler: src/custom-resources/dynamodb-table-manager.handler');
+    expect(serverlessConfigContent).toContain('role: DynamoTableManagerRole');
+    
+    // Check that the IAM role for the custom resource is defined
+    expect(serverlessConfigContent).toContain('DynamoTableManagerRole:');
+    expect(serverlessConfigContent).toContain('Type: AWS::IAM::Role');
+    expect(serverlessConfigContent).toContain('DynamoDBTableManager');
+    
+    // Check that the custom resource has proper permissions
+    expect(serverlessConfigContent).toContain('dynamodb:CreateTable');
+    expect(serverlessConfigContent).toContain('dynamodb:DescribeTable');
+    expect(serverlessConfigContent).toContain('DynamoTableManagerInvokePermission:');
+  });
+
   test('should have DeletionPolicy and UpdateReplacePolicy for all DynamoDB tables', () => {
     // This test ensures that all DynamoDB tables have retention policies
     // to prevent deployment conflicts when tables already exist
-    const tableNames = [
+    const regularTableNames = [
       'BooksTable',
       'UsersTable', 
       'MetadataCacheTable',
-      'BookclubGroupsTable',
       'BookclubMembersTable'
     ];
+    
+    const customResourceTableNames = [
+      'BookclubGroupsTable'
+    ];
 
-    tableNames.forEach(tableName => {
+    // Check regular DynamoDB tables
+    regularTableNames.forEach(tableName => {
       // Find the table definition section
       const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:`, 'g');
       const tableMatch = serverlessConfigContent.match(tableDefRegex);
@@ -128,6 +149,18 @@ describe('Serverless Configuration', () => {
         const tableSection = tableMatch[0];
         expect(tableSection).toContain('DeletionPolicy: Retain');
         expect(tableSection).toContain('UpdateReplacePolicy: Retain');
+      }
+    });
+
+    // Check custom resource tables have DeletionPolicy in Properties
+    customResourceTableNames.forEach(tableName => {
+      const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:[\\s\\S]*?DeletionPolicy: Retain`, 'g');
+      const tableMatch = serverlessConfigContent.match(tableDefRegex);
+      
+      expect(tableMatch).toBeTruthy();
+      if (tableMatch) {
+        expect(tableMatch[0]).toContain('Type: AWS::CloudFormation::CustomResource');
+        expect(tableMatch[0]).toContain('DeletionPolicy: Retain');
       }
     });
   });

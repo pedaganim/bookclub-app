@@ -70,7 +70,7 @@ custom:
 
 plugins:
   - serverless-offline
-
+  - serverless-plugin-existing-s3
 functions:
   # Book-related functions
   createBook:
@@ -401,8 +401,50 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+  # Custom resource function for DynamoDB table management
+  dynamoTableManager:
+    handler: src/custom-resources/dynamodb-table-manager.handler
+    timeout: 300
+    role: DynamoTableManagerRole
+
 resources:
   Resources:
+    # IAM role for DynamoDB table manager custom resource
+    DynamoTableManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: DynamoDBTableManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - dynamodb:CreateTable
+                    - dynamodb:DeleteTable
+                    - dynamodb:DescribeTable
+                    - dynamodb:UpdateTimeToLive
+                    - dynamodb:DescribeTimeToLive
+                  Resource: 
+                    - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-*-${self:provider.stage}
+
+    # Permission for CloudFormation to invoke the custom resource
+    DynamoTableManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref DynamoTableManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
     UserPool:
       Type: AWS::Cognito::UserPool
       Properties:
@@ -558,10 +600,9 @@ resources:
           WriteCapacityUnits: 5
 
     BookclubGroupsTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
+      Type: AWS::CloudFormation::CustomResource
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-groups-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: groupId
@@ -584,6 +625,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+        DeletionPolicy: Retain
 
     BookclubMembersTable:
       Type: AWS::DynamoDB::Table
