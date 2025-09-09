@@ -75,7 +75,6 @@ const AuthCallback: React.FC = () => {
           }, 400);
           return () => clearTimeout(timer);
         } catch (e: any) {
-          console.error(e);
           setStatus('error');
           setMessage(e?.message || 'Authentication failed.');
         }

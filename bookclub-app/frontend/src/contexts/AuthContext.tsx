@@ -43,12 +43,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(currentUser);
             localStorage.setItem('user', JSON.stringify(currentUser));
           } catch (error) {
-            console.warn('Token verification failed; keeping local session and proceeding', error);
             // Keep existing tokens and user to avoid bounce back to /login; user can retry actions
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        // Auth initialization error handled silently
       } finally {
         setLoading(false);
       }

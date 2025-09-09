@@ -55,7 +55,6 @@ const ProfileEdit: React.FC = () => {
       setFormData(prev => ({ ...prev, profilePicture: uploadResponse.fileUrl }));
       setSuccess('Image uploaded successfully');
     } catch (error) {
-      console.error('Upload error:', error);
       setError('Failed to upload image. Please try again.');
     } finally {
       setUploading(false);

@@ -23,7 +23,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       await apiService.deleteBook(book.bookId);
       onDelete(book.bookId);
     } catch (error) {
-      console.error('Error deleting book:', error);
       alert('Failed to delete book');
     } finally {
       setLoading(false);
