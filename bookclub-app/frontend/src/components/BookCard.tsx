@@ -7,9 +7,10 @@ interface BookCardProps {
   onDelete: (bookId: string) => void;
   onUpdate: (book: Book) => void;
   showActions: boolean;
+  listView?: boolean;
 }
 
-const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActions }) => {
+const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActions, listView = false }) => {
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -43,46 +44,85 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${
+      listView ? 'flex' : ''
+    }`}>
       {book.coverImage && (
         <img
           src={book.coverImage}
           alt={book.title}
-          className="w-full h-48 object-cover"
+          className={listView 
+            ? "w-20 h-28 object-cover flex-shrink-0" 
+            : "w-full h-48 object-cover"
+          }
         />
       )}
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{book.title}</h3>
-        <p className="text-gray-600 mb-2">by {book.author}</p>
-        {book.description && (
-          <p className="text-gray-500 text-sm mb-3 line-clamp-3">{book.description}</p>
-        )}
-        <div className="flex items-center justify-between">
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-              book.status
-            )}`}
-          >
-            {book.status}
-          </span>
-          {showActions && (
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+      <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
+        <div className={listView ? "flex-1" : ""}>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{book.title}</h3>
+          <p className="text-gray-600 mb-2">by {book.author}</p>
+          {book.description && (
+            <p className={`text-gray-500 text-sm mb-3 ${listView ? 'line-clamp-2' : 'line-clamp-3'}`}>
+              {book.description}
+            </p>
+          )}
+          {!listView && (
+            <div className="flex items-center justify-between">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                  book.status
+                )}`}
               >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={loading}
-                className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
-              >
-                {loading ? 'Deleting...' : 'Delete'}
-              </button>
+                {book.status}
+              </span>
+              {showActions && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={loading}
+                    className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+                  >
+                    {loading ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
+        {listView && (
+          <div className="ml-4 flex flex-col items-end space-y-2">
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                book.status
+              )}`}
+            >
+              {book.status}
+            </span>
+            {showActions && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+                >
+                  {loading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       {showEditModal && (
