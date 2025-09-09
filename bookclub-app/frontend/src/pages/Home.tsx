@@ -6,6 +6,7 @@ import AddBookModal from '../components/AddBookModal';
 import ClubCard from '../components/ClubCard';
 import CreateClubModal from '../components/CreateClubModal';
 import JoinClubModal from '../components/JoinClubModal';
+import SearchBar from '../components/SearchBar';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Squares2X2Icon, 
@@ -19,6 +20,7 @@ const Home: React.FC = () => {
   const [clubs, setClubs] = useState<BookClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [clubsLoading, setClubsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
   const [clubsError, setClubsError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -27,11 +29,14 @@ const Home: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'my-books'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const { user } = useAuth();
 
   const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const params = filter === 'my-books' && user ? { userId: user.userId } : {};
       const response = await apiService.listBooks(params);
       setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
@@ -41,6 +46,36 @@ const Home: React.FC = () => {
       setLoading(false);
     }
   }, [filter, user]);
+
+  const handleSearch = useCallback(async (query: string) => {
+    try {
+      setSearchLoading(true);
+      setError('');
+      setSearchQuery(query);
+      setIsSearching(!!query.trim());
+      
+      if (!query.trim()) {
+        // If empty query, fetch regular books
+        await fetchBooks();
+        return;
+      }
+
+      const response = await apiService.searchBooks({ q: query });
+      setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to search books');
+      setBooks([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [fetchBooks]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    setIsSearching(false);
+    setError('');
+    fetchBooks();
+  }, [fetchBooks]);
 
   const fetchClubs = useCallback(async () => {
     try {
@@ -55,9 +90,11 @@ const Home: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchBooks();
+    if (!isSearching) {
+      fetchBooks();
+    }
     fetchClubs();
-  }, [fetchBooks, fetchClubs]);
+  }, [fetchBooks, fetchClubs, isSearching]);
 
   const handleBookAdded = (newBook: Book) => {
     setBooks([newBook, ...books]);
@@ -187,29 +224,59 @@ const Home: React.FC = () => {
               </div>
             )}
 
+            {/* Search Bar */}
+            <div className="mb-6">
+              <SearchBar
+                onSearch={handleSearch}
+                onClear={handleClearSearch}
+                placeholder="Search books by title, author, description, ISBN..."
+                loading={searchLoading}
+              />
+            </div>
+
+            {/* Results info */}
+            {isSearching && (
+              <div className="mb-4 text-sm text-gray-600">
+                {searchLoading ? (
+                  <span>Searching...</span>
+                ) : (
+                  <span>
+                    {books.length === 0 
+                      ? `No books found for "${searchQuery}"` 
+                      : `Found ${books.length} book${books.length === 1 ? '' : 's'} for "${searchQuery}"`
+                    }
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="mb-6">
               <div className="flex justify-between items-center">
                 <div className="flex space-x-4">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`px-4 py-2 rounded-md font-medium ${
-                      filter === 'all'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    All Books
-                  </button>
-                  <button
-                    onClick={() => setFilter('my-books')}
-                    className={`px-4 py-2 rounded-md font-medium ${
-                      filter === 'my-books'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    My Books
-                  </button>
+                  {!isSearching && (
+                    <>
+                      <button
+                        onClick={() => setFilter('all')}
+                        className={`px-4 py-2 rounded-md font-medium ${
+                          filter === 'all'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        All Books
+                      </button>
+                      <button
+                        onClick={() => setFilter('my-books')}
+                        className={`px-4 py-2 rounded-md font-medium ${
+                          filter === 'my-books'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        My Books
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <button
@@ -241,9 +308,11 @@ const Home: React.FC = () => {
             {(!Array.isArray(books) || books?.length === 0) ? (
               <div className="text-center py-12">
                 <div className="text-gray-500">
-                  {filter === 'my-books' 
-                    ? "You haven't added any books yet. Click 'Add Book' to get started!"
-                    : "No books available. Be the first to add one!"
+                  {isSearching 
+                    ? `No books found matching "${searchQuery}". Try different search terms.`
+                    : filter === 'my-books' 
+                      ? "You haven't added any books yet. Click 'Add Book' to get started!"
+                      : "No books available. Be the first to add one!"
                   }
                 </div>
               </div>

@@ -125,6 +125,22 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
   
+  searchBooks:
+    handler: src/handlers/books/search.handler
+    events:
+      - http:
+          method: GET
+          path: /books/search
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+  
   updateBook:
     handler: src/handlers/books/update.handler
     events:

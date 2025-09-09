@@ -112,6 +112,89 @@ class Book {
     };
   }
 
+  static async search(query, limit = 10, nextToken = null) {
+    if (isOffline()) {
+      const allBooks = await LocalStorage.listBooks();
+      const filteredBooks = allBooks.filter(book => {
+        if (!query || query.trim() === '') {
+          return true;
+        }
+        
+        const searchTerm = query.toLowerCase().trim();
+        const searchableFields = [
+          book.title,
+          book.author,
+          book.description,
+          book.publisher,
+          book.categories,
+          book.isbn10,
+          book.isbn13
+        ];
+        
+        return searchableFields.some(field => 
+          field && field.toString().toLowerCase().includes(searchTerm)
+        );
+      });
+      
+      return {
+        items: filteredBooks.slice(0, limit),
+        nextToken: filteredBooks.length > limit ? 'has-more' : null,
+      };
+    }
+
+    // If no query provided, return all books
+    if (!query || query.trim() === '') {
+      return this.listAll(limit, nextToken);
+    }
+
+    const searchTerm = query.toLowerCase().trim();
+    
+    // Build filter expression for DynamoDB scan
+    const filterExpressions = [];
+    const expressionAttributeNames = {};
+    const expressionAttributeValues = {};
+    
+    // Search across multiple fields
+    const searchFields = [
+      { field: 'title', attribute: '#title' },
+      { field: 'author', attribute: '#author' },
+      { field: 'description', attribute: '#description' },
+      { field: 'publisher', attribute: '#publisher' },
+      { field: 'categories', attribute: '#categories' },
+      { field: 'isbn10', attribute: '#isbn10' },
+      { field: 'isbn13', attribute: '#isbn13' }
+    ];
+
+    searchFields.forEach((fieldInfo, index) => {
+      const { field, attribute } = fieldInfo;
+      expressionAttributeNames[attribute] = field;
+      const valueKey = `:searchValue${index}`;
+      expressionAttributeValues[valueKey] = searchTerm;
+      filterExpressions.push(`contains(${attribute}, ${valueKey})`);
+    });
+
+    const params = {
+      TableName: getTableName('books'),
+      FilterExpression: filterExpressions.join(' OR '),
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      Limit: limit,
+    };
+
+    if (nextToken) {
+      params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+    }
+
+    const result = await dynamoDb.scan(params);
+    
+    return {
+      items: result.Items || [],
+      nextToken: result.LastEvaluatedKey 
+        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+        : null,
+    };
+  }
+
   static async update(bookId, userId, updates) {
     const timestamp = new Date().toISOString();
     const updateData = {

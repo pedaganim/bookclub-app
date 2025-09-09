@@ -148,6 +148,25 @@ class ApiService {
     return response.data.data!;
   }
 
+  async searchBooks(params?: {
+    q?: string;
+    limit?: number;
+    nextToken?: string;
+  }): Promise<BookListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.q) queryParams.append('q', params.q);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
+
+    const response: AxiosResponse<ApiResponse<BookListResponse>> = await this.api.get(
+      `/books/search?${queryParams.toString()}`
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to search books');
+    }
+    return response.data.data!;
+  }
+
   async updateBook(bookId: string, updates: Partial<Book>): Promise<Book> {
     const response: AxiosResponse<ApiResponse<Book>> = await this.api.put(`/books/${bookId}`, updates);
     if (!response.data.success) {
