@@ -39,7 +39,6 @@ describe('PKCE utilities', () => {
     it('should generate PKCE pair with correct structure', async () => {
       // Mock the crypto functions
       const mockArrayBuffer = new ArrayBuffer(32);
-      const mockUint8Array = new Uint8Array(mockArrayBuffer);
       
       mockCrypto.getRandomValues.mockImplementation((array) => {
         // Fill with predictable values for testing
