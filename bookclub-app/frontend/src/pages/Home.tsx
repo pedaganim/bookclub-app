@@ -11,7 +11,9 @@ import {
   Squares2X2Icon, 
   ListBulletIcon, 
   UserGroupIcon,
-  BookOpenIcon 
+  BookOpenIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon 
 } from '@heroicons/react/24/outline';
 
 const Home: React.FC = () => {
@@ -27,7 +29,13 @@ const Home: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'my-books'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Book[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const { user } = useAuth();
+
+  const isSearchActive = searchQuery.trim().length > 0;
 
   const fetchBooks = useCallback(async () => {
     try {
@@ -53,6 +61,36 @@ const Home: React.FC = () => {
       setClubsLoading(false);
     }
   }, []);
+
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setSearchError('');
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      setSearchError('');
+      const response = await apiService.searchBooks(query.trim());
+      setSearchResults(response.items);
+    } catch (err: any) {
+      setSearchError(err.message || 'Failed to search books');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, performSearch]);
 
   useEffect(() => {
     fetchBooks();
@@ -100,6 +138,17 @@ const Home: React.FC = () => {
       alert(`Invite code: ${inviteCode}`);
     });
   };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearchError('');
+  };
+
+  // Determine which books to display
+  const displayBooks = isSearchActive ? searchResults : books;
+  const displayError = isSearchActive ? searchError : error;
+  const displayLoading = isSearchActive ? isSearching : loading;
 
   if (loading || clubsLoading) {
     return (
@@ -181,67 +230,110 @@ const Home: React.FC = () => {
 
         {activeTab === 'books' ? (
           <>
-            {error && (
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search books by title, author, or description..."
+                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <XMarkIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  </button>
+                )}
+              </div>
+              {isSearchActive && (
+                <p className="mt-2 text-sm text-gray-600">
+                  {isSearching 
+                    ? 'Searching...' 
+                    : `Found ${searchResults.length} book(s) matching "${searchQuery}"`
+                  }
+                </p>
+              )}
+            </div>
+
+            {displayError && (
               <div className="mb-6 rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700">{error}</div>
+                <div className="text-sm text-red-700">{displayError}</div>
               </div>
             )}
 
-            <div className="mb-6">
-              <div className="flex justify-between items-center">
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`px-4 py-2 rounded-md font-medium ${
-                      filter === 'all'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    All Books
-                  </button>
-                  <button
-                    onClick={() => setFilter('my-books')}
-                    className={`px-4 py-2 rounded-md font-medium ${
-                      filter === 'my-books'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    My Books
-                  </button>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-md ${
-                      viewMode === 'grid'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                    title="Grid View"
-                  >
-                    <Squares2X2Icon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-md ${
-                      viewMode === 'list'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                    title="List View"
-                  >
-                    <ListBulletIcon className="h-5 w-5" />
-                  </button>
+            {!isSearchActive && (
+              <div className="mb-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => setFilter('all')}
+                      className={`px-4 py-2 rounded-md font-medium ${
+                        filter === 'all'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      All Books
+                    </button>
+                    <button
+                      onClick={() => setFilter('my-books')}
+                      className={`px-4 py-2 rounded-md font-medium ${
+                        filter === 'my-books'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      My Books
+                    </button>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-md ${
+                        viewMode === 'grid'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                      title="Grid View"
+                    >
+                      <Squares2X2Icon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded-md ${
+                        viewMode === 'list'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                      title="List View"
+                    >
+                      <ListBulletIcon className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {(!Array.isArray(books) || books?.length === 0) ? (
+            {displayLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">
+                  {isSearching ? 'Searching books...' : 'Loading books...'}
+                </p>
+              </div>
+            ) : (!Array.isArray(displayBooks) || displayBooks?.length === 0) ? (
               <div className="text-center py-12">
                 <div className="text-gray-500">
-                  {filter === 'my-books' 
+                  {isSearchActive 
+                    ? `No books found for "${searchQuery}". Try different keywords.`
+                    : filter === 'my-books' 
                     ? "You haven't added any books yet. Click 'Add Book' to get started!"
                     : "No books available. Be the first to add one!"
                   }
@@ -252,7 +344,7 @@ const Home: React.FC = () => {
                 ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 : "space-y-4"
               }>
-                {books.map((book) => (
+                {displayBooks.map((book) => (
                   <BookCard
                     key={book.bookId}
                     book={book}

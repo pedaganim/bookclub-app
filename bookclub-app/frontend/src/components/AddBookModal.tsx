@@ -15,17 +15,21 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     description: '',
     status: 'available' as const,
   });
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageMetadata, setImageMetadata] = useState<any[]>([]);
+  const [nonBookImages, setNonBookImages] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [processingOCR, setProcessingOCR] = useState(false);
-  const [ocrProgress, setOCRProgress] = useState('');
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [processingImages, setProcessingImages] = useState(false);
+  const [imageProgress, setImageProgress] = useState('');
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_IMAGES = 25; // Cost control limit
 
   // Cleanup OCR service on unmount
   useEffect(() => {
@@ -37,136 +41,162 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      processImageFile(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      processImageFiles(files);
     }
   };
 
-  const processImageFile = async (file: File) => {
-    // Enhanced file validation
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file (JPG, PNG, GIF, WebP)');
+  const processImageFiles = async (newFiles: File[]) => {
+    // Check total limit
+    if (images.length + newFiles.length > MAX_IMAGES) {
+      setError(`Maximum ${MAX_IMAGES} images allowed. You can add ${MAX_IMAGES - images.length} more images.`);
       return;
     }
-    
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size must be less than 5MB. Please choose a smaller image.');
-      return;
-    }
-    
-    // Check if file is corrupted by trying to create an image
-    try {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
+
+    setError('');
+    setProcessingImages(true);
+    setImageProgress('Validating images...');
+
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    // Validate and process each file
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i];
       
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = url;
+      // Enhanced file validation
+      if (!file.type.startsWith('image/')) {
+        setError(`File ${file.name} is not an image. Please select image files only.`);
+        continue;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError(`Image ${file.name} is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 5MB.`);
+        continue;
+      }
+      
+      // Check if file is corrupted by trying to create an image
+      try {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = url;
+        });
+        
+        // Create preview
+        newPreviews.push(url);
+        validFiles.push(file);
+      } catch (error) {
+        setError(`Image ${file.name} appears to be corrupted. Please try a different image.`);
+        continue;
+      }
+    }
+
+    if (validFiles.length === 0) {
+      setProcessingImages(false);
+      setImageProgress('');
+      return;
+    }
+
+    // Update state with new valid images
+    setImages(prev => [...prev, ...validFiles]);
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+
+    // Process images for metadata extraction
+    await processImagesForMetadata(validFiles, images.length);
+
+    setProcessingImages(false);
+    setImageProgress('');
+  };
+
+  const processImagesForMetadata = async (filesToProcess: File[], startIndex: number) => {
+    setImageProgress('Processing images for book detection...');
+    
+    try {
+      // Upload images first
+      const uploadPromises = filesToProcess.map(async (file, index) => {
+        try {
+          const uploadData = await apiService.generateUploadUrl(file.type, file.name);
+          await apiService.uploadFile(uploadData.uploadUrl, file);
+          return {
+            s3Bucket: uploadData.fileUrl.split('/')[2].split('.')[0], // Extract bucket from URL
+            s3Key: uploadData.fileKey,
+            localIndex: startIndex + index,
+          };
+        } catch (error) {
+          console.error(`Upload failed for ${file.name}:`, error);
+          return null;
+        }
       });
-      
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      setError('The selected image appears to be corrupted. Please try a different image.');
-      return;
-    }
-    
-    setCoverImage(file);
-    setError('');
-    
-    // Create image preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.onerror = () => {
-      setError('Failed to read the image file. Please try again.');
-    };
-    reader.readAsDataURL(file);
-    
-    // Perform OCR to extract book details
-    await performOCR(file);
-  };
 
-  const performOCR = async (file: File) => {
-    setProcessingOCR(true);
-    setOCRProgress('Initializing OCR engine...');
-    setError('');
-    
-    try {
-      setOCRProgress('Preprocessing image for optimal text recognition...');
-      
-      const { text, confidence } = await ocrService.extractText(file, true);
-      
-      // Enhanced confidence feedback using defined thresholds
-      if (confidence < OCR_CONFIDENCE_THRESHOLDS.LOW) {
-        setError(`Low confidence in text extraction (${Math.round(confidence)}%). Please try with a clearer image or fill in details manually.`);
-      } else if (confidence < OCR_CONFIDENCE_THRESHOLDS.MODERATE) {
-        setError(`Moderate confidence in text extraction (${Math.round(confidence)}%). Please review the extracted details carefully.`);
-      } else {
-        // eslint-disable-next-line no-console
-        console.log(`High confidence OCR result: ${Math.round(confidence)}%`);
+      const uploadResults = (await Promise.all(uploadPromises)).filter(Boolean);
+
+      if (uploadResults.length === 0) {
+        setError('Failed to upload images for processing.');
+        return;
       }
-      
-      setOCRProgress('Analyzing book details...');
-      const bookDetails = ocrService.extractBookDetails(text);
-      
-      // Search for metadata using extracted information
-      if (bookDetails.isbn || bookDetails.title || bookDetails.author) {
-        setOCRProgress('Searching for book metadata...');
-        await enrichWithMetadata(bookDetails);
-      } else {
-        setError('Could not identify book details from image. Please fill in manually.');
+
+      // Extract metadata from uploaded images
+      const metadataResult = await apiService.extractImageMetadata(uploadResults);
+
+      // Process results
+      const newNonBookImages: number[] = [];
+      const newMetadata: any[] = [];
+
+      metadataResult.results.forEach((result, index) => {
+        if (result.success && !result.isBook) {
+          newNonBookImages.push(uploadResults[index].localIndex);
+        }
+        newMetadata.push(result);
+      });
+
+      setNonBookImages(prev => [...prev, ...newNonBookImages]);
+      setImageMetadata(prev => [...prev, ...newMetadata]);
+
+      // Auto-populate form with best metadata if available
+      if (metadataResult.summary.bestMetadata && !formData.title) {
+        const bestMeta = metadataResult.summary.bestMetadata;
+        setFormData(prev => ({
+          ...prev,
+          title: bestMeta.title || prev.title,
+          author: bestMeta.author || prev.author,
+          description: bestMeta.description || prev.description,
+        }));
       }
+
+      // Show warnings for non-book images
+      if (newNonBookImages.length > 0) {
+        setError(`${newNonBookImages.length} image(s) don't appear to be book covers. They are highlighted in red. Consider removing them.`);
+      }
+
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Could not extract text from image. You can still fill in details manually.');
-    } finally {
-      setProcessingOCR(false);
-      setOCRProgress('');
+      console.error('Metadata processing failed:', error);
+      setError('Failed to analyze images. You can still continue manually.');
     }
   };
 
-  const enrichWithMetadata = async (bookDetails: any) => {
-    try {
-      const searchParams: any = {};
-      
-      if (bookDetails.isbn) {
-        searchParams.isbn = bookDetails.isbn;
-      } else {
-        if (bookDetails.title) searchParams.title = bookDetails.title;
-        if (bookDetails.author) searchParams.author = bookDetails.author;
-      }
-      
-      const metadata = await apiService.searchBookMetadata(searchParams);
-      
-      if (metadata) {
-        // Auto-populate form with metadata, preferring API data over OCR
-        setFormData(prev => ({
-          ...prev,
-          title: metadata.title || bookDetails.title || prev.title,
-          author: metadata.authors?.[0] || bookDetails.author || prev.author,
-          description: metadata.description || bookDetails.description || prev.description,
-        }));
-      } else {
-        // Fall back to OCR extracted data
-        setFormData(prev => ({
-          ...prev,
-          title: bookDetails.title || prev.title,
-          author: bookDetails.author || prev.author,
-          description: bookDetails.description || prev.description,
-        }));
-      }
-    } catch (error) {
-      // Still populate with OCR data if API fails
-      setFormData(prev => ({
-        ...prev,
-        title: bookDetails.title || prev.title,
-        author: bookDetails.author || prev.author,
-        description: bookDetails.description || prev.description,
-      }));
+  const removeImage = (index: number) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    const newMetadata = imageMetadata.filter((_, i) => i !== index);
+    const newNonBookImages = nonBookImages.filter(i => i !== index).map(i => i > index ? i - 1 : i);
+
+    setImages(newImages);
+    setImagePreviews(newPreviews);
+    setImageMetadata(newMetadata);
+    setNonBookImages(newNonBookImages);
+
+    // Clean up preview URL
+    if (imagePreviews[index]) {
+      URL.revokeObjectURL(imagePreviews[index]);
     }
+
+    setError('');
   };
 
   const startCamera = async () => {
@@ -203,8 +233,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         
         canvas.toBlob((blob) => {
           if (blob) {
-            const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
-            processImageFile(file);
+            const file = new File([blob], `captured-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            processImageFiles([file]);
             stopCamera();
           }
         }, 'image/jpeg', 0.8);
@@ -236,6 +266,13 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     // Stop camera if it's running
     stopCamera();
     
+    // Clean up image previews
+    imagePreviews.forEach(url => {
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    });
+    
     // Clean up OCR resources
     try {
       await ocrService.cleanup();
@@ -246,14 +283,37 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     onClose();
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImages = async (imagesToUpload: File[]): Promise<string[]> => {
+    if (imagesToUpload.length === 0) return [];
+
     try {
-      setUploadingImage(true);
-      const uploadData = await apiService.generateUploadUrl(file.type, file.name);
-      await apiService.uploadFile(uploadData.uploadUrl, file);
-      return uploadData.fileUrl;
+      setUploadingImages(true);
+      
+      if (imagesToUpload.length === 1) {
+        // Single image upload (backward compatibility)
+        const uploadData = await apiService.generateUploadUrl(imagesToUpload[0].type, imagesToUpload[0].name);
+        await apiService.uploadFile(uploadData.uploadUrl, imagesToUpload[0]);
+        return [uploadData.fileUrl];
+      } else {
+        // Bulk image upload
+        const files = imagesToUpload.map(file => ({
+          fileType: file.type,
+          fileName: file.name,
+        }));
+        
+        const bulkUploadData = await apiService.generateBulkUploadUrls(files);
+        
+        // Upload all images in parallel
+        const uploadPromises = imagesToUpload.map(async (file, index) => {
+          const uploadInfo = bulkUploadData.uploads[index];
+          await apiService.uploadFile(uploadInfo.uploadUrl, file);
+          return uploadInfo.fileUrl;
+        });
+        
+        return await Promise.all(uploadPromises);
+      }
     } finally {
-      setUploadingImage(false);
+      setUploadingImages(false);
     }
   };
 
@@ -263,15 +323,26 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     setError('');
 
     try {
-      let coverImageUrl = '';
+      // Filter out non-book images if user hasn't manually approved them
+      const imagesToUpload = images.filter((_, index) => !nonBookImages.includes(index));
       
-      if (coverImage) {
-        coverImageUrl = await uploadImage(coverImage);
+      if (imagesToUpload.length === 0 && images.length > 0) {
+        setError('All selected images appear to be non-book images. Please add at least one book cover image or proceed anyway.');
+        setLoading(false);
+        return;
+      }
+
+      let imageUrls: string[] = [];
+      
+      if (imagesToUpload.length > 0) {
+        imageUrls = await uploadImages(imagesToUpload);
       }
 
       const bookData = {
         ...formData,
-        coverImage: coverImageUrl || undefined,
+        images: imageUrls,
+        // Maintain backward compatibility with coverImage
+        coverImage: imageUrls[0] || undefined,
         enrichWithMetadata: true, // Enable metadata enrichment
       };
 
@@ -344,7 +415,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Cover Image</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Book Images ({images.length}/{MAX_IMAGES})
+              </label>
               
               {/* Image capture options */}
               <div className="flex flex-wrap gap-2 mb-3">
@@ -352,7 +425,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   type="button"
                   onClick={startCamera}
                   className="px-3 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                  disabled={loading || uploadingImage || processingOCR}
+                  disabled={loading || uploadingImages || processingImages || images.length >= MAX_IMAGES}
                   aria-label="Take a photo of the book cover using your camera"
                 >
                   📷 Take Photo
@@ -361,10 +434,10 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-                  disabled={loading || uploadingImage || processingOCR}
-                  aria-label="Upload an image of the book cover from your device"
+                  disabled={loading || uploadingImages || processingImages || images.length >= MAX_IMAGES}
+                  aria-label="Upload images of the book cover from your device"
                 >
-                  📁 Upload Image
+                  📁 Upload Images
                 </button>
               </div>
               
@@ -373,9 +446,10 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="hidden"
-                aria-label="Select image file"
+                aria-label="Select image files"
               />
               
               {/* Camera view */}
@@ -417,36 +491,53 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               {/* Hidden canvas for photo capture */}
               <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
               
-              {/* Image preview */}
-              {imagePreview && (
+              {/* Image grid */}
+              {imagePreviews.length > 0 && (
                 <div className="mb-3">
-                  <img
-                    src={imagePreview}
-                    alt="Book cover preview"
-                    className="w-full max-w-xs max-h-48 object-contain border rounded-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreview(null);
-                      setCoverImage(null);
-                      setFormData(prev => ({ ...prev, title: '', author: '', description: '' }));
-                    }}
-                    className="mt-1 text-sm text-red-600 hover:text-red-800 focus:outline-none focus:underline"
-                    aria-label="Remove image and clear extracted book details"
-                  >
-                    Remove image
-                  </button>
+                  <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                    {imagePreviews.map((preview, index) => (
+                      <div 
+                        key={index} 
+                        className={`relative group ${
+                          nonBookImages.includes(index) 
+                            ? 'ring-2 ring-red-500 bg-red-50 rounded-md' 
+                            : ''
+                        }`}
+                      >
+                        <img
+                          src={preview}
+                          alt={`Book cover ${index + 1}`}
+                          className="w-full h-20 object-cover border rounded-md"
+                        />
+                        {nonBookImages.includes(index) && (
+                          <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br-md">
+                            ⚠️ Not a book
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label={`Remove image ${index + 1}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Red-bordered images appear to not be book covers. Review and remove if needed.
+                  </p>
                 </div>
               )}
               
               {/* Enhanced processing status */}
-              {processingOCR && (
+              {processingImages && (
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md" role="status" aria-live="polite">
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" aria-hidden="true"></div>
                     <span className="text-sm text-blue-700">
-                      {ocrProgress || 'Processing image...'}
+                      {imageProgress || 'Processing images...'}
                     </span>
                   </div>
                   <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
@@ -455,11 +546,14 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 </div>
               )}
               
-              {/* File selection fallback */}
-              {!showCamera && !imagePreview && (
+              {/* Upload prompt */}
+              {!showCamera && imagePreviews.length === 0 && (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                   <p className="text-sm text-gray-500">
-                    Take a photo of the book cover or upload an image to automatically fill in book details
+                    Take photos or upload images of the book covers to automatically fill in book details
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Up to {MAX_IMAGES} images • JPG, PNG, GIF, WebP • Max 5MB each
                   </p>
                 </div>
               )}
@@ -470,16 +564,22 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 type="button"
                 onClick={handleClose}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                disabled={loading || uploadingImage || processingOCR}
+                disabled={loading || uploadingImages || processingImages}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={loading || uploadingImage || processingOCR}
+                disabled={loading || uploadingImages || processingImages}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
               >
-                {loading ? 'Adding...' : uploadingImage ? 'Uploading...' : processingOCR ? 'Processing...' : 'Add Book'}
+                {loading 
+                  ? 'Adding...' 
+                  : uploadingImages 
+                  ? 'Uploading...' 
+                  : processingImages 
+                  ? 'Processing...' 
+                  : 'Add Book'}
               </button>
             </div>
           </form>

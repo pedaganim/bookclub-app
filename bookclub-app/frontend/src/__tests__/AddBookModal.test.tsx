@@ -37,8 +37,8 @@ describe('Enhanced AddBookModal', () => {
     
     expect(screen.getByText('Add New Book')).toBeInTheDocument();
     expect(screen.getByText('📷 Take Photo')).toBeInTheDocument();
-    expect(screen.getByText('📁 Upload Image')).toBeInTheDocument();
-    expect(screen.getByText('Take a photo of the book cover or upload an image to automatically fill in book details')).toBeInTheDocument();
+    expect(screen.getByText('📁 Upload Images')).toBeInTheDocument();
+    expect(screen.getByText('Take photos or upload images of the book covers to automatically fill in book details')).toBeInTheDocument();
   });
 
   test('maintains existing form functionality', () => {
@@ -56,7 +56,7 @@ describe('Enhanced AddBookModal', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
     const takePhotoButton = screen.getByRole('button', { name: /take a photo of the book cover using your camera/i });
-    const uploadButton = screen.getByRole('button', { name: /upload an image of the book cover from your device/i });
+    const uploadButton = screen.getByRole('button', { name: /upload images of the book cover from your device/i });
     
     expect(takePhotoButton).toBeInTheDocument();
     expect(uploadButton).toBeInTheDocument();

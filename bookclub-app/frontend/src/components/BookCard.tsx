@@ -79,20 +79,82 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
     }
   };
 
+  // Get images array, falling back to coverImage for backward compatibility
+  const bookImages = book.images && book.images.length > 0 
+    ? book.images 
+    : book.coverImage 
+    ? [book.coverImage] 
+    : [];
+
+  const renderImages = () => {
+    if (bookImages.length === 0) {
+      return (
+        <div className={listView 
+          ? "w-20 h-28 bg-gray-200 flex-shrink-0 flex items-center justify-center" 
+          : "w-full h-48 bg-gray-200 flex items-center justify-center"
+        }>
+          <span className="text-gray-400 text-xs">No Image</span>
+        </div>
+      );
+    }
+
+    if (listView) {
+      // In list view, show only the first image
+      return (
+        <img
+          src={bookImages[0]}
+          alt={book.title}
+          className="w-20 h-28 object-cover flex-shrink-0"
+        />
+      );
+    }
+
+    // In grid view, show multiple images
+    if (bookImages.length === 1) {
+      return (
+        <img
+          src={bookImages[0]}
+          alt={book.title}
+          className="w-full h-48 object-cover"
+        />
+      );
+    }
+
+    // Multiple images - show grid
+    return (
+      <div className="w-full h-48 grid grid-cols-2 gap-1 overflow-hidden">
+        {bookImages.slice(0, 4).map((image, index) => (
+          <div 
+            key={index} 
+            className={`relative ${
+              bookImages.length === 2 ? 'col-span-1' : 
+              bookImages.length === 3 && index === 0 ? 'col-span-2' : 
+              'col-span-1'
+            }`}
+          >
+            <img
+              src={image}
+              alt={`${book.title} - Image ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+            {index === 3 && bookImages.length > 4 && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  +{bookImages.length - 4} more
+                </span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${
       listView ? 'flex' : ''
     }`}>
-      {book.coverImage && (
-        <img
-          src={book.coverImage}
-          alt={book.title}
-          className={listView 
-            ? "w-20 h-28 object-cover flex-shrink-0" 
-            : "w-full h-48 object-cover"
-          }
-        />
-      )}
+      {renderImages()}
       <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
         <div className={listView ? "flex-1" : ""}>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{book.title}</h3>
@@ -100,6 +162,11 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
           {book.description && (
             <p className={`text-gray-500 text-sm mb-3 ${listView ? 'line-clamp-2' : 'line-clamp-3'}`}>
               {book.description}
+            </p>
+          )}
+          {!listView && bookImages.length > 1 && (
+            <p className="text-xs text-gray-400 mb-2">
+              {bookImages.length} images
             </p>
           )}
           {!listView && (
