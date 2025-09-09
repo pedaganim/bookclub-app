@@ -465,6 +465,7 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
+      DependsOn: GoogleIdentityProvider
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -482,10 +483,27 @@ resources:
           - profile
         SupportedIdentityProviders:
           - COGNITO
+          - Google
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
         LogoutURLs:
           - ${self:custom.appConfig.oauth.redirectSignOut}
+
+    GoogleIdentityProvider:
+      Type: AWS::Cognito::UserPoolIdentityProvider
+      Properties:
+        UserPoolId: !Ref UserPool
+        ProviderName: Google
+        ProviderType: Google
+        ProviderDetails:
+          client_id: ${ssm:/bookclub/oauth/google_client_id}
+          client_secret: ${ssm:/bookclub/oauth/google_client_secret}
+          authorize_scopes: "openid email profile"
+        AttributeMapping:
+          email: email
+          given_name: given_name
+          family_name: family_name
+          name: name
 
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
