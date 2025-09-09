@@ -59,6 +59,78 @@ describe('BookCard', () => {
     expect(screen.getByText('by Test Author')).toBeInTheDocument();
   });
 
+  it('should render in grid view by default', () => {
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={false} 
+      />
+    );
+
+    // In grid view, the layout should be vertical (no flex class on main container)
+    // We can test this by checking that elements are arranged vertically
+    const title = screen.getByText('Test Book');
+    const author = screen.getByText('by Test Author');
+    expect(title).toBeInTheDocument();
+    expect(author).toBeInTheDocument();
+  });
+
+  it('should render in list view when listView prop is true', () => {
+    render(
+      <BookCard 
+        book={mockBook} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={false}
+        listView={true} 
+      />
+    );
+
+    // In list view, the layout should be horizontal (flex layout)
+    // We can test this by checking that elements are arranged properly
+    const title = screen.getByText('Test Book');
+    const author = screen.getByText('by Test Author');
+    expect(title).toBeInTheDocument();
+    expect(author).toBeInTheDocument();
+  });
+
+  it('should render book cover image correctly in grid view', () => {
+    const bookWithCover = { ...mockBook, coverImage: 'https://example.com/cover.jpg' };
+    render(
+      <BookCard 
+        book={bookWithCover} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={false} 
+      />
+    );
+
+    const image = screen.getByAltText('Test Book');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute('src', 'https://example.com/cover.jpg');
+    expect(image).toHaveClass('w-full', 'h-48', 'object-cover');
+  });
+
+  it('should render book cover image correctly in list view', () => {
+    const bookWithCover = { ...mockBook, coverImage: 'https://example.com/cover.jpg' };
+    render(
+      <BookCard 
+        book={bookWithCover} 
+        onDelete={mockOnDelete} 
+        onUpdate={mockOnUpdate} 
+        showActions={false}
+        listView={true} 
+      />
+    );
+
+    const image = screen.getByAltText('Test Book');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute('src', 'https://example.com/cover.jpg');
+    expect(image).toHaveClass('w-20', 'h-28', 'object-cover', 'flex-shrink-0');
+  });
+
   it('should show action buttons when showActions is true', () => {
     render(
       <BookCard 

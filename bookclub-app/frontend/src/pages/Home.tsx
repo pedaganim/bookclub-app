@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
 import AddBookModal from '../components/AddBookModal';
 import { useAuth } from '../contexts/AuthContext';
+import { Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
 
 const Home: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -11,6 +12,7 @@ const Home: React.FC = () => {
   const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'my-books'>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { user } = useAuth();
 
   const fetchBooks = useCallback(async () => {
@@ -81,27 +83,53 @@ const Home: React.FC = () => {
         )}
 
         <div className="mb-6">
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-md font-medium ${
-                filter === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              All Books
-            </button>
-            <button
-              onClick={() => setFilter('my-books')}
-              className={`px-4 py-2 rounded-md font-medium ${
-                filter === 'my-books'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              My Books
-            </button>
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 rounded-md font-medium ${
+                  filter === 'all'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                All Books
+              </button>
+              <button
+                onClick={() => setFilter('my-books')}
+                className={`px-4 py-2 rounded-md font-medium ${
+                  filter === 'my-books'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                My Books
+              </button>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md ${
+                  viewMode === 'grid'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                title="Grid View"
+              >
+                <Squares2X2Icon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md ${
+                  viewMode === 'list'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                title="List View"
+              >
+                <ListBulletIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -115,7 +143,10 @@ const Home: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            : "space-y-4"
+          }>
             {books.map((book) => (
               <BookCard
                 key={book.bookId}
@@ -123,6 +154,7 @@ const Home: React.FC = () => {
                 onDelete={handleBookDeleted}
                 onUpdate={handleBookUpdated}
                 showActions={user?.userId === book.userId}
+                listView={viewMode === 'list'}
               />
             ))}
           </div>
