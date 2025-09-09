@@ -87,3 +87,30 @@ export interface ProfileUpdateData {
   profilePicture?: string;
   timezone?: string;
 }
+
+export interface BookClub {
+  clubId: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  inviteCode: string;
+  isPrivate: boolean;
+  memberLimit?: number;
+  createdAt: string;
+  updatedAt: string;
+  // Added when user is a member
+  userRole?: 'admin' | 'member';
+  joinedAt?: string;
+}
+
+export interface BookClubMember {
+  clubId: string;
+  userId: string;
+  role: 'admin' | 'member';
+  joinedAt: string;
+}
+
+export interface BookClubListResponse {
+  items: BookClub[];
+  count: number;
+}
