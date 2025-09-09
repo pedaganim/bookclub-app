@@ -28,6 +28,12 @@ jobs:
     
     - name: Run backend tests with coverage
       run: npm run test:coverage
+    
+    - name: Upload backend coverage to artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: ./bookclub-app/backend/coverage/
 
   frontend-tests:
     runs-on: ubuntu-latest
@@ -52,13 +58,18 @@ jobs:
       run: npm test -- --watchAll=false --coverage
       env:
         CI: true
+    
+    - name: Upload frontend coverage to artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: ./bookclub-app/frontend/coverage/
 
 
 
   security-scan:
     runs-on: ubuntu-latest
-    # Only run security scan on main branch pushes to save time on PRs
-    if: github.ref == 'refs/heads/main'
+    # Run security scan on all PRs and main branch pushes
     steps:
     - uses: actions/checkout@v4
     
@@ -92,5 +103,11 @@ jobs:
     
     - name: Run ESLint (if configured)
       working-directory: ./bookclub-app/frontend
-      run: npm run lint || echo "ESLint not configured"
-      continue-on-error: true
+      run: npm run lint
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, security-scan, lint-and-format]
+    steps:
+    - name: Quality gate passed
+      run: echo "All quality checks passed successfully!"

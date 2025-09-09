@@ -39,7 +39,7 @@ bookclub-app/
 ## Backend Testing
 
 ### Framework: Jest + Supertest
-- **Unit Tests**: 25 tests covering models and utilities
+- **Unit Tests**: 48 tests covering models, utilities, and handlers
 - **Integration Tests**: 9 tests covering authentication endpoints
 
 ### Key Features:
@@ -47,6 +47,7 @@ bookclub-app/
 - Express wrapper for testing serverless handlers
 - Comprehensive coverage of User model and LocalStorage utility
 - Authentication flow testing (register/login)
+- **Coverage Thresholds**: Enforced minimum coverage (30% statements, 21% branches, 27% functions, 29% lines)
 
 ### Running Backend Tests:
 ```bash
@@ -62,6 +63,9 @@ npm test -- --testPathPattern=integration
 # Run with coverage
 npm run test:coverage
 
+# Run with coverage and open report
+npm run test:coverage:open
+
 # Watch mode
 npm run test:watch
 ```
@@ -70,17 +74,21 @@ npm run test:watch
 - User model: Registration, login, profile management, Cognito integration
 - LocalStorage: File operations, user CRUD, book CRUD
 - API handlers: Authentication endpoints with validation
+- **Book handlers**: List and get operations with comprehensive test scenarios
+- File upload: URL generation with proper validation
 
 ## Frontend Testing
 
 ### Framework: React Testing Library + Jest
-- **Unit Tests**: 17 tests covering utilities and service logic
+- **Unit Tests**: 35 tests covering utilities, services, and components
+- **Coverage Thresholds**: Enforced minimum coverage (21% statements, 20% branches, 18% functions, 21% lines)
 
 ### Key Features:
 - Mock localStorage and crypto APIs
 - PKCE utility testing for OAuth flows
 - API service configuration testing
 - Component testing with mocked dependencies
+- **ESLint Integration**: Code quality enforcement with custom rules
 
 ### Running Frontend Tests:
 ```bash
@@ -88,29 +96,51 @@ cd bookclub-app/frontend
 
 # Run unit tests
 npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run with coverage and open report
+npm run test:coverage:open
+
+# Run linting
+npm run lint
+
+# Run linting with auto-fix
+npm run lint:fix
 ```
 
 ### Test Coverage:
 - PKCE utilities: Code generation, challenge creation, base64 encoding
 - API service: Token handling, request configuration, error handling
 - Components: Basic rendering and interaction tests
+- **BookCard component**: User interactions, delete operations, error handling
+- OCR Service: Image processing and text extraction
 
 ## Continuous Integration
 
 ### GitHub Actions Workflow
-The CI pipeline includes multiple jobs:
+The CI pipeline includes multiple jobs with quality gates:
 
-1. **Backend Tests**: Unit and integration tests
-2. **Frontend Tests**: Unit tests with coverage
-3. **Security Scan**: Dependency vulnerability checks
-4. **Lint and Format**: Code quality checks
+1. **Backend Tests**: Unit and integration tests with coverage thresholds
+2. **Frontend Tests**: Unit tests with coverage and ESLint validation
+3. **Security Scan**: Dependency vulnerability checks (runs on all PRs)
+4. **Lint and Format**: Code quality checks with ESLint enforcement
+5. **Quality Gate**: Requires all previous jobs to pass
 
 ### Workflow Triggers:
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop`
 
 ### Artifacts:
-- Test coverage reports
+- Test coverage reports for both backend and frontend
+- Coverage thresholds prevent regression
+
+### Quality Gates:
+- All tests must pass
+- Coverage thresholds must be met
+- ESLint checks must pass
+- Security scans must complete without critical issues
 
 ## Test Execution Guide
 

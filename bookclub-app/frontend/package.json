@@ -28,12 +28,33 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
+    "test:coverage": "npm test -- --watchAll=false --coverage",
+    "test:coverage:open": "npm run test:coverage && open coverage/lcov-report/index.html"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "react-hooks/exhaustive-deps": "warn",
+      "prefer-const": "warn",
+      "no-var": "error",
+      "no-console": "warn"
+    },
+    "overrides": [
+      {
+        "files": ["**/__tests__/**/*", "**/*.test.*"],
+        "rules": {
+          "no-console": "off",
+          "testing-library/no-wait-for-multiple-assertions": "warn"
+        }
+      }
     ]
   },
   "browserslist": {
@@ -47,6 +68,23 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/index.tsx",
+      "!src/reportWebVitals.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 21,
+        "branches": 20,
+        "functions": 18,
+        "lines": 21
+      }
+    },
+    "coverageReporters": ["text", "html", "lcov", "json-summary"]
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
