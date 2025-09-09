@@ -130,12 +130,12 @@ describe('Serverless Configuration', () => {
     const regularTableNames = [
       'BooksTable',
       'UsersTable', 
-      'MetadataCacheTable',
-      'BookclubMembersTable'
+      'MetadataCacheTable'
     ];
     
     const customResourceTableNames = [
-      'BookclubGroupsTable'
+      'BookclubGroupsTable',
+      'BookclubMembersTable'
     ];
 
     // Check regular DynamoDB tables
