@@ -1,6 +1,35 @@
 const response = require('../../lib/response');
 const Book = require('../../models/book');
 const bookMetadataService = require('../../lib/book-metadata');
+const textractService = require('../../lib/textract-service');
+
+/**
+ * Helper function to assign ISBN based on extracted metadata
+ * @param {string} existingIsbn10 - Existing ISBN-10 value
+ * @param {string} existingIsbn13 - Existing ISBN-13 value
+ * @param {string} extractedIsbn - ISBN extracted from image
+ * @returns {Object} Object with isbn10 and isbn13 properties
+ */
+function assignIsbnFromMetadata(existingIsbn10, existingIsbn13, extractedIsbn) {
+  const result = {
+    isbn10: existingIsbn10,
+    isbn13: existingIsbn13
+  };
+
+  if (!extractedIsbn) {
+    return result;
+  }
+
+  if (!existingIsbn10 && extractedIsbn.length === 10) {
+    result.isbn10 = extractedIsbn;
+  }
+  
+  if (!existingIsbn13 && extractedIsbn.length === 13) {
+    result.isbn13 = extractedIsbn;
+  }
+
+  return result;
+}
 
 module.exports.handler = async (event) => {
   try {
@@ -13,8 +42,10 @@ module.exports.handler = async (event) => {
 
     const data = JSON.parse(event.body);
 
-    // Validate input
-    if (!data.title || !data.author) {
+    // Validate input - title and author are required unless extracting from image
+    const isExtractingFromImage = data.extractFromImage && data.s3Bucket && data.s3Key;
+    
+    if (!isExtractingFromImage && (!data.title || !data.author)) {
       return response.validationError({
         title: data.title ? undefined : 'Title is required',
         author: data.author ? undefined : 'Author is required',
@@ -63,6 +94,55 @@ module.exports.handler = async (event) => {
         console.error('[BookCreate] Metadata enrichment failed:', error);
         // Continue with original data - metadata enrichment failure shouldn't break book creation
       }
+    }
+
+    // Textract image metadata extraction
+    if (data.extractFromImage && data.s3Bucket && data.s3Key) {
+      try {
+        console.log('[BookCreate] Attempting Textract metadata extraction...');
+        const extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
+        
+        if (extractionResult && extractionResult.bookMetadata) {
+          const { bookMetadata, extractedText } = extractionResult;
+          console.log('[BookCreate] Textract extraction successful');
+          
+          // Merge Textract metadata, preserving user input and previous metadata
+          const isbnAssignment = assignIsbnFromMetadata(
+            bookData.isbn10,
+            bookData.isbn13,
+            bookMetadata.isbn
+          );
+          
+          bookData = {
+            ...bookData,
+            // Use Textract data only for empty fields, prioritizing user input
+            title: bookData.title || bookMetadata.title,
+            author: bookData.author || bookMetadata.author,
+            description: bookData.description || bookMetadata.description,
+            isbn10: isbnAssignment.isbn10,
+            isbn13: isbnAssignment.isbn13,
+            publisher: bookData.publisher || bookMetadata.publisher,
+            publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
+            textractExtractedText: extractedText.fullText,
+            textractConfidence: extractionResult.confidence,
+            textractSource: bookMetadata.extractionSource,
+          };
+        }
+      } catch (error) {
+        console.error('[BookCreate] Textract extraction failed:', error);
+        // Continue with original data - Textract failure shouldn't break book creation
+      }
+    }
+
+    // Final validation - ensure we have at least title and author after all enrichment
+    if (!bookData.title || !bookData.author) {
+      const missingFields = [];
+      if (!bookData.title) missingFields.push('title');
+      if (!bookData.author) missingFields.push('author');
+      
+      return response.validationError({
+        extraction: `Could not extract required fields: ${missingFields.join(', ')}. Please provide them manually or try a different image.`
+      });
     }
 
     const created = await Book.create(bookData, userId);

@@ -1,6 +1,6 @@
 # Book Metadata Integration
 
-This document describes the Google Books API and Open Library integration for automatic book metadata enrichment.
+This document describes the comprehensive book metadata integration including Google Books API, Open Library integration, and Amazon Textract OCR for automatic book metadata enrichment.
 
 ## Features
 
@@ -10,10 +10,18 @@ This document describes the Google Books API and Open Library integration for au
 - Fallback between Google Books API and Open Library
 - Automatic caching to reduce API calls and costs
 
+### Amazon Textract Integration
+- **NEW**: Extract text and metadata directly from uploaded book cover images
+- Parse extracted text to identify book title, author, ISBN, publisher, and publication date
+- Store all extracted text in the book description field
+- Graceful fallback when OCR extraction fails
+- Support for both standalone image processing and integrated book creation
+
 ### Book Creation Enhancement
-- Optional metadata enrichment during book creation
-- Preserves user input over API data
-- Graceful degradation on metadata lookup failures
+- Optional metadata enrichment during book creation via external APIs
+- **NEW**: Optional Textract extraction during book creation from uploaded images
+- Preserves user input over API/OCR data
+- Graceful degradation on metadata lookup or extraction failures
 
 ### Caching
 - 24-hour cache using DynamoDB with TTL
@@ -53,18 +61,72 @@ At least one parameter is required.
 }
 ```
 
+### **NEW**: Extract Image Metadata
+`POST /images/extract-metadata`
+
+Request body:
+```json
+{
+  "s3Bucket": "bookclub-bucket",
+  "s3Key": "book-covers/user-id/image.jpg"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "metadata": {
+      "title": "Clean Code",
+      "author": "Robert C. Martin",
+      "isbn": "9780132350884",
+      "publisher": "Prentice Hall",
+      "publishedDate": "2008",
+      "description": "Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin...",
+      "extractionSource": "textract"
+    },
+    "extractedText": "Full extracted text from the image...",
+    "confidence": 92,
+    "textBlocks": 15,
+    "summary": {
+      "hasTitle": true,
+      "hasAuthor": true,
+      "hasISBN": true,
+      "hasPublisher": true,
+      "hasPublishedDate": true
+    }
+  }
+}
+```
+
 ### Enhanced Book Creation
 `POST /books`
 
 Additional optional fields:
 - `isbn`: Book ISBN for metadata lookup
 - `enrichWithMetadata`: Boolean flag to enable metadata enrichment
+- **NEW**: `extractFromImage`: Boolean flag to enable Textract extraction
+- **NEW**: `s3Bucket`: S3 bucket name for image extraction
+- **NEW**: `s3Key`: S3 object key for image extraction
 
-Example request:
+Example request with Textract:
+```json
+{
+  "extractFromImage": true,
+  "s3Bucket": "bookclub-bucket",
+  "s3Key": "book-covers/user-id/image.jpg"
+}
+```
+
+Example request with manual data and Textract enhancement:
 ```json
 {
   "title": "Clean Code",
   "author": "Robert Martin", 
+  "extractFromImage": true,
+  "s3Bucket": "bookclub-bucket",
+  "s3Key": "book-covers/user-id/image.jpg",
   "enrichWithMetadata": true
 }
 ```
@@ -72,20 +134,34 @@ Example request:
 ## Architecture
 
 ### Data Sources
-1. **Google Books API** (primary)
+1. **Amazon Textract** (primary for image-based extraction)
+   - Directly extract text from book cover images
+   - Parse metadata from extracted text using pattern matching
+   - Store full extracted text as book description
+
+2. **Google Books API** (primary for search-based lookup)
    - No API key required for basic usage
    - Comprehensive metadata
    - Higher rate limits
 
-2. **Open Library** (fallback)
+3. **Open Library** (fallback for search-based lookup)
    - Free and open source
    - Good coverage of older books
    - Alternative when Google Books fails
 
+### Textract Processing Pipeline
+1. **Image Upload**: User uploads book cover image to S3
+2. **Text Extraction**: Textract DetectDocumentText processes the image
+3. **Metadata Parsing**: Extract title, author, ISBN, publisher, publication date
+4. **Pattern Matching**: Use regex patterns to identify different metadata fields
+5. **Validation**: Ensure extracted data meets quality criteria
+6. **Storage**: Store all extracted text as description, metadata as structured fields
+
 ### Search Strategy
-1. **ISBN Search**: Most accurate, tried first if ISBN provided
-2. **Title/Author Search**: Fallback when ISBN not available or fails
-3. **Graceful Degradation**: Returns null on all failures, doesn't break book creation
+1. **Textract Extraction**: For image-based metadata extraction
+2. **ISBN Search**: Most accurate, tried first if ISBN provided
+3. **Title/Author Search**: Fallback when ISBN not available or fails
+4. **Graceful Degradation**: Returns null on all failures, doesn't break book creation
 
 ### Error Handling
 - Network timeouts (10 seconds)
@@ -95,6 +171,14 @@ Example request:
 - AWS configuration errors in sandboxed environments
 - Graceful fallback to basic book creation
 - **Sandboxed Environment Detection**: Automatically detects CI/test environments and skips external API calls to prevent DNS blocking issues
+
+### Textract Metadata Extraction
+- **ISBN Detection**: Matches ISBN-10 and ISBN-13 patterns with various formatting
+- **Title Extraction**: Uses high-confidence text blocks with length and content filtering
+- **Author Extraction**: Pattern matching for "by [Author]" and similar patterns
+- **Publisher Extraction**: Identifies publisher names with contextual patterns
+- **Date Extraction**: Extracts publication years from copyright notices
+- **Quality Validation**: Ensures extracted metadata meets minimum quality criteria
 
 ### Caching Strategy
 - **Cache Key**: Based on ISBN or title+author combination
@@ -111,36 +195,68 @@ Example request:
 - **Billing**: Pay-per-request (cost-effective for sporadic usage)
 
 ### IAM Permissions
-Updated serverless.yml includes metadata-cache table permissions.
+Updated serverless.yml includes:
+- Textract permissions (`textract:DetectDocumentText`, `textract:AnalyzeDocument`)
+- Metadata-cache table permissions
+- S3 read permissions for image processing
 
 ## Usage Examples
 
 ### Frontend Integration
 ```typescript
+// Extract metadata from uploaded image
+const imageMetadata = await apiService.extractImageMetadata({
+  s3Bucket: 'bookclub-bucket',
+  s3Key: 'book-covers/user-id/image.jpg'
+});
+
+// Create book with Textract extraction
+const book = await apiService.createBook({
+  extractFromImage: true,
+  s3Bucket: 'bookclub-bucket',
+  s3Key: 'book-covers/user-id/image.jpg'
+});
+
+// Create book with manual data and Textract enhancement
+const book = await apiService.createBook({
+  title: 'Clean Code',
+  author: 'Robert Martin',
+  extractFromImage: true,
+  s3Bucket: 'bookclub-bucket',
+  s3Key: 'book-covers/user-id/image.jpg',
+  enrichWithMetadata: true
+});
+
 // Search for metadata
 const metadata = await apiService.searchBookMetadata({
   isbn: '9780132350884'
 });
-
-// Create book with metadata enrichment
-const book = await apiService.createBook({
-  title: 'Clean Code',
-  author: 'Robert Martin',
-  enrichWithMetadata: true
-});
 ```
 
-### OCR Integration (Future)
+### Workflow Examples
 ```javascript
-// Extract text from OCR
-const ocrResult = await ocrService.extractText(imageFile);
+// 1. Upload image and extract metadata
+const uploadResult = await uploadService.uploadImage(imageFile);
+const extractionResult = await textractService.extractMetadata(
+  uploadResult.s3Bucket, 
+  uploadResult.s3Key
+);
 
-// Search with extracted data
-const metadata = await bookMetadataService.searchBookMetadata({
-  isbn: ocrResult.isbn,
-  title: ocrResult.title,
-  author: ocrResult.author
+// 2. Create book with extracted metadata
+const book = await bookService.createBook({
+  ...extractionResult.metadata,
+  extractFromImage: true,
+  s3Bucket: uploadResult.s3Bucket,
+  s3Key: uploadResult.s3Key
 });
+
+// 3. Enhance with external API metadata if needed
+if (extractionResult.metadata.isbn) {
+  const enhancedMetadata = await metadataService.searchBookMetadata({
+    isbn: extractionResult.metadata.isbn
+  });
+  // Merge enhanced metadata
+}
 ```
 
 ## Testing and Development
@@ -172,6 +288,12 @@ When any of these are detected, external API calls are skipped and appropriate l
 
 ## Cost Optimization
 
+### Textract Costs
+- **DetectDocumentText**: $1.50 per 1,000 pages
+- **Typical Usage**: Book covers are single pages
+- **Estimated Cost**: ~$0.0015 per book cover processed
+- **Volume Discounts**: Available for high-volume usage
+
 ### API Usage
 - Google Books API: Free tier (1000 requests/day)
 - Open Library: No limits, donation-supported
@@ -198,7 +320,7 @@ terraform apply
 ```
 
 ### Serverless Deployment
-Updated IAM permissions and new endpoint:
+Updated IAM permissions and new endpoints:
 ```bash
 cd backend
 serverless deploy
@@ -208,7 +330,8 @@ serverless deploy
 No additional environment variables required. The service uses:
 - Existing DynamoDB configuration
 - Built-in Node.js HTTP modules
-- No API keys needed
+- AWS SDK with existing IAM roles
+- No API keys needed for basic functionality
 
 ## Monitoring
 
@@ -216,31 +339,45 @@ No additional environment variables required. The service uses:
 - Lambda function metrics (duration, errors, invocations)
 - DynamoDB metrics (read/write units, throttling)
 - API Gateway metrics (latency, errors)
+- **NEW**: Textract usage metrics and errors
 
 ### Logging
 - Metadata search attempts and results
 - Cache hits and misses
 - API failures and fallbacks
 - Search performance metrics
+- **NEW**: Textract extraction results and confidence scores
+- **NEW**: Image processing errors and retries
 
 ## Future Enhancements
 
-1. **Additional Data Sources**
+1. **Enhanced OCR Processing**
+   - Pre-processing images for better OCR accuracy
+   - Support for multiple image formats
+   - Batch processing for multiple images
+   - Confidence-based validation
+
+2. **Advanced Text Analysis**
+   - Machine learning models for better metadata extraction
+   - Natural language processing for descriptions
+   - Auto-categorization based on content
+
+3. **Additional Data Sources**
    - WorldCat API
    - Library of Congress API
    - Publisher-specific APIs
 
-2. **Enhanced Caching**
+4. **Enhanced Caching**
    - Redis for sub-second cache access
    - Intelligent cache warming
    - Cache statistics and optimization
 
-3. **OCR Integration**
-   - Amazon Textract for ISBN extraction
-   - Image preprocessing for better accuracy
-   - Confidence scoring for extracted text
-
-4. **Machine Learning**
+5. **Machine Learning Integration**
    - Book recommendation based on metadata
    - Duplicate detection using similarity algorithms
    - Auto-categorization based on descriptions
+
+6. **Improved Image Processing**
+   - Image enhancement before OCR
+   - Support for multi-page documents
+   - Automatic image orientation correction
