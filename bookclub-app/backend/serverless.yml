@@ -481,21 +481,21 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
-outputs:
-  UserPoolId:
-    Value: !Ref UserPool
-    Export:
-      Name: ${self:service}-${self:provider.stage}-UserPoolId
-  UserPoolClientId:
-    Value: !Ref UserPoolClient
-    Export:
-      Name: ${self:service}-${self:provider.stage}-UserPoolClientId
-  RestApiId:
-    Value: !Ref ApiGatewayRestApi
-    Export:
-      Name: ${self:service}-${self:provider.stage}-RestApiId
-  ApiUrl:
-    Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
-  BookCoversBucketName:
-    Value: ${self:service}-${self:provider.stage}-book-covers
+  Outputs:
+    UserPoolId:
+      Value: !Ref UserPool
+      Export:
+        Name: ${self:service}-${self:provider.stage}-UserPoolId
+    UserPoolClientId:
+      Value: !Ref UserPoolClient
+      Export:
+        Name: ${self:service}-${self:provider.stage}-UserPoolClientId
+    RestApiId:
+      Value: !Ref ApiGatewayRestApi
+      Export:
+        Name: ${self:service}-${self:provider.stage}-RestApiId
+    ApiUrl:
+      Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
+    BookCoversBucketName:
+      Value: ${self:service}-${self:provider.stage}-book-covers
 
