@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
-import { ocrService } from '../services/ocrService';
+import { ocrService, OCR_CONFIDENCE_THRESHOLDS } from '../services/ocrService';
 
 interface AddBookModalProps {
   onClose: () => void;
@@ -96,11 +96,17 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     setError('');
     
     try {
-      setOCRProgress('Extracting text from image...');
-      const { text, confidence } = await ocrService.extractText(file);
+      setOCRProgress('Preprocessing image for optimal text recognition...');
       
-      if (confidence < 30) {
-        setError('Low confidence in text extraction. Please try with a clearer image or fill in details manually.');
+      const { text, confidence } = await ocrService.extractText(file, true);
+      
+      // Enhanced confidence feedback using defined thresholds
+      if (confidence < OCR_CONFIDENCE_THRESHOLDS.LOW) {
+        setError(`Low confidence in text extraction (${Math.round(confidence)}%). Please try with a clearer image or fill in details manually.`);
+      } else if (confidence < OCR_CONFIDENCE_THRESHOLDS.MODERATE) {
+        setError(`Moderate confidence in text extraction (${Math.round(confidence)}%). Please review the extracted details carefully.`);
+      } else {
+        console.log(`High confidence OCR result: ${Math.round(confidence)}%`);
       }
       
       setOCRProgress('Analyzing book details...');

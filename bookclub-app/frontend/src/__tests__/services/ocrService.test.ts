@@ -13,7 +13,8 @@ describe('OCRService', () => {
   beforeEach(() => {
     mockWorker = {
       recognize: jest.fn(),
-      terminate: jest.fn()
+      terminate: jest.fn(),
+      setParameters: jest.fn()
     };
     mockCreateWorker.mockResolvedValue(mockWorker);
     jest.clearAllMocks();
@@ -129,6 +130,52 @@ by George Orwell`;
     test('handles cleanup without initialized worker', async () => {
       // Should not throw error
       await expect(ocrService.cleanup()).resolves.toBeUndefined();
+    });
+  });
+
+  describe('preprocessImage', () => {
+    test('gracefully handles preprocessing failure in test environment', async () => {
+      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      mockWorker.recognize.mockResolvedValue({
+        data: { text: 'Test text', confidence: 75 }
+      });
+
+      // In test environment, preprocessing will fail due to canvas limitations
+      // but extractText should still work with original image
+      const result = await ocrService.extractText(mockFile, true);
+
+      expect(result.text).toBe('Test text');
+      expect(result.confidence).toBe(75);
+      expect(mockWorker.recognize).toHaveBeenCalledWith(mockFile);
+    });
+
+    test('can disable preprocessing', async () => {
+      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      mockWorker.recognize.mockResolvedValue({
+        data: { text: 'Test text', confidence: 80 }
+      });
+
+      const result = await ocrService.extractText(mockFile, false);
+
+      expect(result.text).toBe('Test text');
+      expect(result.confidence).toBe(80);
+      expect(mockWorker.recognize).toHaveBeenCalledWith(mockFile);
+    });
+  });
+
+  describe('enhanced error handling', () => {
+    test('provides detailed error logging', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const mockError = new Error('Detailed OCR error');
+      mockWorker.recognize.mockRejectedValue(mockError);
+
+      await expect(ocrService.extractText(mockFile)).rejects.toThrow(
+        'Failed to extract text from image. Please ensure the image is clear and contains readable text.'
+      );
+
+      expect(consoleSpy).toHaveBeenCalledWith('OCR recognition failed:', mockError);
+      consoleSpy.mockRestore();
     });
   });
 });
