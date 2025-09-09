@@ -484,6 +484,8 @@ resources:
     # DynamoDB Tables
     BooksTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:service}-books-${self:provider.stage}
         AttributeDefinitions:
@@ -510,6 +512,8 @@ resources:
 
     UsersTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:service}-users-${self:provider.stage}
         AttributeDefinitions:
@@ -536,6 +540,8 @@ resources:
 
     MetadataCacheTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:service}-metadata-cache-${self:provider.stage}
         AttributeDefinitions:
@@ -553,6 +559,8 @@ resources:
 
     BookclubGroupsTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:service}-bookclub-groups-${self:provider.stage}
         AttributeDefinitions:
@@ -579,6 +587,8 @@ resources:
 
     BookclubMembersTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:service}-bookclub-members-${self:provider.stage}
         AttributeDefinitions:
