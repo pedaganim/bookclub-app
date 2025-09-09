@@ -1,18 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
   <defs>
     <style>
-      .logo-text { font-family: 'Georgia', serif; font-weight: bold; fill: #4f46e5; }
-      .book-icon { fill: #4f46e5; }
+      .logo-text { 
+        font-family: 'Arial', sans-serif; 
+        font-weight: bold; 
+        fill: #A8B5A3; 
+        text-anchor: middle;
+      }
+      .logo-element { fill: #A8B5A3; }
     </style>
   </defs>
   
-  <!-- Book icon -->
-  <g transform="translate(5,8)">
-    <rect x="0" y="0" width="20" height="24" rx="2" class="book-icon" fill="none" stroke="#4f46e5" stroke-width="1.5"/>
-    <line x1="0" y1="12" x2="20" y2="12" stroke="#4f46e5" stroke-width="1"/>
-    <line x1="10" y1="0" x2="10" y2="24" stroke="#4f46e5" stroke-width="1"/>
+  <!-- Left book -->
+  <g class="logo-element">
+    <path d="M10 8 L10 28 L22 28 L22 26 L24 26 L24 8 Z" />
+    <rect x="11" y="9" width="1" height="16" fill="#fff" opacity="0.3"/>
   </g>
   
-  <!-- Text -->
-  <text x="35" y="26" class="logo-text" font-size="16">Book Club</text>
+  <!-- Right book -->
+  <g class="logo-element">
+    <path d="M110 8 L98 8 L98 26 L100 26 L100 28 L110 28 Z" />
+    <rect x="108" y="9" width="1" height="16" fill="#fff" opacity="0.3"/>
+  </g>
+  
+  <!-- Center - Person reading -->
+  <g class="logo-element">
+    <!-- Head -->
+    <circle cx="60" cy="12" r="8"/>
+    <!-- Body -->
+    <path d="M48 20 Q48 18 52 18 L68 18 Q72 18 72 20 L72 28 Q72 30 68 30 L52 30 Q48 30 48 28 Z"/>
+    <!-- Book in hands -->
+    <rect x="38" y="22" width="44" height="12" rx="1" fill="#fff"/>
+    <line x1="60" y1="22" x2="60" y2="34" stroke="#A8B5A3" stroke-width="1"/>
+  </g>
+  
+  <!-- Text is omitted for navbar version to keep it compact -->
 </svg>

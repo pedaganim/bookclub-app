@@ -1,33 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Book Club Logo Placeholder -->
   <defs>
     <style>
-      .logo-text { font-family: Arial, sans-serif; font-weight: bold; fill: #A8B5A3; }
-      .book-color { fill: #A8B5A3; }
-      .person-color { fill: #A8B5A3; }
+      .logo-text { 
+        font-family: 'Arial', sans-serif; 
+        font-weight: bold; 
+        fill: #A8B5A3; 
+        text-anchor: middle;
+      }
+      .logo-element { fill: #A8B5A3; }
     </style>
   </defs>
   
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="240" fill="white" stroke="#A8B5A3" stroke-width="8"/>
+  <!-- Left book -->
+  <g class="logo-element">
+    <path d="M140 160 L140 280 L200 280 L200 260 L220 260 L220 160 Z" />
+    <rect x="145" y="165" width="5" height="90" fill="#fff" opacity="0.3"/>
+    <rect x="155" y="165" width="40" height="5" fill="#fff" opacity="0.5"/>
+  </g>
   
-  <!-- Person with book icon -->
-  <g transform="translate(256,180)">
-    <!-- Person head -->
-    <circle cx="0" cy="-30" r="25" class="person-color"/>
-    <!-- Person body -->
-    <path d="M -40 20 Q -40 -10 0 -10 Q 40 -10 40 20 L 40 60 L -40 60 Z" class="person-color"/>
-    
+  <!-- Right book -->
+  <g class="logo-element">
+    <path d="M372 160 L292 160 L292 260 L312 260 L312 280 L372 280 Z" />
+    <rect x="362" y="165" width="5" height="90" fill="#fff" opacity="0.3"/>
+    <rect x="297" y="165" width="40" height="5" fill="#fff" opacity="0.5"/>
+  </g>
+  
+  <!-- Center - Person reading -->
+  <g class="logo-element">
+    <!-- Head -->
+    <circle cx="256" cy="120" r="35"/>
+    <!-- Body/torso -->
+    <path d="M220 160 Q220 150 230 150 L282 150 Q292 150 292 160 L292 220 Q292 230 282 230 L230 230 Q220 230 220 220 Z"/>
     <!-- Book in hands -->
-    <rect x="-35" y="10" width="70" height="50" rx="5" class="book-color" fill="none" stroke="#A8B5A3" stroke-width="3"/>
-    <line x1="-35" y1="35" x2="35" y2="35" stroke="#A8B5A3" stroke-width="2"/>
-    
-    <!-- Side books -->
-    <rect x="-80" y="20" width="30" height="40" rx="3" class="book-color"/>
-    <rect x="50" y="15" width="30" height="45" rx="3" class="book-color"/>
+    <path d="M200 190 L200 260 L312 260 L312 190 L256 180 Z" fill="#fff"/>
+    <path d="M256 180 L256 260" stroke="#A8B5A3" stroke-width="2" fill="none"/>
+    <!-- Reading lines -->
+    <rect x="210" y="200" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="210" y="210" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="210" y="220" width="30" height="2" fill="#A8B5A3"/>
+    <rect x="267" y="200" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="267" y="210" width="35" height="2" fill="#A8B5A3"/>
+    <rect x="267" y="220" width="30" height="2" fill="#A8B5A3"/>
   </g>
   
   <!-- Text -->
-  <text x="256" y="380" text-anchor="middle" class="logo-text" font-size="48">BOOK</text>
-  <text x="256" y="430" text-anchor="middle" class="logo-text" font-size="48">CLUB</text>
+  <text x="256" y="340" class="logo-text" font-size="56">BOOK</text>
+  <text x="256" y="410" class="logo-text" font-size="56">CLUB</text>
 </svg>
