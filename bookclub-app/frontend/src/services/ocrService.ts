@@ -68,6 +68,7 @@ class OCRService {
       
       this.isInitialized = true;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('OCR worker initialization failed:', error);
       throw new Error('Failed to initialize OCR engine. Please try again.');
     }
@@ -238,26 +239,19 @@ class OCRService {
       if (enablePreprocessing) {
         try {
           processedFile = await this.preprocessImage(file);
-          console.log('Image preprocessing completed successfully');
         } catch (preprocessError) {
+          // eslint-disable-next-line no-console
           console.warn('Image preprocessing failed, using original image:', preprocessError);
           // Continue with original file if preprocessing fails
         }
       }
 
-      console.log('Starting OCR recognition...');
-      const startTime = Date.now();
       
       const { data: { text, confidence } } = await this.worker.recognize(processedFile);
       
-      const processingTime = Date.now() - startTime;
-      console.log(`OCR completed in ${processingTime}ms with confidence: ${confidence}%`);
-      
-      // Log extracted text for debugging (truncated)
-      console.log('Extracted text preview:', text.substring(0, 200) + (text.length > 200 ? '...' : ''));
-      
       return { text: text.trim(), confidence };
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('OCR recognition failed:', error);
       throw new Error('Failed to extract text from image. Please ensure the image is clear and contains readable text.');
     }

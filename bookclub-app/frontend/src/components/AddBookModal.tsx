@@ -106,6 +106,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
       } else if (confidence < OCR_CONFIDENCE_THRESHOLDS.MODERATE) {
         setError(`Moderate confidence in text extraction (${Math.round(confidence)}%). Please review the extracted details carefully.`);
       } else {
+        // eslint-disable-next-line no-console
         console.log(`High confidence OCR result: ${Math.round(confidence)}%`);
       }
       
