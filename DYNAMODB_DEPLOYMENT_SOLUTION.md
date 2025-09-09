@@ -41,9 +41,9 @@ Applied the custom resource solution to tables that have experienced deployment 
 
 - ✅ `BookclubGroupsTable` - Uses custom resource
 - ✅ `BookclubMembersTable` - Uses custom resource  
+- ✅ `MetadataCacheTable` - Uses custom resource (updated to fix deployment issue)
 - ⚪ `BooksTable` - Remains regular DynamoDB table
 - ⚪ `UsersTable` - Remains regular DynamoDB table
-- ⚪ `MetadataCacheTable` - Remains regular DynamoDB table
 
 ## Configuration Changes
 
