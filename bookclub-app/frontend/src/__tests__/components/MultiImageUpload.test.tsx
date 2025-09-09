@@ -84,8 +84,9 @@ describe('MultiImageUpload', () => {
       expect(mockImageProcessingService.processImages).toHaveBeenCalledTimes(2);
     });
 
-    // Should be called twice - once for each file
-    expect(mockOnImagesProcessed).toHaveBeenCalledTimes(2);
+    // Should be called once at the end with all results
+    expect(mockOnImagesProcessed).toHaveBeenCalledTimes(1);
+    expect(mockOnImagesProcessed).toHaveBeenCalledWith(mockProcessedImages);
   });
 
   it('should show processing progress', async () => {
@@ -289,14 +290,6 @@ describe('MultiImageUpload', () => {
 
     const fileInput = screen.getByLabelText('Select multiple image files');
     await userEvent.upload(fileInput, mockFiles);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Valid: 2/)).toBeInTheDocument();
-      expect(screen.getByText(/Book content: 1/)).toBeInTheDocument();
-      expect(screen.getByText(/Invalid: 1/)).toBeInTheDocument();
-      expect(screen.getByText(/Total size: \d+KB/)).toBeInTheDocument();
-    });
-  });
 
     await waitFor(() => {
       expect(screen.getByText(/Valid: 2/)).toBeInTheDocument();

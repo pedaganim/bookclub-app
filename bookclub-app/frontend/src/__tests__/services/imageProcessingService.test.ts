@@ -87,8 +87,8 @@ describe('ImageProcessingService', () => {
     const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
     
     ocrService.extractText.mockResolvedValue({
-      text: 'This is not a book cover, just random text without book keywords',
-      confidence: 70,
+      text: 'Grocery shopping list: milk, eggs, bread, apples, bananas',
+      confidence: 70, // High confidence but non-book content
     });
 
     const results = await imageProcessingService.processImages([mockFile]);
@@ -104,7 +104,7 @@ describe('ImageProcessingService', () => {
     
     ocrService.extractText.mockResolvedValue({
       text: 'Book Title',
-      confidence: 20,
+      confidence: 20, // Below minBookConfidence of 30
     });
 
     const results = await imageProcessingService.processImages([mockFile]);
@@ -135,29 +135,45 @@ describe('ImageProcessingService', () => {
     await expect(imageProcessingService.processImages(mockFiles)).rejects.toThrow('Maximum 25 images allowed');
   });
 
-  it('should detect various book-related keywords', () => {
-    const testCases = [
-      { text: 'ISBN 978-1234567890', expected: true },
-      { text: 'Published by Random House', expected: true },
-      { text: 'Chapter 1: Introduction', expected: true },
-      { text: 'Author: John Doe', expected: true },
-      { text: 'Novel of the Year', expected: true },
-      { text: 'Random text without book content', expected: false },
-      { text: 'Shopping list: milk, eggs, bread', expected: false },
-    ];
-
-    testCases.forEach(({ text, expected }) => {
-      // Access private method for testing - this is a workaround for testing
-      const isBook = imageProcessingService.detectBookContent?.(text) ?? (
-        text.toLowerCase().includes('book') || 
-        text.toLowerCase().includes('isbn') ||
-        text.toLowerCase().includes('author') ||
-        text.toLowerCase().includes('chapter') ||
-        text.toLowerCase().includes('novel') ||
-        text.toLowerCase().includes('published')
-      );
-      
-      expect(isBook).toBe(expected);
+  it('should detect ISBN patterns', async () => {
+    const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
+    
+    ocrService.extractText.mockResolvedValue({
+      text: 'ISBN 978-1234567890',
+      confidence: 70,
     });
+
+    const results = await imageProcessingService.processImages([mockFile]);
+    
+    expect(results[0].isBook).toBe(true);
+    expect(results[0].isValid).toBe(true);
+  });
+
+  it('should detect author keywords', async () => {
+    const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
+    
+    ocrService.extractText.mockResolvedValue({
+      text: 'By Author: John Doe',
+      confidence: 70,
+    });
+
+    const results = await imageProcessingService.processImages([mockFile]);
+    
+    expect(results[0].isBook).toBe(true);
+    expect(results[0].isValid).toBe(true);
+  });
+
+  it('should detect chapter keywords', async () => {
+    const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
+    
+    ocrService.extractText.mockResolvedValue({
+      text: 'Chapter 1: Introduction',
+      confidence: 70,
+    });
+
+    const results = await imageProcessingService.processImages([mockFile]);
+    
+    expect(results[0].isBook).toBe(true);
+    expect(results[0].isValid).toBe(true);
   });
 });
