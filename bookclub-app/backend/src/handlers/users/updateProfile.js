@@ -45,7 +45,8 @@ module.exports.handler = async (event) => {
     // Validate timezone if provided
     if (updates.timezone) {
       const validTimezones = Intl.supportedValuesOf('timeZone');
-      if (!validTimezones.includes(updates.timezone)) {
+      // Accept "UTC" as a special case since it's used by the frontend but not in Intl.supportedValuesOf
+      if (updates.timezone !== 'UTC' && !validTimezones.includes(updates.timezone)) {
         return response.validationError({
           timezone: 'Invalid timezone',
         });
