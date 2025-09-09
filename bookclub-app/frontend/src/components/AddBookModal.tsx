@@ -30,7 +30,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   // Cleanup OCR service on unmount
   useEffect(() => {
     return () => {
-      ocrService.cleanup().catch(console.error);
+      ocrService.cleanup().catch(() => {
+        // Silently handle cleanup errors
+      });
     };
   }, []);
 
@@ -112,7 +114,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         setError('Could not identify book details from image. Please fill in manually.');
       }
     } catch (error) {
-      console.error('OCR failed:', error);
       setError(error instanceof Error ? error.message : 'Could not extract text from image. You can still fill in details manually.');
     } finally {
       setProcessingOCR(false);
@@ -151,7 +152,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         }));
       }
     } catch (error) {
-      console.error('Failed to enrich metadata:', error);
       // Still populate with OCR data if API fails
       setFormData(prev => ({
         ...prev,
@@ -178,7 +178,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         }, 100);
       }
     } catch (error) {
-      console.error('Camera access failed:', error);
       setError('Could not access camera. Please check permissions or use file upload instead.');
     }
   };
@@ -234,7 +233,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     try {
       await ocrService.cleanup();
     } catch (error) {
-      console.error('Error cleaning up OCR service:', error);
+      // Silently handle cleanup errors
     }
     
     onClose();

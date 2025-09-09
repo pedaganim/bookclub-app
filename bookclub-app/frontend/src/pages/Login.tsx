@@ -60,7 +60,6 @@ const Login: React.FC = () => {
                   const url = `https://${config.cognito.domain}/oauth2/authorize?${params.toString()}`;
                   window.location.href = url;
                 } catch (e) {
-                  console.error('Failed to initiate OAuth', e);
                   setError('Failed to start Google sign-in. Please try again.');
                 }
               }}
