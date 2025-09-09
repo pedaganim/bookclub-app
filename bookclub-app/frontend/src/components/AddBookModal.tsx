@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
 import { ocrService, OCR_CONFIDENCE_THRESHOLDS } from '../services/ocrService';
+import { ProcessedImage } from '../services/imageProcessingService';
+import MultiImageUpload from './MultiImageUpload';
 
 interface AddBookModalProps {
   onClose: () => void;
@@ -16,10 +18,12 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     status: 'available' as const,
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [additionalImages, setAdditionalImages] = useState<ProcessedImage[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [processingOCR, setProcessingOCR] = useState(false);
   const [ocrProgress, setOCRProgress] = useState('');
   const [showCamera, setShowCamera] = useState(false);
@@ -246,14 +250,37 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     onClose();
   };
 
+  const uploadImages = async (images: ProcessedImage[]): Promise<string[]> => {
+    if (images.length === 0) return [];
+
+    setUploadingImages(true);
+    setUploadProgress({ current: 0, total: images.length });
+
+    try {
+      const validImages = images.filter(img => img.isValid);
+      const uploadPromises = validImages.map(async (image, index) => {
+        setUploadProgress({ current: index + 1, total: validImages.length });
+        
+        const uploadData = await apiService.generateUploadUrl(image.file.type, image.file.name);
+        await apiService.uploadFile(uploadData.uploadUrl, image.file);
+        return uploadData.fileUrl;
+      });
+
+      return await Promise.all(uploadPromises);
+    } finally {
+      setUploadingImages(false);
+      setUploadProgress({ current: 0, total: 0 });
+    }
+  };
+
   const uploadImage = async (file: File): Promise<string> => {
     try {
-      setUploadingImage(true);
+      setUploadingImages(true);
       const uploadData = await apiService.generateUploadUrl(file.type, file.name);
       await apiService.uploadFile(uploadData.uploadUrl, file);
       return uploadData.fileUrl;
     } finally {
-      setUploadingImage(false);
+      setUploadingImages(false);
     }
   };
 
@@ -264,14 +291,22 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
     try {
       let coverImageUrl = '';
+      let additionalImageUrls: string[] = [];
       
+      // Upload cover image if provided
       if (coverImage) {
         coverImageUrl = await uploadImage(coverImage);
+      }
+
+      // Upload additional images
+      if (additionalImages.length > 0) {
+        additionalImageUrls = await uploadImages(additionalImages);
       }
 
       const bookData = {
         ...formData,
         coverImage: coverImageUrl || undefined,
+        images: additionalImageUrls.length > 0 ? additionalImageUrls : undefined,
         enrichWithMetadata: true, // Enable metadata enrichment
       };
 
@@ -286,7 +321,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div className="relative top-8 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Book</h3>
           {error && (
@@ -352,7 +387,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   type="button"
                   onClick={startCamera}
                   className="px-3 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                  disabled={loading || uploadingImage || processingOCR}
+                  disabled={loading || uploadingImages || processingOCR}
                   aria-label="Take a photo of the book cover using your camera"
                 >
                   📷 Take Photo
@@ -361,21 +396,21 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-                  disabled={loading || uploadingImage || processingOCR}
+                  disabled={loading || uploadingImages || processingOCR}
                   aria-label="Upload an image of the book cover from your device"
                 >
-                  📁 Upload Image
+                  📁 Upload Cover
                 </button>
               </div>
               
-              {/* Hidden file input */}
+              {/* Hidden file input for cover */}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
-                aria-label="Select image file"
+                aria-label="Select cover image file"
               />
               
               {/* Camera view */}
@@ -417,7 +452,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               {/* Hidden canvas for photo capture */}
               <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
               
-              {/* Image preview */}
+              {/* Cover image preview */}
               {imagePreview && (
                 <div className="mb-3">
                   <img
@@ -433,9 +468,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                       setFormData(prev => ({ ...prev, title: '', author: '', description: '' }));
                     }}
                     className="mt-1 text-sm text-red-600 hover:text-red-800 focus:outline-none focus:underline"
-                    aria-label="Remove image and clear extracted book details"
+                    aria-label="Remove cover image and clear extracted book details"
                   >
-                    Remove image
+                    Remove cover image
                   </button>
                 </div>
               )}
@@ -455,31 +490,64 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 </div>
               )}
               
-              {/* File selection fallback */}
+              {/* File selection fallback for cover */}
               {!showCamera && !imagePreview && (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center mb-4">
                   <p className="text-sm text-gray-500">
                     Take a photo of the book cover or upload an image to automatically fill in book details
                   </p>
                 </div>
               )}
             </div>
+
+            {/* Additional Images Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Additional Images
+                <span className="text-xs text-gray-500 ml-1">(Optional - up to 25 images)</span>
+              </label>
+              
+              <MultiImageUpload
+                onImagesProcessed={setAdditionalImages}
+                onError={setError}
+                disabled={loading || uploadingImages || processingOCR}
+                maxImages={25}
+              />
+            </div>
+
+            {/* Upload Progress */}
+            {uploadingImages && (
+              <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-md" role="status" aria-live="polite">
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2" aria-hidden="true"></div>
+                  <span className="text-sm text-green-700">
+                    Uploading images... ({uploadProgress.current}/{uploadProgress.total})
+                  </span>
+                </div>
+                <div className="mt-2 w-full bg-green-200 rounded-full h-1">
+                  <div 
+                    className="bg-green-600 h-1 rounded-full transition-all duration-300" 
+                    style={{ width: `${(uploadProgress.current / Math.max(uploadProgress.total, 1)) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
             
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
                 onClick={handleClose}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                disabled={loading || uploadingImage || processingOCR}
+                disabled={loading || uploadingImages || processingOCR}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={loading || uploadingImage || processingOCR}
+                disabled={loading || uploadingImages || processingOCR}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
               >
-                {loading ? 'Adding...' : uploadingImage ? 'Uploading...' : processingOCR ? 'Processing...' : 'Add Book'}
+                {loading ? 'Adding...' : uploadingImages ? 'Uploading...' : processingOCR ? 'Processing...' : 'Add Book'}
               </button>
             </div>
           </form>
