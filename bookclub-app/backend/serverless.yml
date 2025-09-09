@@ -599,10 +599,9 @@ resources:
           WriteCapacityUnits: 5
 
     MetadataCacheTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
+      Type: AWS::CloudFormation::CustomResource
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-metadata-cache-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: cacheKey
@@ -616,6 +615,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+        DeletionPolicy: Retain
 
     BookclubGroupsTable:
       Type: AWS::CloudFormation::CustomResource
