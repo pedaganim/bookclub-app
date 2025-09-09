@@ -62,6 +62,62 @@ resource "aws_dynamodb_table" "metadata_cache" {
   }
 }
 
+resource "aws_dynamodb_table" "bookclub_groups" {
+  name         = "${var.service_name}-bookclub-groups-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "clubId"
+
+  attribute {
+    name = "clubId"
+    type = "S"
+  }
+
+  attribute {
+    name = "inviteCode"
+    type = "S"
+  }
+
+  attribute {
+    name = "createdBy"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "InviteCodeIndex"
+    hash_key        = "inviteCode"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "CreatedByIndex"
+    hash_key        = "createdBy"
+    projection_type = "ALL"
+  }
+}
+
+resource "aws_dynamodb_table" "bookclub_members" {
+  name         = "${var.service_name}-bookclub-members-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "clubId"
+  range_key    = "userId"
+
+  attribute {
+    name = "clubId"
+    type = "S"
+  }
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "UserIdIndex"
+    hash_key        = "userId"
+    projection_type = "ALL"
+  }
+}
+
 # S3 bucket for book covers
 resource "aws_s3_bucket" "book_covers" {
   bucket = "${var.service_name}-${var.stage}-book-covers"
@@ -134,4 +190,16 @@ resource "aws_ssm_parameter" "metadata_cache_table_name" {
   name  = "/${var.service_name}/${var.stage}/metadata_cache_table_name"
   type  = "String"
   value = aws_dynamodb_table.metadata_cache.name
+}
+
+resource "aws_ssm_parameter" "bookclub_groups_table_name" {
+  name  = "/${var.service_name}/${var.stage}/bookclub_groups_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.bookclub_groups.name
+}
+
+resource "aws_ssm_parameter" "bookclub_members_table_name" {
+  name  = "/${var.service_name}/${var.stage}/bookclub_members_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.bookclub_members.name
 }
