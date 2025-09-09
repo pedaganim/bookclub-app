@@ -139,13 +139,45 @@ jobs:
           fi
           echo "API_URL=$API_URL" | tee -a "$GITHUB_ENV"
 
-      - name: Configure Cognito domain for frontend
+      - name: Fetch Cognito IDs from CloudFormation exports
         working-directory: bookclub-app/backend
         run: |
           set -euo pipefail
+          SERVICE=bookclub-app
           STAGE=prod
+          # Try CFN exports first (may print 'None' when missing)
+          USER_POOL_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolId'].Value | [0]" --output text | sed 's/None//')
+          CLIENT_ID=$(aws cloudformation list-exports --query "Exports[?Name=='${SERVICE}-${STAGE}-UserPoolClientId'].Value | [0]" --output text | sed 's/None//')
+
+          # If exports missing, fall back to resolving from stack resources + Cognito APIs
+          if [ -z "$USER_POOL_ID" ] || [ -z "$CLIENT_ID" ]; then
+            echo "CFN exports for UserPoolId/ClientId not found; falling back to stack resources..."
+            # Find the physical user pool id from the stack resources
+            USER_POOL_ID=${USER_POOL_ID:-$(aws cloudformation describe-stack-resources \
+              --stack-name "${SERVICE}-${STAGE}" \
+              --query "StackResources[?LogicalResourceId=='UserPool'].PhysicalResourceId | [0]" --output text 2>/dev/null | sed 's/None//')}
+
+            if [ -n "$USER_POOL_ID" ]; then
+              # Try to find an app client by name first, then default to the first client
+              CLIENT_NAME="${SERVICE}-client-${STAGE}"
+              CLIENT_ID=${CLIENT_ID:-$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --max-results 60 \
+                --query "UserPoolClients[?ClientName=='${CLIENT_NAME}'].ClientId | [0]" --output text 2>/dev/null | sed 's/None//')}
+              if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
+                CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --max-results 60 \
+                  --query "UserPoolClients[0].ClientId" --output text 2>/dev/null | sed 's/None//')
+              fi
+            fi
+          fi
+
+          if [ -z "$USER_POOL_ID" ] || [ -z "$CLIENT_ID" ]; then
+            echo "Failed to resolve Cognito UserPoolId/ClientId from both CFN exports and Cognito APIs." >&2
+            echo "Check that the Serverless stack created the User Pool and App Client successfully." >&2
+            exit 1
+          fi
           DOMAIN_PREFIX=$(jq -r '.userPoolDomainPrefix' config/app.prod.json)
           COGNITO_DOMAIN="${DOMAIN_PREFIX}-${STAGE}.auth.${AWS_REGION}.amazoncognito.com"
+          echo "REACT_APP_COGNITO_USER_POOL_ID=$USER_POOL_ID" >> "$GITHUB_ENV"
+          echo "REACT_APP_COGNITO_CLIENT_ID=$CLIENT_ID" >> "$GITHUB_ENV"
           echo "REACT_APP_COGNITO_DOMAIN=$COGNITO_DOMAIN" >> "$GITHUB_ENV"
 
       - name: Build frontend
@@ -154,9 +186,10 @@ jobs:
           # Prefer detected API URL; falls back to execute-api if custom domain not live yet
           REACT_APP_API_URL: ${{ env.API_URL }}
           REACT_APP_COGNITO_REGION: us-east-1
-          # Use GitHub secrets directly for Cognito configuration
-          REACT_APP_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
-          REACT_APP_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
+          # Optional: You can fetch these dynamically via serverless info if desired
+          # For simplicity in CI, you may store them as secrets
+          REACT_APP_COGNITO_USER_POOL_ID: ${{ env.REACT_APP_COGNITO_USER_POOL_ID }}
+          REACT_APP_COGNITO_CLIENT_ID: ${{ env.REACT_APP_COGNITO_CLIENT_ID }}
           REACT_APP_COGNITO_DOMAIN: ${{ env.REACT_APP_COGNITO_DOMAIN }}
           REACT_APP_OAUTH_REDIRECT_SIGNIN: https://booklub.shop/auth/callback
           REACT_APP_OAUTH_REDIRECT_SIGNOUT: https://booklub.shop/
