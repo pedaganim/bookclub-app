@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+  <defs>
+    <style>
+      .logo-text { font-family: 'Georgia', serif; font-weight: bold; fill: #4f46e5; }
+      .book-icon { fill: #4f46e5; }
+    </style>
+  </defs>
+  
+  <!-- Book icon -->
+  <g transform="translate(5,8)">
+    <rect x="0" y="0" width="20" height="24" rx="2" class="book-icon" fill="none" stroke="#4f46e5" stroke-width="1.5"/>
+    <line x1="0" y1="12" x2="20" y2="12" stroke="#4f46e5" stroke-width="1"/>
+    <line x1="10" y1="0" x2="10" y2="24" stroke="#4f46e5" stroke-width="1"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="35" y="26" class="logo-text" font-size="16">Book Club</text>
+</svg>

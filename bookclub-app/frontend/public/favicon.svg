@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <style>
+      .book-icon { fill: #4f46e5; stroke: #4f46e5; }
+    </style>
+  </defs>
+  
+  <!-- Simplified book icon for favicon -->
+  <rect x="6" y="4" width="20" height="24" rx="2" class="book-icon" fill="#4f46e5"/>
+  <rect x="8" y="6" width="16" height="20" rx="1" fill="white"/>
+  <line x1="8" y1="16" x2="24" y2="16" stroke="#4f46e5" stroke-width="1"/>
+  <line x1="16" y1="6" x2="16" y2="26" stroke="#4f46e5" stroke-width="1"/>
+</svg>
