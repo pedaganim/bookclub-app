@@ -3,6 +3,34 @@ const Book = require('../../models/book');
 const bookMetadataService = require('../../lib/book-metadata');
 const textractService = require('../../lib/textract-service');
 
+/**
+ * Helper function to assign ISBN based on extracted metadata
+ * @param {string} existingIsbn10 - Existing ISBN-10 value
+ * @param {string} existingIsbn13 - Existing ISBN-13 value
+ * @param {string} extractedIsbn - ISBN extracted from image
+ * @returns {Object} Object with isbn10 and isbn13 properties
+ */
+function assignIsbnFromMetadata(existingIsbn10, existingIsbn13, extractedIsbn) {
+  const result = {
+    isbn10: existingIsbn10,
+    isbn13: existingIsbn13
+  };
+
+  if (!extractedIsbn) {
+    return result;
+  }
+
+  if (!existingIsbn10 && extractedIsbn.length === 10) {
+    result.isbn10 = extractedIsbn;
+  }
+  
+  if (!existingIsbn13 && extractedIsbn.length === 13) {
+    result.isbn13 = extractedIsbn;
+  }
+
+  return result;
+}
+
 module.exports.handler = async (event) => {
   try {
     // Derive userId from Cognito authorizer claims (configured in API Gateway)
@@ -79,14 +107,20 @@ module.exports.handler = async (event) => {
           console.log('[BookCreate] Textract extraction successful');
           
           // Merge Textract metadata, preserving user input and previous metadata
+          const isbnAssignment = assignIsbnFromMetadata(
+            bookData.isbn10,
+            bookData.isbn13,
+            bookMetadata.isbn
+          );
+          
           bookData = {
             ...bookData,
             // Use Textract data only for empty fields, prioritizing user input
             title: bookData.title || bookMetadata.title,
             author: bookData.author || bookMetadata.author,
             description: bookData.description || bookMetadata.description,
-            isbn10: bookData.isbn10 || (bookMetadata.isbn && bookMetadata.isbn.length === 10 ? bookMetadata.isbn : null),
-            isbn13: bookData.isbn13 || (bookMetadata.isbn && bookMetadata.isbn.length === 13 ? bookMetadata.isbn : null),
+            isbn10: isbnAssignment.isbn10,
+            isbn13: isbnAssignment.isbn13,
             publisher: bookData.publisher || bookMetadata.publisher,
             publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
             textractExtractedText: extractedText.fullText,

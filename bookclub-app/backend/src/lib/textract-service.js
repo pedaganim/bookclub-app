@@ -138,8 +138,8 @@ class TextractService {
 
     // Extract author - look for patterns like "by [Name]" or "Author: [Name]"
     const authorPatterns = [
-      /(?:by|author|written by)[:\s]+([a-z\s.,''-]+?)(?:\s*(?:isbn|copyright|published|©|\d{4}|$))/gi,
-      /([a-z\s.,''-]+?)(?:\s*,\s*(?:author|writer))/gi
+      /(?:by|author|written by)[:\s]+([a-z\s.,'\-]+?)(?:\s*(?:isbn|copyright|published|©|\d{4}|$))/gi,
+      /([a-z\s.,'\-]+?)(?:\s*,\s*(?:author|writer))/gi
     ];
 
     for (const pattern of authorPatterns) {
@@ -179,8 +179,16 @@ class TextractService {
     const yearPattern = /(?:copyright|published|©)[:\s]*(\d{4})/gi;
     const yearMatch = fullText.match(yearPattern);
     if (yearMatch) {
-      const year = yearMatch[1] || yearMatch[0].match(/\d{4}/)[0];
-      if (year >= 1800 && year <= new Date().getFullYear()) {
+      let year;
+      if (yearMatch[1]) {
+        year = yearMatch[1];
+      } else {
+        const yearDigits = yearMatch[0].match(/\d{4}/);
+        if (yearDigits && yearDigits[0]) {
+          year = yearDigits[0];
+        }
+      }
+      if (year && year >= 1800 && year <= new Date().getFullYear()) {
         metadata.publishedDate = year;
       }
     }
