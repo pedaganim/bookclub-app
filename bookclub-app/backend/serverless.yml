@@ -407,17 +407,17 @@ functions:
     timeout: 300
     role: DynamoTableManagerRole
 
-  # Custom resource function for S3 bucket create-if-missing
-  s3BucketManager:
-    handler: src/custom-resources/s3-bucket-manager.handler
-    timeout: 300
-    role: S3BucketManagerRole
-
   # Custom resource function for Cognito IdP create-or-update
   cognitoResourceManager:
     handler: src/custom-resources/cognito-resource-manager.handler
     timeout: 300
     role: CognitoResourceManagerRole
+
+  # Custom resource function for S3 bucket management
+  s3BucketManager:
+    handler: src/custom-resources/s3-bucket-manager.handler
+    timeout: 300
+    role: S3BucketManagerRole
 
 resources:
   Resources:
@@ -457,44 +457,6 @@ resources:
         FunctionName: !Ref DynamoTableManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
-    # IAM role for S3 bucket manager custom resource
-    S3BucketManagerRole:
-      Type: AWS::IAM::Role
-      Properties:
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: lambda.amazonaws.com
-              Action: sts:AssumeRole
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        Policies:
-          - PolicyName: S3BucketManager
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - s3:CreateBucket
-                    - s3:HeadBucket
-                    - s3:GetBucketLocation
-                    - s3:GetBucketCors
-                    - s3:PutBucketCors
-                    - s3:GetPublicAccessBlock
-                    - s3:PutPublicAccessBlock
-                    - s3:GetBucketPolicy
-                    - s3:PutBucketPolicy
-                  Resource: "*"
-
-    # Permission for CloudFormation to invoke S3 bucket manager
-    S3BucketManagerInvokePermission:
-      Type: AWS::Lambda::Permission
-      Properties:
-        Action: lambda:InvokeFunction
-        FunctionName: !Ref S3BucketManagerLambdaFunction
-        Principal: cloudformation.amazonaws.com
 
     # IAM role for Cognito IdP manager custom resource
     CognitoResourceManagerRole:
@@ -530,6 +492,45 @@ resources:
         FunctionName: !Ref CognitoResourceManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
+    # IAM role for S3 bucket manager custom resource
+    S3BucketManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: S3BucketManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:CreateBucket
+                    - s3:DeleteBucket
+                    - s3:HeadBucket
+                    - s3:PutBucketCors
+                    - s3:PutBucketPolicy
+                    - s3:PutPublicAccessBlock
+                    - s3:GetBucketLocation
+                    - s3:ListBucket
+                  Resource: 
+                    - arn:aws:s3:::${self:service}-*-${self:provider.stage}
+
+    # Permission for CloudFormation to invoke S3 bucket manager
+    S3BucketManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref S3BucketManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
     UserPool:
       Type: AWS::Cognito::UserPool
       DeletionPolicy: Retain
@@ -552,7 +553,6 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
-      DependsOn: GoogleIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -783,12 +783,12 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
-        Action: CreateOrConfigureBucket
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
           IgnorePublicAcls: false
+          RestrictPublicBuckets: true
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:
@@ -802,13 +802,7 @@ resources:
               AllowedOrigins:
                 - "*"
               MaxAge: 3000
-        PolicyDocument:
-          Statement:
-            - Sid: PublicReadGetObject
-              Effect: Allow
-              Principal: "*"
-              Action: s3:GetObject
-              Resource: !Sub "${self:service}-${self:provider.stage}-book-covers/*"
+        EnablePublicRead: true
 
   Outputs:
     UserPoolId:
