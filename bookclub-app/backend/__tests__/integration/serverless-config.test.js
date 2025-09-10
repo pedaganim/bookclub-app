@@ -152,15 +152,54 @@ describe('Serverless Configuration', () => {
       }
     });
 
-    // Check custom resource tables have DeletionPolicy in Properties
+    // Check custom resource tables have DeletionPolicy and UpdateReplacePolicy
     customResourceTableNames.forEach(tableName => {
-      const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:[\\s\\S]*?DeletionPolicy: Retain`, 'g');
+      const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:`, 'g');
       const tableMatch = serverlessConfigContent.match(tableDefRegex);
       
       expect(tableMatch).toBeTruthy();
       if (tableMatch) {
-        expect(tableMatch[0]).toContain('Type: AWS::CloudFormation::CustomResource');
-        expect(tableMatch[0]).toContain('DeletionPolicy: Retain');
+        const tableSection = tableMatch[0];
+        expect(tableSection).toContain('Type: AWS::CloudFormation::CustomResource');
+        expect(tableSection).toContain('DeletionPolicy: Retain');
+        expect(tableSection).toContain('UpdateReplacePolicy: Retain');
+      }
+    });
+  });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for S3 bucket', () => {
+    // This test ensures that the S3 bucket has retention policies
+    // to prevent deployment conflicts when bucket already exists
+    const bucketDefRegex = new RegExp(`BookCoversBucket:[\\s\\S]*?Properties:`, 'g');
+    const bucketMatch = serverlessConfigContent.match(bucketDefRegex);
+    
+    expect(bucketMatch).toBeTruthy();
+    if (bucketMatch) {
+      const bucketSection = bucketMatch[0];
+      expect(bucketSection).toContain('DeletionPolicy: Retain');
+      expect(bucketSection).toContain('UpdateReplacePolicy: Retain');
+    }
+  });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for Cognito resources', () => {
+    // This test ensures that critical Cognito resources have retention policies
+    // to prevent loss of user accounts and authentication configuration
+    const cognitoResourceNames = [
+      'UserPool',
+      'UserPoolClient', 
+      'GoogleIdentityProvider',
+      'UserPoolDomain'
+    ];
+
+    cognitoResourceNames.forEach(resourceName => {
+      const resourceDefRegex = new RegExp(`${resourceName}:[\\s\\S]*?Properties:`, 'g');
+      const resourceMatch = serverlessConfigContent.match(resourceDefRegex);
+      
+      expect(resourceMatch).toBeTruthy();
+      if (resourceMatch) {
+        const resourceSection = resourceMatch[0];
+        expect(resourceSection).toContain('DeletionPolicy: Retain');
+        expect(resourceSection).toContain('UpdateReplacePolicy: Retain');
       }
     });
   });

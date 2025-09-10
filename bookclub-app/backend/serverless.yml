@@ -447,6 +447,8 @@ resources:
 
     UserPool:
       Type: AWS::Cognito::UserPool
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         UserPoolName: ${self:service}-user-pool-${self:provider.stage}
         Schema:
@@ -466,6 +468,8 @@ resources:
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
       DependsOn: GoogleIdentityProvider
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -491,6 +495,8 @@ resources:
 
     GoogleIdentityProvider:
       Type: AWS::Cognito::UserPoolIdentityProvider
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         UserPoolId: !Ref UserPool
         ProviderName: Google
@@ -507,6 +513,8 @@ resources:
 
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -572,6 +580,8 @@ resources:
 
     UsersTable:
       Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-users-${self:provider.stage}
@@ -596,10 +606,11 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-        DeletionPolicy: Retain
 
     MetadataCacheTable:
       Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-metadata-cache-${self:provider.stage}
@@ -615,10 +626,11 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-        DeletionPolicy: Retain
 
     BookclubGroupsTable:
       Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-groups-${self:provider.stage}
@@ -643,10 +655,11 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-        DeletionPolicy: Retain
 
     BookclubMembersTable:
       Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-members-${self:provider.stage}
@@ -673,11 +686,12 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-        DeletionPolicy: Retain
 
     # S3 Bucket for book covers
     BookCoversBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
