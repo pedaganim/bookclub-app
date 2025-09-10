@@ -521,7 +521,7 @@ resources:
                     - s3:GetBucketLocation
                     - s3:ListBucket
                   Resource: 
-                    - arn:aws:s3:::${self:service}-*-${self:provider.stage}
+                    - arn:aws:s3:::${self:service}-${self:provider.stage}-*
 
     # Permission for CloudFormation to invoke S3 bucket manager
     S3BucketManagerInvokePermission:
