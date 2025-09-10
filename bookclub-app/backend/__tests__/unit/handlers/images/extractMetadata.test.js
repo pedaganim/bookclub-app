@@ -7,6 +7,13 @@ const mockTextractService = require('../../../../src/lib/textract-service');
 describe('Extract Image Metadata Handler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock console methods to avoid noise in tests
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   const mockEvent = (body, userId = 'test-user-123') => ({
