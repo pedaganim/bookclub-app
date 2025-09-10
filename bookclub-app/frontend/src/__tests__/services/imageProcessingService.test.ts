@@ -35,6 +35,7 @@ describe('ImageProcessingService', () => {
     }) as any;
 
     // Mock Image constructor
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const OriginalImage = global.Image;
     global.Image = class MockImage {
       onload: (() => void) | null = null;
