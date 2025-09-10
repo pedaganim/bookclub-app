@@ -183,6 +183,36 @@ class ApiService {
     });
   }
 
+  // Add method to get pre-extracted metadata
+  async getPreExtractedMetadata(s3Bucket: string, s3Key: string): Promise<any> {
+    try {
+      // Wait a moment for automatic processing to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const response: AxiosResponse<ApiResponse<any>> = await this.api.get(`/images/metadata?s3Bucket=${encodeURIComponent(s3Bucket)}&s3Key=${encodeURIComponent(s3Key)}`);
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return null;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Pre-extracted metadata not available:', error);
+      return null;
+    }
+  }
+
+  // Image processing methods
+  async extractImageMetadata(s3Bucket: string, s3Key: string): Promise<any> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.post('/images/extract-metadata', {
+      s3Bucket,
+      s3Key,
+    });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to extract image metadata');
+    }
+    return response.data.data!;
+  }
+
   // Club methods
   async createClub(clubData: {
     name: string;
