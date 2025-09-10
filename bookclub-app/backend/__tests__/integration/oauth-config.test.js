@@ -12,7 +12,7 @@ describe('OAuth Configuration', () => {
   describe('Google Identity Provider', () => {
     test('should have Google Identity Provider configured', () => {
       expect(yamlContent).toContain('GoogleIdentityProvider:');
-      expect(yamlContent).toContain('Type: AWS::Cognito::UserPoolIdentityProvider');
+      expect(yamlContent).toContain('Type: AWS::CloudFormation::CustomResource');
       expect(yamlContent).toContain('ProviderName: Google');
       expect(yamlContent).toContain('ProviderType: Google');
     });

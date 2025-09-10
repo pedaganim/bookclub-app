@@ -33,10 +33,10 @@ describe('Serverless Configuration', () => {
 
   test('should have S3 bucket for book covers defined', () => {
     expect(serverlessConfigContent).toContain('BookCoversBucket:');
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::Bucket');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     expect(serverlessConfigContent).toContain('BucketName: ${self:service}-${self:provider.stage}-book-covers');
-    expect(serverlessConfigContent).toContain('BookCoversBucketPolicy:');
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::BucketPolicy');
+    // Note: Using custom resource instead of separate bucket policy
+    expect(serverlessConfigContent).toContain('Action: CreateOrConfigureBucket');
   });
 
   test('should have CloudFormation exports defined', () => {
