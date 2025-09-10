@@ -17,6 +17,7 @@ class Book {
       author: bookData.author,
       description: bookData.description || '',
       coverImage: bookData.coverImage || null,
+      images: bookData.images || null, // Additional images beyond cover
       status: bookData.status || 'available', // available, borrowed, reading
       // Additional metadata fields (optional)
       isbn10: bookData.isbn10 || null,

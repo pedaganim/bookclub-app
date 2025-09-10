@@ -10,6 +10,14 @@ jest.mock('../services/ocrService', () => ({
   }
 }));
 
+// Mock image processing service
+jest.mock('../services/imageProcessingService', () => ({
+  imageProcessingService: {
+    processImages: jest.fn(),
+    cleanup: jest.fn(),
+  },
+}));
+
 // Mock API service
 jest.mock('../services/api', () => ({
   apiService: {
@@ -37,7 +45,8 @@ describe('Enhanced AddBookModal', () => {
     
     expect(screen.getByText('Add New Book')).toBeInTheDocument();
     expect(screen.getByText('📷 Take Photo')).toBeInTheDocument();
-    expect(screen.getByText('📁 Upload Image')).toBeInTheDocument();
+    expect(screen.getByText('📁 Upload Cover')).toBeInTheDocument();
+    expect(screen.getByText('Additional Images')).toBeInTheDocument();
     expect(screen.getByText('Take a photo of the book cover or upload an image to automatically fill in book details')).toBeInTheDocument();
   });
 
@@ -62,5 +71,13 @@ describe('Enhanced AddBookModal', () => {
     expect(uploadButton).toBeInTheDocument();
     expect(takePhotoButton).toHaveClass('focus:ring-2', 'focus:ring-blue-500');
     expect(uploadButton).toHaveClass('focus:ring-2', 'focus:ring-green-500');
+  });
+
+  test('includes multi-image upload section', () => {
+    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
+    
+    expect(screen.getByText('Additional Images')).toBeInTheDocument();
+    expect(screen.getByText('(Optional - up to 25 images)')).toBeInTheDocument();
+    expect(screen.getByText('Upload up to 25 book images. Images will be automatically downsized and validated.')).toBeInTheDocument();
   });
 });
