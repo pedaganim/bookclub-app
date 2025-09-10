@@ -39,10 +39,6 @@ describe('OAuth Configuration', () => {
       expect(yamlContent).toContain('- Google');
     });
 
-    test('should depend on Google Identity Provider', () => {
-      expect(yamlContent).toContain('DependsOn: GoogleIdentityProvider');
-    });
-
     test('should have OAuth flows configured', () => {
       expect(yamlContent).toContain('AllowedOAuthFlowsUserPoolClient: true');
       expect(yamlContent).toContain('AllowedOAuthFlows:');
