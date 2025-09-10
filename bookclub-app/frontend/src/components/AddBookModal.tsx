@@ -3,6 +3,7 @@ import { Book } from '../types';
 import { apiService } from '../services/api';
 import { ProcessedImage } from '../services/imageProcessingService';
 import MultiImageUpload from './MultiImageUpload';
+import { parseS3Url } from '../utils/s3Utils';
 
 interface AddBookModalProps {
   onClose: () => void;
@@ -57,11 +58,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
           const uploadData = await apiService.generateUploadUrl(image.file.type, image.file.name);
           await apiService.uploadFile(uploadData.uploadUrl, image.file);
           
-          // Extract S3 bucket and key from uploadData.fileUrl
-          // URL format: https://bucket.s3.region.amazonaws.com/path/to/file
-          const url = new URL(uploadData.fileUrl);
-          const s3Bucket = url.hostname.split('.')[0];
-          const s3Key = url.pathname.substring(1); // Remove leading slash
+          // Extract S3 bucket and key from uploadData.fileUrl using utility function
+          const { bucket: s3Bucket, key: s3Key } = parseS3Url(uploadData.fileUrl);
           
           setProcessingStatus(`Extracting metadata from image ${i + 1}...`);
           
@@ -136,6 +134,11 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     onClose();
   };
 
+  // Compute filter counts once to avoid redundant operations
+  const validBookImagesCount = uploadedImages.filter(img => img.isValid && img.isBook).length;
+  const invalidImagesCount = uploadedImages.filter(img => !img.isValid).length;
+  const nonBookImagesCount = uploadedImages.filter(img => img.isValid && !img.isBook).length;
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-8 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
@@ -195,13 +198,13 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   <span className="font-medium">Total images:</span> {uploadedImages.length}
                 </div>
                 <div>
-                  <span className="font-medium">Valid book images:</span> {uploadedImages.filter(img => img.isValid && img.isBook).length}
+                  <span className="font-medium">Valid book images:</span> {validBookImagesCount}
                 </div>
                 <div>
-                  <span className="font-medium">Invalid images:</span> {uploadedImages.filter(img => !img.isValid).length}
+                  <span className="font-medium">Invalid images:</span> {invalidImagesCount}
                 </div>
                 <div>
-                  <span className="font-medium">Non-book images:</span> {uploadedImages.filter(img => img.isValid && !img.isBook).length}
+                  <span className="font-medium">Non-book images:</span> {nonBookImagesCount}
                 </div>
               </div>
             </div>
@@ -219,10 +222,10 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             <button
               type="button"
               onClick={processImagesAndCreateBooks}
-              disabled={loading || uploadedImages.filter(img => img.isValid && img.isBook).length === 0}
+              disabled={loading || validBookImagesCount === 0}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
-              {loading ? 'Processing...' : `Create ${uploadedImages.filter(img => img.isValid && img.isBook).length} Book${uploadedImages.filter(img => img.isValid && img.isBook).length !== 1 ? 's' : ''}`}
+              {loading ? 'Processing...' : `Create ${validBookImagesCount} Book${validBookImagesCount !== 1 ? 's' : ''}`}
             </button>
           </div>
         </div>

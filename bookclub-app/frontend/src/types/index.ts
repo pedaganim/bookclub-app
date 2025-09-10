@@ -116,3 +116,19 @@ export interface BookClubListResponse {
   items: BookClub[];
   count: number;
 }
+
+export interface ExtractedMetadata {
+  metadata: {
+    title?: string;
+    author?: string;
+    isbn?: string;
+    description?: string;
+  };
+  extractedText?: string;
+  confidence?: number;
+}
+
+export interface S3UrlComponents {
+  bucket: string;
+  key: string;
+}
