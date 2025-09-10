@@ -551,7 +551,6 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
-      DependsOn: GoogleIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
