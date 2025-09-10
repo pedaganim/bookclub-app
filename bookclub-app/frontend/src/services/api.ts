@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -181,6 +181,46 @@ class ApiService {
         'Content-Type': file.type,
       },
     });
+  }
+
+  // Add method to get pre-extracted metadata with exponential backoff
+  async getPreExtractedMetadata(s3Bucket: string, s3Key: string): Promise<ExtractedMetadata | null> {
+    const maxAttempts = 6; // e.g., total wait time up to ~7.5s (0.5+1+1.5+2+2.5+3)
+    let attempt = 0;
+    let delay = 500; // start with 500ms
+    
+    while (attempt < maxAttempts) {
+      try {
+        const response: AxiosResponse<ApiResponse<ExtractedMetadata>> = await this.api.get(`/images/metadata?s3Bucket=${encodeURIComponent(s3Bucket)}&s3Key=${encodeURIComponent(s3Key)}`);
+        if (response.data.success && response.data.data) {
+          return response.data.data;
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn(`Attempt ${attempt + 1}: Pre-extracted metadata not available yet.`, error);
+      }
+      
+      // Wait before next attempt (exponential backoff)
+      const currentDelay = delay;
+      await new Promise(resolve => setTimeout(resolve, currentDelay));
+      attempt++;
+      delay = Math.min(delay + 500, 3000); // increase delay, max 3s
+    }
+    
+    // After max attempts, return null
+    return null;
+  }
+
+  // Image processing methods
+  async extractImageMetadata(s3Bucket: string, s3Key: string): Promise<ExtractedMetadata> {
+    const response: AxiosResponse<ApiResponse<ExtractedMetadata>> = await this.api.post('/images/extract-metadata', {
+      s3Bucket,
+      s3Key,
+    });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to extract image metadata');
+    }
+    return response.data.data!;
   }
 
   // Club methods

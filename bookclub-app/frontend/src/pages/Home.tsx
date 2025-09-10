@@ -128,7 +128,7 @@ const Home: React.FC = () => {
                 onClick={() => setShowAddModal(true)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"
               >
-                Add Book
+                Add Books
               </button>
             ) : (
               <>
@@ -242,7 +242,7 @@ const Home: React.FC = () => {
               <div className="text-center py-12">
                 <div className="text-gray-500">
                   {filter === 'my-books' 
-                    ? "You haven't added any books yet. Click 'Add Book' to get started!"
+                    ? "You haven't added any books yet. Click 'Add Books' to get started!"
                     : "No books available. Be the first to add one!"
                   }
                 </div>

@@ -1,15 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import AddBookModal from '../components/AddBookModal';
 
-// Mock OCR service
-jest.mock('../services/ocrService', () => ({
-  ocrService: {
-    extractText: jest.fn(),
-    extractBookDetails: jest.fn(),
-    cleanup: jest.fn().mockResolvedValue(undefined)
-  }
-}));
-
 // Mock image processing service
 jest.mock('../services/imageProcessingService', () => ({
   imageProcessingService: {
@@ -21,63 +12,46 @@ jest.mock('../services/imageProcessingService', () => ({
 // Mock API service
 jest.mock('../services/api', () => ({
   apiService: {
-    searchBookMetadata: jest.fn(),
     generateUploadUrl: jest.fn(),
     uploadFile: jest.fn(),
-    createBook: jest.fn()
+    createBook: jest.fn(),
+    extractImageMetadata: jest.fn()
   }
 }));
 
-// Get the mocked OCR service
-const { ocrService } = jest.requireMock('../services/ocrService');
-
-describe('Enhanced AddBookModal', () => {
+describe('Add Books Modal (Bulk Upload)', () => {
   const mockOnClose = jest.fn();
   const mockOnBookAdded = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    ocrService.cleanup.mockResolvedValue(undefined);
   });
 
-  test('renders enhanced UI with photo capture options', () => {
+  test('renders bulk upload UI with correct title', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
-    expect(screen.getByText('Add New Book')).toBeInTheDocument();
-    expect(screen.getByText('📷 Take Photo')).toBeInTheDocument();
-    expect(screen.getByText('📁 Upload Cover')).toBeInTheDocument();
-    expect(screen.getByText('Additional Images')).toBeInTheDocument();
-    expect(screen.getByText('Take a photo of the book cover or upload an image to automatically fill in book details')).toBeInTheDocument();
+    expect(screen.getByText('Add Books')).toBeInTheDocument();
+    expect(screen.getByText('Upload multiple book cover images to automatically create book entries. Each image will be processed to extract book information.')).toBeInTheDocument();
   });
 
-  test('maintains existing form functionality', () => {
+  test('shows multi-image upload component', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
-    expect(screen.getByPlaceholderText('Enter book title')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter author name')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Brief description of the book')).toBeInTheDocument();
-    expect(screen.getByText('Available')).toBeInTheDocument();
+    expect(screen.getByText('Upload up to 10 book images. Images will be automatically downsized and validated.')).toBeInTheDocument();
+    expect(screen.getByText('📁 Add Images (0/10)')).toBeInTheDocument();
+  });
+
+  test('shows Cancel and Create Books buttons', () => {
+    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
+    
     expect(screen.getByText('Cancel')).toBeInTheDocument();
-    expect(screen.getByText('Add Book')).toBeInTheDocument();
+    expect(screen.getByText('Create 0 Books')).toBeInTheDocument();
   });
 
-  test('shows accessible image capture buttons with proper ARIA labels', () => {
+  test('Create Books button is disabled when no valid book images', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
-    const takePhotoButton = screen.getByRole('button', { name: /take a photo of the book cover using your camera/i });
-    const uploadButton = screen.getByRole('button', { name: /upload an image of the book cover from your device/i });
-    
-    expect(takePhotoButton).toBeInTheDocument();
-    expect(uploadButton).toBeInTheDocument();
-    expect(takePhotoButton).toHaveClass('focus:ring-2', 'focus:ring-blue-500');
-    expect(uploadButton).toHaveClass('focus:ring-2', 'focus:ring-green-500');
-  });
-
-  test('includes multi-image upload section', () => {
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
-    
-    expect(screen.getByText('Additional Images')).toBeInTheDocument();
-    expect(screen.getByText('(Optional - up to 25 images)')).toBeInTheDocument();
-    expect(screen.getByText('Upload up to 25 book images. Images will be automatically downsized and validated.')).toBeInTheDocument();
+    const createButton = screen.getByText('Create 0 Books');
+    expect(createButton).toBeDisabled();
   });
 });
