@@ -29,6 +29,7 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const timeoutRefs = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const addNotification = (type: Notification['type'], message: string, duration = 5000) => {
     const id = Date.now().toString();
@@ -38,15 +39,32 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     // Auto-remove notification after duration
     if (duration > 0) {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         removeNotification(id);
       }, duration);
+      timeoutRefs.current.set(id, timeoutId);
     }
   };
 
   const removeNotification = (id: string) => {
+    // Clear timeout if it exists
+    const timeoutId = timeoutRefs.current.get(id);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutRefs.current.delete(id);
+    }
+    
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
+
+  // Cleanup all timeouts on unmount
+  React.useEffect(() => {
+    const timeoutMap = timeoutRefs.current;
+    return () => {
+      timeoutMap.forEach(timeoutId => clearTimeout(timeoutId));
+      timeoutMap.clear();
+    };
+  }, []);
 
   const value: NotificationContextType = {
     notifications,

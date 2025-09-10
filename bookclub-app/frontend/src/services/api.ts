@@ -36,13 +36,15 @@ class ApiService {
         if (error.response?.status === 401 && this.onSessionExpired) {
           // Check if the error is related to authentication/authorization
           const errorCode = error.response?.data?.error?.code;
-          const errorMessage = error.response?.data?.error?.message;
+          const errorMessage = error.response?.data?.error?.message?.toLowerCase() || '';
           
-          // Trigger session expired logout if it's an auth-related 401
+          // Trigger session expired logout only for specific token-related errors
+          // Be more specific to avoid false positives on other 401s
           if (errorCode === 'UNAUTHORIZED' || 
-              (errorMessage && errorMessage.toLowerCase().includes('token')) ||
-              (errorMessage && errorMessage.toLowerCase().includes('expired')) ||
-              (errorMessage && errorMessage.toLowerCase().includes('unauthorized'))) {
+              errorCode === 'TOKEN_EXPIRED' ||
+              errorMessage.includes('token expired') ||
+              errorMessage.includes('invalid token') ||
+              errorMessage.includes('jwt expired')) {
             this.onSessionExpired();
           }
         }

@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [addNotification, navigate]);
 
   useEffect(() => {
-    // Register session expiration handler with API service
+    // Register session expiration handler with API service (only once)
     apiService.setSessionExpiredHandler(logoutWithSessionExpired);
 
     // Check if user is already logged in
