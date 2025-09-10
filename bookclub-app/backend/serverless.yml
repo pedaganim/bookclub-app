@@ -678,6 +678,8 @@ resources:
     # S3 Bucket for book covers
     BookCoversBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:

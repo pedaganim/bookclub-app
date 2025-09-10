@@ -164,4 +164,18 @@ describe('Serverless Configuration', () => {
       }
     });
   });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for S3 bucket', () => {
+    // This test ensures that the S3 bucket has retention policies
+    // to prevent deployment conflicts when bucket already exists
+    const bucketDefRegex = new RegExp(`BookCoversBucket:[\\s\\S]*?Properties:`, 'g');
+    const bucketMatch = serverlessConfigContent.match(bucketDefRegex);
+    
+    expect(bucketMatch).toBeTruthy();
+    if (bucketMatch) {
+      const bucketSection = bucketMatch[0];
+      expect(bucketSection).toContain('DeletionPolicy: Retain');
+      expect(bucketSection).toContain('UpdateReplacePolicy: Retain');
+    }
+  });
 });
