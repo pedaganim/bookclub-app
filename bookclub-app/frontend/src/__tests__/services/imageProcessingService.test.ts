@@ -91,23 +91,24 @@ describe('ImageProcessingService', () => {
     expect(results[0].validationMessage).toBe('File must be an image');
   });
 
-  it('should detect non-book content', async () => {
+  it('should accept non-book content (temporarily)', async () => {
     const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
     
     ocrService.extractText.mockResolvedValue({
       text: 'Grocery shopping list: milk, eggs, bread, apples, bananas',
-      confidence: 70, // High confidence but non-book content
+      confidence: 80, // High confidence (>70) should have no message
     });
 
     const results = await imageProcessingService.processImages([mockFile]);
 
     expect(results).toHaveLength(1);
-    expect(results[0].isValid).toBe(false);
-    expect(results[0].isBook).toBe(false);
-    expect(results[0].validationMessage).toContain('does not appear to contain book-related content');
+    // TEMPORARY: Should accept non-book content to unblock users
+    expect(results[0].isValid).toBe(true);
+    expect(results[0].isBook).toBe(true);
+    expect(results[0].validationMessage).toBeUndefined(); // No warning for high confidence
   });
 
-  it('should handle low confidence OCR results', async () => {
+  it('should handle low confidence OCR results (temporarily accepting)', async () => {
     const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
     
     ocrService.extractText.mockResolvedValue({
@@ -119,11 +120,11 @@ describe('ImageProcessingService', () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].isValid).toBe(true); // Allow but warn
-    expect(results[0].isBook).toBe(false);
-    expect(results[0].validationMessage).toContain('Low text detection confidence');
+    expect(results[0].isBook).toBe(true); // TEMPORARY: accepting as book
+    expect(results[0].validationMessage).toContain('Accepted with 20% text confidence');
   });
 
-  it('should handle OCR failures gracefully', async () => {
+  it('should handle OCR failures gracefully (temporarily accepting)', async () => {
     const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
     
     ocrService.extractText.mockRejectedValue(new Error('OCR failed'));
@@ -132,7 +133,8 @@ describe('ImageProcessingService', () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].isValid).toBe(true); // Allow but warn
-    expect(results[0].validationMessage).toContain('Could not analyze image content');
+    expect(results[0].isBook).toBe(true); // TEMPORARY: accepting even when OCR fails
+    expect(results[0].validationMessage).toContain('Could not analyze image content, but accepting for upload');
   });
 
   it('should reject when processing too many images', async () => {
