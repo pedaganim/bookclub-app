@@ -519,6 +519,7 @@ resources:
                     - cognito-idp:DescribeIdentityProvider
                     - cognito-idp:CreateIdentityProvider
                     - cognito-idp:UpdateIdentityProvider
+                    - cognito-idp:DeleteIdentityProvider
                   Resource: "*"
 
     # Permission for CloudFormation to invoke Cognito IdP manager
@@ -551,6 +552,7 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
+      DependsOn: GoogleIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
