@@ -19,16 +19,27 @@ describe('Serverless Configuration - Circular Dependency Validation', () => {
     expect(serverlessConfigContent).not.toContain('DependsOn: GoogleIdentityProvider');
   });
 
-  test('should use regular S3 bucket instead of custom resource', () => {
-    // S3 bucket should be a regular AWS::S3::Bucket, not a custom resource
-    // to avoid dependency issues with custom resource Lambda functions
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::Bucket');
-    expect(serverlessConfigContent).not.toContain('Action: CreateOrConfigureBucket');
+  test('should use custom resource for S3 bucket to handle create-if-missing scenario', () => {
+    // S3 bucket should use custom resource to avoid "bucket already exists" errors
+    // This ensures graceful handling when bucket exists from previous deployments
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
+    expect(serverlessConfigContent).toContain('ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn');
+    expect(serverlessConfigContent).toContain('s3BucketManager:');
+    expect(serverlessConfigContent).toContain('handler: src/custom-resources/s3-bucket-manager.handler');
   });
 
-  test('should not reference missing S3BucketManager function', () => {
-    // Should not have references to S3BucketManagerLambdaFunction if the function doesn't exist
-    expect(serverlessConfigContent).not.toContain('S3BucketManagerLambdaFunction');
+  test('should not reference missing functions', () => {
+    // Should have all referenced functions properly defined
+    const functions = ['DynamoTableManagerLambdaFunction', 'CognitoResourceManagerLambdaFunction', 'S3BucketManagerLambdaFunction'];
+    for (const func of functions) {
+      if (serverlessConfigContent.includes(func)) {
+        // If function is referenced, it should be defined in functions section
+        let functionName = func.replace('LambdaFunction', '');
+        // Convert from PascalCase to camelCase
+        functionName = functionName.charAt(0).toLowerCase() + functionName.slice(1);
+        expect(serverlessConfigContent).toContain(`${functionName}:`);
+      }
+    }
   });
 
   test('should have properly defined custom resource functions', () => {
@@ -38,6 +49,9 @@ describe('Serverless Configuration - Circular Dependency Validation', () => {
     
     expect(serverlessConfigContent).toContain('cognitoResourceManager:');
     expect(serverlessConfigContent).toContain('handler: src/custom-resources/cognito-resource-manager.handler');
+
+    expect(serverlessConfigContent).toContain('s3BucketManager:');
+    expect(serverlessConfigContent).toContain('handler: src/custom-resources/s3-bucket-manager.handler');
   });
 
   test('should have retention policies for data protection', () => {
@@ -46,21 +60,23 @@ describe('Serverless Configuration - Circular Dependency Validation', () => {
     expect(serverlessConfigContent).toContain('UpdateReplacePolicy: Retain');
   });
 
-  test('should have S3 bucket and bucket policy properly configured', () => {
-    // Both bucket and bucket policy should be present
+  test('should have S3 bucket with create-if-missing functionality', () => {
+    // Bucket should be managed by custom resource for graceful handling
     expect(serverlessConfigContent).toContain('BookCoversBucket:');
-    expect(serverlessConfigContent).toContain('BookCoversBucketPolicy:');
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::BucketPolicy');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
+    expect(serverlessConfigContent).toContain('EnablePublicRead: true');
   });
 
   test('should have proper IAM roles for custom resources', () => {
     // Custom resource functions should have dedicated IAM roles
     expect(serverlessConfigContent).toContain('DynamoTableManagerRole:');
     expect(serverlessConfigContent).toContain('CognitoResourceManagerRole:');
+    expect(serverlessConfigContent).toContain('S3BucketManagerRole:');
     
     // Should have proper permissions
     expect(serverlessConfigContent).toContain('DynamoTableManagerInvokePermission:');
     expect(serverlessConfigContent).toContain('CognitoResourceManagerInvokePermission:');
+    expect(serverlessConfigContent).toContain('S3BucketManagerInvokePermission:');
   });
 
   test('should not have problematic dependency patterns', () => {

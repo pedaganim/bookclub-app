@@ -33,12 +33,12 @@ describe('Serverless Configuration', () => {
 
   test('should have S3 bucket for book covers defined', () => {
     expect(serverlessConfigContent).toContain('BookCoversBucket:');
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::Bucket');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     expect(serverlessConfigContent).toContain('BucketName: ${self:service}-${self:provider.stage}-book-covers');
     // Check for retention policies
     expect(serverlessConfigContent).toContain('DeletionPolicy: Retain');
-    // Check for bucket policy
-    expect(serverlessConfigContent).toContain('BookCoversBucketPolicy:');
+    // Check for custom resource configuration
+    expect(serverlessConfigContent).toContain('EnablePublicRead: true');
   });
 
   test('should have CloudFormation exports defined', () => {
@@ -124,6 +124,23 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('dynamodb:CreateTable');
     expect(serverlessConfigContent).toContain('dynamodb:DescribeTable');
     expect(serverlessConfigContent).toContain('DynamoTableManagerInvokePermission:');
+  });
+
+  test('should have custom resource function for S3 bucket management', () => {
+    // Check that the S3 bucket manager function is defined
+    expect(serverlessConfigContent).toContain('s3BucketManager:');
+    expect(serverlessConfigContent).toContain('handler: src/custom-resources/s3-bucket-manager.handler');
+    expect(serverlessConfigContent).toContain('role: S3BucketManagerRole');
+    
+    // Check that the IAM role for the custom resource is defined
+    expect(serverlessConfigContent).toContain('S3BucketManagerRole:');
+    expect(serverlessConfigContent).toContain('Type: AWS::IAM::Role');
+    expect(serverlessConfigContent).toContain('S3BucketManager');
+    
+    // Check that the custom resource has proper permissions
+    expect(serverlessConfigContent).toContain('s3:CreateBucket');
+    expect(serverlessConfigContent).toContain('s3:HeadBucket');
+    expect(serverlessConfigContent).toContain('S3BucketManagerInvokePermission:');
   });
 
   test('should have DeletionPolicy and UpdateReplacePolicy for all DynamoDB tables', () => {
