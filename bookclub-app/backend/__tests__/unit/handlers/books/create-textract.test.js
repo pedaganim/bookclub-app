@@ -14,8 +14,15 @@ const mockImageMetadataService = require('../../../../src/lib/image-metadata-ser
 describe('Create Book Handler with Textract Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock console methods to avoid noise in tests
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     // Mock image metadata service to return null (no pre-extracted metadata)
     mockImageMetadataService.getExtractedMetadata = jest.fn().mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   const mockEvent = (body, userId = 'test-user-123') => ({
