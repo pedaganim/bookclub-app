@@ -83,9 +83,13 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             }
           }
           
+          // TEMPORARY FIX: Create book even if metadata extraction fails
+          // This allows users to upload any image and create book entries
+          let bookData;
+          
           if (extractedData && extractedData.metadata && extractedData.metadata.title && extractedData.metadata.author) {
             // Create book with extracted metadata
-            const bookData = {
+            bookData = {
               title: extractedData.metadata.title,
               author: extractedData.metadata.author,
               description: extractedData.metadata.description || extractedData.extractedText || '',
@@ -94,15 +98,23 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               isbn: extractedData.metadata.isbn || undefined,
               enrichWithMetadata: true,
             };
-            
-            const newBook = await apiService.createBook(bookData);
-            createdBooks.push({ book: newBook, imageIndex });
-            processed++;
           } else {
-            // If metadata extraction fails, skip this image
+            // If metadata extraction fails, create book with placeholder values
             // eslint-disable-next-line no-console
-            console.warn(`Could not extract sufficient metadata from image ${i + 1}`);
+            console.warn(`Could not extract sufficient metadata from image ${i + 1}, using placeholder values`);
+            bookData = {
+              title: `Book from Image ${i + 1}`,
+              author: 'Unknown Author',
+              description: extractedData?.extractedText || 'Book information to be updated',
+              coverImage: uploadData.fileUrl,
+              status: 'available' as const,
+              enrichWithMetadata: true,
+            };
           }
+          
+          const newBook = await apiService.createBook(bookData);
+          createdBooks.push({ book: newBook, imageIndex });
+          processed++;
         } catch (imageError) {
           // eslint-disable-next-line no-console
           console.error(`Failed to process image ${i + 1}:`, imageError);
