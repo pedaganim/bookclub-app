@@ -407,6 +407,12 @@ functions:
     timeout: 300
     role: DynamoTableManagerRole
 
+  # NEW: Custom resource function for S3 bucket create-if-missing
+  s3BucketManager:
+    handler: src/custom-resources/s3-bucket-manager.handler
+    timeout: 300
+    role: S3BucketManagerRole
+
 resources:
   Resources:
     # IAM role for DynamoDB table manager custom resource
@@ -443,6 +449,45 @@ resources:
       Properties:
         Action: lambda:InvokeFunction
         FunctionName: !Ref DynamoTableManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    # NEW: IAM role for S3 bucket manager custom resource
+    S3BucketManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: S3BucketManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:CreateBucket
+                    - s3:HeadBucket
+                    - s3:GetBucketLocation
+                    - s3:GetBucketCors
+                    - s3:PutBucketCors
+                    - s3:GetPublicAccessBlock
+                    - s3:PutPublicAccessBlock
+                    - s3:GetBucketPolicy
+                    - s3:PutBucketPolicy
+                  Resource: "*"
+
+    # NEW: Permission for CloudFormation to invoke S3 bucket manager
+    S3BucketManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref S3BucketManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
     UserPool:
@@ -550,6 +595,7 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
     # DynamoDB Tables
+    # CHANGED: BooksTable now uses CustomResource (idempotent create-if-missing)
     BooksTable:
       Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
@@ -688,12 +734,14 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
-    # S3 Bucket for book covers
+    # S3 Bucket for book covers (create-if-missing via custom resource)
     BookCoversBucket:
-      Type: AWS::S3::Bucket
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
+        Action: CreateOrConfigureBucket
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
@@ -712,18 +760,13 @@ resources:
               AllowedOrigins:
                 - "*"
               MaxAge: 3000
-
-    BookCoversBucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        Bucket: !Ref BookCoversBucket
         PolicyDocument:
           Statement:
             - Sid: PublicReadGetObject
               Effect: Allow
               Principal: "*"
               Action: s3:GetObject
-              Resource: !Sub "${BookCoversBucket}/*"
+              Resource: !Sub "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
 
   Outputs:
     UserPoolId:
@@ -742,4 +785,3 @@ resources:
       Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
     BookCoversBucketName:
       Value: ${self:service}-${self:provider.stage}-book-covers
-
