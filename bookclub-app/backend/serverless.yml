@@ -742,7 +742,7 @@ resources:
           BlockPublicAcls: false
           BlockPublicPolicy: false
           IgnorePublicAcls: false
-          RestrictPublicBuckets: false
+          RestrictPublicBuckets: true
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:
