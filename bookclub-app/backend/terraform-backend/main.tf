@@ -15,6 +15,10 @@ provider "aws" {
 # S3 bucket for Terraform remote state
 resource "aws_s3_bucket" "tf_state" {
   bucket = var.tf_backend_bucket
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_versioning" "tf_state" {
@@ -50,5 +54,9 @@ resource "aws_dynamodb_table" "tf_lock" {
   attribute {
     name = "LockID"
     type = "S"
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }

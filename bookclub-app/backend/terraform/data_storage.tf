@@ -21,6 +21,10 @@ resource "aws_dynamodb_table" "books" {
     hash_key        = "userId"
     projection_type = "ALL"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_dynamodb_table" "users" {
@@ -43,6 +47,10 @@ resource "aws_dynamodb_table" "users" {
     hash_key        = "email"
     projection_type = "ALL"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_dynamodb_table" "metadata_cache" {
@@ -59,6 +67,10 @@ resource "aws_dynamodb_table" "metadata_cache" {
   ttl {
     attribute_name = "ttl"
     enabled        = true
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -93,6 +105,10 @@ resource "aws_dynamodb_table" "bookclub_groups" {
     hash_key        = "createdBy"
     projection_type = "ALL"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_dynamodb_table" "bookclub_members" {
@@ -116,11 +132,19 @@ resource "aws_dynamodb_table" "bookclub_members" {
     hash_key        = "userId"
     projection_type = "ALL"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # S3 bucket for book covers
 resource "aws_s3_bucket" "book_covers" {
   bucket = "${var.service_name}-${var.stage}-book-covers"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_cors_configuration" "book_covers" {
