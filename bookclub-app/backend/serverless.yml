@@ -407,11 +407,17 @@ functions:
     timeout: 300
     role: DynamoTableManagerRole
 
-  # NEW: Custom resource function for S3 bucket create-if-missing
+  # Custom resource function for S3 bucket create-if-missing
   s3BucketManager:
     handler: src/custom-resources/s3-bucket-manager.handler
     timeout: 300
     role: S3BucketManagerRole
+
+  # Custom resource function for Cognito IdP create-or-update
+  cognitoResourceManager:
+    handler: src/custom-resources/cognito-resource-manager.handler
+    timeout: 300
+    role: CognitoResourceManagerRole
 
 resources:
   Resources:
@@ -451,7 +457,7 @@ resources:
         FunctionName: !Ref DynamoTableManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
-    # NEW: IAM role for S3 bucket manager custom resource
+    # IAM role for S3 bucket manager custom resource
     S3BucketManagerRole:
       Type: AWS::IAM::Role
       Properties:
@@ -482,12 +488,45 @@ resources:
                     - s3:PutBucketPolicy
                   Resource: "*"
 
-    # NEW: Permission for CloudFormation to invoke S3 bucket manager
+    # Permission for CloudFormation to invoke S3 bucket manager
     S3BucketManagerInvokePermission:
       Type: AWS::Lambda::Permission
       Properties:
         Action: lambda:InvokeFunction
         FunctionName: !Ref S3BucketManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    # IAM role for Cognito IdP manager custom resource
+    CognitoResourceManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: CognitoIdpManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - cognito-idp:DescribeIdentityProvider
+                    - cognito-idp:CreateIdentityProvider
+                    - cognito-idp:UpdateIdentityProvider
+                  Resource: "*"
+
+    # Permission for CloudFormation to invoke Cognito IdP manager
+    CognitoResourceManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref CognitoResourceManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
     UserPool:
@@ -539,10 +578,12 @@ resources:
           - ${self:custom.appConfig.oauth.redirectSignOut}
 
     GoogleIdentityProvider:
-      Type: AWS::Cognito::UserPoolIdentityProvider
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: CreateOrUpdateIdentityProvider
         UserPoolId: !Ref UserPool
         ProviderName: Google
         ProviderType: Google
@@ -595,7 +636,7 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
     # DynamoDB Tables
-    # CHANGED: BooksTable now uses CustomResource (idempotent create-if-missing)
+    # BooksTable switched to CustomResource (create-if-missing)
     BooksTable:
       Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
@@ -766,7 +807,7 @@ resources:
               Effect: Allow
               Principal: "*"
               Action: s3:GetObject
-              Resource: !Sub "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+              Resource: !Sub "${self:service}-${self:provider.stage}-book-covers/*"
 
   Outputs:
     UserPoolId:
