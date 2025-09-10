@@ -258,11 +258,14 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
     try {
       const validImages = images.filter(img => img.isValid);
-      const uploadPromises = validImages.map(async (image, index) => {
-        setUploadProgress({ current: index + 1, total: validImages.length });
-        
+      const uploadPromises = validImages.map(async (image) => {
         const uploadData = await apiService.generateUploadUrl(image.file.type, image.file.name);
         await apiService.uploadFile(uploadData.uploadUrl, image.file);
+        // Increment progress after each upload completes
+        setUploadProgress(prev => ({
+          current: prev.current + 1,
+          total: prev.total
+        }));
         return uploadData.fileUrl;
       });
 

@@ -34,15 +34,18 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     setProcessingProgress({ current: 0, total: fileArray.length });
 
     try {
-      // Process images with progress tracking
-      const results: ProcessedImage[] = [];
+      // Process all images concurrently and track progress
+      let completed = 0;
+      const promises = fileArray.map(async (file) => {
+        const processedBatch = await imageProcessingService.processImages([file]);
+        completed += 1;
+        setProcessingProgress({ current: completed, total: fileArray.length });
+        return processedBatch;
+      });
       
-      for (let i = 0; i < fileArray.length; i++) {
-        setProcessingProgress({ current: i + 1, total: fileArray.length });
-        
-        const processedBatch = await imageProcessingService.processImages([fileArray[i]]);
-        results.push(...processedBatch);
-      }
+      const batches = await Promise.all(promises);
+      const results: ProcessedImage[] = [];
+      batches.forEach(batch => results.push(...batch));
 
       const newImages = [...processedImages, ...results];
       setProcessedImages(newImages);

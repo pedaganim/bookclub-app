@@ -18,6 +18,24 @@ export interface ImageValidationOptions {
   minBookConfidence?: number;
 }
 
+// Constants for book content detection
+const BOOK_KEYWORDS = [
+  'isbn', 'author', 'publisher', 'edition', 'copyright',
+  'chapter', 'page', 'novel', 'story', 'book', 'press',
+  'publication', 'printed', 'library', 'volume', 'series'
+];
+
+// ISBN pattern matching ISBN-10, ISBN-13, and common formats
+// Matches patterns like: ISBN 978-0123456789, ISBN: 0123456789, 978-0123456789
+const ISBN_PATTERN = /isbn[-:\s]*\d{9,13}|978[-\s]*\d{10}|979[-\s]*\d{10}/i;
+
+// Title patterns for detecting book titles in text
+const TITLE_PATTERNS = [
+  // Match titles with capitalized words, numbers, and common punctuation
+  /^([A-Z][\w''\-:,&()\\.]*\s+){1,}[A-Z][\w''\-:,&()\\.]*$/, // Two or more capitalized words, possibly with punctuation/numbers
+  /\b([A-Z][\w''\-:,&()\\.]*\s+){2,}/, // At least two capitalized words in a row
+];
+
 class ImageProcessingService {
   private readonly defaultOptions: Required<ImageValidationOptions> = {
     maxSizeBytes: 2 * 1024 * 1024, // 2MB after processing
@@ -247,30 +265,18 @@ class ImageProcessingService {
   private detectBookContent(text: string): boolean {
     const normalizedText = text.toLowerCase();
     
-    // Common book-related keywords and patterns
-    const bookKeywords = [
-      'isbn', 'author', 'publisher', 'edition', 'copyright',
-      'chapter', 'page', 'novel', 'story', 'book', 'press',
-      'publication', 'printed', 'library', 'volume', 'series'
-    ];
-
-    const titlePatterns = [
-      /^[A-Z][a-z\s]+$/, // Title case
-      /\b(the|a|an)\s+[A-Z]/i, // Articles followed by title case
-    ];
-
     // Check for book-related keywords
-    const hasBookKeywords = bookKeywords.some(keyword => 
+    const hasBookKeywords = BOOK_KEYWORDS.some(keyword => 
       normalizedText.includes(keyword)
     );
 
     // Check for title-like patterns
-    const hasTitlePatterns = titlePatterns.some(pattern => 
+    const hasTitlePatterns = TITLE_PATTERNS.some(pattern => 
       pattern.test(text.trim())
     );
 
     // Check for ISBN patterns
-    const hasISBN = /isbn[-:\s]*\d{9,13}|978[-\s]*\d{10}|979[-\s]*\d{10}/i.test(normalizedText);
+    const hasISBN = ISBN_PATTERN.test(normalizedText);
 
     // Must have either book keywords, title patterns, or ISBN
     return hasBookKeywords || hasTitlePatterns || hasISBN;
