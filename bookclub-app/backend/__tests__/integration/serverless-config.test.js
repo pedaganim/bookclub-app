@@ -20,8 +20,8 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('BookclubGroupsTable:');
     expect(serverlessConfigContent).toContain('BookclubMembersTable:');
     
-    // Verify they are AWS::DynamoDB::Table types
-    expect(serverlessConfigContent).toContain('Type: AWS::DynamoDB::Table');
+    // Verify they are AWS::CloudFormation::CustomResource types (since all tables are now custom resources)
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     
     // Check table names match expected pattern
     expect(serverlessConfigContent).toContain('TableName: ${self:service}-books-${self:provider.stage}');
@@ -128,10 +128,11 @@ describe('Serverless Configuration', () => {
     // This test ensures that all DynamoDB tables have retention policies
     // to prevent deployment conflicts when tables already exist
     const regularTableNames = [
-      'BooksTable'
+      // No regular tables - all are now custom resources
     ];
     
     const customResourceTableNames = [
+      'BooksTable',
       'BookclubGroupsTable',
       'BookclubMembersTable',
       'MetadataCacheTable',

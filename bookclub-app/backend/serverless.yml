@@ -551,10 +551,11 @@ resources:
 
     # DynamoDB Tables
     BooksTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-books-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: bookId
