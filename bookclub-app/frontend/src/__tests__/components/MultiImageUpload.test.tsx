@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MultiImageUpload from '../../components/MultiImageUpload';
-import { imageProcessingService } from '../../services/imageProcessingService';
+import { imageProcessingService, ProcessedImage } from '../../services/imageProcessingService';
 
 // Mock the image processing service
 jest.mock('../../services/imageProcessingService', () => ({
@@ -92,8 +92,8 @@ describe('MultiImageUpload', () => {
   it('should show processing progress', async () => {
     const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
 
-    let resolveProcessing: (value: any) => void;
-    const processingPromise = new Promise(resolve => {
+    let resolveProcessing: (value: ProcessedImage[]) => void;
+    const processingPromise = new Promise<ProcessedImage[]>(resolve => {
       resolveProcessing = resolve;
     });
 
@@ -247,18 +247,28 @@ describe('MultiImageUpload', () => {
     const fileInput = screen.getByLabelText('Select multiple image files');
     await userEvent.upload(fileInput, mockFiles);
 
+    // Check for validation indicators
     await waitFor(() => {
-      // Check for validation indicators
       const checkmarks = screen.getAllByText('✓');
-      const crosses = screen.getAllByText('✗');
-      const warnings = screen.getAllByText('⚠');
-      
       expect(checkmarks.length).toBeGreaterThan(0); // Valid book
+    });
+    
+    await waitFor(() => {
+      const crosses = screen.getAllByText('✗');
       expect(crosses.length).toBeGreaterThan(0); // Invalid
+    });
+    
+    await waitFor(() => {
+      const warnings = screen.getAllByText('⚠');
       expect(warnings.length).toBeGreaterThan(0); // Warning
-      
-      // Check for validation messages
+    });
+    
+    // Check for validation messages
+    await waitFor(() => {
       expect(screen.getByText('Not a book cover')).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
       expect(screen.getByText('Low confidence detection')).toBeInTheDocument();
     });
   });
@@ -291,10 +301,20 @@ describe('MultiImageUpload', () => {
     const fileInput = screen.getByLabelText('Select multiple image files');
     await userEvent.upload(fileInput, mockFiles);
 
+    // Check for statistics individually
     await waitFor(() => {
       expect(screen.getByText(/Valid: 2/)).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
       expect(screen.getByText(/Book content: 1/)).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
       expect(screen.getByText(/Invalid: 1/)).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
       expect(screen.getByText(/Total size: \d+KB/)).toBeInTheDocument();
     });
   });

@@ -8,11 +8,13 @@ const MultiImageUploadDemo: React.FC = () => {
 
   const handleImagesProcessed = (images: ProcessedImage[]) => {
     setProcessedImages(images);
+    // eslint-disable-next-line no-console
     console.log('Processed images:', images);
   };
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
+    // eslint-disable-next-line no-console
     console.error('Upload error:', errorMessage);
   };
 

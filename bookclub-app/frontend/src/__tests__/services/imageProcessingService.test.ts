@@ -27,14 +27,18 @@ describe('ImageProcessingService', () => {
       }),
     };
     
-    document.createElement = jest.fn((tagName) => {
-      if (tagName === 'canvas') return mockCanvas;
-      return document.createElement(tagName);
-    });
+    // Mock document.createElement for canvas elements
+    const originalCreateElement = document.createElement;
+    document.createElement = jest.fn((tagName: string) => {
+      if (tagName === 'canvas') return mockCanvas as any;
+      return originalCreateElement.call(document, tagName);
+    }) as any;
 
-    global.Image = class {
-      onload = null;
-      onerror = null;
+    // Mock Image constructor
+    const OriginalImage = global.Image;
+    global.Image = class MockImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
       src = '';
       width = 100;
       height = 100;
@@ -44,16 +48,20 @@ describe('ImageProcessingService', () => {
           if (this.onload) this.onload();
         }, 0);
       }
-    };
+    } as any;
 
+    // Mock URL methods
+    const originalURL = global.URL;
     global.URL = {
+      ...originalURL,
       createObjectURL: jest.fn(() => 'blob:fake-url'),
       revokeObjectURL: jest.fn(),
-    };
+    } as any;
   });
 
   afterEach(() => {
     imageProcessingService.cleanup([]);
+    jest.restoreAllMocks();
   });
 
   it('should process a valid book image successfully', async () => {
