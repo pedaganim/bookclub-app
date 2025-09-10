@@ -34,10 +34,7 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}/index/*
         - Effect: Allow
-          Action:
-            - s3:PutObject
-            - s3:GetObject
-            - s3:DeleteObject
+          Action: [s3:PutObject, s3:GetObject, s3:DeleteObject]
           Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
         - Effect: Allow
           Action:
@@ -60,8 +57,7 @@ custom:
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
   dynamodb:
-    stages:
-      - dev
+    stages: [dev]
     start:
       port: 8000
       inMemory: true
@@ -81,18 +77,12 @@ functions:
           path: /books
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
+            authorizerId: { Ref: ApiGatewayAuthorizer }
+
   getBook:
     handler: src/handlers/books/get.handler
     events:
@@ -101,14 +91,9 @@ functions:
           path: /books/{bookId}
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-  
+
   listBooks:
     handler: src/handlers/books/list.handler
     events:
@@ -117,14 +102,9 @@ functions:
           path: /books
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-  
+
   updateBook:
     handler: src/handlers/books/update.handler
     events:
@@ -133,18 +113,12 @@ functions:
           path: /books/{bookId}
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
+            authorizerId: { Ref: ApiGatewayAuthorizer }
+
   deleteBook:
     handler: src/handlers/books/delete.handler
     events:
@@ -153,18 +127,12 @@ functions:
           path: /books/{bookId}
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
+            authorizerId: { Ref: ApiGatewayAuthorizer }
+
   bookMetadata:
     handler: src/handlers/books/metadata.handler
     events:
@@ -173,19 +141,13 @@ functions:
           path: /books/metadata
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
-  # User-related functions
+            authorizerId: { Ref: ApiGatewayAuthorizer }
+
+  # User-related
   registerUser:
     handler: src/handlers/users/register.handler
     events:
@@ -194,14 +156,9 @@ functions:
           path: /auth/register
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-  
+
   loginUser:
     handler: src/handlers/users/login.handler
     events:
@@ -210,14 +167,9 @@ functions:
           path: /auth/login
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-  
+
   getUserProfile:
     handler: src/handlers/users/getProfile.handler
     events:
@@ -226,18 +178,12 @@ functions:
           path: /users/me
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
+            authorizerId: { Ref: ApiGatewayAuthorizer }
+
   updateUserProfile:
     handler: src/handlers/users/updateProfile.handler
     events:
@@ -246,18 +192,12 @@ functions:
           path: /users/me
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
+            authorizerId: { Ref: ApiGatewayAuthorizer }
+
   # File upload
   generateUploadUrl:
     handler: src/handlers/files/generateUploadUrl.handler
@@ -267,17 +207,11 @@ functions:
           path: /upload-url
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
   # Image metadata extraction
   extractImageMetadata:
@@ -288,19 +222,13 @@ functions:
           path: /images/extract-metadata
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
-# Club-related functions
+  # Club-related
   createClub:
     handler: src/handlers/clubs/create.handler
     events:
@@ -309,17 +237,11 @@ functions:
           path: /clubs
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
   getClub:
     handler: src/handlers/clubs/get.handler
@@ -329,17 +251,11 @@ functions:
           path: /clubs/{clubId}
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
   listUserClubs:
     handler: src/handlers/clubs/list.handler
@@ -349,17 +265,11 @@ functions:
           path: /clubs
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
   joinClub:
     handler: src/handlers/clubs/join.handler
@@ -369,17 +279,11 @@ functions:
           path: /clubs/join
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
   leaveClub:
     handler: src/handlers/clubs/leave.handler
@@ -389,33 +293,31 @@ functions:
           path: /clubs/{clubId}/leave
           cors:
             origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
+            headers: [Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token]
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+            authorizerId: { Ref: ApiGatewayAuthorizer }
 
-  # Custom resource function for DynamoDB table management
+  # Custom resource functions (idempotent managers)
   dynamoTableManager:
     handler: src/custom-resources/dynamodb-table-manager.handler
     timeout: 300
     role: DynamoTableManagerRole
 
-resources:
-  Conditions:
-    IsProd: !Equals [ "${self:provider.stage}", "prod" ]
-    NotProd:
-      Fn::Not:
-        - Condition: IsProd
+  s3BucketManager:
+    handler: src/custom-resources/s3-bucket-manager.handler
+    timeout: 300
+    role: S3BucketManagerRole
 
+  cognitoResourceManager:
+    handler: src/custom-resources/cognito-resource-manager.handler
+    timeout: 300
+    role: CognitoResourceManagerRole
+
+resources:
   Resources:
-    # IAM role for DynamoDB table manager custom resource
+    # ---------- IAM for custom resources ----------
     DynamoTableManagerRole:
       Type: AWS::IAM::Role
       Properties:
@@ -423,8 +325,7 @@ resources:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
-              Principal:
-                Service: lambda.amazonaws.com
+              Principal: { Service: lambda.amazonaws.com }
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
@@ -440,10 +341,65 @@ resources:
                     - dynamodb:DescribeTable
                     - dynamodb:UpdateTimeToLive
                     - dynamodb:DescribeTimeToLive
-                  Resource: 
+                  Resource:
                     - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-*-${self:provider.stage}
 
-    # Permission for CloudFormation to invoke the custom resource
+    S3BucketManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal: { Service: lambda.amazonaws.com }
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: S3BucketManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:CreateBucket
+                    - s3:HeadBucket
+                    - s3:GetBucketLocation
+                    - s3:GetBucketCors
+                    - s3:PutBucketCors
+                    - s3:GetPublicAccessBlock
+                    - s3:PutPublicAccessBlock
+                    - s3:GetBucketPolicy
+                    - s3:PutBucketPolicy
+                  Resource: "*"
+
+    CognitoResourceManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal: { Service: lambda.amazonaws.com }
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: CognitoResourceManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - cognito-idp:CreateIdentityProvider
+                    - cognito-idp:UpdateIdentityProvider
+                    - cognito-idp:DescribeIdentityProvider
+                    - cognito-idp:CreateUserPoolDomain
+                    - cognito-idp:DescribeUserPoolDomain
+                    - cognito-idp:DeleteUserPoolDomain
+                  Resource: "*"
+
+    # ---------- Allow CFN to invoke custom resource Lambdas ----------
     DynamoTableManagerInvokePermission:
       Type: AWS::Lambda::Permission
       Properties:
@@ -451,6 +407,21 @@ resources:
         FunctionName: !Ref DynamoTableManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
+    S3BucketManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref S3BucketManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    CognitoResourceManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref CognitoResourceManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    # ---------- Cognito ----------
     UserPool:
       Type: AWS::Cognito::UserPool
       DeletionPolicy: Retain
@@ -468,42 +439,16 @@ resources:
             RequireUppercase: true
             RequireNumbers: true
             RequireSymbols: true
-        AutoVerifiedAttributes:
-          - email
+        AutoVerifiedAttributes: [email]
 
-    UserPoolClient:
-      Type: AWS::Cognito::UserPoolClient
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
-      Properties:
-        ClientName: ${self:service}-client-${self:provider.stage}
-        UserPoolId: !Ref UserPool
-        GenerateSecret: false
-        ExplicitAuthFlows:
-          - ADMIN_NO_SRP_AUTH
-          - USER_PASSWORD_AUTH
-        PreventUserExistenceErrors: ENABLED
-        AllowedOAuthFlowsUserPoolClient: true
-        AllowedOAuthFlows:
-          - code
-        AllowedOAuthScopes:
-          - openid
-          - email
-          - profile
-        SupportedIdentityProviders:
-          - COGNITO
-          - Google
-        CallbackURLs:
-          - ${self:custom.appConfig.oauth.redirectSignIn}
-        LogoutURLs:
-          - ${self:custom.appConfig.oauth.redirectSignOut}
-
+    # Create or no-op if IdP exists
     GoogleIdentityProvider:
-      Condition: NotProd
-      Type: AWS::Cognito::UserPoolIdentityProvider
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: CreateOrUpdateIdentityProvider
         UserPoolId: !Ref UserPool
         ProviderName: Google
         ProviderType: Google
@@ -517,11 +462,33 @@ resources:
           family_name: family_name
           name: name
 
-    UserPoolDomain:
-      Type: AWS::Cognito::UserPoolDomain
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ClientName: ${self:service}-client-${self:provider.stage}
+        UserPoolId: !Ref UserPool
+        GenerateSecret: false
+        ExplicitAuthFlows: [ADMIN_NO_SRP_AUTH, USER_PASSWORD_AUTH]
+        PreventUserExistenceErrors: ENABLED
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthFlows: [code]
+        AllowedOAuthScopes: [openid, email, profile]
+        SupportedIdentityProviders: [COGNITO, Google]
+        CallbackURLs:
+          - ${self:custom.appConfig.oauth.redirectSignIn}
+        LogoutURLs:
+          - ${self:custom.appConfig.oauth.redirectSignOut}
+
+    # Create or no-op if domain exists
+    UserPoolDomain:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: CreateUserPoolDomainIfMissing
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
 
@@ -555,8 +522,7 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
-    # DynamoDB Tables
-    # CHANGED: BooksTable now uses CustomResource (idempotent create-if-missing)
+    # ---------- DynamoDB via CustomResource (already idempotent) ----------
     BooksTable:
       Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
@@ -577,14 +543,9 @@ resources:
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+            Projection: { ProjectionType: ALL }
+            ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
 
     UsersTable:
       Type: AWS::CloudFormation::CustomResource
@@ -606,14 +567,9 @@ resources:
             KeySchema:
               - AttributeName: email
                 KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+            Projection: { ProjectionType: ALL }
+            ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
 
     MetadataCacheTable:
       Type: AWS::CloudFormation::CustomResource
@@ -631,9 +587,7 @@ resources:
         TimeToLiveSpecification:
           AttributeName: ttl
           Enabled: true
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
 
     BookclubGroupsTable:
       Type: AWS::CloudFormation::CustomResource
@@ -655,14 +609,9 @@ resources:
             KeySchema:
               - AttributeName: createdBy
                 KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+            Projection: { ProjectionType: ALL }
+            ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
 
     BookclubMembersTable:
       Type: AWS::CloudFormation::CustomResource
@@ -686,22 +635,18 @@ resources:
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+            Projection: { ProjectionType: ALL }
+            ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
 
-    # S3 Bucket for book covers (skip creating in prod)
+    # ---------- S3 via CustomResource (create-if-missing) ----------
     BookCoversBucket:
-      Condition: NotProd
-      Type: AWS::S3::Bucket
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
+        Action: CreateOrConfigureBucket
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
@@ -709,30 +654,30 @@ resources:
           IgnorePublicAcls: false
         CorsConfiguration:
           CorsRules:
-            - AllowedHeaders:
-                - "*"
-              AllowedMethods:
-                - GET
-                - PUT
-                - POST
-                - DELETE
-                - HEAD
-              AllowedOrigins:
-                - "*"
+            - AllowedHeaders: ["*"]
+              AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+              AllowedOrigins: ["*"]
               MaxAge: 3000
-
-    BookCoversBucketPolicy:
-      Condition: NotProd
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        Bucket: !Ref BookCoversBucket
         PolicyDocument:
           Statement:
             - Sid: PublicReadGetObject
               Effect: Allow
               Principal: "*"
               Action: s3:GetObject
-              Resource: !Sub "${BookCoversBucket}/*"
+              Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+
+    # (Optional) keep separate policy resource if you prefer CFN-managed policy; it will attach/overwrite
+    # BookCoversBucketPolicy:
+    #   Type: AWS::S3::BucketPolicy
+    #   Properties:
+    #     Bucket: ${self:service}-${self:provider.stage}-book-covers
+    #     PolicyDocument:
+    #       Statement:
+    #         - Sid: PublicReadGetObject
+    #           Effect: Allow
+    #           Principal: "*"
+    #           Action: s3:GetObject
+    #           Resource: !Sub "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
 
   Outputs:
     UserPoolId:
