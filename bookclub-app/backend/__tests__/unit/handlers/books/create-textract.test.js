@@ -4,10 +4,12 @@ const handler = require('../../../../src/handlers/books/create').handler;
 jest.mock('../../../../src/models/book');
 jest.mock('../../../../src/lib/book-metadata');
 jest.mock('../../../../src/lib/textract-service');
+jest.mock('../../../../src/lib/image-metadata-service');
 
 const mockBook = require('../../../../src/models/book');
 const mockBookMetadataService = require('../../../../src/lib/book-metadata');
 const mockTextractService = require('../../../../src/lib/textract-service');
+const mockImageMetadataService = require('../../../../src/lib/image-metadata-service');
 
 describe('Create Book Handler with Textract Integration', () => {
   beforeEach(() => {
@@ -15,6 +17,8 @@ describe('Create Book Handler with Textract Integration', () => {
     // Mock console methods to avoid noise in tests
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Mock image metadata service to return null (no pre-extracted metadata)
+    mockImageMetadataService.getExtractedMetadata = jest.fn().mockResolvedValue(null);
   });
 
   afterEach(() => {

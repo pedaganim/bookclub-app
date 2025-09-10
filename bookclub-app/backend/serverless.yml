@@ -300,6 +300,38 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+  # List user's extracted image metadata
+  listImageMetadata:
+    handler: src/handlers/images/listMetadata.handler
+    events:
+      - http:
+          method: GET
+          path: /images/metadata
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  # Automatic image processing on upload
+  processImageUpload:
+    handler: src/handlers/images/processUpload.handler
+    events:
+      - s3:
+          bucket: ${self:service}-${self:provider.stage}-book-covers
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: book-covers/
+          existing: true
+
 # Club-related functions
   createClub:
     handler: src/handlers/clubs/create.handler
