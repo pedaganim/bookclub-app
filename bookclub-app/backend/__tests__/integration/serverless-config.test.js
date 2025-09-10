@@ -128,14 +128,14 @@ describe('Serverless Configuration', () => {
     // This test ensures that all DynamoDB tables have retention policies
     // to prevent deployment conflicts when tables already exist
     const regularTableNames = [
-      'BooksTable',
-      'UsersTable'
+      'BooksTable'
     ];
     
     const customResourceTableNames = [
       'BookclubGroupsTable',
       'BookclubMembersTable',
-      'MetadataCacheTable'
+      'MetadataCacheTable',
+      'UsersTable'
     ];
 
     // Check regular DynamoDB tables
