@@ -220,6 +220,7 @@ class ImageProcessingService {
   ): Promise<{ isValid: boolean; message?: string; confidence?: number; isBook?: boolean }> {
     try {
       // Use OCR to analyze image content
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { text, confidence } = await ocrService.extractText(file, false); // Skip preprocessing as we've already downsized
 
       // TEMPORARY: Always treat images as valid book images to unblock users
