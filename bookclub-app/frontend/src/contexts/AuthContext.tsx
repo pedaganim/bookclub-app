@@ -1,12 +1,15 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, ProfileUpdateData } from '../types';
 import { apiService } from '../services/api';
+import { useNotification } from './NotificationContext';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   updateProfile: (updates: ProfileUpdateData) => Promise<void>;
   logout: () => void;
+  logoutWithSessionExpired: () => void;
   isAuthenticated: boolean;
 }
 
@@ -27,8 +30,27 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { addNotification } = useNotification();
+
+  const logout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  const logoutWithSessionExpired = useCallback(() => {
+    logout();
+    addNotification('warning', 'Your session has expired. Please sign in again to continue.', 7000);
+    navigate('/login');
+  }, [addNotification, navigate]);
 
   useEffect(() => {
+    // Register session expiration handler with API service
+    apiService.setSessionExpiredHandler(logoutWithSessionExpired);
+
     // Check if user is already logged in
     const initializeAuth = async () => {
       try {
@@ -54,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [logoutWithSessionExpired]);
 
   // Commented out local auth methods - using Google OAuth only
   /*
@@ -100,18 +122,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
-
   const value: AuthContextType = {
     user,
     loading,
     updateProfile,
     logout,
+    logoutWithSessionExpired,
     isAuthenticated: !!user,
   };
 

@@ -5,6 +5,7 @@ import { config } from '../config';
 class ApiService {
   private api: AxiosInstance;
   private baseURL: string;
+  private onSessionExpired?: () => void;
 
   constructor() {
     this.baseURL = config.apiBaseUrl;
@@ -27,14 +28,32 @@ class ApiService {
       return config;
     });
 
-    // Add response interceptor to handle errors (do not auto-redirect on 401)
+    // Add response interceptor to handle errors and detect token expiration
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        // Let calling code decide how to handle 401s to avoid login bounce loops
+        // Check if this is a 401 error indicating token expiration
+        if (error.response?.status === 401 && this.onSessionExpired) {
+          // Check if the error is related to authentication/authorization
+          const errorCode = error.response?.data?.error?.code;
+          const errorMessage = error.response?.data?.error?.message;
+          
+          // Trigger session expired logout if it's an auth-related 401
+          if (errorCode === 'UNAUTHORIZED' || 
+              (errorMessage && errorMessage.toLowerCase().includes('token')) ||
+              (errorMessage && errorMessage.toLowerCase().includes('expired')) ||
+              (errorMessage && errorMessage.toLowerCase().includes('unauthorized'))) {
+            this.onSessionExpired();
+          }
+        }
         return Promise.reject(error);
       }
     );
+  }
+
+  // Method to register session expiration callback
+  setSessionExpiredHandler(handler: () => void) {
+    this.onSessionExpired = handler;
   }
 
   // Auth methods
