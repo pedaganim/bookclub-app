@@ -103,27 +103,35 @@ const createBucket = async (params) => {
 };
 
 const configureBucket = async (bucketName, config) => {
-  try {
-    // Set CORS configuration if provided
-    if (config.CorsConfiguration) {
+  // Set CORS configuration if provided
+  if (config.CorsConfiguration) {
+    try {
       console.log('Setting CORS configuration for bucket:', bucketName);
       await s3.putBucketCors({
         Bucket: bucketName,
         CORSConfiguration: config.CorsConfiguration
       }).promise();
+    } catch (error) {
+      console.log('Error configuring CORS, but continuing:', error.message);
     }
+  }
 
-    // Set public access block configuration if provided
-    if (config.PublicAccessBlockConfiguration) {
+  // Set public access block configuration if provided
+  if (config.PublicAccessBlockConfiguration) {
+    try {
       console.log('Setting public access block configuration for bucket:', bucketName);
       await s3.putPublicAccessBlock({
         Bucket: bucketName,
         PublicAccessBlockConfiguration: config.PublicAccessBlockConfiguration
       }).promise();
+    } catch (error) {
+      console.log('Error configuring public access block, but continuing:', error.message);
     }
+  }
 
-    // Set bucket policy if needed for public read access
-    if (config.EnablePublicRead) {
+  // Set bucket policy if needed for public read access
+  if (config.EnablePublicRead) {
+    try {
       console.log('Setting bucket policy for public read access:', bucketName);
       const bucketPolicy = {
         Version: '2012-10-17',
@@ -142,13 +150,12 @@ const configureBucket = async (bucketName, config) => {
         Bucket: bucketName,
         Policy: JSON.stringify(bucketPolicy)
       }).promise();
+    } catch (error) {
+      console.log('Error configuring bucket policy, but continuing:', error.message);
     }
-
-    console.log('Bucket configuration completed for:', bucketName);
-  } catch (error) {
-    console.log('Error configuring bucket, but continuing:', error.message);
-    // Don't fail the entire operation if configuration fails
   }
+
+  console.log('Bucket configuration completed for:', bucketName);
 };
 
 const deleteBucket = async (bucketName) => {
