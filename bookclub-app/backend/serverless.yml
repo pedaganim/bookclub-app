@@ -571,10 +571,9 @@ resources:
           WriteCapacityUnits: 5
 
     UsersTable:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
+      Type: AWS::CloudFormation::CustomResource
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-users-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: userId
@@ -597,6 +596,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+        DeletionPolicy: Retain
 
     MetadataCacheTable:
       Type: AWS::CloudFormation::CustomResource
