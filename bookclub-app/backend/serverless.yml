@@ -70,7 +70,7 @@ custom:
 
 plugins:
   - serverless-offline
-
+  - serverless-plugin-existing-s3
 functions:
   # Book-related functions
   createBook:
@@ -433,10 +433,140 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+  # Custom resource function for DynamoDB table management
+  dynamoTableManager:
+    handler: src/custom-resources/dynamodb-table-manager.handler
+    timeout: 300
+    role: DynamoTableManagerRole
+
+  # Custom resource function for Cognito IdP create-or-update
+  cognitoResourceManager:
+    handler: src/custom-resources/cognito-resource-manager.handler
+    timeout: 300
+    role: CognitoResourceManagerRole
+
+  # Custom resource function for S3 bucket management
+  s3BucketManager:
+    handler: src/custom-resources/s3-bucket-manager.handler
+    timeout: 300
+    role: S3BucketManagerRole
+
 resources:
   Resources:
+    # IAM role for DynamoDB table manager custom resource
+    DynamoTableManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: DynamoDBTableManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - dynamodb:CreateTable
+                    - dynamodb:DeleteTable
+                    - dynamodb:DescribeTable
+                    - dynamodb:UpdateTimeToLive
+                    - dynamodb:DescribeTimeToLive
+                  Resource: 
+                    - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-*-${self:provider.stage}
+
+    # Permission for CloudFormation to invoke the custom resource
+    DynamoTableManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref DynamoTableManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+
+    # IAM role for Cognito IdP manager custom resource
+    CognitoResourceManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: CognitoIdpManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - cognito-idp:DescribeIdentityProvider
+                    - cognito-idp:CreateIdentityProvider
+                    - cognito-idp:UpdateIdentityProvider
+                    - cognito-idp:DeleteIdentityProvider
+                  Resource: "*"
+
+    # Permission for CloudFormation to invoke Cognito IdP manager
+    CognitoResourceManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref CognitoResourceManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    # IAM role for S3 bucket manager custom resource
+    S3BucketManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: S3BucketManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:CreateBucket
+                    - s3:DeleteBucket
+                    - s3:HeadBucket
+                    - s3:PutBucketCors
+                    - s3:PutBucketPolicy
+                    - s3:PutPublicAccessBlock
+                    - s3:GetBucketLocation
+                    - s3:ListBucket
+                  Resource: 
+                    - arn:aws:s3:::${self:service}-${self:provider.stage}-*
+
+    # Permission for CloudFormation to invoke S3 bucket manager
+    S3BucketManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref S3BucketManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
     UserPool:
       Type: AWS::Cognito::UserPool
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         UserPoolName: ${self:service}-user-pool-${self:provider.stage}
         Schema:
@@ -455,6 +585,8 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -472,13 +604,36 @@ resources:
           - profile
         SupportedIdentityProviders:
           - COGNITO
+          - Google
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
         LogoutURLs:
           - ${self:custom.appConfig.oauth.redirectSignOut}
 
+    GoogleIdentityProvider:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: CreateOrUpdateIdentityProvider
+        UserPoolId: !Ref UserPool
+        ProviderName: Google
+        ProviderType: Google
+        ProviderDetails:
+          client_id: ${ssm:/bookclub/oauth/google_client_id}
+          client_secret: ${ssm:/bookclub/oauth/google_client_secret}
+          authorize_scopes: "openid email profile"
+        AttributeMapping:
+          email: email
+          given_name: given_name
+          family_name: family_name
+          name: name
+
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
@@ -514,9 +669,13 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
     # DynamoDB Tables
+    # BooksTable switched to CustomResource (create-if-missing)
     BooksTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-books-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: bookId
@@ -541,8 +700,11 @@ resources:
           WriteCapacityUnits: 5
 
     UsersTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-users-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: userId
@@ -567,8 +729,11 @@ resources:
           WriteCapacityUnits: 5
 
     MetadataCacheTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-metadata-cache-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: cacheKey
@@ -584,8 +749,11 @@ resources:
           WriteCapacityUnits: 5
 
     BookclubGroupsTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-groups-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: groupId
@@ -610,8 +778,11 @@ resources:
           WriteCapacityUnits: 5
 
     BookclubMembersTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-members-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: groupId
@@ -637,16 +808,19 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
-    # S3 Bucket for book covers
+    # S3 Bucket for book covers (create-if-missing via custom resource)
     BookCoversBucket:
-      Type: AWS::S3::Bucket
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
           IgnorePublicAcls: false
-          RestrictPublicReadAcl: false
+          RestrictPublicBuckets: true
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:
@@ -660,18 +834,7 @@ resources:
               AllowedOrigins:
                 - "*"
               MaxAge: 3000
-
-    BookCoversBucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        Bucket: !Ref BookCoversBucket
-        PolicyDocument:
-          Statement:
-            - Sid: PublicReadGetObject
-              Effect: Allow
-              Principal: "*"
-              Action: s3:GetObject
-              Resource: !Sub "${BookCoversBucket}/*"
+        EnablePublicRead: true
 
   Outputs:
     UserPoolId:
@@ -690,4 +853,3 @@ resources:
       Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
     BookCoversBucketName:
       Value: ${self:service}-${self:provider.stage}-book-covers
-

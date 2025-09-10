@@ -17,5 +17,8 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "yaml": "^2.8.1"
+  }
 }

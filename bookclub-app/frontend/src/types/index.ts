@@ -15,6 +15,7 @@ export interface Book {
   author: string;
   description?: string;
   coverImage?: string;
+  images?: string[]; // Additional images beyond cover
   status: 'available' | 'borrowed' | 'reading';
   // Extended metadata fields
   isbn10?: string;

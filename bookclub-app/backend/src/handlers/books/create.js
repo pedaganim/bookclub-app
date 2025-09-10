@@ -59,6 +59,7 @@ module.exports.handler = async (event) => {
       author: data.author,
       description: data.description,
       coverImage: data.coverImage,
+      images: data.images, // Support for additional images
       status: data.status,
     };
 

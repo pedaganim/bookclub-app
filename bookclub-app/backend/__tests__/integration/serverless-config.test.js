@@ -20,8 +20,8 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('BookclubGroupsTable:');
     expect(serverlessConfigContent).toContain('BookclubMembersTable:');
     
-    // Verify they are AWS::DynamoDB::Table types
-    expect(serverlessConfigContent).toContain('Type: AWS::DynamoDB::Table');
+    // Verify they are AWS::CloudFormation::CustomResource types (since all tables are now custom resources)
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     
     // Check table names match expected pattern
     expect(serverlessConfigContent).toContain('TableName: ${self:service}-books-${self:provider.stage}');
@@ -33,10 +33,12 @@ describe('Serverless Configuration', () => {
 
   test('should have S3 bucket for book covers defined', () => {
     expect(serverlessConfigContent).toContain('BookCoversBucket:');
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::Bucket');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     expect(serverlessConfigContent).toContain('BucketName: ${self:service}-${self:provider.stage}-book-covers');
-    expect(serverlessConfigContent).toContain('BookCoversBucketPolicy:');
-    expect(serverlessConfigContent).toContain('Type: AWS::S3::BucketPolicy');
+    // Check for retention policies
+    expect(serverlessConfigContent).toContain('DeletionPolicy: Retain');
+    // Check for custom resource configuration
+    expect(serverlessConfigContent).toContain('EnablePublicRead: true');
   });
 
   test('should have CloudFormation exports defined', () => {
@@ -105,5 +107,120 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('AllowedHeaders:');
     expect(serverlessConfigContent).toContain('AllowedMethods:');
     expect(serverlessConfigContent).toContain('AllowedOrigins:');
+  });
+
+  test('should have custom resource function for DynamoDB table management', () => {
+    // Check that the custom resource Lambda function is defined
+    expect(serverlessConfigContent).toContain('dynamoTableManager:');
+    expect(serverlessConfigContent).toContain('handler: src/custom-resources/dynamodb-table-manager.handler');
+    expect(serverlessConfigContent).toContain('role: DynamoTableManagerRole');
+    
+    // Check that the IAM role for the custom resource is defined
+    expect(serverlessConfigContent).toContain('DynamoTableManagerRole:');
+    expect(serverlessConfigContent).toContain('Type: AWS::IAM::Role');
+    expect(serverlessConfigContent).toContain('DynamoDBTableManager');
+    
+    // Check that the custom resource has proper permissions
+    expect(serverlessConfigContent).toContain('dynamodb:CreateTable');
+    expect(serverlessConfigContent).toContain('dynamodb:DescribeTable');
+    expect(serverlessConfigContent).toContain('DynamoTableManagerInvokePermission:');
+  });
+
+  test('should have custom resource function for S3 bucket management', () => {
+    // Check that the S3 bucket manager function is defined
+    expect(serverlessConfigContent).toContain('s3BucketManager:');
+    expect(serverlessConfigContent).toContain('handler: src/custom-resources/s3-bucket-manager.handler');
+    expect(serverlessConfigContent).toContain('role: S3BucketManagerRole');
+    
+    // Check that the IAM role for the custom resource is defined
+    expect(serverlessConfigContent).toContain('S3BucketManagerRole:');
+    expect(serverlessConfigContent).toContain('Type: AWS::IAM::Role');
+    expect(serverlessConfigContent).toContain('S3BucketManager');
+    
+    // Check that the custom resource has proper permissions
+    expect(serverlessConfigContent).toContain('s3:CreateBucket');
+    expect(serverlessConfigContent).toContain('s3:HeadBucket');
+    expect(serverlessConfigContent).toContain('S3BucketManagerInvokePermission:');
+  });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for all DynamoDB tables', () => {
+    // This test ensures that all DynamoDB tables have retention policies
+    // to prevent deployment conflicts when tables already exist
+    const regularTableNames = [
+      // No regular tables - all are now custom resources
+    ];
+    
+    const customResourceTableNames = [
+      'BooksTable',
+      'BookclubGroupsTable',
+      'BookclubMembersTable',
+      'MetadataCacheTable',
+      'UsersTable'
+    ];
+
+    // Check regular DynamoDB tables
+    regularTableNames.forEach(tableName => {
+      // Find the table definition section
+      const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:`, 'g');
+      const tableMatch = serverlessConfigContent.match(tableDefRegex);
+      
+      expect(tableMatch).toBeTruthy();
+      if (tableMatch) {
+        const tableSection = tableMatch[0];
+        expect(tableSection).toContain('DeletionPolicy: Retain');
+        expect(tableSection).toContain('UpdateReplacePolicy: Retain');
+      }
+    });
+
+    // Check custom resource tables have DeletionPolicy and UpdateReplacePolicy
+    customResourceTableNames.forEach(tableName => {
+      const tableDefRegex = new RegExp(`${tableName}:[\\s\\S]*?Properties:`, 'g');
+      const tableMatch = serverlessConfigContent.match(tableDefRegex);
+      
+      expect(tableMatch).toBeTruthy();
+      if (tableMatch) {
+        const tableSection = tableMatch[0];
+        expect(tableSection).toContain('Type: AWS::CloudFormation::CustomResource');
+        expect(tableSection).toContain('DeletionPolicy: Retain');
+        expect(tableSection).toContain('UpdateReplacePolicy: Retain');
+      }
+    });
+  });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for S3 bucket', () => {
+    // This test ensures that the S3 bucket has retention policies
+    // to prevent deployment conflicts when bucket already exists
+    const bucketDefRegex = new RegExp(`BookCoversBucket:[\\s\\S]*?Properties:`, 'g');
+    const bucketMatch = serverlessConfigContent.match(bucketDefRegex);
+    
+    expect(bucketMatch).toBeTruthy();
+    if (bucketMatch) {
+      const bucketSection = bucketMatch[0];
+      expect(bucketSection).toContain('DeletionPolicy: Retain');
+      expect(bucketSection).toContain('UpdateReplacePolicy: Retain');
+    }
+  });
+
+  test('should have DeletionPolicy and UpdateReplacePolicy for Cognito resources', () => {
+    // This test ensures that critical Cognito resources have retention policies
+    // to prevent loss of user accounts and authentication configuration
+    const cognitoResourceNames = [
+      'UserPool',
+      'UserPoolClient', 
+      'GoogleIdentityProvider',
+      'UserPoolDomain'
+    ];
+
+    cognitoResourceNames.forEach(resourceName => {
+      const resourceDefRegex = new RegExp(`${resourceName}:[\\s\\S]*?Properties:`, 'g');
+      const resourceMatch = serverlessConfigContent.match(resourceDefRegex);
+      
+      expect(resourceMatch).toBeTruthy();
+      if (resourceMatch) {
+        const resourceSection = resourceMatch[0];
+        expect(resourceSection).toContain('DeletionPolicy: Retain');
+        expect(resourceSection).toContain('UpdateReplacePolicy: Retain');
+      }
+    });
   });
 });
