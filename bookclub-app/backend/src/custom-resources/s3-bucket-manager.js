@@ -59,12 +59,22 @@ const sendResponse = async (event, context, responseStatus, responseData = {}, p
 
 const bucketExists = async (bucketName) => {
   try {
+    console.log(`Checking if bucket exists: ${bucketName}`);
     await s3.headBucket({ Bucket: bucketName }).promise();
+    console.log(`Bucket exists: ${bucketName}`);
     return true;
   } catch (error) {
     if (error.code === 'NoSuchBucket' || error.code === 'NotFound') {
+      console.log(`Bucket does not exist: ${bucketName}`);
       return false;
     }
+    if (error.code === 'Forbidden') {
+      // If we get Forbidden, the bucket might exist but we don't have permission to check
+      // This can happen with buckets in different accounts. For our use case, assume it doesn't exist.
+      console.log(`Bucket access forbidden (assuming doesn't exist): ${bucketName}`);
+      return false;
+    }
+    console.error(`Error checking bucket existence: ${error.code} - ${error.message}`);
     throw error;
   }
 };
@@ -73,10 +83,12 @@ const createBucket = async (params) => {
   try {
     console.log('Creating S3 bucket:', params.Bucket);
     const result = await s3.createBucket(params).promise();
+    console.log('S3 bucket created successfully:', params.Bucket);
     
     // Wait for bucket to be available
     console.log('Waiting for bucket to become available...');
     await s3.waitFor('bucketExists', { Bucket: params.Bucket }).promise();
+    console.log('S3 bucket is now available:', params.Bucket);
     
     return result;
   } catch (error) {
@@ -85,6 +97,7 @@ const createBucket = async (params) => {
       console.log('Bucket already exists, adopting it:', params.Bucket);
       return { Location: `/${params.Bucket}` };
     }
+    console.error(`Error creating bucket: ${error.code} - ${error.message}`);
     throw error;
   }
 };
@@ -172,11 +185,14 @@ exports.handler = async (event, context) => {
     EnablePublicRead 
   } = ResourceProperties;
 
+  console.log(`Processing ${RequestType} request for bucket: ${BucketName}`);
+
   try {
     let result;
     
     switch (RequestType) {
       case 'Create':
+        console.log(`Starting Create operation for bucket: ${BucketName}`);
         const exists = await bucketExists(BucketName);
         if (exists) {
           console.log(`Bucket ${BucketName} already exists, adopting it`);
@@ -195,6 +211,7 @@ exports.handler = async (event, context) => {
           PublicAccessBlockConfiguration,
           EnablePublicRead
         });
+        console.log(`Create operation completed successfully for bucket: ${BucketName}`);
         break;
 
       case 'Update':
@@ -205,9 +222,11 @@ exports.handler = async (event, context) => {
           EnablePublicRead
         });
         result = { Location: `/${BucketName}` };
+        console.log(`Update operation completed successfully for bucket: ${BucketName}`);
         break;
 
       case 'Delete':
+        console.log(`Starting Delete operation for bucket: ${BucketName}`);
         // Only delete if DeletionPolicy is not Retain
         if (ResourceProperties.DeletionPolicy !== 'Retain') {
           await deleteBucket(BucketName);
@@ -215,15 +234,18 @@ exports.handler = async (event, context) => {
           console.log(`DeletionPolicy is Retain, keeping bucket: ${BucketName}`);
         }
         result = {};
+        console.log(`Delete operation completed successfully for bucket: ${BucketName}`);
         break;
 
       default:
         throw new Error(`Unknown request type: ${RequestType}`);
     }
 
+    console.log('Sending SUCCESS response to CloudFormation');
     await sendResponse(event, context, 'SUCCESS', { BucketName }, BucketName);
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error occurred:', error);
+    console.error('Error stack:', error.stack);
     await sendResponse(event, context, 'FAILED', { Error: error.message });
   }
 };
