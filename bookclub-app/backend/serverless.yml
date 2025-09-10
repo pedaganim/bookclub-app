@@ -56,7 +56,6 @@ custom:
   serverless-offline:
     httpPort: 4000
     resourceRoutes: true
-    # Mock AWS services for offline development
     environment:
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
@@ -71,6 +70,7 @@ custom:
 plugins:
   - serverless-offline
   - serverless-plugin-existing-s3
+
 functions:
   # Book-related functions
   createBook:
@@ -408,6 +408,12 @@ functions:
     role: DynamoTableManagerRole
 
 resources:
+  Conditions:
+    IsProd: !Equals [ "${self:provider.stage}", "prod" ]
+    NotProd:
+      Fn::Not:
+        - Condition: IsProd
+
   Resources:
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
@@ -467,7 +473,6 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
-      DependsOn: GoogleIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -494,6 +499,7 @@ resources:
           - ${self:custom.appConfig.oauth.redirectSignOut}
 
     GoogleIdentityProvider:
+      Condition: NotProd
       Type: AWS::Cognito::UserPoolIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
@@ -550,6 +556,7 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
     # DynamoDB Tables
+    # CHANGED: BooksTable now uses CustomResource (idempotent create-if-missing)
     BooksTable:
       Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
@@ -688,8 +695,9 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
-    # S3 Bucket for book covers
+    # S3 Bucket for book covers (skip creating in prod)
     BookCoversBucket:
+      Condition: NotProd
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
@@ -714,6 +722,7 @@ resources:
               MaxAge: 3000
 
     BookCoversBucketPolicy:
+      Condition: NotProd
       Type: AWS::S3::BucketPolicy
       Properties:
         Bucket: !Ref BookCoversBucket
@@ -742,4 +751,3 @@ resources:
       Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
     BookCoversBucketName:
       Value: ${self:service}-${self:provider.stage}-book-covers
-
