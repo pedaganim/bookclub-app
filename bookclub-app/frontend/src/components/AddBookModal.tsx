@@ -29,20 +29,34 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   // Check for newly created books and their processing status
   const checkProcessingStatus = async (uploadTimestamp: number) => {
     try {
-      const response = await apiService.listBooks({ limit: 20 });
-      
-      // Find books created after upload timestamp with pending metadata
-      const newBooks = response.items.filter(book => {
-        const bookCreated = new Date(book.createdAt).getTime();
-        return bookCreated >= uploadTimestamp && 
-               (book.metadataSource === 'image-upload-pending' || 
-                book.metadataSource === 'textract-auto-processed');
-      });
+      let allBooks: Book[] = [];
+      let nextToken: string | undefined = undefined;
+      let keepFetching = true;
 
-      setProcessingBooks(newBooks);
+      // Fetch all books using pagination to ensure we don't miss any
+      while (keepFetching) {
+        const response = await apiService.listBooks({ limit: 20, nextToken });
+        if (response.items && response.items.length > 0) {
+          // Filter books created after upload timestamp with pending metadata
+          const filteredBooks = response.items.filter(book => {
+            const bookCreated = new Date(book.createdAt).getTime();
+            return bookCreated >= uploadTimestamp && 
+                   (book.metadataSource === 'image-upload-pending' || 
+                    book.metadataSource === 'textract-auto-processed');
+          });
+          allBooks = allBooks.concat(filteredBooks);
+        }
+        nextToken = response.nextToken;
+        // Stop if no more pages
+        if (!nextToken) {
+          keepFetching = false;
+        }
+      }
 
-      const pendingBooks = newBooks.filter(book => book.metadataSource === 'image-upload-pending');
-      const completedBooks = newBooks.filter(book => book.metadataSource === 'textract-auto-processed');
+      setProcessingBooks(allBooks);
+
+      const pendingBooks = allBooks.filter(book => book.metadataSource === 'image-upload-pending');
+      const completedBooks = allBooks.filter(book => book.metadataSource === 'textract-auto-processed');
 
       if (pendingBooks.length === 0 && completedBooks.length > 0) {
         // All processing complete
@@ -59,7 +73,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         return false; // Still processing
       }
       
-      return true; // No books found yet, stop polling
+      return false; // No books found yet, continue polling
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error checking processing status:', error);

@@ -9,6 +9,21 @@ const PLACEHOLDER_AUTHOR = 'Unknown Author';
 const PROCESSING_DESCRIPTION = 'Book uploaded via image - metadata processing in progress';
 
 /**
+ * Utility function to remove undefined fields from an object
+ * @param {Object} obj - Object to clean
+ * @returns {Object} - Object with undefined fields removed
+ */
+function removeUndefinedFields(obj) {
+  const cleaned = { ...obj };
+  Object.keys(cleaned).forEach(key => {
+    if (cleaned[key] === undefined) {
+      delete cleaned[key];
+    }
+  });
+  return cleaned;
+}
+
+/**
  * Derives a meaningful title from the uploaded filename
  * @param {string} s3Key - The S3 key (e.g., "book-covers/userId/my-book-title.jpg")
  * @returns {string} - Formatted title (e.g., "My Book Title")
@@ -143,7 +158,7 @@ module.exports.handler = async (event) => {
             const updatedBookData = {
               // Only update if we have better data than placeholders
               title: bookMetadata.title || bookData.title,
-              author: bookMetadata.author || PLACEHOLDER_AUTHOR,
+              author: bookMetadata.author ?? PLACEHOLDER_AUTHOR,
               description: bookMetadata.description || extractedText.fullText || PROCESSING_DESCRIPTION,
               isbn10: bookMetadata.isbn && bookMetadata.isbn.length === 10 ? bookMetadata.isbn : undefined,
               isbn13: bookMetadata.isbn && bookMetadata.isbn.length === 13 ? bookMetadata.isbn : undefined,
@@ -154,14 +169,10 @@ module.exports.handler = async (event) => {
               metadataSource: 'textract-auto-processed'
             };
             
-            // Remove undefined fields
-            Object.keys(updatedBookData).forEach(key => {
-              if (updatedBookData[key] === undefined) {
-                delete updatedBookData[key];
-              }
-            });
+            // Remove undefined fields using utility function
+            const cleanedBookData = removeUndefinedFields(updatedBookData);
             
-            await Book.update(createdBook.bookId, userId, updatedBookData);
+            await Book.update(createdBook.bookId, userId, cleanedBookData);
             
             console.log(`[ImageProcessor] Updated book ${createdBook.bookId} with extracted metadata`);
           } else {
