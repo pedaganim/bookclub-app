@@ -86,7 +86,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, null);
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: null
@@ -139,6 +139,30 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, null);
+  });
+
+  it('should list all books with search filter when search query provided', async () => {
+    const mockBooks = {
+      items: [{ bookId: '1', title: 'Book 1' }],
+      nextToken: null
+    };
+
+    Book.listAll.mockResolvedValue(mockBooks);
+    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
+
+    const event = {
+      queryStringParameters: {
+        search: 'fiction'
+      }
+    };
+
+    await handler(event);
+
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, 'fiction');
+    expect(response.success).toHaveBeenCalledWith({
+      items: mockBooks.items,
+      nextToken: null
+    });
   });
 });

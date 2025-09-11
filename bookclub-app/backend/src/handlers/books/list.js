@@ -7,6 +7,7 @@ module.exports.handler = async (event) => {
     let userId = qs && typeof qs.userId === 'string' ? qs.userId : null;
     const limit = qs && qs.limit ? parseInt(qs.limit, 10) : 10;
     const nextToken = qs && typeof qs.nextToken === 'string' ? qs.nextToken : null;
+    const search = qs && typeof qs.search === 'string' ? qs.search : null;
 
     // If no userId specified, try to use Cognito claims (authenticated user)
     if (!userId && event?.requestContext?.authorizer?.claims?.sub) {
@@ -20,6 +21,7 @@ module.exports.handler = async (event) => {
       hasClaims: !!(event?.requestContext?.authorizer?.claims),
       limit,
       hasNextToken: !!nextToken,
+      hasSearch: !!search,
     });
 
     let result;
@@ -27,7 +29,7 @@ module.exports.handler = async (event) => {
       result = await Book.listByUser(userId, limit, nextToken);
     } else {
       // Public listing (all books) when no userId provided
-      result = await Book.listAll(limit, nextToken);
+      result = await Book.listAll(limit, nextToken, search);
     }
 
     return response.success({

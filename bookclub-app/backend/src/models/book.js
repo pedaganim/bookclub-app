@@ -83,9 +83,18 @@ class Book {
     };
   }
 
-  static async listAll(limit = 10, nextToken = null) {
+  static async listAll(limit = 10, nextToken = null, searchQuery = null) {
     if (isOffline()) {
-      const result = await LocalStorage.listBooks();
+      let result = await LocalStorage.listBooks();
+      
+      // Apply search filter if provided
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        result = result.filter(book => 
+          book.description && book.description.toLowerCase().includes(query)
+        );
+      }
+      
       // For offline mode, we'll implement simple pagination later if needed
       return {
         items: result.slice(0, limit),
@@ -98,6 +107,17 @@ class Book {
       Limit: limit,
       ScanIndexForward: false,
     };
+
+    // Add search filter if provided
+    if (searchQuery) {
+      params.FilterExpression = 'contains(#desc, :searchQuery)';
+      params.ExpressionAttributeNames = {
+        '#desc': 'description'
+      };
+      params.ExpressionAttributeValues = {
+        ':searchQuery': searchQuery
+      };
+    }
 
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
