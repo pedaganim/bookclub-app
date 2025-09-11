@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book } from '../types';
+import { Book, BookListResponse } from '../types';
 import { apiService } from '../services/api';
 import { ProcessedImage } from '../services/imageProcessingService';
 import MultiImageUpload from './MultiImageUpload';
@@ -35,10 +35,10 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
       // Fetch all books using pagination to ensure we don't miss any
       while (keepFetching) {
-        const response = await apiService.listBooks({ limit: 20, nextToken });
+        const response: BookListResponse = await apiService.listBooks({ limit: 20, nextToken });
         if (response.items && response.items.length > 0) {
           // Filter books created after upload timestamp with pending metadata
-          const filteredBooks = response.items.filter(book => {
+          const filteredBooks = response.items.filter((book: Book) => {
             const bookCreated = new Date(book.createdAt).getTime();
             return bookCreated >= uploadTimestamp && 
                    (book.metadataSource === 'image-upload-pending' || 
