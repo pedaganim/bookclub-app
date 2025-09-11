@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
@@ -123,6 +124,13 @@ const Home: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            {/* Public Library Link */}
+            <Link
+              to="/library"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
+            >
+              📚 Browse Our Library
+            </Link>
             {activeTab === 'books' ? (
               <button
                 onClick={() => setShowAddModal(true)}
