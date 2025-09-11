@@ -22,7 +22,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     }
     timeoutRef.current = setTimeout(() => {
       onSearch(query.trim());
-    }, 300); // 300ms debounce
+    }, 1000); // 1000ms debounce as requested
   }, [onSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
