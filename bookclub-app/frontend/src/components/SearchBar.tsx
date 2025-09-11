@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface SearchBarProps {
@@ -13,6 +13,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
   className = "" 
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce search to avoid too many API calls
+  const debouncedSearch = useCallback((query: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      onSearch(query.trim());
+    }, 300); // 300ms debounce
+  }, [onSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +34,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
     const query = e.target.value;
     setSearchQuery(query);
     
-    // Perform search on every keystroke for better UX
-    onSearch(query.trim());
+    // Perform debounced search for better performance
+    debouncedSearch(query);
   };
 
   return (
