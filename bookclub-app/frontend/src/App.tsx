@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
+import BookLibrary from './pages/BookLibrary';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Navigate to="/login" replace />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/library" element={<BookLibrary />} />
               <Route
                 path="/"
                 element={

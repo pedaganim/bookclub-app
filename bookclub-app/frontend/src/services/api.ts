@@ -169,6 +169,29 @@ class ApiService {
     return response.data.data!;
   }
 
+  async listBooksPublic(params?: {
+    limit?: number;
+    nextToken?: string;
+  }): Promise<BookListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
+
+    // Create a request without authorization header for public access
+    const response: AxiosResponse<ApiResponse<BookListResponse>> = await axios.get(
+      `${this.baseURL}/books?${queryParams.toString()}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list books');
+    }
+    return response.data.data!;
+  }
+
   async updateBook(bookId: string, updates: Partial<Book>): Promise<Book> {
     const response: AxiosResponse<ApiResponse<Book>> = await this.api.put(`/books/${bookId}`, updates);
     if (!response.data.success) {
