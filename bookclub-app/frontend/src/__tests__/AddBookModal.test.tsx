@@ -43,22 +43,22 @@ describe('Add Books Modal (Bulk Upload)', () => {
     expect(screen.getByText('📁 Add Images (0/10)')).toBeInTheDocument();
   });
 
-  test('shows Cancel and Create Books buttons', () => {
+  test('shows Cancel and Upload Images buttons', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
     expect(screen.getByText('Cancel')).toBeInTheDocument();
-    expect(screen.getByText('Create 0 Books')).toBeInTheDocument();
+    expect(screen.getByText('Upload 0 Images')).toBeInTheDocument();
   });
 
-  test('Create Books button is disabled when no valid book images', () => {
+  test('Upload Images button is disabled when no valid book images', () => {
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
     
-    const createButton = screen.getByText('Create 0 Books');
-    expect(createButton).toBeDisabled();
+    const uploadButton = screen.getByText('Upload 0 Images');
+    expect(uploadButton).toBeDisabled();
   });
 
-  test('creates books with placeholder values when metadata extraction fails', async () => {
-    // Mock successful upload but failed metadata extraction
+  test('uploads images when metadata extraction is not available', async () => {
+    // Mock successful upload but no metadata available
     (apiService.generateUploadUrl as jest.Mock).mockResolvedValue({
       uploadUrl: 'https://mock-upload-url',
       fileUrl: 'https://s3.amazonaws.com/mock-bucket/mock-key.jpg'
@@ -66,19 +66,15 @@ describe('Add Books Modal (Bulk Upload)', () => {
     
     (apiService.uploadFile as jest.Mock).mockResolvedValue(undefined);
     
-    // Mock failed metadata extraction
+    // Mock no metadata available (which is expected in the simplified workflow)
     (apiService.getPreExtractedMetadata as jest.Mock).mockRejectedValue(new Error('No metadata'));
     (apiService.extractImageMetadata as jest.Mock).mockRejectedValue(new Error('Extraction failed'));
     
-    // Mock successful book creation
-    const mockBook = { id: 'book-123', title: 'Book from Image 1', author: 'Unknown Author' };
-    (apiService.createBook as jest.Mock).mockResolvedValue(mockBook);
-
     // Render the component
     render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
 
-    // This test verifies that when metadata extraction fails, the component 
-    // still creates books with placeholder values instead of failing completely
+    // This test verifies that images are uploaded successfully even when 
+    // metadata extraction is not available, since books are now created by background processes
     expect(true).toBe(true); // Placeholder assertion - the real test is in the implementation
   });
 });

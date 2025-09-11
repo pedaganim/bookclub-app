@@ -113,7 +113,7 @@ describe('BookLibrary', () => {
     render(<BookLibrary />);
     
     await waitFor(() => {
-      expect(apiService.listBooksPublic).toHaveBeenCalledWith();
+      expect(apiService.listBooksPublic).toHaveBeenCalledWith({ search: undefined });
     });
   });
 });
