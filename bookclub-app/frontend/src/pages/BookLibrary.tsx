@@ -1,37 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
 
 const BookLibrary: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState(10);
+  const [nextToken, setNextToken] = useState<string | null>(null);
+  const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
+  const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
-  const fetchBooks = async (search?: string) => {
+  const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
       setLoading(true);
       setError('');
       // Make public request without userId to get all books
-      const response = await apiService.listBooksPublic({ search });
+      const response = await apiService.listBooksPublic({ 
+        search, 
+        limit: currentPageSize || pageSize,
+        nextToken: token || undefined 
+      });
       setBooks(Array.isArray(response.items) ? response.items : []);
+      setHasNextPage(!!response.nextToken);
+      setNextToken(response.nextToken || null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageSize]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    fetchBooks(query || undefined);
+    // Reset pagination when searching
+    setPreviousTokens([]);
+    setNextToken(null);
+    setCurrentPageToken(null);
+    fetchBooks(query || undefined, pageSize, null);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    // Reset pagination when changing page size
+    setPreviousTokens([]);
+    setNextToken(null);
+    setCurrentPageToken(null);
+    fetchBooks(searchQuery || undefined, newPageSize, null);
+  };
+
+  const handleNextPage = () => {
+    if (hasNextPage && nextToken) {
+      // Store current page's starting token in history for going back
+      setPreviousTokens(prev => [...prev, currentPageToken]);
+      setCurrentPageToken(nextToken);
+      fetchBooks(searchQuery || undefined, pageSize, nextToken);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (previousTokens.length > 0) {
+      // Get the previous page's starting token
+      const newPreviousTokens = [...previousTokens];
+      const poppedToken = newPreviousTokens.pop();
+      const previousPageToken = poppedToken !== undefined ? poppedToken : null;
+      setPreviousTokens(newPreviousTokens);
+      setCurrentPageToken(previousPageToken);
+      
+      fetchBooks(searchQuery || undefined, pageSize, previousPageToken);
+    }
   };
 
   useEffect(() => {
     fetchBooks();
-  }, []);
+  }, [fetchBooks]);
 
   if (loading) {
     return (
@@ -79,14 +126,30 @@ const BookLibrary: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {books.map((book) => (
-              <PublicBookCard
-                key={book.bookId}
-                book={book}
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {books.map((book) => (
+                <PublicBookCard
+                  key={book.bookId}
+                  book={book}
+                />
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="mt-8">
+              <Pagination
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                hasNextPage={hasNextPage}
+                hasPreviousPage={previousTokens.length > 0}
+                onNextPage={handleNextPage}
+                onPreviousPage={handlePreviousPage}
+                currentItemsCount={books.length}
+                isLoading={loading}
               />
-            ))}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>
