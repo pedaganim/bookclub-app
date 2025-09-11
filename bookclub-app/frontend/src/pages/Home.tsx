@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
 import AllBooksCard from '../components/AllBooksCard';
 import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
 import AddBookModal from '../components/AddBookModal';
 import ClubCard from '../components/ClubCard';
 import CreateClubModal from '../components/CreateClubModal';
@@ -31,37 +32,93 @@ const Home: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
   const [searchQuery, setSearchQuery] = useState('');
+  // Pagination state for "All Books" filter
+  const [pageSize, setPageSize] = useState(10);
+  const [nextToken, setNextToken] = useState<string | null>(null);
+  const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
+  const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const { user } = useAuth();
 
-  const fetchBooks = useCallback(async (search?: string) => {
+  const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
       setLoading(true);
       setError('');
       if (filter === 'my-books' && user) {
-        // My Books - use authenticated API
+        // My Books - use authenticated API (no pagination needed for personal books)
         const params = { userId: user.userId };
         const response = await apiService.listBooks(params);
         setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
+        // Reset pagination state for my-books since it doesn't use pagination
+        setHasNextPage(false);
+        setNextToken(null);
       } else {
-        // All Books - use public API with search support
-        const response = await apiService.listBooksPublic({ search });
+        // All Books - use public API with search and pagination support
+        const response = await apiService.listBooksPublic({ 
+          search, 
+          limit: currentPageSize || pageSize,
+          nextToken: token || undefined 
+        });
         setBooks(Array.isArray(response.items) ? response.items : []);
+        setHasNextPage(!!response.nextToken);
+        setNextToken(response.nextToken || null);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
       setLoading(false);
     }
-  }, [filter, user]);
+  }, [filter, user, pageSize]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    fetchBooks(query || undefined);
+    // Reset pagination when searching (only for "All Books" filter)
+    if (filter === 'all') {
+      setPreviousTokens([]);
+      setNextToken(null);
+      setCurrentPageToken(null);
+    }
+    fetchBooks(query || undefined, pageSize, null);
   };
 
   const handleFilterChange = (newFilter: 'all' | 'my-books') => {
     setFilter(newFilter);
     setSearchQuery(''); // Clear search when changing filters
+    // Reset pagination when changing filters
+    setPreviousTokens([]);
+    setNextToken(null);
+    setCurrentPageToken(null);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    // Reset pagination when changing page size
+    setPreviousTokens([]);
+    setNextToken(null);
+    setCurrentPageToken(null);
+    fetchBooks(searchQuery || undefined, newPageSize, null);
+  };
+
+  const handleNextPage = () => {
+    if (hasNextPage && nextToken) {
+      // Store current page's starting token in history for going back
+      setPreviousTokens(prev => [...prev, currentPageToken]);
+      setCurrentPageToken(nextToken);
+      fetchBooks(searchQuery || undefined, pageSize, nextToken);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (previousTokens.length > 0) {
+      // Get the previous page's starting token
+      const newPreviousTokens = [...previousTokens];
+      const poppedToken = newPreviousTokens.pop();
+      const previousPageToken = poppedToken !== undefined ? poppedToken : null;
+      setPreviousTokens(newPreviousTokens);
+      setCurrentPageToken(previousPageToken);
+      
+      fetchBooks(searchQuery || undefined, pageSize, previousPageToken);
+    }
   };
 
   const fetchClubs = useCallback(async () => {
@@ -293,28 +350,46 @@ const Home: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className={viewMode === 'grid' 
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                : "space-y-4"
-              }>
-                {books.map((book) => (
-                  filter === 'all' ? (
-                    <AllBooksCard
-                      key={book.bookId}
-                      book={book}
+              <>
+                <div className={viewMode === 'grid' 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  : "space-y-4"
+                }>
+                  {books.map((book) => (
+                    filter === 'all' ? (
+                      <AllBooksCard
+                        key={book.bookId}
+                        book={book}
+                      />
+                    ) : (
+                      <BookCard
+                        key={book.bookId}
+                        book={book}
+                        onDelete={handleBookDeleted}
+                        onUpdate={handleBookUpdated}
+                        showActions={user?.userId === book.userId}
+                        listView={viewMode === 'list'}
+                      />
+                    )
+                  ))}
+                </div>
+                
+                {/* Pagination Controls - Only show for "All Books" filter */}
+                {filter === 'all' && (
+                  <div className="mt-8">
+                    <Pagination
+                      pageSize={pageSize}
+                      onPageSizeChange={handlePageSizeChange}
+                      hasNextPage={hasNextPage}
+                      hasPreviousPage={previousTokens.length > 0}
+                      onNextPage={handleNextPage}
+                      onPreviousPage={handlePreviousPage}
+                      currentItemsCount={books.length}
+                      isLoading={loading}
                     />
-                  ) : (
-                    <BookCard
-                      key={book.bookId}
-                      book={book}
-                      onDelete={handleBookDeleted}
-                      onUpdate={handleBookUpdated}
-                      showActions={user?.userId === book.userId}
-                      listView={viewMode === 'list'}
-                    />
-                  )
-                ))}
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         ) : (

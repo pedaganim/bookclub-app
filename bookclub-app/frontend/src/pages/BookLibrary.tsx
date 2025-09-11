@@ -67,11 +67,12 @@ const BookLibrary: React.FC = () => {
     if (previousTokens.length > 0) {
       // Get the previous page's starting token
       const newPreviousTokens = [...previousTokens];
-      const previousPageToken = newPreviousTokens.pop();
+      const poppedToken = newPreviousTokens.pop();
+      const previousPageToken = poppedToken !== undefined ? poppedToken : null;
       setPreviousTokens(newPreviousTokens);
       setCurrentPageToken(previousPageToken);
       
-      fetchBooks(searchQuery || undefined, pageSize, previousPageToken || null);
+      fetchBooks(searchQuery || undefined, pageSize, previousPageToken);
     }
   };
 
