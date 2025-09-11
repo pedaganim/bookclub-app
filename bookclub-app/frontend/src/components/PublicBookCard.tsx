@@ -22,7 +22,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
   const getDisplayUsername = (userId: string) => {
     // For now, show a simplified version of the userId
     // This could be enhanced later to fetch actual usernames
-    return `User ${userId.slice(-8)}`;
+    return `User ${userId.slice(-Math.min(8, userId.length))}`;
   };
 
   // Default placeholder image when no cover image is provided
@@ -45,7 +45,15 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
         {/* Description */}
         {book.description && (
           <div className="mb-3">
-            <p className="text-gray-700 text-sm leading-relaxed line-clamp-4">
+            <p
+              className="text-gray-700 text-sm leading-relaxed"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
               {formatDescription(book.description)}
             </p>
           </div>

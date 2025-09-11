@@ -14,7 +14,7 @@ const BookLibrary: React.FC = () => {
         setLoading(true);
         // Make public request without userId to get all books
         const response = await apiService.listBooksPublic();
-        setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
+        setBooks(Array.isArray(response.items) ? response.items : []);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch books');
       } finally {
