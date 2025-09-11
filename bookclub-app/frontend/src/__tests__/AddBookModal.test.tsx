@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import AddBookModal from '../components/AddBookModal';
 import { apiService } from '../services/api';
 
@@ -74,23 +74,9 @@ describe('Add Books Modal (Bulk Upload)', () => {
     const mockBook = { id: 'book-123', title: 'Book from Image 1', author: 'Unknown Author' };
     (apiService.createBook as jest.Mock).mockResolvedValue(mockBook);
 
-    // Create component with mock uploaded images
-    const component = render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
-    
-    // Mock the uploadedImages state by creating a scenario where images are processed
-    // Since the component uses internal state, we'll verify the behavior through the API calls
-    
-    // Set up the component with a mock image that would be considered valid
-    const mockUploadedImages = [{
-      file: new File(['mock'], 'test.jpg', { type: 'image/jpeg' }),
-      isValid: true,
-      isBook: true,
-      confidence: 80
-    }];
+    // Render the component
+    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
 
-    // Simulate the processImagesAndCreateBooks being called with valid images
-    // We'll test this by checking if the createBook API is called with fallback values
-    
     // This test verifies that when metadata extraction fails, the component 
     // still creates books with placeholder values instead of failing completely
     expect(true).toBe(true); // Placeholder assertion - the real test is in the implementation
