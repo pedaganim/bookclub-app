@@ -1,16 +1,12 @@
-const textractService = require('../../lib/textract-service');
-const { DynamoDB } = require('../../lib/aws-config');
-const { getTableName } = require('../../lib/table-names');
 const Book = require('../../models/book');
 
 /**
- * Lambda function to automatically process uploaded images with Textract and create books
+ * Lambda function to automatically create book entries from uploaded images
  * Triggered by S3 ObjectCreated events
  * 
  * Flow:
- * 1. Extract metadata from uploaded book cover images using Textract
- * 2. Store extracted metadata in cache for manual book creation fallback
- * 3. Automatically create book entries when sufficient metadata is extracted
+ * 1. Create minimal book entries with uploaded cover images
+ * 2. Metadata extraction and enrichment happens asynchronously via other lambdas
  */
 module.exports.handler = async (event) => {
   console.log('[ImageProcessor] Processing S3 event:', JSON.stringify(event, null, 2));
@@ -43,77 +39,23 @@ module.exports.handler = async (event) => {
       const userId = keyParts[1];
 
       try {
-        // Extract metadata using Textract
-        const extractionResult = await textractService.extractTextFromImage(bucket, key);
+        // Create minimal book entry with uploaded image
+        const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
         
-        if (!extractionResult) {
-          console.log('[ImageProcessor] Textract extraction failed, skipping metadata storage');
-          continue;
-        }
-
-        // Store extracted metadata in cache table for later retrieval
-        const metadataItem = {
-          cacheKey: `textract:${bucket}:${key}`,
-          extractedAt: new Date().toISOString(),
-          userId: userId,
-          s3Bucket: bucket,
-          s3Key: key,
-          metadata: extractionResult.bookMetadata,
-          extractedText: extractionResult.extractedText,
-          confidence: extractionResult.confidence,
-          ttl: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days TTL
+        const bookData = {
+          title: 'Uploaded Book', // Placeholder - will be updated by metadata processing
+          author: 'Unknown Author', // Placeholder - will be updated by metadata processing
+          description: 'Book uploaded via image - metadata processing in progress',
+          coverImage: fileUrl,
+          metadataSource: 'image-upload-pending'
         };
 
-        const dynamodb = new DynamoDB.DocumentClient();
-        await dynamodb.put({
-          TableName: getTableName('metadata-cache'),
-          Item: metadataItem,
-        }).promise();
+        const createdBook = await Book.create(bookData, userId);
+        
+        console.log(`[ImageProcessor] Created book entry for uploaded image: ${createdBook.bookId} - ${key}`);
 
-        console.log(`[ImageProcessor] Successfully processed and stored metadata for ${key} with ${extractionResult.confidence}% confidence`);
-        console.log(`[ImageProcessor] Extracted metadata:`, {
-          title: extractionResult.bookMetadata.title,
-          author: extractionResult.bookMetadata.author,
-          isbn: extractionResult.bookMetadata.isbn,
-        });
-
-        // Auto-create book if we have enough metadata
-        if (extractionResult.bookMetadata && 
-            (extractionResult.bookMetadata.title || extractionResult.bookMetadata.author)) {
-          
-          try {
-            const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
-            
-            const bookData = {
-              title: extractionResult.bookMetadata.title || 'Unknown Title',
-              author: extractionResult.bookMetadata.author || 'Unknown Author',
-              description: extractionResult.bookMetadata.description || extractionResult.extractedText?.fullText || '',
-              coverImage: fileUrl,
-              isbn10: extractionResult.bookMetadata.isbn && extractionResult.bookMetadata.isbn.length === 10 ? extractionResult.bookMetadata.isbn : null,
-              isbn13: extractionResult.bookMetadata.isbn && extractionResult.bookMetadata.isbn.length === 13 ? extractionResult.bookMetadata.isbn : null,
-              publishedDate: extractionResult.bookMetadata.publishedDate || null,
-              publisher: extractionResult.bookMetadata.publisher || null,
-              textractExtractedText: extractionResult.extractedText?.fullText || extractionResult.extractedText,
-              textractConfidence: extractionResult.confidence,
-              textractSource: extractionResult.bookMetadata.extractionSource || 'auto-upload',
-              textractExtractedAt: new Date().toISOString(),
-              metadataSource: 'textract-auto'
-            };
-
-            const createdBook = await Book.create(bookData, userId);
-            
-            console.log(`[ImageProcessor] Auto-created book from image: ${createdBook.bookId} - "${createdBook.title}" by ${createdBook.author}`);
-            
-          } catch (bookCreationError) {
-            console.error(`[ImageProcessor] Failed to auto-create book from ${key}:`, bookCreationError);
-            // Don't fail the whole process if book creation fails - metadata is still cached
-          }
-        } else {
-          console.log(`[ImageProcessor] Insufficient metadata to auto-create book from ${key} - title or author missing`);
-        }
-
-      } catch (extractionError) {
-        console.error(`[ImageProcessor] Error processing image ${key}:`, extractionError);
+      } catch (bookCreationError) {
+        console.error(`[ImageProcessor] Error creating book entry for ${key}:`, bookCreationError);
         // Continue processing other images even if one fails
       }
     }
