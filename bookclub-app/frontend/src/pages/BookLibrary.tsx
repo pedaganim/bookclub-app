@@ -12,7 +12,8 @@ const BookLibrary: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [nextToken, setNextToken] = useState<string | null>(null);
-  const [previousTokens, setPreviousTokens] = useState<string[]>([]);
+  const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
+  const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
@@ -40,6 +41,7 @@ const BookLibrary: React.FC = () => {
     // Reset pagination when searching
     setPreviousTokens([]);
     setNextToken(null);
+    setCurrentPageToken(null);
     fetchBooks(query || undefined, pageSize, null);
   };
 
@@ -48,30 +50,28 @@ const BookLibrary: React.FC = () => {
     // Reset pagination when changing page size
     setPreviousTokens([]);
     setNextToken(null);
+    setCurrentPageToken(null);
     fetchBooks(searchQuery || undefined, newPageSize, null);
   };
 
   const handleNextPage = () => {
     if (hasNextPage && nextToken) {
-      // Store current token in history for going back
-      setPreviousTokens(prev => [...prev, nextToken]);
+      // Store current page's starting token in history for going back
+      setPreviousTokens(prev => [...prev, currentPageToken]);
+      setCurrentPageToken(nextToken);
       fetchBooks(searchQuery || undefined, pageSize, nextToken);
     }
   };
 
   const handlePreviousPage = () => {
     if (previousTokens.length > 0) {
-      // Get the previous token
+      // Get the previous page's starting token
       const newPreviousTokens = [...previousTokens];
-      const previousToken = newPreviousTokens.pop();
+      const previousPageToken = newPreviousTokens.pop();
       setPreviousTokens(newPreviousTokens);
+      setCurrentPageToken(previousPageToken);
       
-      // If we're going back to the first page
-      if (newPreviousTokens.length === 0) {
-        fetchBooks(searchQuery || undefined, pageSize, null);
-      } else {
-        fetchBooks(searchQuery || undefined, pageSize, previousToken || null);
-      }
+      fetchBooks(searchQuery || undefined, pageSize, previousPageToken || null);
     }
   };
 
