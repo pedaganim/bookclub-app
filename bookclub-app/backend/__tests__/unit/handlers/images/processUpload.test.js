@@ -35,7 +35,7 @@ describe('processUpload handler', () => {
     // Should create book with minimal data
     expect(Book.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Uploaded Book',
+        title: 'Test Image', // Derived from filename
         author: 'Unknown Author',
         description: 'Book uploaded via image - metadata processing in progress',
         coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user123/test-image.jpg',
@@ -153,5 +153,40 @@ describe('processUpload handler', () => {
     expect(Book.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
       coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user456/test-image2.jpg'
     }), 'user456');
+  });
+
+  it('should derive meaningful titles from various filename formats', async () => {
+    const testCases = [
+      { filename: 'my-book-title.jpg', expected: 'My Book Title' },
+      { filename: 'book_with_underscores.png', expected: 'Book With Underscores' },
+      { filename: 'book.title.with.dots.gif', expected: 'Book Title With Dots' },
+      { filename: 'MixedCaseTitle.jpg', expected: 'MixedCaseTitle' },
+      { filename: 'simple.jpg', expected: 'Simple' }
+    ];
+
+    for (const testCase of testCases) {
+      const event = {
+        Records: [
+          {
+            eventSource: 'aws:s3',
+            s3: {
+              bucket: { name: 'test-bucket' },
+              object: { key: `book-covers/user123/${testCase.filename}` }
+            }
+          }
+        ]
+      };
+
+      await handler(event);
+
+      expect(Book.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: testCase.expected
+        }),
+        'user123'
+      );
+
+      jest.clearAllMocks();
+    }
   });
 });

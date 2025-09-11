@@ -1,5 +1,31 @@
 const Book = require('../../models/book');
 
+// Constants
+const METADATA_SOURCE_PENDING = 'image-upload-pending';
+const PLACEHOLDER_AUTHOR = 'Unknown Author';
+const PROCESSING_DESCRIPTION = 'Book uploaded via image - metadata processing in progress';
+
+/**
+ * Derives a meaningful title from the uploaded filename
+ * @param {string} s3Key - The S3 key (e.g., "book-covers/userId/my-book-title.jpg")
+ * @returns {string} - Formatted title (e.g., "My Book Title")
+ */
+function deriveBookTitleFromFilename(s3Key) {
+  // Extract filename from S3 key (book-covers/userId/filename.ext)
+  const keyParts = s3Key.split('/');
+  const filename = keyParts[keyParts.length - 1];
+  
+  // Remove file extension
+  const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+  
+  // Replace underscores, hyphens, and dots with spaces
+  // Then capitalize first letter of each word
+  return nameWithoutExt
+    .replace(/[_\-\.]/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase())
+    .trim() || 'Uploaded Book'; // Fallback if filename processing results in empty string
+}
+
 /**
  * Lambda function to automatically create book entries from uploaded images
  * Triggered by S3 ObjectCreated events
@@ -43,11 +69,11 @@ module.exports.handler = async (event) => {
         const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
         
         const bookData = {
-          title: 'Uploaded Book', // Placeholder - will be updated by metadata processing
-          author: 'Unknown Author', // Placeholder - will be updated by metadata processing
-          description: 'Book uploaded via image - metadata processing in progress',
+          title: deriveBookTitleFromFilename(key), // Derive from filename - will be updated by metadata processing
+          author: PLACEHOLDER_AUTHOR, // Placeholder - will be updated by metadata processing
+          description: PROCESSING_DESCRIPTION,
           coverImage: fileUrl,
-          metadataSource: 'image-upload-pending'
+          metadataSource: METADATA_SOURCE_PENDING
         };
 
         const createdBook = await Book.create(bookData, userId);
