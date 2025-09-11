@@ -1,6 +1,6 @@
 const textractService = require('../../lib/textract-service');
 const { DynamoDB } = require('../../lib/aws-config');
-const tableNames = require('../../lib/table-names');
+const { getTableName } = require('../../lib/table-names');
 
 /**
  * Lambda function to automatically process uploaded images with Textract
@@ -60,7 +60,7 @@ module.exports.handler = async (event) => {
 
         const dynamodb = new DynamoDB.DocumentClient();
         await dynamodb.put({
-          TableName: tableNames.metadataCache,
+          TableName: getTableName('metadata-cache'),
           Item: metadataItem,
         }).promise();
 
