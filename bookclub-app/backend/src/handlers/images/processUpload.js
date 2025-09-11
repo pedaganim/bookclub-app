@@ -1,10 +1,38 @@
-const textractService = require('../../lib/textract-service');
-const { DynamoDB } = require('../../lib/aws-config');
-const { getTableName } = require('../../lib/table-names');
+const Book = require('../../models/book');
+
+// Constants
+const METADATA_SOURCE_PENDING = 'image-upload-pending';
+const PLACEHOLDER_AUTHOR = 'Unknown Author';
+const PROCESSING_DESCRIPTION = 'Book uploaded via image - metadata processing in progress';
 
 /**
- * Lambda function to automatically process uploaded images with Textract
+ * Derives a meaningful title from the uploaded filename
+ * @param {string} s3Key - The S3 key (e.g., "book-covers/userId/my-book-title.jpg")
+ * @returns {string} - Formatted title (e.g., "My Book Title")
+ */
+function deriveBookTitleFromFilename(s3Key) {
+  // Extract filename from S3 key (book-covers/userId/filename.ext)
+  const keyParts = s3Key.split('/');
+  const filename = keyParts[keyParts.length - 1];
+  
+  // Remove file extension
+  const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+  
+  // Replace underscores, hyphens, and dots with spaces
+  // Then capitalize first letter of each word
+  return nameWithoutExt
+    .replace(/[_\-\.]/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase())
+    .trim() || 'Uploaded Book'; // Fallback if filename processing results in empty string
+}
+
+/**
+ * Lambda function to automatically create book entries from uploaded images
  * Triggered by S3 ObjectCreated events
+ * 
+ * Flow:
+ * 1. Create minimal book entries with uploaded cover images
+ * 2. Metadata extraction and enrichment happens asynchronously via other lambdas
  */
 module.exports.handler = async (event) => {
   console.log('[ImageProcessor] Processing S3 event:', JSON.stringify(event, null, 2));
@@ -37,42 +65,23 @@ module.exports.handler = async (event) => {
       const userId = keyParts[1];
 
       try {
-        // Extract metadata using Textract
-        const extractionResult = await textractService.extractTextFromImage(bucket, key);
+        // Create minimal book entry with uploaded image
+        const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
         
-        if (!extractionResult) {
-          console.log('[ImageProcessor] Textract extraction failed, skipping metadata storage');
-          continue;
-        }
-
-        // Store extracted metadata in cache table for later retrieval
-        const metadataItem = {
-          cacheKey: `textract:${bucket}:${key}`,
-          extractedAt: new Date().toISOString(),
-          userId: userId,
-          s3Bucket: bucket,
-          s3Key: key,
-          metadata: extractionResult.bookMetadata,
-          extractedText: extractionResult.extractedText,
-          confidence: extractionResult.confidence,
-          ttl: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days TTL
+        const bookData = {
+          title: deriveBookTitleFromFilename(key), // Derive from filename - will be updated by metadata processing
+          author: PLACEHOLDER_AUTHOR, // Placeholder - will be updated by metadata processing
+          description: PROCESSING_DESCRIPTION,
+          coverImage: fileUrl,
+          metadataSource: METADATA_SOURCE_PENDING
         };
 
-        const dynamodb = new DynamoDB.DocumentClient();
-        await dynamodb.put({
-          TableName: getTableName('metadata-cache'),
-          Item: metadataItem,
-        }).promise();
+        const createdBook = await Book.create(bookData, userId);
+        
+        console.log(`[ImageProcessor] Created book entry for uploaded image: ${createdBook.bookId} - ${key}`);
 
-        console.log(`[ImageProcessor] Successfully processed and stored metadata for ${key} with ${extractionResult.confidence}% confidence`);
-        console.log(`[ImageProcessor] Extracted metadata:`, {
-          title: extractionResult.bookMetadata.title,
-          author: extractionResult.bookMetadata.author,
-          isbn: extractionResult.bookMetadata.isbn,
-        });
-
-      } catch (extractionError) {
-        console.error(`[ImageProcessor] Error processing image ${key}:`, extractionError);
+      } catch (bookCreationError) {
+        console.error(`[ImageProcessor] Error creating book entry for ${key}:`, bookCreationError);
         // Continue processing other images even if one fails
       }
     }
