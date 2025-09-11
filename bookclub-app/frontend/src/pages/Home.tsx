@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
+import AllBooksCard from '../components/AllBooksCard';
+import SearchBar from '../components/SearchBar';
 import AddBookModal from '../components/AddBookModal';
 import ClubCard from '../components/ClubCard';
 import CreateClubModal from '../components/CreateClubModal';
@@ -28,20 +30,39 @@ const Home: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'my-books'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
+  const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
 
-  const fetchBooks = useCallback(async () => {
+  const fetchBooks = useCallback(async (search?: string) => {
     try {
       setLoading(true);
-      const params = filter === 'my-books' && user ? { userId: user.userId } : {};
-      const response = await apiService.listBooks(params);
-      setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
+      setError('');
+      if (filter === 'my-books' && user) {
+        // My Books - use authenticated API
+        const params = { userId: user.userId };
+        const response = await apiService.listBooks(params);
+        setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
+      } else {
+        // All Books - use public API with search support
+        const response = await apiService.listBooksPublic({ search });
+        setBooks(Array.isArray(response.items) ? response.items : []);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
       setLoading(false);
     }
   }, [filter, user]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    fetchBooks(query || undefined);
+  };
+
+  const handleFilterChange = (newFilter: 'all' | 'my-books') => {
+    setFilter(newFilter);
+    setSearchQuery(''); // Clear search when changing filters
+  };
 
   const fetchClubs = useCallback(async () => {
     try {
@@ -172,17 +193,20 @@ const Home: React.FC = () => {
                 <BookOpenIcon className="h-4 w-4" />
                 Books
               </button>
-              <button
-                onClick={() => setActiveTab('clubs')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'clubs'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <UserGroupIcon className="h-4 w-4" />
-                My Clubs ({clubs.length})
-              </button>
+              {/* Clubs tab temporarily hidden per requirements */}
+              {false && (
+                <button
+                  onClick={() => setActiveTab('clubs')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                    activeTab === 'clubs'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <UserGroupIcon className="h-4 w-4" />
+                  My Clubs ({clubs.length})
+                </button>
+              )}
             </nav>
           </div>
         </div>
@@ -199,7 +223,7 @@ const Home: React.FC = () => {
               <div className="flex justify-between items-center">
                 <div className="flex space-x-4">
                   <button
-                    onClick={() => setFilter('all')}
+                    onClick={() => handleFilterChange('all')}
                     className={`px-4 py-2 rounded-md font-medium ${
                       filter === 'all'
                         ? 'bg-indigo-600 text-white'
@@ -209,7 +233,7 @@ const Home: React.FC = () => {
                     All Books
                   </button>
                   <button
-                    onClick={() => setFilter('my-books')}
+                    onClick={() => handleFilterChange('my-books')}
                     className={`px-4 py-2 rounded-md font-medium ${
                       filter === 'my-books'
                         ? 'bg-indigo-600 text-white'
@@ -246,12 +270,25 @@ const Home: React.FC = () => {
               </div>
             </div>
 
+            {/* Search Bar - Only show for "All Books" filter */}
+            {filter === 'all' && (
+              <div className="mb-6">
+                <SearchBar 
+                  onSearch={handleSearch}
+                  placeholder="Search books by description..."
+                  className="max-w-md mx-auto"
+                />
+              </div>
+            )}
+
             {(!Array.isArray(books) || books?.length === 0) ? (
               <div className="text-center py-12">
                 <div className="text-gray-500">
                   {filter === 'my-books' 
                     ? "You haven't added any books yet. Click 'Add Books' to get started!"
-                    : "No books available. Be the first to add one!"
+                    : searchQuery 
+                      ? `No books found matching "${searchQuery}".`
+                      : "No books available. Be the first to add one!"
                   }
                 </div>
               </div>
@@ -261,14 +298,21 @@ const Home: React.FC = () => {
                 : "space-y-4"
               }>
                 {books.map((book) => (
-                  <BookCard
-                    key={book.bookId}
-                    book={book}
-                    onDelete={handleBookDeleted}
-                    onUpdate={handleBookUpdated}
-                    showActions={user?.userId === book.userId}
-                    listView={viewMode === 'list'}
-                  />
+                  filter === 'all' ? (
+                    <AllBooksCard
+                      key={book.bookId}
+                      book={book}
+                    />
+                  ) : (
+                    <BookCard
+                      key={book.bookId}
+                      book={book}
+                      onDelete={handleBookDeleted}
+                      onUpdate={handleBookUpdated}
+                      showActions={user?.userId === book.userId}
+                      listView={viewMode === 'list'}
+                    />
+                  )
                 ))}
               </div>
             )}

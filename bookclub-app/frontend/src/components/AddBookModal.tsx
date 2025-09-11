@@ -3,7 +3,6 @@ import { Book } from '../types';
 import { apiService } from '../services/api';
 import { ProcessedImage } from '../services/imageProcessingService';
 import MultiImageUpload from './MultiImageUpload';
-import { parseS3Url } from '../utils/s3Utils';
 
 interface AddBookModalProps {
   onClose: () => void;
@@ -15,7 +14,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [processingStatus, setProcessingStatus] = useState('');
-  const [processedBooks, setProcessedBooks] = useState<{ book: Book; imageIndex: number }[]>([]);
 
   const handleImagesProcessed = (images: ProcessedImage[]) => {
     setUploadedImages(images);
@@ -26,7 +24,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     setError(errorMessage);
   };
 
-  const processImagesAndCreateBooks = async () => {
+  const uploadImagesOnly = async () => {
     if (uploadedImages.length === 0) {
       setError('Please upload at least one book image.');
       return;
@@ -34,7 +32,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
     setLoading(true);
     setError('');
-    setProcessingStatus('Processing images and creating books...');
+    setProcessingStatus('Uploading images...');
 
     try {
       const validImages = uploadedImages.filter(img => img.isValid && img.isBook);
@@ -44,101 +42,37 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         return;
       }
 
-      const createdBooks: { book: Book; imageIndex: number }[] = [];
-      let processed = 0;
-
+      const uploadedCount = validImages.length;
+      
       for (let i = 0; i < validImages.length; i++) {
         const image = validImages[i];
-        const imageIndex = uploadedImages.indexOf(image);
         
         try {
           setProcessingStatus(`Uploading image ${i + 1} of ${validImages.length}...`);
           
-          // Upload image to S3
+          // Upload image to S3 only
           const uploadData = await apiService.generateUploadUrl(image.file.type, image.file.name);
           await apiService.uploadFile(uploadData.uploadUrl, image.file);
           
-          // Extract S3 bucket and key from uploadData.fileUrl using utility function
-          const { bucket: s3Bucket, key: s3Key } = parseS3Url(uploadData.fileUrl);
-          
-          setProcessingStatus(`Extracting metadata from image ${i + 1}...`);
-          
-          let extractedData = null;
-          
-          // First try to get pre-extracted metadata (from automatic processing)
-          try {
-            extractedData = await apiService.getPreExtractedMetadata(s3Bucket, s3Key);
-          } catch (preExtractError) {
-            // eslint-disable-next-line no-console
-            console.warn(`Pre-extraction not available for image ${i + 1}, falling back to manual extraction`);
-          }
-          
-          // If pre-extracted data not available, try manual extraction
-          if (!extractedData) {
-            try {
-              extractedData = await apiService.extractImageMetadata(s3Bucket, s3Key);
-            } catch (manualExtractError) {
-              // eslint-disable-next-line no-console
-              console.warn(`Manual extraction also failed for image ${i + 1}:`, manualExtractError);
-            }
-          }
-          
-          // TEMPORARY FIX: Create book even if metadata extraction fails
-          // This allows users to upload any image and create book entries
-          let bookData;
-          
-          if (extractedData && extractedData.metadata && extractedData.metadata.title && extractedData.metadata.author) {
-            // Create book with extracted metadata
-            bookData = {
-              title: extractedData.metadata.title,
-              author: extractedData.metadata.author,
-              description: extractedData.metadata.description || extractedData.extractedText || '',
-              coverImage: uploadData.fileUrl,
-              status: 'available' as const,
-              isbn: extractedData.metadata.isbn || undefined,
-              enrichWithMetadata: true,
-            };
-          } else {
-            // If metadata extraction fails, create book with placeholder values
-            // eslint-disable-next-line no-console
-            console.warn(`Could not extract sufficient metadata from image ${i + 1}, using placeholder values`);
-            bookData = {
-              title: `Book from Image ${i + 1}`,
-              author: 'Unknown Author',
-              description: extractedData?.extractedText || 'Book information to be updated',
-              coverImage: uploadData.fileUrl,
-              status: 'available' as const,
-              enrichWithMetadata: true,
-            };
-          }
-          
-          const newBook = await apiService.createBook(bookData);
-          createdBooks.push({ book: newBook, imageIndex });
-          processed++;
         } catch (imageError) {
           // eslint-disable-next-line no-console
-          console.error(`Failed to process image ${i + 1}:`, imageError);
+          console.error(`Failed to upload image ${i + 1}:`, imageError);
           // Continue with next image
         }
       }
 
-      setProcessedBooks(createdBooks);
+      setProcessingStatus(`Successfully uploaded ${uploadedCount} image${uploadedCount > 1 ? 's' : ''}. Books will be processed automatically.`);
       
-      if (processed > 0) {
-        setProcessingStatus(`Successfully created ${processed} book${processed > 1 ? 's' : ''} from ${validImages.length} image${validImages.length > 1 ? 's' : ''}.`);
-        
-        // Notify parent component about the first book (for backwards compatibility)
-        if (createdBooks.length > 0) {
-          onBookAdded(createdBooks[0].book);
-        }
-      } else {
-        setError('Could not create any books from the uploaded images. Please ensure the images contain clear book cover text with title and author information.');
-      }
+      // Return success immediately after upload
+      // The S3 event triggers will handle metadata processing and book creation
+      setTimeout(() => {
+        handleClose();
+      }, 2000); // Show success message for 2 seconds
+      
     } catch (err: any) {
-      setError(err.message || 'Failed to process images and create books');
+      setError(err.message || 'Failed to upload images');
     } finally {
       setLoading(false);
-      setProcessingStatus('');
     }
   };
 
@@ -171,22 +105,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               <div className="flex items-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" aria-hidden="true"></div>
                 <div className="text-sm text-blue-700">{processingStatus}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Success Summary */}
-          {processedBooks.length > 0 && (
-            <div className="mb-4 rounded-md bg-green-50 p-4">
-              <div className="text-sm text-green-700">
-                <p className="font-medium mb-2">Successfully created {processedBooks.length} book{processedBooks.length > 1 ? 's' : ''}:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  {processedBooks.map(({ book }, index) => (
-                    <li key={index}>
-                      <span className="font-medium">{book.title}</span> by {book.author}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
           )}
@@ -229,15 +147,15 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               disabled={loading}
             >
-              {processedBooks.length > 0 ? 'Done' : 'Cancel'}
+              Cancel
             </button>
             <button
               type="button"
-              onClick={processImagesAndCreateBooks}
+              onClick={uploadImagesOnly}
               disabled={loading || validBookImagesCount === 0}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
-              {loading ? 'Processing...' : `Create ${validBookImagesCount} Book${validBookImagesCount !== 1 ? 's' : ''}`}
+              {loading ? 'Uploading...' : `Upload ${validBookImagesCount} Image${validBookImagesCount !== 1 ? 's' : ''}`}
             </button>
           </div>
         </div>

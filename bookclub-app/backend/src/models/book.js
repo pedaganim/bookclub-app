@@ -125,12 +125,42 @@ class Book {
 
     const result = await dynamoDb.scan(params);
     
+    // Enrich books with user names
+    const enrichedBooks = await this.enrichBooksWithUserNames(result.Items || []);
+    
     return {
-      items: result.Items || [],
+      items: enrichedBooks,
       nextToken: result.LastEvaluatedKey 
         ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
         : null,
     };
+  }
+
+  static async enrichBooksWithUserNames(books) {
+    if (!books || books.length === 0) return books;
+    
+    // Get unique user IDs
+    const userIds = [...new Set(books.map(book => book.userId))];
+    
+    // Fetch user information
+    const User = require('./user');
+    const userMap = {};
+    
+    await Promise.all(userIds.map(async (userId) => {
+      try {
+        const user = await User.getById(userId);
+        userMap[userId] = user ? user.name : null;
+      } catch (error) {
+        console.warn(`Failed to fetch user ${userId}:`, error.message);
+        userMap[userId] = null;
+      }
+    }));
+    
+    // Add user names to books
+    return books.map(book => ({
+      ...book,
+      userName: userMap[book.userId] || null
+    }));
   }
 
   static async update(bookId, userId, updates) {

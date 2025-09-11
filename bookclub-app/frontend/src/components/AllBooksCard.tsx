@@ -1,11 +1,11 @@
 import React from 'react';
 import { Book } from '../types';
 
-interface PublicBookCardProps {
+interface AllBooksCardProps {
   book: Book;
 }
 
-const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
+const AllBooksCard: React.FC<AllBooksCardProps> = ({ book }) => {
   // Function to format description text properly
   const formatDescription = (text?: string) => {
     if (!text) return '';
@@ -16,15 +16,6 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
     }
     
     return text;
-  };
-
-  // Get username from userName field or fallback to simplified userId
-  const getDisplayUsername = (book: Book) => {
-    if (book.userName) {
-      return book.userName;
-    }
-    // Fallback to simplified version of the userId
-    return `User ${book.userId.slice(-Math.min(8, book.userId.length))}`;
   };
 
   // Default placeholder image when no cover image is provided
@@ -44,7 +35,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
       />
       
       <div className="p-4">
-        {/* Description */}
+        {/* Description - Only displayed field */}
         {book.description && (
           <div className="mb-3">
             <p
@@ -60,16 +51,9 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
             </p>
           </div>
         )}
-        
-        {/* Username */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-            Shared by {getDisplayUsername(book)}
-          </span>
-        </div>
       </div>
     </div>
   );
 };
 
-export default PublicBookCard;
+export default AllBooksCard;
