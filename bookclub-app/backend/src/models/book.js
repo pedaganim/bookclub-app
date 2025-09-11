@@ -83,9 +83,18 @@ class Book {
     };
   }
 
-  static async listAll(limit = 10, nextToken = null) {
+  static async listAll(limit = 10, nextToken = null, searchQuery = null) {
     if (isOffline()) {
-      const result = await LocalStorage.listBooks();
+      let result = await LocalStorage.listBooks();
+      
+      // Apply search filter if provided
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        result = result.filter(book => 
+          book.description && book.description.toLowerCase().includes(query)
+        );
+      }
+      
       // For offline mode, we'll implement simple pagination later if needed
       return {
         items: result.slice(0, limit),
@@ -99,18 +108,59 @@ class Book {
       ScanIndexForward: false,
     };
 
+    // Add search filter if provided
+    if (searchQuery) {
+      params.FilterExpression = 'contains(#desc, :searchQuery)';
+      params.ExpressionAttributeNames = {
+        '#desc': 'description'
+      };
+      params.ExpressionAttributeValues = {
+        ':searchQuery': searchQuery
+      };
+    }
+
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
     const result = await dynamoDb.scan(params);
     
+    // Enrich books with user names
+    const enrichedBooks = await this.enrichBooksWithUserNames(result.Items || []);
+    
     return {
-      items: result.Items || [],
+      items: enrichedBooks,
       nextToken: result.LastEvaluatedKey 
         ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
         : null,
     };
+  }
+
+  static async enrichBooksWithUserNames(books) {
+    if (!books || books.length === 0) return books;
+    
+    // Get unique user IDs
+    const userIds = [...new Set(books.map(book => book.userId))];
+    
+    // Fetch user information
+    const User = require('./user');
+    const userMap = {};
+    
+    await Promise.all(userIds.map(async (userId) => {
+      try {
+        const user = await User.getById(userId);
+        userMap[userId] = user ? user.name : null;
+      } catch (error) {
+        console.warn(`Failed to fetch user ${userId}:`, error.message);
+        userMap[userId] = null;
+      }
+    }));
+    
+    // Add user names to books
+    return books.map(book => ({
+      ...book,
+      userName: userMap[book.userId] || null
+    }));
   }
 
   static async update(bookId, userId, updates) {

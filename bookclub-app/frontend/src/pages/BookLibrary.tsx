@@ -2,26 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
+import SearchBar from '../components/SearchBar';
 
 const BookLibrary: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchBooks = async (search?: string) => {
+    try {
+      setLoading(true);
+      setError('');
+      // Make public request without userId to get all books
+      const response = await apiService.listBooksPublic({ search });
+      setBooks(Array.isArray(response.items) ? response.items : []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch books');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    fetchBooks(query || undefined);
+  };
 
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true);
-        // Make public request without userId to get all books
-        const response = await apiService.listBooksPublic();
-        setBooks(Array.isArray(response.items) ? response.items : []);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch books');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBooks();
   }, []);
 
@@ -46,6 +54,15 @@ const BookLibrary: React.FC = () => {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <SearchBar 
+            onSearch={handleSearch}
+            placeholder="Search books by description..."
+            className="max-w-md mx-auto"
+          />
+        </div>
+
         {error && (
           <div className="mb-6 rounded-md bg-red-50 p-4">
             <div className="text-sm text-red-700">{error}</div>
@@ -55,7 +72,10 @@ const BookLibrary: React.FC = () => {
         {(!Array.isArray(books) || books?.length === 0) ? (
           <div className="text-center py-12">
             <div className="text-gray-500">
-              No books are available in our library yet.
+              {searchQuery 
+                ? `No books found matching "${searchQuery}".`
+                : "No books are available in our library yet."
+              }
             </div>
           </div>
         ) : (

@@ -83,8 +83,8 @@ describe('BookLibrary', () => {
     
     await waitFor(() => {
       expect(screen.getByTestId('book-1')).toBeInTheDocument();
-      expect(screen.getByTestId('book-2')).toBeInTheDocument();
     });
+    expect(screen.getByTestId('book-2')).toBeInTheDocument();
   });
 
   it('should handle API errors gracefully', async () => {
@@ -113,7 +113,7 @@ describe('BookLibrary', () => {
     render(<BookLibrary />);
     
     await waitFor(() => {
-      expect(apiService.listBooksPublic).toHaveBeenCalledWith();
+      expect(apiService.listBooksPublic).toHaveBeenCalledWith({ search: undefined });
     });
   });
 });

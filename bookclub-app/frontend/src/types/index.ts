@@ -28,6 +28,8 @@ export interface Book {
   metadataSource?: string;
   createdAt: string;
   updatedAt: string;
+  // User name from users table
+  userName?: string;
 }
 
 export interface BookMetadata {
