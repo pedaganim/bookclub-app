@@ -262,4 +262,161 @@ describe('Create Book Handler with Textract Integration', () => {
       'test-user-123'
     );
   });
+
+  it('should use pre-extracted metadata description when available', async () => {
+    // Mock pre-extracted metadata that has description in metadata field
+    const mockPreExtractedResult = {
+      extractedText: {
+        fullText: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.'
+      },
+      bookMetadata: {
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '9780132350884',
+        description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.',
+        extractionSource: 'textract'
+      },
+      confidence: 95,
+      extractedAt: '2023-01-01T00:00:00Z',
+      isPreExtracted: true
+    };
+
+    mockImageMetadataService.getExtractedMetadata.mockResolvedValue(mockPreExtractedResult);
+    
+    const mockCreatedBook = {
+      id: 'book-123',
+      title: 'Clean Code',
+      author: 'Robert C. Martin',
+      description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.'
+    };
+    mockBook.create.mockResolvedValue(mockCreatedBook);
+
+    const event = mockEvent({
+      extractFromImage: true,
+      s3Bucket: 'test-bucket',
+      s3Key: 'book-covers/test-user/image.jpg'
+    });
+
+    const result = await handler(event);
+
+    expect(result.statusCode).toBe(201);
+    
+    // Should use description from pre-extracted metadata
+    expect(mockBook.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.',
+        isPreExtracted: true
+      }),
+      'test-user-123'
+    );
+    
+    // Should not call textract extraction since pre-extracted data was found
+    expect(mockTextractService.extractTextFromImage).not.toHaveBeenCalled();
+  });
+
+  it('should fall back to extractedText.fullText when metadata.description is missing', async () => {
+    // Mock pre-extracted metadata that is missing description in metadata field
+    const mockPreExtractedResult = {
+      extractedText: {
+        fullText: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.'
+      },
+      bookMetadata: {
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '9780132350884',
+        // Note: description is missing from metadata
+        extractionSource: 'textract'
+      },
+      confidence: 95,
+      extractedAt: '2023-01-01T00:00:00Z',
+      isPreExtracted: true
+    };
+
+    mockImageMetadataService.getExtractedMetadata.mockResolvedValue(mockPreExtractedResult);
+    
+    const mockCreatedBook = {
+      id: 'book-123',
+      title: 'Clean Code',
+      author: 'Robert C. Martin',
+      description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.'
+    };
+    mockBook.create.mockResolvedValue(mockCreatedBook);
+
+    const event = mockEvent({
+      extractFromImage: true,
+      s3Bucket: 'test-bucket',
+      s3Key: 'book-covers/test-user/image.jpg'
+    });
+
+    const result = await handler(event);
+
+    expect(result.statusCode).toBe(201);
+    
+    // Should fall back to extractedText.fullText for description
+    expect(mockBook.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.',
+        isPreExtracted: true
+      }),
+      'test-user-123'
+    );
+    
+    // Should not call textract extraction since pre-extracted data was found
+    expect(mockTextractService.extractTextFromImage).not.toHaveBeenCalled();
+  });
+
+  it('should prioritize user description over metadata description', async () => {
+    // Mock pre-extracted metadata with description
+    const mockPreExtractedResult = {
+      extractedText: {
+        fullText: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.'
+      },
+      bookMetadata: {
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '9780132350884',
+        description: 'Extracted description from image',
+        extractionSource: 'textract'
+      },
+      confidence: 95,
+      extractedAt: '2023-01-01T00:00:00Z',
+      isPreExtracted: true
+    };
+
+    mockImageMetadataService.getExtractedMetadata.mockResolvedValue(mockPreExtractedResult);
+    
+    const mockCreatedBook = {
+      id: 'book-123',
+      title: 'Clean Code',
+      author: 'Robert C. Martin',
+      description: 'User provided description'
+    };
+    mockBook.create.mockResolvedValue(mockCreatedBook);
+
+    const event = mockEvent({
+      description: 'User provided description', // User-provided description should take precedence
+      extractFromImage: true,
+      s3Bucket: 'test-bucket',
+      s3Key: 'book-covers/test-user/image.jpg'
+    });
+
+    const result = await handler(event);
+
+    expect(result.statusCode).toBe(201);
+    
+    // Should prioritize user-provided description over metadata description
+    expect(mockBook.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        description: 'User provided description',
+        isPreExtracted: true
+      }),
+      'test-user-123'
+    );
+  });
 });

@@ -129,7 +129,7 @@ module.exports.handler = async (event) => {
             // Use Textract data only for empty fields, prioritizing user input
             title: bookData.title || bookMetadata.title,
             author: bookData.author || bookMetadata.author,
-            description: bookData.description || bookMetadata.description,
+            description: bookData.description || bookMetadata.description || extractedText.fullText || extractedText,
             isbn10: isbnAssignment.isbn10,
             isbn13: isbnAssignment.isbn13,
             publisher: bookData.publisher || bookMetadata.publisher,
