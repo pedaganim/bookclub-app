@@ -215,7 +215,7 @@ class Book {
     };
 
     try {
-      await dynamoDb.deleteItem(params);
+      await dynamoDb.delete(params);
       return { success: true };
     } catch (error) {
       if (error.code === 'ConditionalCheckFailedException') {
