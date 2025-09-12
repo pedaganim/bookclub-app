@@ -35,11 +35,21 @@ module.exports = {
     return dynamoDb.update(params).promise();
   },
 
-  async delete(tableName, key) {
-    const params = {
-      TableName: tableName,
-      Key: key,
-    };
+  async delete(tableNameOrParams, key) {
+    let params;
+    
+    // Support both signatures: delete(tableName, key) and delete(params)
+    if (typeof tableNameOrParams === 'string') {
+      // Legacy signature: delete(tableName, key)
+      params = {
+        TableName: tableNameOrParams,
+        Key: key,
+      };
+    } else {
+      // New signature: delete(params) - supports conditional expressions
+      params = tableNameOrParams;
+    }
+    
     await dynamoDb.delete(params).promise();
     return { success: true };
   },
