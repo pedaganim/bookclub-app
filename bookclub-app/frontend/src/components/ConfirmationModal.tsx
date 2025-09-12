@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface ConfirmationModalProps {
@@ -22,17 +22,53 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onCancel,
   isDestructive = false,
 }) => {
+  // Generate a unique ID for the modal title
+  const titleId = `confirmation-modal-title-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Handle Escape key press
+  const handleEscapeKey = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onCancel();
+      }
+    },
+    [onCancel]
+  );
+
+  // Set up keyboard event listener when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+      // Focus management - focus the modal when it opens
+      const modalElement = document.querySelector('[role="dialog"]') as HTMLElement;
+      if (modalElement) {
+        modalElement.focus();
+      }
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen, handleEscapeKey]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div 
+        className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+            <h3 id={titleId} className="text-lg font-medium text-gray-900">{title}</h3>
             <button
               onClick={onCancel}
               className="text-gray-400 hover:text-gray-600"
+              aria-label="Close modal"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
