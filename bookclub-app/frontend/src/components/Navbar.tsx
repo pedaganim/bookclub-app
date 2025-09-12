@@ -17,14 +17,15 @@ const Navbar: React.FC = () => {
                 className="h-8 w-auto"
               />
             </Link>
-            
-            {/* Public Library Link */}
-            <Link
-              to="/library"
-              className="ml-8 text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium border border-indigo-200 hover:border-indigo-300 transition-colors"
-            >
-              📚 Our Library
-            </Link>
+            {!isAuthenticated && (
+              // Public Library link shown only when not signed in; moved to Sidebar for signed-in users
+              <Link
+                to="/library"
+                className="ml-8 text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium border border-indigo-200 hover:border-indigo-300 transition-colors"
+              >
+                📚 Our Library
+              </Link>
+            )}
           </div>
           
           <div className="flex items-center space-x-4">
