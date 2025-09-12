@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Book } from '../types';
 import { apiService } from '../services/api';
+import { useNotification } from '../contexts/NotificationContext';
+import ConfirmationModal from './ConfirmationModal';
 
 interface BookCardProps {
   book: Book;
@@ -62,20 +64,20 @@ const ActionButtons: React.FC<{
 const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActions, listView = false }) => {
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const { addNotification } = useNotification();
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this book?')) {
-      return;
-    }
-
     try {
       setLoading(true);
       await apiService.deleteBook(book.bookId);
       onDelete(book.bookId);
+      addNotification('success', 'Book deleted successfully');
     } catch (error) {
-      alert('Failed to delete book');
+      addNotification('error', 'Failed to delete book');
     } finally {
       setLoading(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -108,7 +110,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
               {showActions && (
                 <ActionButtons
                   onEdit={() => setShowEditModal(true)}
-                  onDelete={handleDelete}
+                  onDelete={() => setShowDeleteModal(true)}
                   loading={loading}
                 />
               )}
@@ -121,7 +123,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
             {showActions && (
               <ActionButtons
                 onEdit={() => setShowEditModal(true)}
-                onDelete={handleDelete}
+                onDelete={() => setShowDeleteModal(true)}
                 loading={loading}
               />
             )}
@@ -136,6 +138,17 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
           onUpdate={onUpdate}
         />
       )}
+      
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title="Delete Book"
+        message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        isDestructive={true}
+      />
     </div>
   );
 };
