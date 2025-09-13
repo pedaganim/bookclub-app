@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 // Test component that renders the logo
 const LogoDisplay = () => (
   <div>
-    <img src="/logo-navbar.svg" alt="Book Club" className="h-8 w-auto" />
+    <img src="/logo.png" alt="Book Club" className="h-8 w-auto" />
   </div>
 );
 
@@ -33,7 +33,7 @@ describe('Logo and Avatar Components', () => {
     
     const logoImage = screen.getByAltText('Book Club');
     expect(logoImage).toBeInTheDocument();
-    expect(logoImage).toHaveAttribute('src', '/logo-navbar.svg');
+    expect(logoImage).toHaveAttribute('src', '/logo.png');
     expect(logoImage).toHaveClass('h-8', 'w-auto');
   });
 
