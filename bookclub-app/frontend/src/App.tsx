@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
+import About from './pages/About';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Navigate to="/login" replace />} />
+                  <Route path="/about" element={<About />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
                   <Route
