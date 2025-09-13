@@ -1,0 +1,160 @@
+name: Deploy From Ref (Versioned/Rollback)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (tag, branch, or commit SHA)"
+        required: true
+        type: string
+      stage:
+        description: "Serverless stage to deploy (e.g., prod, staging)"
+        required: true
+        default: "prod"
+        type: choice
+        options:
+          - prod
+          - staging
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      STAGE: ${{ inputs.stage }}
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-actions-deploy-from-ref
+
+      - name: Install Serverless
+        run: npm i -g serverless@3
+
+      - name: Ensure Google OAuth SSM parameters exist
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          if ! aws ssm get-parameter --name "/bookclub/oauth/google_client_id" >/dev/null 2>&1; then
+            aws ssm put-parameter \
+              --name "/bookclub/oauth/google_client_id" \
+              --type String \
+              --value "$GOOGLE_CLIENT_ID"
+          fi
+          if ! aws ssm get-parameter --name "/bookclub/oauth/google_client_secret" --with-decryption >/dev/null 2>&1; then
+            aws ssm put-parameter \
+              --name "/bookclub/oauth/google_client_secret" \
+              --type SecureString \
+              --value "$GOOGLE_CLIENT_SECRET"
+          fi
+
+      - name: Backend deps
+        working-directory: bookclub-app/backend
+        run: npm ci
+
+      - name: Deploy backend (Serverless)
+        working-directory: bookclub-app/backend
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: npx serverless deploy --stage ${{ env.STAGE }}
+
+      - name: Check CloudFormation stack status
+        working-directory: bookclub-app/backend
+        run: |
+          set -euo pipefail
+          STACK_NAME="bookclub-app-${{ env.STAGE }}"
+          STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --query 'Stacks[0].StackStatus' --output text || echo "")
+          echo "StackStatus=$STATUS"
+          if [ -z "$STATUS" ]; then
+            echo "Stack $STACK_NAME not found. The deploy step may have failed before stack creation." >&2
+            exit 1
+          fi
+          case "$STATUS" in
+            *_IN_PROGRESS) echo "Stack update in progress; continuing" ;;
+            *_COMPLETE) echo "Stack is complete: $STATUS" ;;
+            *)
+              echo "Stack is in error state: $STATUS" >&2
+              aws cloudformation describe-stack-events --stack-name "$STACK_NAME" --max-items 15 --output table || true
+              exit 1
+              ;;
+          esac
+
+      - name: Detect API URL (prefer custom domain, fallback to execute-api)
+        id: detect_api
+        working-directory: bookclub-app/backend
+        run: |
+          set -euo pipefail
+          STAGE="${{ env.STAGE }}"
+          EXEC_API=$(aws cloudformation describe-stacks --stack-name bookclub-app-$STAGE \
+            --query "Stacks[0].Outputs[?OutputKey=='ServiceEndpoint'].OutputValue | [0]" --output text 2>/dev/null | sed 's/None//')
+          if [ -z "${EXEC_API}" ]; then
+            EXEC_API=$(npx serverless info --stage "$STAGE" --verbose | awk '/ServiceEndpoint:/{print $2; exit}' || echo "")
+          fi
+          if [ -z "$EXEC_API" ]; then
+            REST_API_ID=$(aws cloudformation list-exports --query "Exports[?Name=='bookclub-app-$STAGE-RestApiId'].Value | [0]" --output text || echo "")
+            if [ -n "$REST_API_ID" ] && [ "$REST_API_ID" != "None" ]; then
+              EXEC_API="https://${REST_API_ID}.execute-api.${AWS_REGION}.amazonaws.com/$STAGE"
+            else
+              echo "Failed to detect ServiceEndpoint." >&2
+              exit 1
+            fi
+          fi
+          echo "API_URL=$EXEC_API" | tee -a "$GITHUB_ENV"
+
+      - name: Build frontend
+        working-directory: bookclub-app/frontend
+        env:
+          REACT_APP_API_URL: ${{ env.API_URL }}
+          REACT_APP_COGNITO_REGION: us-east-1
+          REACT_APP_COGNITO_USER_POOL_ID: ${{ env.REACT_APP_COGNITO_USER_POOL_ID }}
+          REACT_APP_COGNITO_CLIENT_ID: ${{ env.REACT_APP_COGNITO_CLIENT_ID }}
+          REACT_APP_COGNITO_DOMAIN: ${{ env.REACT_APP_COGNITO_DOMAIN }}
+          REACT_APP_OAUTH_REDIRECT_SIGNIN: https://booklub.shop/auth/callback
+          REACT_APP_OAUTH_REDIRECT_SIGNOUT: https://booklub.shop/
+          REACT_APP_OAUTH_SCOPES: "openid email profile"
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload frontend to S3 (versioned path)
+        env:
+          FRONTEND_S3_BUCKET: ${{ secrets.FRONTEND_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          REF="${{ inputs.ref }}"
+          SAFE_REF=$(echo "$REF" | tr '/' '-' )
+          PREFIX="versions/$SAFE_REF/"
+          echo "Uploading build to s3://$FRONTEND_S3_BUCKET/$PREFIX"
+          aws s3 sync bookclub-app/frontend/build s3://$FRONTEND_S3_BUCKET/$PREFIX --delete
+          echo "PREVIEW_URL=https://booklub.shop/$PREFIX" | tee -a "$GITHUB_ENV"
+
+      - name: Invalidate CloudFront (optional)
+        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        env:
+          DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/versions/*"
+
+      - name: Post deployment URL to summary
+        run: |
+          echo "Deployed ref ${{ inputs.ref }} to stage ${{ inputs.stage }}" >> $GITHUB_STEP_SUMMARY
+          echo "Frontend URL: $PREVIEW_URL" >> $GITHUB_STEP_SUMMARY
