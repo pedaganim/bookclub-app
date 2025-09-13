@@ -32,7 +32,8 @@
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
     "test:coverage": "npm test -- --watchAll=false --coverage",
-    "test:coverage:open": "npm run test:coverage && open coverage/lcov-report/index.html"
+    "test:coverage:open": "npm run test:coverage && open coverage/lcov-report/index.html",
+    "assets:generate": "node scripts/generate-icons.js"
   },
   "eslintConfig": {
     "extends": [
@@ -89,6 +90,8 @@
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "axios-mock-adapter": "^1.22.0",
-    "postcss": "^8.5.6"
+    "postcss": "^8.5.6",
+    "png-to-ico": "^2.1.8",
+    "sharp": "^0.33.4"
   }
 }
