@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { imageProcessingService, ProcessedImage } from '../services/imageProcessingService';
+import type { ProcessedImage } from '../services/imageProcessingService';
 
 interface MultiImageUploadProps {
   onImagesProcessed: (images: ProcessedImage[]) => void;
@@ -15,8 +15,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   maxImages = 25,
 }) => {
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0 });
+  const [isProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelection = useCallback(async (files: FileList | null) => {
@@ -30,22 +29,17 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       return;
     }
 
-    setIsProcessing(true);
-    setProcessingProgress({ current: 0, total: fileArray.length });
-
     try {
-      // Process all images concurrently and track progress
-      let completed = 0;
-      const promises = fileArray.map(async (file) => {
-        const processedBatch = await imageProcessingService.processImages([file]);
-        completed += 1;
-        setProcessingProgress({ current: completed, total: fileArray.length });
-        return processedBatch;
-      });
-      
-      const batches = await Promise.all(promises);
-      const results: ProcessedImage[] = [];
-      batches.forEach(batch => results.push(...batch));
+      // No client-side processing: create lightweight entries with preview URLs
+      const results: ProcessedImage[] = fileArray.map((file) => ({
+        file,
+        originalFile: file,
+        preview: URL.createObjectURL(file),
+        isValid: true,
+        isBook: true,
+        confidence: undefined,
+        validationMessage: '',
+      } as unknown as ProcessedImage));
 
       const newImages = [...processedImages, ...results];
       setProcessedImages(newImages);
@@ -56,10 +50,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to process images');
-    } finally {
-      setIsProcessing(false);
-      setProcessingProgress({ current: 0, total: 0 });
+      onError(error instanceof Error ? error.message : 'Failed to add images');
     }
   }, [processedImages, maxImages, onImagesProcessed, onError]);
 
@@ -79,34 +70,15 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     onImagesProcessed(newImages);
   };
 
-  const retryImage = async (index: number) => {
-    const imageToRetry = processedImages[index];
-    if (!imageToRetry.originalFile) return;
-
-    setIsProcessing(true);
-    try {
-      const retryResults = await imageProcessingService.processImages([imageToRetry.originalFile]);
-      const newImages = [...processedImages];
-      
-      // Clean up old preview
-      if (newImages[index].preview) {
-        URL.revokeObjectURL(newImages[index].preview);
-      }
-      
-      newImages[index] = retryResults[0];
-      setProcessedImages(newImages);
-      onImagesProcessed(newImages);
-    } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to retry image processing');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  // Removed retry logic; no client-side processing
 
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
-      imageProcessingService.cleanup(processedImages);
+      // Revoke any created object URLs on unmount
+      processedImages.forEach((img) => {
+        if (img.preview) URL.revokeObjectURL(img.preview);
+      });
     };
   }, [processedImages]);
 
@@ -152,22 +124,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       />
 
       {/* Processing Progress */}
-      {isProcessing && (
-        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md" role="status" aria-live="polite">
-          <div className="flex items-center">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" aria-hidden="true"></div>
-            <span className="text-sm text-blue-700">
-              Processing images... ({processingProgress.current}/{processingProgress.total})
-            </span>
-          </div>
-          <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
-            <div 
-              className="bg-blue-600 h-1 rounded-full transition-all duration-300" 
-              style={{ width: `${(processingProgress.current / Math.max(processingProgress.total, 1)) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
+      {/* No client-side processing status */}
 
       {/* Image Grid */}
       {processedImages.length > 0 && (
@@ -235,17 +192,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
                 {image.confidence !== undefined && ` • ${Math.round(image.confidence)}% confidence`}
               </p>
 
-              {/* Retry Button for Failed Images */}
-              {!image.isValid && image.originalFile && (
-                <button
-                  type="button"
-                  onClick={() => retryImage(index)}
-                  className="mt-1 text-xs text-blue-600 hover:text-blue-800 focus:outline-none focus:underline"
-                  disabled={isProcessing}
-                >
-                  Retry Processing
-                </button>
-              )}
+              {/* No retry button since we removed client-side processing */}
             </div>
           ))}
         </div>
@@ -255,10 +202,10 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       {processedImages.length === 0 && (
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
           <p className="text-sm text-gray-500">
-            Upload up to {maxImages} book images. Images will be automatically downsized and validated.
+            Upload up to {maxImages} book images. We'll upload them as-is and process details in the background.
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Supported formats: JPG, PNG, GIF • Max file size: 2MB after processing
+            Supported formats: JPG, PNG, GIF • Large files may take longer to upload
           </p>
         </div>
       )}

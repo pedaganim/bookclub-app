@@ -11,7 +11,7 @@ const Login: React.FC = () => {
         <div>
           <div className="flex justify-center mb-6">
             <img 
-              src="/logo.svg" 
+              src="/logo.png" 
               alt="Book Club" 
               className="h-24 w-auto"
             />
