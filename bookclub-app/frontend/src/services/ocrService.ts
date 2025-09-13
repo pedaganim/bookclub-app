@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import type { Worker as TesseractWorker } from 'tesseract.js';
 
 export interface OCRResult {
   text: string;
@@ -39,7 +40,7 @@ interface PreprocessingOptions {
 }
 
 class OCRService {
-  private worker: Tesseract.Worker | null = null;
+  private worker: TesseractWorker | null = null;
   private isInitialized = false;
 
   /**

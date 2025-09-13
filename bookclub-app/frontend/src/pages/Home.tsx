@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
@@ -29,6 +30,8 @@ const Home: React.FC = () => {
   const [showCreateClubModal, setShowCreateClubModal] = useState(false);
   const [showJoinClubModal, setShowJoinClubModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'my-books'>('all');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +91,13 @@ const Home: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    // Navigate to keep URL and UI in sync
+    if (newFilter === 'my-books') {
+      navigate('/my-books');
+    } else {
+      navigate('/');
+    }
+    fetchBooks(searchQuery || undefined, pageSize, null);
   };
 
   const handlePageSizeChange = (newPageSize: number) => {
@@ -137,6 +147,16 @@ const Home: React.FC = () => {
     fetchBooks();
     fetchClubs();
   }, [fetchBooks, fetchClubs]);
+
+  // Keep filter in sync with current route
+  useEffect(() => {
+    if (location.pathname === '/my-books' && filter !== 'my-books') {
+      setFilter('my-books');
+    } else if (location.pathname === '/' && filter !== 'all') {
+      setFilter('all');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const handleBookAdded = (newBook: Book) => {
     setBooks([newBook, ...books]);
