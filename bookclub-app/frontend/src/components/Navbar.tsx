@@ -28,7 +28,7 @@ const Navbar: React.FC = () => {
                 to="/library"
                 className="ml-8 text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium border border-indigo-200 hover:border-indigo-300 transition-colors"
               >
-                📚 Our Library
+                📚 Your Library
               </Link>
             )}
             <Link
