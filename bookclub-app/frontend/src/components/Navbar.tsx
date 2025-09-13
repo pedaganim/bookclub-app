@@ -11,11 +11,16 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <img 
-                src="/logo.png" 
-                alt="Book Club" 
-                className="h-8 w-auto"
-              />
+              {(() => {
+                const logoSrc = `${process.env.PUBLIC_URL || ''}/logo.png`;
+                return (
+                  <img 
+                    src={logoSrc} 
+                    alt="Book Club" 
+                    className="h-8 w-auto"
+                  />
+                );
+              })()}
             </Link>
             {!isAuthenticated && (
               // Public Library link shown only when not signed in; moved to Sidebar for signed-in users
