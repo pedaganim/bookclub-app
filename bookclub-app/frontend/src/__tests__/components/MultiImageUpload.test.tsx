@@ -2,17 +2,8 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MultiImageUpload from '../../components/MultiImageUpload';
-import { imageProcessingService, ProcessedImage } from '../../services/imageProcessingService';
 
-// Mock the image processing service
-jest.mock('../../services/imageProcessingService', () => ({
-  imageProcessingService: {
-    processImages: jest.fn(),
-    cleanup: jest.fn(),
-  },
-}));
-
-const mockImageProcessingService = imageProcessingService as jest.Mocked<typeof imageProcessingService>;
+// No image processing service in simplified component
 
 describe('MultiImageUpload', () => {
   const mockOnImagesProcessed = jest.fn();
@@ -41,39 +32,15 @@ describe('MultiImageUpload', () => {
   it('should render the upload interface', () => {
     renderComponent();
     
-    expect(screen.getByText(/Add Images \(0\/25\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Add Book Cover Image \(0\/25\)/)).toBeInTheDocument();
     expect(screen.getByText(/Upload up to 25 book images/)).toBeInTheDocument();
   });
 
-  it('should handle file selection and processing', async () => {
+  it('should handle file selection and preview', async () => {
     const mockFiles = [
       new File(['fake-image-data'], 'test1.jpg', { type: 'image/jpeg' }),
       new File(['fake-image-data'], 'test2.jpg', { type: 'image/jpeg' }),
     ];
-
-    const mockProcessedImages = [
-      {
-        file: mockFiles[0],
-        originalFile: mockFiles[0],
-        preview: 'blob:fake-url-1',
-        isValid: true,
-        isBook: true,
-        confidence: 85,
-      },
-      {
-        file: mockFiles[1],
-        originalFile: mockFiles[1],
-        preview: 'blob:fake-url-2',
-        isValid: false,
-        validationMessage: 'Not a book',
-        isBook: false,
-        confidence: 40,
-      },
-    ];
-
-    // Mock processing each file individually
-    mockImageProcessingService.processImages.mockResolvedValueOnce([mockProcessedImages[0]])
-      .mockResolvedValueOnce([mockProcessedImages[1]]);
 
     renderComponent();
 
@@ -81,44 +48,13 @@ describe('MultiImageUpload', () => {
     await userEvent.upload(fileInput, mockFiles);
 
     await waitFor(() => {
-      expect(mockImageProcessingService.processImages).toHaveBeenCalledTimes(2);
+      expect(mockOnImagesProcessed).toHaveBeenCalledTimes(1);
     });
-
-    // Should be called once at the end with all results
-    expect(mockOnImagesProcessed).toHaveBeenCalledTimes(1);
-    expect(mockOnImagesProcessed).toHaveBeenCalledWith(mockProcessedImages);
-  });
-
-  it('should show processing progress', async () => {
-    const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
-
-    let resolveProcessing: (value: ProcessedImage[]) => void;
-    const processingPromise = new Promise<ProcessedImage[]>(resolve => {
-      resolveProcessing = resolve;
-    });
-
-    mockImageProcessingService.processImages.mockReturnValue(processingPromise);
-
-    renderComponent();
-
-    const fileInput = screen.getByLabelText('Select multiple image files');
-    await userEvent.upload(fileInput, [mockFile]);
-
-    // Should show processing indicator
-    expect(screen.getByText(/Processing images.../)).toBeInTheDocument();
-
-    // Resolve the processing
-    resolveProcessing!([{
-      file: mockFile,
-      originalFile: mockFile,
-      preview: 'blob:fake-url',
-      isValid: true,
-      isBook: true,
-    }]);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Processing images.../)).not.toBeInTheDocument();
-    });
+    const firstCallArg = (mockOnImagesProcessed as jest.Mock).mock.calls[0][0];
+    expect(Array.isArray(firstCallArg)).toBe(true);
+    expect(firstCallArg).toHaveLength(2);
+    expect(firstCallArg[0].file.name).toBe('test1.jpg');
+    expect(firstCallArg[1].file.name).toBe('test2.jpg');
   });
 
   it('should enforce maximum image limit', async () => {
@@ -132,22 +68,10 @@ describe('MultiImageUpload', () => {
     await userEvent.upload(fileInput, mockFiles);
 
     expect(mockOnError).toHaveBeenCalledWith('Maximum 25 images allowed. You can add 25 more.');
-    expect(mockImageProcessingService.processImages).not.toHaveBeenCalled();
   });
 
   it('should allow removing individual images', async () => {
     const mockFile = new File(['fake-image-data'], 'test.jpg', { type: 'image/jpeg' });
-
-    const mockProcessedImage = {
-      file: mockFile,
-      originalFile: mockFile,
-      preview: 'blob:fake-url',
-      isValid: true,
-      isBook: true,
-      confidence: 85,
-    };
-
-    mockImageProcessingService.processImages.mockResolvedValue([mockProcessedImage]);
 
     renderComponent();
 
@@ -164,7 +88,7 @@ describe('MultiImageUpload', () => {
     await userEvent.click(removeButton);
 
     expect(mockOnImagesProcessed).toHaveBeenLastCalledWith([]);
-    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
+    expect(global.URL.revokeObjectURL).toHaveBeenCalled();
   });
 
   it('should allow clearing all images', async () => {
@@ -172,16 +96,6 @@ describe('MultiImageUpload', () => {
       new File(['fake-image-data'], 'test1.jpg', { type: 'image/jpeg' }),
       new File(['fake-image-data'], 'test2.jpg', { type: 'image/jpeg' }),
     ];
-
-    const mockProcessedImages = mockFiles.map((file, index) => ({
-      file,
-      originalFile: file,
-      preview: `blob:fake-url-${index}`,
-      isValid: true,
-      isBook: true,
-    }));
-
-    mockImageProcessingService.processImages.mockResolvedValue(mockProcessedImages);
 
     renderComponent();
 
@@ -198,92 +112,15 @@ describe('MultiImageUpload', () => {
     await userEvent.click(clearButton);
 
     expect(mockOnImagesProcessed).toHaveBeenLastCalledWith([]);
-    expect(mockImageProcessingService.cleanup).toHaveBeenCalled();
   });
 
-  it('should show validation status for each image', async () => {
-    const mockFiles = [
-      new File(['fake-image-data'], 'valid.jpg', { type: 'image/jpeg' }),
-      new File(['fake-image-data'], 'invalid.jpg', { type: 'image/jpeg' }),
-      new File(['fake-image-data'], 'warning.jpg', { type: 'image/jpeg' }),
-    ];
+  // Removed validation/status tests; simplified UI no longer shows these
 
-    const mockProcessedImages = [
-      {
-        file: mockFiles[0],
-        originalFile: mockFiles[0],
-        preview: 'blob:fake-url-1',
-        isValid: true,
-        isBook: true,
-        confidence: 90,
-      },
-      {
-        file: mockFiles[1],
-        originalFile: mockFiles[1],
-        preview: 'blob:fake-url-2',
-        isValid: false,
-        validationMessage: 'Not a book cover',
-        isBook: false,
-        confidence: 30,
-      },
-      {
-        file: mockFiles[2],
-        originalFile: mockFiles[2],
-        preview: 'blob:fake-url-3',
-        isValid: true,
-        isBook: false,
-        validationMessage: 'Low confidence detection',
-        confidence: 45,
-      },
-    ];
-
-    // Mock processing each file individually
-    mockImageProcessingService.processImages.mockResolvedValueOnce([mockProcessedImages[0]])
-      .mockResolvedValueOnce([mockProcessedImages[1]])
-      .mockResolvedValueOnce([mockProcessedImages[2]]);
-
-    renderComponent();
-
-    const fileInput = screen.getByLabelText('Select multiple image files');
-    await userEvent.upload(fileInput, mockFiles);
-
-    // Check for validation indicators
-    await waitFor(() => {
-      const checkmarks = screen.getAllByText('✓');
-      expect(checkmarks.length).toBeGreaterThan(0); // Valid book
-    });
-    
-    await waitFor(() => {
-      const crosses = screen.getAllByText('✗');
-      expect(crosses.length).toBeGreaterThan(0); // Invalid
-    });
-    
-    await waitFor(() => {
-      const warnings = screen.getAllByText('⚠');
-      expect(warnings.length).toBeGreaterThan(0); // Warning
-    });
-    
-    // Check for validation messages
-    await waitFor(() => {
-      expect(screen.getByText('Not a book cover')).toBeInTheDocument();
-    });
-    
-    await waitFor(() => {
-      expect(screen.getByText('Low confidence detection')).toBeInTheDocument();
-    });
-  });
-
-  it('should show summary statistics', async () => {
+  it('should show summary with selected count and total size', async () => {
     const mockFiles = [
       new File(['fake-image-data'], 'test1.jpg', { type: 'image/jpeg' }),
       new File(['fake-image-data'], 'test2.jpg', { type: 'image/jpeg' }),
       new File(['fake-image-data'], 'test3.jpg', { type: 'image/jpeg' }),
-    ];
-
-    const mockProcessedImages = [
-      { file: mockFiles[0], originalFile: mockFiles[0], preview: 'blob:1', isValid: true, isBook: true },
-      { file: mockFiles[1], originalFile: mockFiles[1], preview: 'blob:2', isValid: false, isBook: false },
-      { file: mockFiles[2], originalFile: mockFiles[2], preview: 'blob:3', isValid: true, isBook: false },
     ];
 
     // Mock file sizes
@@ -291,30 +128,13 @@ describe('MultiImageUpload', () => {
     Object.defineProperty(mockFiles[1], 'size', { value: 2048 });
     Object.defineProperty(mockFiles[2], 'size', { value: 1536 });
 
-    // Mock processing each file individually
-    mockImageProcessingService.processImages.mockResolvedValueOnce([mockProcessedImages[0]])
-      .mockResolvedValueOnce([mockProcessedImages[1]])
-      .mockResolvedValueOnce([mockProcessedImages[2]]);
-
     renderComponent();
 
     const fileInput = screen.getByLabelText('Select multiple image files');
     await userEvent.upload(fileInput, mockFiles);
 
-    // Check for statistics individually
     await waitFor(() => {
-      expect(screen.getByText(/Valid: 2/)).toBeInTheDocument();
-    });
-    
-    await waitFor(() => {
-      expect(screen.getByText(/Book content: 1/)).toBeInTheDocument();
-    });
-    
-    await waitFor(() => {
-      expect(screen.getByText(/Invalid: 1/)).toBeInTheDocument();
-    });
-    
-    await waitFor(() => {
+      expect(screen.getByText(/Selected: 3/)).toBeInTheDocument();
       expect(screen.getByText(/Total size: \d+KB/)).toBeInTheDocument();
     });
   });
@@ -322,6 +142,6 @@ describe('MultiImageUpload', () => {
   it('should be disabled when prop is set', () => {
     renderComponent({ disabled: true });
     
-    expect(screen.getByText(/Add Images \(0\/25\)/)).toBeDisabled();
+    expect(screen.getByText(/Add Book Cover Image \(0\/25\)/)).toBeDisabled();
   });
 });
