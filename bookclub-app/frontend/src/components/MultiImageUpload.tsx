@@ -68,7 +68,10 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     const newImages = processedImages.filter((_, i) => i !== index);
 
     // Clean up the removed image's blob URL
-    if (processedImages[index]?.preview) URL.revokeObjectURL(processedImages[index].preview);
+    const prevUrl = processedImages[index]?.preview;
+    if (prevUrl) {
+      URL.revokeObjectURL(prevUrl);
+    }
 
     setProcessedImages(newImages);
     onImagesProcessed(newImages);

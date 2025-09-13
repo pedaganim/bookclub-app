@@ -33,7 +33,7 @@ describe('BookLibrary', () => {
     
     render(<BookLibrary />);
     
-    expect(screen.getByText('Loading our library...')).toBeInTheDocument();
+    expect(screen.getByText('Loading your library...')).toBeInTheDocument();
   });
 
   it('should render page title and description', async () => {
@@ -42,7 +42,7 @@ describe('BookLibrary', () => {
     render(<BookLibrary />);
     
     await waitFor(() => {
-      expect(screen.getByText('Our Library')).toBeInTheDocument();
+      expect(screen.getByText('Your Library')).toBeInTheDocument();
     });
     expect(screen.getByText('Discover books shared by our community')).toBeInTheDocument();
   });
@@ -53,7 +53,7 @@ describe('BookLibrary', () => {
     render(<BookLibrary />);
     
     await waitFor(() => {
-      expect(screen.getByText('No books are available in our library yet.')).toBeInTheDocument();
+      expect(screen.getByText('No books are available in your library yet.')).toBeInTheDocument();
     });
   });
 
@@ -103,7 +103,7 @@ describe('BookLibrary', () => {
     render(<BookLibrary />);
     
     await waitFor(() => {
-      expect(screen.getByText('No books are available in our library yet.')).toBeInTheDocument();
+      expect(screen.getByText('No books are available in your library yet.')).toBeInTheDocument();
     });
   });
 
