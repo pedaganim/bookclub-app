@@ -23,16 +23,18 @@ const AllBooksCard: React.FC<AllBooksCardProps> = ({ book }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      {/* Image - Always displayed */}
-      <img
-        src={book.coverImage || defaultBookImage}
-        alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
-        className="w-full h-48 object-cover"
-        onError={(e) => {
-          // Fallback to default image if cover image fails to load
-          (e.target as HTMLImageElement).src = defaultBookImage;
-        }}
-      />
+      {/* Image - Always displayed with consistent aspect ratio */}
+      <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
+        <img
+          src={book.coverImage || defaultBookImage}
+          alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
+          className="w-full h-full object-cover object-center"
+          onError={(e) => {
+            // Fallback to default image if cover image fails to load
+            (e.target as HTMLImageElement).src = defaultBookImage;
+          }}
+        />
+      </div>
       
       <div className="p-4">
         {/* Description - Only displayed field */}
