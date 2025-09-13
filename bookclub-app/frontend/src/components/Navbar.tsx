@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <img 
-                src="/logo-navbar.svg" 
+                src="/logo.png" 
                 alt="Book Club" 
                 className="h-8 w-auto"
               />
