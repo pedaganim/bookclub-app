@@ -30,7 +30,10 @@ const About: React.FC = () => {
           <h2 className="text-2xl font-semibold text-gray-900">Links</h2>
           <ul className="list-disc list-inside text-gray-700">
             <li>
-              GitHub: <a className="text-indigo-600 hover:text-indigo-800 underline" href="https://github.com/pedaganim" target="_blank" rel="noreferrer">https://github.com/pedaganim</a>
+              GitHub: <a className="text-indigo-600 hover:text-indigo-800 underline" href="https://github.com/pedaganim/bookclub-app" target="_blank" rel="noreferrer">https://github.com/pedaganim/bookclub-app</a>
+            </li>
+            <li>
+              For new Feature Requests: please open an issue on our <a className="text-indigo-600 hover:text-indigo-800 underline" href="https://github.com/pedaganim/bookclub-app/issues/new/choose" target="_blank" rel="noreferrer">GitHub Issues</a> page.
             </li>
           </ul>
         </section>
