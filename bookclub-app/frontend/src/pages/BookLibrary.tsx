@@ -147,6 +147,7 @@ const BookLibrary: React.FC = () => {
             currentItemsCount={books.length}
             isLoading={loading}
             totalCount={totalCount}
+            startIndex={(previousTokens.length * pageSize) + (books.length ? 1 : 0)}
           />
         </div>
 
@@ -197,6 +198,7 @@ const BookLibrary: React.FC = () => {
                 currentItemsCount={books.length}
                 isLoading={loading}
                 totalCount={totalCount}
+                startIndex={(previousTokens.length * pageSize) + (books.length ? 1 : 0)}
               />
             </div>
           </>
