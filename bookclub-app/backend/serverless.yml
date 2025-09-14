@@ -433,6 +433,46 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+  updateClub:
+    handler: src/handlers/clubs/update.handler
+    events:
+      - http:
+          method: PATCH
+          path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  deleteClub:
+    handler: src/handlers/clubs/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   # Custom resource function for DynamoDB table management
   dynamoTableManager:
     handler: src/custom-resources/dynamodb-table-manager.handler
