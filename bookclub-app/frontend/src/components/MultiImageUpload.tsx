@@ -77,36 +77,6 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     onImagesProcessed(newImages);
   };
 
-  const retryImage = async (index: number) => {
-    const imageToRetry = processedImages[index];
-    if (!imageToRetry.file) return;
-
-    setIsProcessing(true);
-    try {
-      // No client-side processing
-      // Service.processImages([imageToRetry.file]);
-      const newImages = [...processedImages];
-
-      // Clean up old preview
-      const oldPreview = newImages[index]?.preview;
-      if (oldPreview) {
-        URL.revokeObjectURL(oldPreview);
-      }
-
-      newImages[index] = {
-        file: imageToRetry.file,
-        preview: URL.createObjectURL(imageToRetry.file),
-      };
-
-      setProcessedImages(newImages);
-      onImagesProcessed(newImages);
-    } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to retry image processing');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
