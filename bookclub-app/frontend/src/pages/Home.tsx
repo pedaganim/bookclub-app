@@ -1,39 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { Book, BookClub, BookListResponse } from '../types';
+import { Book, BookListResponse } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
 import AllBooksCard from '../components/AllBooksCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import AddBookModal from '../components/AddBookModal';
-import ClubCard from '../components/ClubCard';
-import CreateClubModal from '../components/CreateClubModal';
-import JoinClubModal from '../components/JoinClubModal';
+// Clubs are temporarily disabled
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Squares2X2Icon, 
   ListBulletIcon, 
-  UserGroupIcon,
   BookOpenIcon 
 } from '@heroicons/react/24/outline';
 
 const Home: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [clubs, setClubs] = useState<BookClub[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clubsLoading, setClubsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [clubsError, setClubsError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showCreateClubModal, setShowCreateClubModal] = useState(false);
-  const [showJoinClubModal, setShowJoinClubModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'my-books'>('all');
   const location = useLocation();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
+  const [activeTab, setActiveTab] = useState<'books'>('books');
   const [searchQuery, setSearchQuery] = useState('');
   // Pagination state for "All Books" filter
   const [pageSize, setPageSize] = useState(25);
@@ -44,6 +36,8 @@ const Home: React.FC = () => {
   // Client-side pagination for 'My Books'
   const [myPageIndex, setMyPageIndex] = useState(0);
   const { user } = useAuth();
+  // Background total count for 'All Books'
+  const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
@@ -79,8 +73,37 @@ const Home: React.FC = () => {
           nextToken: token || undefined 
         });
         setBooks(Array.isArray(response.items) ? response.items : []);
-        setHasNextPage(!!response.nextToken);
+        const hasMore = !!response.nextToken;
+        setHasNextPage(hasMore);
         setNextToken(response.nextToken || null);
+
+        // On first page for current query/pageSize, compute background total
+        if (token == null) {
+          if (!hasMore) {
+            setTotalCount(Array.isArray(response.items) ? response.items.length : 0);
+          } else {
+            const initial = Array.isArray(response.items) ? response.items.length : 0;
+            void (async () => {
+              try {
+                let count = initial;
+                let tokenLocal: string | undefined = response.nextToken || undefined;
+                const perPage = Math.max(currentPageSize || pageSize, 50);
+                while (tokenLocal) {
+                  const resp = await apiService.listBooksPublic({
+                    search,
+                    limit: perPage,
+                    nextToken: tokenLocal,
+                  });
+                  count += Array.isArray(resp.items) ? resp.items.length : 0;
+                  tokenLocal = resp.nextToken || undefined;
+                }
+                setTotalCount(count);
+              } catch (e) {
+                // ignore errors and leave totalCount undefined
+              }
+            })();
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
@@ -97,6 +120,7 @@ const Home: React.FC = () => {
       setNextToken(null);
       setCurrentPageToken(null);
     }
+    setTotalCount(undefined);
     fetchBooks(query || undefined, pageSize, null);
   };
 
@@ -107,6 +131,8 @@ const Home: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    setMyPageIndex(0);
+    setTotalCount(undefined);
     // Navigate to keep URL and UI in sync
     if (newFilter === 'my-books') {
       navigate('/my-books');
@@ -123,6 +149,7 @@ const Home: React.FC = () => {
     setNextToken(null);
     setCurrentPageToken(null);
     setMyPageIndex(0);
+    setTotalCount(undefined);
     fetchBooks(searchQuery || undefined, newPageSize, null);
   };
 
@@ -153,22 +180,11 @@ const Home: React.FC = () => {
     }
   };
 
-  const fetchClubs = useCallback(async () => {
-    try {
-      setClubsLoading(true);
-      const response = await apiService.getUserClubs();
-      setClubs(response.items || []);
-    } catch (err: any) {
-      setClubsError(err.message || 'Failed to fetch clubs');
-    } finally {
-      setClubsLoading(false);
-    }
-  }, []);
+  // Clubs disabled: no-op
 
   useEffect(() => {
     fetchBooks();
-    fetchClubs();
-  }, [fetchBooks, fetchClubs]);
+  }, [fetchBooks]);
 
   // Keep filter in sync with current route
   useEffect(() => {
@@ -203,34 +219,9 @@ const Home: React.FC = () => {
     ));
   };
 
-  const handleClubCreated = (newClub: BookClub) => {
-    setClubs([newClub, ...clubs]);
-    setShowCreateClubModal(false);
-  };
+  // Clubs disabled: removed related handlers
 
-  const handleClubJoined = (newClub: BookClub) => {
-    setClubs([newClub, ...clubs]);
-    setShowJoinClubModal(false);
-  };
-
-  const handleClubLeft = async (clubId: string) => {
-    try {
-      await apiService.leaveClub(clubId);
-      setClubs(clubs.filter(club => club.clubId !== clubId));
-    } catch (err: any) {
-      alert(err.message || 'Failed to leave club');
-    }
-  };
-
-  const handleCopyInvite = (inviteCode: string) => {
-    navigator.clipboard.writeText(inviteCode).then(() => {
-      alert('Invite code copied to clipboard!');
-    }).catch(() => {
-      alert(`Invite code: ${inviteCode}`);
-    });
-  };
-
-  if (loading || clubsLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -259,28 +250,13 @@ const Home: React.FC = () => {
             >
               📚 Browse Your Library
             </Link>
-            {activeTab === 'books' ? (
+            {activeTab === 'books' && (
               <button
                 onClick={() => setShowAddModal(true)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"
               >
                 Add Books
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowJoinClubModal(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
-                >
-                  Join Club
-                </button>
-                <button
-                  onClick={() => setShowCreateClubModal(true)}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"
-                >
-                  Create Club
-                </button>
-              </>
             )}
           </div>
         </div>
@@ -300,20 +276,7 @@ const Home: React.FC = () => {
                 <BookOpenIcon className="h-4 w-4" />
                 Books
               </button>
-              {/* Clubs tab temporarily hidden per requirements */}
-              {false && (
-                <button
-                  onClick={() => setActiveTab('clubs')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
-                    activeTab === 'clubs'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <UserGroupIcon className="h-4 w-4" />
-                  My Clubs ({clubs.length})
-                </button>
-              )}
+              {/* Clubs tab disabled */}
             </nav>
           </div>
         </div>
@@ -331,7 +294,7 @@ const Home: React.FC = () => {
                 onPreviousPage={handlePreviousPage}
                 currentItemsCount={displayedBooks.length}
                 isLoading={loading}
-                totalCount={filter === 'my-books' ? books.length : undefined}
+                totalCount={filter === 'my-books' ? books.length : totalCount}
               />
             </div>
 
@@ -451,75 +414,19 @@ const Home: React.FC = () => {
                     onPreviousPage={handlePreviousPage}
                     currentItemsCount={displayedBooks.length}
                     isLoading={loading}
-                    totalCount={filter === 'my-books' ? books.length : undefined}
+                    totalCount={filter === 'my-books' ? books.length : totalCount}
                   />
                 </div>
               </>
             )}
           </>
-        ) : (
-          <>
-            {clubsError && (
-              <div className="mb-6 rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700">{clubsError}</div>
-              </div>
-            )}
-
-            {clubs.length === 0 ? (
-              <div className="text-center py-12">
-                <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <div className="text-gray-500 mb-4">
-                  You haven't joined any book clubs yet.
-                </div>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={() => setShowJoinClubModal(true)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
-                  >
-                    Join a Club
-                  </button>
-                  <button
-                    onClick={() => setShowCreateClubModal(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"
-                  >
-                    Create a Club
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {clubs.map((club) => (
-                  <ClubCard
-                    key={club.clubId}
-                    club={club}
-                    onLeave={handleClubLeft}
-                    onCopyInvite={handleCopyInvite}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        ) : null}
 
         {/* Modals */}
         {showAddModal && (
           <AddBookModal
             onClose={() => setShowAddModal(false)}
             onBookAdded={handleBookAdded}
-          />
-        )}
-
-        {showCreateClubModal && (
-          <CreateClubModal
-            onClose={() => setShowCreateClubModal(false)}
-            onClubCreated={handleClubCreated}
-          />
-        )}
-
-        {showJoinClubModal && (
-          <JoinClubModal
-            onClose={() => setShowJoinClubModal(false)}
-            onClubJoined={handleClubJoined}
           />
         )}
       </div>
