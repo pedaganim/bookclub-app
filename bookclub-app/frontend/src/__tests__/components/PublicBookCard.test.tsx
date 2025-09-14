@@ -52,8 +52,8 @@ describe('PublicBookCard', () => {
     const bookWithoutDescription = { ...mockBook, description: '' };
     render(<PublicBookCard book={bookWithoutDescription} />);
     
-    // Should only show the username section
-    expect(screen.getByText('Shared by User user456')).toBeInTheDocument();
+    // Should only show the borrow action button
+    expect(screen.getByText('Borrow from User user456')).toBeInTheDocument();
     expect(screen.queryByText('A test book description')).not.toBeInTheDocument();
   });
 
@@ -80,7 +80,7 @@ describe('PublicBookCard', () => {
   it('should display simplified username from userId', () => {
     render(<PublicBookCard book={mockBook} />);
     
-    expect(screen.getByText('Shared by User user456')).toBeInTheDocument();
+    expect(screen.getByText('Borrow from User user456')).toBeInTheDocument();
   });
 
   it('should handle fallback when image fails to load', async () => {
