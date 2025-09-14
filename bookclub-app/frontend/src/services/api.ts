@@ -28,25 +28,15 @@ class ApiService {
       return config;
     });
 
-    // Add response interceptor to handle errors and detect token expiration
+    // Add response interceptor to handle errors and detect auth failures
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        // Check if this is a 401 error indicating token expiration
-        if (error.response?.status === 401 && this.onSessionExpired) {
-          // Check if the error is related to authentication/authorization
-          const errorCode = error.response?.data?.error?.code;
-          const errorMessage = error.response?.data?.error?.message?.toLowerCase() || '';
-          
-          // Trigger session expired logout only for specific token-related errors
-          // Be more specific to avoid false positives on other 401s
-          if (errorCode === 'UNAUTHORIZED' || 
-              errorCode === 'TOKEN_EXPIRED' ||
-              errorMessage.includes('token expired') ||
-              errorMessage.includes('invalid token') ||
-              errorMessage.includes('jwt expired')) {
-            this.onSessionExpired();
-          }
+        // Redirect to login on any authentication/authorization failure
+        if ((error.response?.status === 401 || error.response?.status === 403) && this.onSessionExpired) {
+          // Previously, we only redirected for specific token errors. To ensure consistent UX,
+          // we now redirect on any 401/403 from protected endpoints.
+          this.onSessionExpired();
         }
         return Promise.reject(error);
       }

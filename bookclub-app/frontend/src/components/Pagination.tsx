@@ -25,6 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({
   totalCount,
 }) => {
   const pageSizeOptions = [10, 25, 50, 100];
+  const effectiveTotal = typeof totalCount === 'number' ? totalCount : currentItemsCount;
 
   return (
     <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
@@ -47,8 +48,7 @@ const Pagination: React.FC<PaginationProps> = ({
         </div>
 
         <div className="text-sm text-gray-700">
-          Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''}
-          {typeof totalCount === 'number' ? ` of total ${totalCount} books` : ''}
+          Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''} of total {effectiveTotal} book{effectiveTotal !== 1 ? 's' : ''}
         </div>
 
         <div className="flex items-center space-x-2">
