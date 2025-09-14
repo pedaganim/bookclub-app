@@ -18,12 +18,11 @@ class ApiService {
 
     // Add request interceptor to include auth token
     this.api.interceptors.request.use((config) => {
-      // Prefer idToken for API Gateway Cognito authorizer; fallback to accessToken
-      const idToken = localStorage.getItem('idToken');
+      // Always use Cognito Access Token for backend auth.
+      // Backend verifies tokens using Cognito GetUser, which requires an Access Token.
       const accessToken = localStorage.getItem('accessToken');
-      const token = idToken || accessToken;
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
       }
       return config;
     });
