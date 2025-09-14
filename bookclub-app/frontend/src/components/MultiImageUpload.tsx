@@ -88,8 +88,9 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       const newImages = [...processedImages];
 
       // Clean up old preview
-      if (newImages[index].preview) {
-        URL.revokeObjectURL(newImages[index].preview);
+      const oldPreview = newImages[index]?.preview;
+      if (oldPreview) {
+        URL.revokeObjectURL(oldPreview);
       }
 
       newImages[index] = {
