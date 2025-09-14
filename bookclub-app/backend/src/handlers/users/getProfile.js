@@ -1,6 +1,5 @@
 const User = require('../../models/user');
 const response = require('../../lib/response');
-const LocalStorage = require('../../lib/local-storage');
 
 module.exports.handler = async (event) => {
   try {
@@ -11,17 +10,21 @@ module.exports.handler = async (event) => {
       claims = event.requestContext.authorizer.claims;
       userId = claims.sub;
     } else {
-      // Fallback for local/offline: parse Bearer token and verify via LocalStorage
+      // Fallback: parse Bearer token and validate via Cognito (or LocalStorage in offline mode)
       const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
       const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
       if (!token) {
         return response.unauthorized('Missing Authorization header');
       }
-      const user = await LocalStorage.verifyToken(token);
-      if (!user) {
-        return response.unauthorized('Invalid token');
+      try {
+        const user = await User.getCurrentUser(token);
+        if (!user) {
+          return response.unauthorized('Invalid token');
+        }
+        userId = user.userId;
+      } catch (e) {
+        return response.unauthorized('Invalid or expired token');
       }
-      userId = user.userId;
     }
 
     let user = await User.getById(userId);
