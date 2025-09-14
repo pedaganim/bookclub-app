@@ -33,15 +33,18 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
 
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
-      const response = await fetch(
+      const fetchFn: typeof fetch | undefined = (globalThis as any).fetch;
+      if (!fetchFn) throw new Error('Geocoding service unavailable');
+
+      const response = await fetchFn(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
-      );
-      
-      if (!response.ok) {
+      ).catch(() => undefined as any);
+
+      if (!response || !('ok' in response) || !response.ok) {
         throw new Error('Geocoding service unavailable');
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       
       if (data.error) {
         throw new Error('Location not found');
