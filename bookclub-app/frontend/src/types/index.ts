@@ -134,3 +134,34 @@ export interface S3UrlComponents {
   bucket: string;
   key: string;
 }
+
+// Direct Messaging types
+export interface DMConversation {
+  conversationId: string;
+  userAId: string;
+  userBId: string;
+  lastMessageAt?: string;
+  lastMessageSnippet?: string;
+  unreadCountForUserA?: number;
+  unreadCountForUserB?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DMMessage {
+  conversationId: string;
+  messageId: string;
+  fromUserId: string;
+  toUserId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface DMConversationList {
+  items: DMConversation[];
+}
+
+export interface DMMessageList {
+  items: DMMessage[];
+  nextToken?: string;
+}
