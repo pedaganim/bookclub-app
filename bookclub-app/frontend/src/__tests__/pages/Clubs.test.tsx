@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/no-node-access, jest/no-conditional-expect, testing-library/prefer-presence-queries */
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';

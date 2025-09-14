@@ -13,6 +13,7 @@ import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
 import Clubs from './pages/Clubs';
 import Messages from './pages/Messages';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <Messages />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/users/:userId"
+                    element={
+                      <ProtectedRoute>
+                        <UserProfile />
                       </ProtectedRoute>
                     }
                   />

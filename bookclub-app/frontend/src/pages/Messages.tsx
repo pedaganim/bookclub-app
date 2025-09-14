@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { DMConversation, DMMessage, User } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,7 +20,7 @@ const Messages: React.FC = () => {
 
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [messages, setMessages] = useState<DMMessage[]>([]);
-  const [nextToken, setNextToken] = useState<string | undefined>(undefined);
+  // const [nextToken, setNextToken] = useState<string | undefined>(undefined);
   const [msgError, setMsgError] = useState('');
   const [composerText, setComposerText] = useState('');
   const pollRef = useRef<number | undefined>(undefined);
@@ -57,7 +57,7 @@ const Messages: React.FC = () => {
       setMsgError('');
       const res = await apiService.dmListMessages(convId, 30);
       setMessages(res.items || []);
-      setNextToken(res.nextToken);
+      // setNextToken(res.nextToken);
     } catch (e: any) {
       setMsgError(e.message || 'Failed to load messages');
     } finally {
@@ -108,7 +108,7 @@ const Messages: React.FC = () => {
         setUserCache(prev => ({ ...prev, [otherUserId]: u }));
       } catch {}
     })();
-  }, [otherUserId]);
+  }, [otherUserId, userCache]);
 
   const handleSend = async () => {
     if (!routeConversationId || !otherUserId) return;
@@ -176,14 +176,15 @@ const Messages: React.FC = () => {
                       >
                         <div className="flex items-center gap-2">
                           {other?.profilePicture ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={other.profilePicture} alt={other.name} className="h-6 w-6 rounded-full object-cover" />
                           ) : (
                             <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] text-gray-600">
                               {(other?.name || 'U').slice(0,1)}
                             </div>
                           )}
-                          <div className="text-sm font-medium text-gray-900 truncate">{other?.name || c.conversationId.slice(0, 8) + '…'}</div>
+                          <Link to={otherId ? `/users/${otherId}` : '#'} className="text-sm font-medium text-gray-900 truncate hover:underline">
+                            {other?.name || c.conversationId.slice(0, 8) + '…'}
+                          </Link>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-gray-500 truncate">{c.lastMessageSnippet || 'No messages yet'}</div>
@@ -211,14 +212,15 @@ const Messages: React.FC = () => {
                   <div className="text-sm text-gray-700">Chat with</div>
                   <div className="flex items-center gap-2">
                     {otherUser?.profilePicture ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={otherUser.profilePicture} alt={otherUser.name} className="h-8 w-8 rounded-full object-cover" />
                     ) : (
                       <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-600">
                         {(otherUser?.name || 'U').slice(0,1)}
                       </div>
                     )}
-                    <div className="text-base font-medium text-gray-900">{otherUser?.name || otherUserId}</div>
+                    <Link to={otherUserId ? `/users/${otherUserId}` : '#'} className="text-base font-medium text-gray-900 hover:underline">
+                      {otherUser?.name || otherUserId}
+                    </Link>
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">

@@ -71,7 +71,6 @@ const UserPickerModal: React.FC<UserPickerModalProps> = ({ onClose, onPick }) =>
             <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
               <div className="flex items-center gap-3">
                 {result.profilePicture ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={result.profilePicture} alt={result.name} className="h-8 w-8 rounded-full object-cover" />
                 ) : (
                   <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-600">
