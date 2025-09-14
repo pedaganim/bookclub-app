@@ -3,6 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PublicBookCard from '../../components/PublicBookCard';
 
+// Mock AuthContext to avoid react-router-dom hook usage during tests
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ isAuthenticated: false, user: null }),
+}));
+
+
 describe('PublicBookCard', () => {
   const mockBook = {
     bookId: 'book123',

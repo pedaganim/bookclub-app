@@ -1,11 +1,16 @@
 import React from 'react';
 import { Book } from '../types';
+import { NotificationContext } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PublicBookCardProps {
   book: Book;
 }
 
 const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
+  const [sending, setSending] = React.useState(false);
+  const notificationCtx = React.useContext(NotificationContext);
+  const { isAuthenticated, user } = useAuth();
   // Function to format description text properly
   const formatDescription = (text?: string) => {
     if (!text) return '';
@@ -29,6 +34,43 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
 
   // Default placeholder image when no cover image is provided
   const defaultBookImage = "data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
+
+  const handleBorrowClick = async () => {
+    // Require auth token; if missing, redirect to login
+    if (!isAuthenticated) {
+      window.location.assign('/login');
+      return;
+    }
+
+    // Prevent self-DM when viewing own book
+    if (user?.userId === book.userId) {
+      notificationCtx?.addNotification('info', 'This is your own book.');
+      return;
+    }
+
+    try {
+      setSending(true);
+      const { apiService } = await import('../services/api');
+      const { trackBorrowIntent } = await import('../services/analytics');
+      // Create or fetch conversation with the owner
+      const conversation = await apiService.dmCreateConversation(book.userId);
+      // Send an initial templated message
+      const title = book.title ? `"${book.title}"` : 'your book';
+      const message = `Hi! I\'m interested in borrowing ${title}. Is it available?`;
+      await apiService.dmSendMessage(conversation.conversationId, book.userId, message);
+      // Track analytics (non-blocking)
+      try { trackBorrowIntent(book.userId, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'PublicBookCard' }); } catch {}
+      // Navigate to the messages thread
+      notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
+      window.location.assign(`/messages/${conversation.conversationId}`);
+    } catch (e) {
+      // If something goes wrong, fall back to messages list
+      notificationCtx?.addNotification('error', 'Could not start a chat. Opening Messages…');
+      window.location.assign('/messages');
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -64,16 +106,32 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
         )}
         
         {/* Borrow action */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            className="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-md"
-            title={`Borrow from ${getDisplayUsername(book)}`}
-            // onClick handler can open a borrow/chat flow in future
-          >
-            Borrow from {getDisplayUsername(book)}
-          </button>
-        </div>
+        {(() => {
+          // Hide borrow button if this is the current user's own book
+          try {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+              const me = JSON.parse(savedUser);
+              if (me?.userId && me.userId === book.userId) {
+                return null;
+              }
+            }
+          } catch {}
+          return (
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                className={`text-xs font-medium text-white px-3 py-1 rounded-md ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                title={`Borrow from ${getDisplayUsername(book)}`}
+                onClick={handleBorrowClick}
+                disabled={sending}
+              >
+                {sending ? 'Sending…' : `Borrow from ${getDisplayUsername(book)}`}
+              </button>
+              <a href={`/users/${book.userId}`} className="text-xs text-indigo-700 hover:underline">View profile</a>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

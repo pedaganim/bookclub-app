@@ -3,6 +3,7 @@ import { BookClub } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CreateClubModal from '../components/CreateClubModal';
+import EditClubModal from '../components/EditClubModal';
 
 const Clubs: React.FC = () => {
   const [clubs, setClubs] = useState<BookClub[]>([]);
@@ -10,6 +11,7 @@ const Clubs: React.FC = () => {
   const [error, setError] = useState('');
   const { user } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
+  const [editingClub, setEditingClub] = useState<BookClub | null>(null);
 
   const load = async () => {
     try {
@@ -39,20 +41,9 @@ const Clubs: React.FC = () => {
     }
   };
 
-  const handleEdit = async (club: BookClub) => {
+  const handleEdit = (club: BookClub) => {
     if (!isCreator(club)) return;
-    const name = window.prompt('Club name', club.name);
-    if (name == null) return;
-    const description = window.prompt('Description (optional)', club.description || '');
-    try {
-      const updated = await apiService.updateClub(club.clubId, {
-        name: name.trim(),
-        description: (description || '').trim(),
-      });
-      setClubs(prev => prev.map(c => (c.clubId === club.clubId ? updated : c)));
-    } catch (e: any) {
-      alert(e.message || 'Failed to update club');
-    }
+    setEditingClub(club);
   };
 
   if (loading) {
@@ -118,6 +109,19 @@ const Clubs: React.FC = () => {
           <CreateClubModal
             onClose={() => setShowCreate(false)}
             onClubCreated={(club) => { setClubs(prev => [club, ...prev]); setShowCreate(false); }}
+          />
+        )}
+
+        {editingClub && (
+          <EditClubModal
+            club={editingClub as BookClub}
+            onClose={() => setEditingClub(null)}
+            onSave={async (updates) => {
+              const current = editingClub as BookClub;
+              const updated = await apiService.updateClub(current.clubId, updates);
+              setClubs(prev => prev.map(c => (c.clubId === current.clubId ? updated : c)));
+              setEditingClub(null);
+            }}
           />
         )}
       </div>

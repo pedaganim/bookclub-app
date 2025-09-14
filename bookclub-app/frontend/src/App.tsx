@@ -12,6 +12,8 @@ import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
 import Clubs from './pages/Clubs';
+import Messages from './pages/Messages';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -29,6 +31,30 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
+                  <Route
+                    path="/messages"
+                    element={
+                      <ProtectedRoute>
+                        <Messages />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/messages/:conversationId"
+                    element={
+                      <ProtectedRoute>
+                        <Messages />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/users/:userId"
+                    element={
+                      <ProtectedRoute>
+                        <UserProfile />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/clubs"
                     element={

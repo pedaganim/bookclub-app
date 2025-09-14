@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList } from '../types';
 import { config } from '../config';
 
 class ApiService {
@@ -319,6 +319,66 @@ class ApiService {
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to delete club');
     }
+  }
+
+  // Direct Messaging
+  async dmCreateConversation(toUserId: string): Promise<DMConversation> {
+    const response: AxiosResponse<ApiResponse<DMConversation>> = await this.api.post('/dm/conversations', { toUserId });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to create conversation');
+    }
+    return response.data.data!;
+  }
+
+  async dmListConversations(limit = 20): Promise<DMConversationList> {
+    const response: AxiosResponse<ApiResponse<DMConversationList>> = await this.api.get(`/dm/conversations?limit=${limit}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list conversations');
+    }
+    return response.data.data!;
+  }
+
+  async dmSendMessage(conversationId: string, toUserId: string, content: string): Promise<DMMessage> {
+    const response: AxiosResponse<ApiResponse<DMMessage>> = await this.api.post(`/dm/conversations/${conversationId}/messages`, { toUserId, content });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to send message');
+    }
+    return response.data.data!;
+  }
+
+  async dmListMessages(conversationId: string, limit = 20, nextToken?: string): Promise<DMMessageList> {
+    const query = new URLSearchParams();
+    query.set('limit', String(limit));
+    if (nextToken) query.set('nextToken', nextToken);
+    const response: AxiosResponse<ApiResponse<DMMessageList>> = await this.api.get(`/dm/conversations/${conversationId}/messages?${query.toString()}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list messages');
+    }
+    return response.data.data!;
+  }
+
+  async dmMarkRead(conversationId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<{ read: boolean }>> = await this.api.patch(`/dm/conversations/${conversationId}/read`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to mark conversation as read');
+    }
+  }
+
+  // Public user lookup
+  async getUserPublic(userId: string): Promise<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'>> {
+    const response: AxiosResponse<ApiResponse<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'>>> = await this.api.get(`/users/${userId}`);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to fetch user');
+    }
+    return response.data.data;
+  }
+
+  async findUserByEmail(email: string): Promise<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'> | null> {
+    const response: AxiosResponse<ApiResponse<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'>>> = await this.api.get(`/users/query?email=${encodeURIComponent(email)}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to find user');
+    }
+    return response.data.data || null;
   }
 }
 

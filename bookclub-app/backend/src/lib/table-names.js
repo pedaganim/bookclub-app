@@ -7,6 +7,8 @@ const tableNames = {
   'metadata-cache': `${SERVICE_NAME}-metadata-cache-${STAGE}`,
   'bookclub-groups': `${SERVICE_NAME}-bookclub-groups-${STAGE}`,
   'bookclub-members': `${SERVICE_NAME}-bookclub-members-${STAGE}`,
+  'dm-conversations': `${SERVICE_NAME}-dm-conversations-${STAGE}`,
+  'dm-messages': `${SERVICE_NAME}-dm-messages-${STAGE}`,
 };
 
 function getTableName(key) {
