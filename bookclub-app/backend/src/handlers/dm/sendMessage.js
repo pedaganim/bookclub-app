@@ -1,14 +1,11 @@
 const { success, error } = require('../../lib/response');
-const User = require('../../models/user');
 const DM = require('../../models/dm');
 
 exports.handler = async (event) => {
   try {
-    const authToken = event.headers.Authorization?.replace('Bearer ', '');
-    if (!authToken) return error('Authorization token is required', 401);
-    let currentUser;
-    try { currentUser = await User.getCurrentUser(authToken); } catch { return error('Invalid or expired token', 401); }
-    if (!currentUser) return error('User not found', 401);
+    const claims = event?.requestContext?.authorizer?.claims;
+    const userId = claims?.sub;
+    if (!userId) return error('Unauthorized', 401);
 
     const { conversationId } = event.pathParameters || {};
     if (!conversationId) return error('conversationId is required', 400);
@@ -21,10 +18,10 @@ exports.handler = async (event) => {
     if (content.length > 2000) return error('content too long (max 2000)', 400);
 
     // Ensure conv exists and user participates
-    const conv = await DM.ensureConversation(currentUser.userId, toUserId);
+    const conv = await DM.ensureConversation(userId, toUserId);
     if (conv.conversationId !== conversationId) return error('Conversation ID does not match participants', 403);
 
-    const msg = await DM.sendMessage({ conversationId, fromUserId: currentUser.userId, toUserId, content: content.trim() });
+    const msg = await DM.sendMessage({ conversationId, fromUserId: userId, toUserId, content: content.trim() });
     return success(msg);
   } catch (e) {
     // eslint-disable-next-line no-console
