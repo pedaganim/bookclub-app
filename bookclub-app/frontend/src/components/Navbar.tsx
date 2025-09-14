@@ -35,7 +35,7 @@ const Navbar: React.FC = () => {
               to="/about"
               className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
             >
-              About
+              About US
             </Link>
           </div>
           
