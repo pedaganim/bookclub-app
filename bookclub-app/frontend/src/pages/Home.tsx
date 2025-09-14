@@ -320,10 +320,6 @@ const Home: React.FC = () => {
                 totalCount={filter === 'my-books' ? books.length : undefined}
               />
             </div>
-                  isLoading={loading}
-                />
-              </div>
-            )}
 
             {error && (
               <div className="mb-6 rounded-md bg-red-50 p-4">
