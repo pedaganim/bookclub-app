@@ -41,6 +41,8 @@ const Home: React.FC = () => {
   const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
+  // Client-side pagination for 'My Books'
+  const [myPageIndex, setMyPageIndex] = useState(0);
   const { user } = useAuth();
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
@@ -106,11 +108,15 @@ const Home: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    setMyPageIndex(0);
     fetchBooks(searchQuery || undefined, newPageSize, null);
   };
 
   const handleNextPage = () => {
-    if (hasNextPage && nextToken) {
+    if (filter === 'my-books') {
+      const maxIndex = Math.ceil(books.length / pageSize) - 1;
+      setMyPageIndex((idx) => Math.min(idx + 1, Math.max(0, maxIndex)));
+    } else if (hasNextPage && nextToken) {
       // Store current page's starting token in history for going back
       setPreviousTokens(prev => [...prev, currentPageToken]);
       setCurrentPageToken(nextToken);
@@ -119,7 +125,9 @@ const Home: React.FC = () => {
   };
 
   const handlePreviousPage = () => {
-    if (previousTokens.length > 0) {
+    if (filter === 'my-books') {
+      setMyPageIndex((idx) => Math.max(0, idx - 1));
+    } else if (previousTokens.length > 0) {
       // Get the previous page's starting token
       const newPreviousTokens = [...previousTokens];
       const poppedToken = newPreviousTokens.pop();
@@ -152,11 +160,19 @@ const Home: React.FC = () => {
   useEffect(() => {
     if (location.pathname === '/my-books' && filter !== 'my-books') {
       setFilter('my-books');
+      setMyPageIndex(0);
     } else if (location.pathname === '/' && filter !== 'all') {
       setFilter('all');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
+
+  // Derive displayed items and pagination flags
+  const displayedBooks = filter === 'my-books'
+    ? books.slice(myPageIndex * pageSize, myPageIndex * pageSize + pageSize)
+    : books;
+  const hasPrev = filter === 'my-books' ? myPageIndex > 0 : previousTokens.length > 0;
+  const hasNext = filter === 'my-books' ? ((myPageIndex + 1) * pageSize) < books.length : hasNextPage;
 
   const handleBookAdded = (newBook: Book) => {
     setBooks([newBook, ...books]);
@@ -290,6 +306,25 @@ const Home: React.FC = () => {
 
         {activeTab === 'books' ? (
           <>
+            {/* Top Pagination - Show for both filters */}
+            <div className="mb-4">
+              <Pagination
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                hasNextPage={hasNext}
+                hasPreviousPage={hasPrev}
+                onNextPage={handleNextPage}
+                onPreviousPage={handlePreviousPage}
+                currentItemsCount={displayedBooks.length}
+                isLoading={loading}
+                totalCount={filter === 'my-books' ? books.length : undefined}
+              />
+            </div>
+                  isLoading={loading}
+                />
+              </div>
+            )}
+
             {error && (
               <div className="mb-6 rounded-md bg-red-50 p-4">
                 <div className="text-sm text-red-700">{error}</div>
@@ -375,11 +410,12 @@ const Home: React.FC = () => {
                   ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                   : "space-y-4"
                 }>
-                  {books.map((book) => (
+                  {displayedBooks.map((book) => (
                     filter === 'all' ? (
                       <AllBooksCard
                         key={book.bookId}
                         book={book}
+                        listView={viewMode === 'list'}
                       />
                     ) : (
                       <BookCard
@@ -394,21 +430,20 @@ const Home: React.FC = () => {
                   ))}
                 </div>
                 
-                {/* Pagination Controls - Only show for "All Books" filter */}
-                {filter === 'all' && (
-                  <div className="mt-8">
-                    <Pagination
-                      pageSize={pageSize}
-                      onPageSizeChange={handlePageSizeChange}
-                      hasNextPage={hasNextPage}
-                      hasPreviousPage={previousTokens.length > 0}
-                      onNextPage={handleNextPage}
-                      onPreviousPage={handlePreviousPage}
-                      currentItemsCount={books.length}
-                      isLoading={loading}
-                    />
-                  </div>
-                )}
+                {/* Bottom Pagination - Show for both filters */}
+                <div className="mt-8">
+                  <Pagination
+                    pageSize={pageSize}
+                    onPageSizeChange={handlePageSizeChange}
+                    hasNextPage={hasNext}
+                    hasPreviousPage={hasPrev}
+                    onNextPage={handleNextPage}
+                    onPreviousPage={handlePreviousPage}
+                    currentItemsCount={displayedBooks.length}
+                    isLoading={loading}
+                    totalCount={filter === 'my-books' ? books.length : undefined}
+                  />
+                </div>
               </>
             )}
           </>

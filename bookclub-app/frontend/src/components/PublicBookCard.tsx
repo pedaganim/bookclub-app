@@ -63,11 +63,16 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
           </div>
         )}
         
-        {/* Username */}
+        {/* Borrow action */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-            Shared by {getDisplayUsername(book)}
-          </span>
+          <button
+            type="button"
+            className="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-md"
+            title={`Borrow from ${getDisplayUsername(book)}`}
+            // onClick handler can open a borrow/chat flow in future
+          >
+            Borrow from {getDisplayUsername(book)}
+          </button>
         </div>
       </div>
     </div>

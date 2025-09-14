@@ -97,8 +97,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       )}
       <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
         <div className={listView ? "flex-1" : ""}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{book.title}</h3>
-          <p className="text-gray-600 mb-2">by {book.author}</p>
+          {/* Title and author intentionally hidden per requirements */}
           {book.description && (
             <p className={`text-gray-500 text-sm mb-3 ${listView ? 'line-clamp-2' : 'line-clamp-3'}`}>
               {book.description}

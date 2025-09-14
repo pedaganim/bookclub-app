@@ -101,6 +101,20 @@ const BookLibrary: React.FC = () => {
           </p>
         </div>
 
+        {/* Top Pagination */}
+        <div className="mb-4">
+          <Pagination 
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            hasNextPage={hasNextPage}
+            hasPreviousPage={previousTokens.length > 0}
+            onNextPage={handleNextPage}
+            onPreviousPage={handlePreviousPage}
+            currentItemsCount={books.length}
+            isLoading={loading}
+          />
+        </div>
+
         {/* Search Bar */}
         <div className="mb-6">
           <SearchBar 
@@ -147,6 +161,7 @@ const BookLibrary: React.FC = () => {
                 onPreviousPage={handlePreviousPage}
                 currentItemsCount={books.length}
                 isLoading={loading}
+                
               />
             </div>
           </>
