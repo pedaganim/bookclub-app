@@ -56,7 +56,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
       const conversation = await apiService.dmCreateConversation(book.userId);
       // Send an initial templated message
       const title = book.title ? `"${book.title}"` : 'your book';
-      const message = `Hi! I\'m interested in borrowing ${title}. Is it available?`;
+      const message = `Hi! I'm interested in borrowing ${title}. Is it available?`;
       await apiService.dmSendMessage(conversation.conversationId, book.userId, message);
       // Track analytics (non-blocking)
       try { trackBorrowIntent(book.userId, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'PublicBookCard' }); } catch {}
