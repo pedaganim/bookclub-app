@@ -93,6 +93,66 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
 
+  getUserPublic:
+    handler: src/handlers/users/getById.handler
+    events:
+      - http:
+          method: GET
+          path: /users/{userId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  findUserByEmail:
+    handler: src/handlers/users/findByEmail.handler
+    events:
+      - http:
+          method: GET
+          path: /users/query
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmMarkRead:
+    handler: src/handlers/dm/markRead.handler
+    events:
+      - http:
+          method: PATCH
+          path: /dm/conversations/{conversationId}/read
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   # Direct Messages (DM)
   dmCreateConversation:
     handler: src/handlers/dm/createConversation.handler

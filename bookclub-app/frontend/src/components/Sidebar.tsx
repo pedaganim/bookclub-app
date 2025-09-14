@@ -38,6 +38,12 @@ const Sidebar: React.FC = () => {
         >
           My Clubs
         </NavLink>
+        <NavLink
+          to="/messages"
+          className={({ isActive }) => `${baseLink} ${isActive ? active : inactive}`}
+        >
+          Messages
+        </NavLink>
       </nav>
     </aside>
   );

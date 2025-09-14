@@ -356,6 +356,30 @@ class ApiService {
     }
     return response.data.data!;
   }
+
+  async dmMarkRead(conversationId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<{ read: boolean }>> = await this.api.patch(`/dm/conversations/${conversationId}/read`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to mark conversation as read');
+    }
+  }
+
+  // Public user lookup
+  async getUserPublic(userId: string): Promise<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'>> {
+    const response: AxiosResponse<ApiResponse<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'>>> = await this.api.get(`/users/${userId}`);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error?.message || 'Failed to fetch user');
+    }
+    return response.data.data;
+  }
+
+  async findUserByEmail(email: string): Promise<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'> | null> {
+    const response: AxiosResponse<ApiResponse<Pick<User, 'userId' | 'name' | 'email' | 'profilePicture'>>> = await this.api.get(`/users/query?email=${encodeURIComponent(email)}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to find user');
+    }
+    return response.data.data || null;
+  }
 }
 
 export const apiService = new ApiService();
