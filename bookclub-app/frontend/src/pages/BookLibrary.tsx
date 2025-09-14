@@ -15,6 +15,7 @@ const BookLibrary: React.FC = () => {
   const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
@@ -27,8 +28,39 @@ const BookLibrary: React.FC = () => {
         nextToken: token || undefined 
       });
       setBooks(Array.isArray(response.items) ? response.items : []);
-      setHasNextPage(!!response.nextToken);
+      const hasMore = !!response.nextToken;
+      setHasNextPage(hasMore);
       setNextToken(response.nextToken || null);
+
+      // Kick off background total count computation on first page load/search
+      if (currentPageToken === null) {
+        // If no more pages, total is just current items length
+        if (!hasMore) {
+          setTotalCount(Array.isArray(response.items) ? response.items.length : 0);
+        } else {
+          // Compute total by walking the remaining pages in the background
+          const initial = Array.isArray(response.items) ? response.items.length : 0;
+          void (async () => {
+            try {
+              let count = initial;
+              let tokenLocal: string | undefined = response.nextToken || undefined;
+              const perPage = Math.max(pageSize, 50); // speed up counting a bit
+              while (tokenLocal) {
+                const resp = await apiService.listBooksPublic({
+                  search,
+                  limit: perPage,
+                  nextToken: tokenLocal,
+                });
+                count += Array.isArray(resp.items) ? resp.items.length : 0;
+                tokenLocal = resp.nextToken || undefined;
+              }
+              setTotalCount(count);
+            } catch (e) {
+              // Ignore count errors; leave totalCount undefined
+            }
+          })();
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
@@ -42,6 +74,7 @@ const BookLibrary: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    setTotalCount(undefined);
     fetchBooks(query || undefined, pageSize, null);
   };
 
@@ -51,6 +84,7 @@ const BookLibrary: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    setTotalCount(undefined);
     fetchBooks(searchQuery || undefined, newPageSize, null);
   };
 
@@ -112,6 +146,7 @@ const BookLibrary: React.FC = () => {
             onPreviousPage={handlePreviousPage}
             currentItemsCount={books.length}
             isLoading={loading}
+            totalCount={totalCount}
           />
         </div>
 
@@ -161,7 +196,7 @@ const BookLibrary: React.FC = () => {
                 onPreviousPage={handlePreviousPage}
                 currentItemsCount={books.length}
                 isLoading={loading}
-                
+                totalCount={totalCount}
               />
             </div>
           </>
