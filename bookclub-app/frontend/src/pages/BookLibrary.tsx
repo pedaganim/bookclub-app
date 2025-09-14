@@ -66,7 +66,7 @@ const BookLibrary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pageSize]);
+  }, [pageSize, currentPageToken]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
