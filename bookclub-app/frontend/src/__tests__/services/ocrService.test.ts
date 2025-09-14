@@ -9,6 +9,7 @@ const mockCreateWorker = jest.mocked(require('tesseract.js').createWorker);
 
 describe('OCRService', () => {
   let mockWorker: any;
+  let warnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockWorker = {
@@ -18,10 +19,23 @@ describe('OCRService', () => {
     };
     mockCreateWorker.mockResolvedValue(mockWorker);
     jest.clearAllMocks();
+    // Mock canvas getContext to avoid jsdom warnings and allow preprocessing paths
+    Object.defineProperty(HTMLCanvasElement.prototype as any, 'getContext', {
+      value: jest.fn().mockReturnValue({
+        drawImage: jest.fn(),
+        getImageData: jest.fn().mockReturnValue({ data: new Uint8ClampedArray(0), width: 0, height: 0 }),
+        putImageData: jest.fn(),
+      }),
+      configurable: true,
+      writable: true,
+    });
+    // Silence console.warn messages about preprocessing in test env
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(async () => {
     await ocrService.cleanup();
+    if (warnSpy) warnSpy.mockRestore();
   });
 
   describe('extractText', () => {

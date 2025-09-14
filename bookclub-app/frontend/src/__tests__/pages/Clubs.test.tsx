@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom';
 import Clubs from '../../pages/Clubs';
 
 // Mock apiService
@@ -54,11 +53,7 @@ describe('Clubs page', () => {
       ],
     });
 
-    render(
-      <MemoryRouter>
-        <Clubs />
-      </MemoryRouter>
-    );
+    render(<Clubs />);
 
     await waitFor(() => {
       expect(screen.getByText('My Club')).toBeInTheDocument();
@@ -86,11 +81,7 @@ describe('Clubs page', () => {
   it('opens create modal and can close it', async () => {
     (apiService.getUserClubs as jest.Mock).mockResolvedValue({ items: [] });
 
-    render(
-      <MemoryRouter>
-        <Clubs />
-      </MemoryRouter>
-    );
+    render(<Clubs />);
 
     await waitFor(() => {
       expect(screen.getByText('You have no clubs yet.')).toBeInTheDocument();
