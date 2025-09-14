@@ -5,9 +5,12 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-    # Run tests when PRs are assigned or review is requested to ensure code quality
-    # before assignment/review and provide feedback to assignees/reviewers
+    # Run tests on PR creation and whenever code updates happen, as well as key review lifecycle events
     types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
       - assigned
       - review_requested
 

@@ -295,6 +295,11 @@ const Home: React.FC = () => {
                 currentItemsCount={displayedBooks.length}
                 isLoading={loading}
                 totalCount={filter === 'my-books' ? books.length : totalCount}
+                startIndex={
+                  filter === 'my-books'
+                    ? (myPageIndex * pageSize) + (displayedBooks.length ? 1 : 0)
+                    : (previousTokens.length * pageSize) + (displayedBooks.length ? 1 : 0)
+                }
               />
             </div>
 
@@ -415,6 +420,11 @@ const Home: React.FC = () => {
                     currentItemsCount={displayedBooks.length}
                     isLoading={loading}
                     totalCount={filter === 'my-books' ? books.length : totalCount}
+                    startIndex={
+                      filter === 'my-books'
+                        ? (myPageIndex * pageSize) + (displayedBooks.length ? 1 : 0)
+                        : (previousTokens.length * pageSize) + (displayedBooks.length ? 1 : 0)
+                    }
                   />
                 </div>
               </>

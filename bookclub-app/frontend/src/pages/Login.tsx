@@ -42,6 +42,10 @@ const Login: React.FC = () => {
             </div>
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+              <p className="text-sm text-indigo-800">Swap books with other members as part of your club</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">5</div>
               <p className="text-sm text-indigo-800">Schedule meetings and start discussions</p>
             </div>
           </div>
