@@ -92,6 +92,87 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId: 
               Ref: ApiGatewayAuthorizer
+
+  # Direct Messages (DM)
+  dmCreateConversation:
+    handler: src/handlers/dm/createConversation.handler
+    events:
+      - http:
+          method: POST
+          path: /dm/conversations
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmListConversations:
+    handler: src/handlers/dm/listConversations.handler
+    events:
+      - http:
+          method: GET
+          path: /dm/conversations
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmSendMessage:
+    handler: src/handlers/dm/sendMessage.handler
+    events:
+      - http:
+          method: POST
+          path: /dm/conversations/{conversationId}/messages
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmListMessages:
+    handler: src/handlers/dm/listMessages.handler
+    events:
+      - http:
+          method: GET
+          path: /dm/conversations/{conversationId}/messages
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   
   getBook:
     handler: src/handlers/books/get.handler
@@ -730,6 +811,87 @@ resources:
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    DmConversationsTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-dm-conversations-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: conversationId
+            AttributeType: S
+          - AttributeName: userAId
+            AttributeType: S
+          - AttributeName: userBId
+            AttributeType: S
+          - AttributeName: lastMessageAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: conversationId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserAIndex
+            KeySchema:
+              - AttributeName: userAId
+                KeyType: HASH
+              - AttributeName: lastMessageAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: UserBIndex
+            KeySchema:
+              - AttributeName: userBId
+                KeyType: HASH
+              - AttributeName: lastMessageAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    DmMessagesTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-dm-messages-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: conversationId
+            AttributeType: S
+          - AttributeName: messageId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: conversationId
+            KeyType: HASH
+          - AttributeName: messageId
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: ConversationCreatedAtIndex
+            KeySchema:
+              - AttributeName: conversationId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
