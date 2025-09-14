@@ -11,21 +11,20 @@ exports.handler = async (event) => {
       return error('Invite code is required', 400);
     }
 
-    // Get current user from token
-    const authToken = event.headers.Authorization?.replace('Bearer ', '');
-    if (!authToken) {
-      return error('Authorization token is required', 401);
-    }
-
-    let currentUser;
-    try {
-      currentUser = await User.getCurrentUser(authToken);
-    } catch (err) {
-      return error('Invalid or expired token', 401);
-    }
-
-    if (!currentUser) {
-      return error('User not found', 401);
+    // Auth: prefer authorizer claims, fallback to token validation
+    const claims = event?.requestContext?.authorizer?.claims;
+    let userId = claims?.sub;
+    if (!userId) {
+      const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader || null;
+      if (!token) return error('Authorization token is required', 401);
+      try {
+        const currentUser = await User.getCurrentUser(token);
+        if (!currentUser) return error('User not found', 401);
+        userId = currentUser.userId;
+      } catch (err) {
+        return error('Invalid or expired token', 401);
+      }
     }
 
     // Find club by invite code
@@ -35,7 +34,7 @@ exports.handler = async (event) => {
     }
 
     // Check if user is already a member
-    const isMember = await BookClub.isMember(club.clubId, currentUser.userId);
+    const isMember = await BookClub.isMember(club.clubId, userId);
     if (isMember) {
       return error('You are already a member of this club', 400);
     }
@@ -49,7 +48,7 @@ exports.handler = async (event) => {
     }
 
     // Add user as member
-    const membership = await BookClub.addMember(club.clubId, currentUser.userId, 'member');
+    const membership = await BookClub.addMember(club.clubId, userId, 'member');
 
     // Return club with user's role
     const result = {

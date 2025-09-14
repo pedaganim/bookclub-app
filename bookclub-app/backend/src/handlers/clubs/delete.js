@@ -9,20 +9,20 @@ exports.handler = async (event) => {
       return error('clubId is required in path', 400);
     }
 
-    // Authn / Authz
-    const authToken = event.headers.Authorization?.replace('Bearer ', '');
-    if (!authToken) {
-      return error('Authorization token is required', 401);
-    }
-
-    let currentUser;
-    try {
-      currentUser = await User.getCurrentUser(authToken);
-    } catch (err) {
-      return error('Invalid or expired token', 401);
-    }
-    if (!currentUser) {
-      return error('User not found', 401);
+    // Authn / Authz: prefer authorizer claims, fallback to token validation
+    const claims = event?.requestContext?.authorizer?.claims;
+    let userId = claims?.sub;
+    if (!userId) {
+      const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader || null;
+      if (!token) return error('Authorization token is required', 401);
+      try {
+        const currentUser = await User.getCurrentUser(token);
+        if (!currentUser) return error('User not found', 401);
+        userId = currentUser.userId;
+      } catch (err) {
+        return error('Invalid or expired token', 401);
+      }
     }
 
     const club = await BookClub.getById(clubId);
@@ -30,7 +30,7 @@ exports.handler = async (event) => {
       return error('Club not found', 404);
     }
 
-    if (club.createdBy !== currentUser.userId) {
+    if (club.createdBy !== userId) {
       return error('Only the club creator can delete this club', 403);
     }
 
