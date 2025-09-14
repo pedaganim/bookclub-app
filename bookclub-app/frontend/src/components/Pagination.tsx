@@ -10,6 +10,7 @@ interface PaginationProps {
   onPreviousPage: () => void;
   currentItemsCount: number;
   isLoading?: boolean;
+  totalCount?: number;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -21,6 +22,7 @@ const Pagination: React.FC<PaginationProps> = ({
   onPreviousPage,
   currentItemsCount,
   isLoading = false,
+  totalCount,
 }) => {
   const pageSizeOptions = [10, 25, 50, 100];
 
@@ -46,6 +48,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
         <div className="text-sm text-gray-700">
           Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''}
+          {typeof totalCount === 'number' ? ` of total ${totalCount} books` : ''}
         </div>
 
         <div className="flex items-center space-x-2">
