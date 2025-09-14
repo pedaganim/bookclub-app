@@ -183,6 +183,8 @@ jobs:
       - name: Build frontend
         working-directory: bookclub-app/frontend
         env:
+          # Do not fail the production build on warnings
+          CI: false
           # Prefer detected API URL; falls back to execute-api if custom domain not live yet
           REACT_APP_API_URL: ${{ env.API_URL }}
           REACT_APP_COGNITO_REGION: us-east-1
