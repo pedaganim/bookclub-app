@@ -305,6 +305,21 @@ class ApiService {
       throw new Error(response.data.error?.message || 'Failed to leave club');
     }
   }
+
+  async updateClub(clubId: string, updates: Partial<BookClub>): Promise<BookClub> {
+    const response: AxiosResponse<ApiResponse<BookClub>> = await this.api.patch(`/clubs/${clubId}`, updates);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to update club');
+    }
+    return response.data.data!;
+  }
+
+  async deleteClub(clubId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(`/clubs/${clubId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to delete club');
+    }
+  }
 }
 
 export const apiService = new ApiService();

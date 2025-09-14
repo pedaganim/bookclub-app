@@ -207,6 +207,12 @@ const Home: React.FC = () => {
   const handleBookAdded = (newBook: Book) => {
     setBooks([newBook, ...books]);
     setShowAddModal(false);
+    // Move user to "My Books" after successful upload
+    if (filter !== 'my-books') {
+      setFilter('my-books');
+      setMyPageIndex(0);
+      navigate('/my-books');
+    }
   };
 
   const handleBookDeleted = (bookId: string) => {

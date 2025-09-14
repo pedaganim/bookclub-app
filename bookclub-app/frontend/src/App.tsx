@@ -11,6 +11,7 @@ import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
+import Clubs from './pages/Clubs';
 
 function App() {
   return (
@@ -28,6 +29,14 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
+                  <Route
+                    path="/clubs"
+                    element={
+                      <ProtectedRoute>
+                        <Clubs />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/"
                     element={
