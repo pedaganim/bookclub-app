@@ -149,8 +149,8 @@ describe('BookClub Model', () => {
       };
       const club = await BookClub.create(clubData, testUserId);
 
-      // Add a small delay to ensure different timestamp
-      await new Promise(resolve => setTimeout(resolve, 1));
+      // Add a small delay to ensure different timestamp (avoid same-ms equality)
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       const updates = {
         name: 'Updated Club Name',

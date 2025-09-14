@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import MultiImageUpload from '../components/MultiImageUpload';
-import { ProcessedImage } from '../services/imageProcessingService';
+
+type SelectedImage = { file: File; preview?: string };
 
 const MultiImageUploadDemo: React.FC = () => {
-  const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
+  const [processedImages, setProcessedImages] = useState<SelectedImage[]>([]);
   const [error, setError] = useState<string>('');
 
-  const handleImagesProcessed = (images: ProcessedImage[]) => {
+  const handleImagesProcessed = (images: SelectedImage[]) => {
     setProcessedImages(images);
     // eslint-disable-next-line no-console
     console.log('Processed images:', images);
@@ -40,9 +41,6 @@ const MultiImageUploadDemo: React.FC = () => {
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="grid grid-cols-1 gap-2 text-sm">
               <div>Total Images: {processedImages.length}</div>
-              <div>Valid Images: {processedImages.filter(img => img.isValid).length}</div>
-              <div>Book Content Detected: {processedImages.filter(img => img.isBook).length}</div>
-              <div>Invalid Images: {processedImages.filter(img => !img.isValid).length}</div>
               <div>
                 Total Size: {(processedImages.reduce((sum, img) => sum + img.file.size, 0) / 1024).toFixed(0)}KB
               </div>

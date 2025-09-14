@@ -1,14 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import AddBookModal from '../components/AddBookModal';
+import { NotificationProvider } from '../contexts/NotificationContext';
 import { apiService } from '../services/api';
 
-// Mock image processing service
-jest.mock('../services/imageProcessingService', () => ({
-  imageProcessingService: {
-    processImages: jest.fn(),
-    cleanup: jest.fn(),
-  },
-}));
+// No image processing service in simplified workflow
 
 // Mock API service
 jest.mock('../services/api', () => ({
@@ -30,30 +25,39 @@ describe('Add Books Modal (Bulk Upload)', () => {
     jest.clearAllMocks();
   });
 
+  const renderWithProviders = () =>
+    render(
+      <NotificationProvider>
+        <AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />
+      </NotificationProvider>
+    );
+
   test('renders bulk upload UI with correct title', () => {
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
-    
+    renderWithProviders();
     expect(screen.getByText('Add Books')).toBeInTheDocument();
-    expect(screen.getByText('Upload multiple book cover images to automatically create book entries. Each image will be processed to extract book information.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Upload multiple book cover images to create entries quickly. We skip image processing; you can edit details later.'
+      )
+    ).toBeInTheDocument();
   });
 
   test('shows multi-image upload component', () => {
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
-    
-    expect(screen.getByText('Upload up to 10 book images. Images will be automatically downsized and validated.')).toBeInTheDocument();
-    expect(screen.getByText('📁 Add Images (0/10)')).toBeInTheDocument();
+    renderWithProviders();
+    expect(
+      screen.getByText("Upload up to 10 book images. We'll upload them as-is and process details in the background.")
+    ).toBeInTheDocument();
+    expect(screen.getByText('📁 Add Book Cover Image (0/10)')).toBeInTheDocument();
   });
 
   test('shows Cancel and Upload Images buttons', () => {
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
-    
+    renderWithProviders();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
     expect(screen.getByText('Upload 0 Images')).toBeInTheDocument();
   });
 
-  test('Upload Images button is disabled when no valid book images', () => {
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
-    
+  test('Upload Images button is disabled when no images selected', () => {
+    renderWithProviders();
     const uploadButton = screen.getByText('Upload 0 Images');
     expect(uploadButton).toBeDisabled();
   });
@@ -78,14 +82,14 @@ describe('Add Books Modal (Bulk Upload)', () => {
     });
     
     // Render the component
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
+    renderWithProviders();
 
     // This test verifies that images are uploaded successfully even when 
     // metadata extraction is not available, since books are now created by background processes
     expect(true).toBe(true); // Placeholder assertion - the real test is in the implementation
   });
 
-  test('shows processing status and polls for book creation', async () => {
+  test('shows background upload scaffolding (no polling)', async () => {
     // Mock successful upload
     (apiService.generateUploadUrl as jest.Mock).mockResolvedValue({
       uploadUrl: 'https://mock-upload-url',
@@ -110,10 +114,9 @@ describe('Add Books Modal (Bulk Upload)', () => {
       nextToken: null
     });
 
-    render(<AddBookModal onClose={mockOnClose} onBookAdded={mockOnBookAdded} />);
+    renderWithProviders();
 
-    // The component should show processing status when books are being processed
-    // This test verifies the polling mechanism works for status updates
-    expect(apiService.listBooks).toBeDefined();
+    // In the simplified flow, uploads run in background; ensure API is mocked
+    expect(apiService.generateUploadUrl).toBeDefined();
   });
 });
