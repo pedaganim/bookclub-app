@@ -36,7 +36,7 @@ const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'books' | 'clubs'>('books');
   const [searchQuery, setSearchQuery] = useState('');
   // Pagination state for "All Books" filter
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
@@ -50,11 +50,21 @@ const Home: React.FC = () => {
       setLoading(true);
       setError('');
       if (filter === 'my-books' && user) {
-        // My Books - use authenticated API (no pagination needed for personal books)
-        const params = { userId: user.userId };
-        const response = await apiService.listBooks(params);
-        setBooks(Array.isArray((response as any)?.items) ? (response as any).items : []);
-        // Reset pagination state for my-books since it doesn't use pagination
+        // My Books - fetch all pages and paginate on the client
+        const maxTotal = 2000;
+        const perPage = 100;
+        let aggregated: Book[] = [];
+        let tokenLocal: string | undefined = undefined;
+        for (let i = 0; i < Math.ceil(maxTotal / perPage); i++) {
+          const resp = await apiService.listBooks({ userId: user.userId, limit: perPage, nextToken: tokenLocal });
+          if (Array.isArray((resp as any)?.items)) {
+            aggregated = aggregated.concat((resp as any).items as Book[]);
+          }
+          tokenLocal = (resp as any)?.nextToken || undefined;
+          if (!tokenLocal || aggregated.length >= maxTotal) break;
+        }
+        setBooks(aggregated);
+        // Reset API pagination state (unused for my-books)
         setHasNextPage(false);
         setNextToken(null);
       } else {
