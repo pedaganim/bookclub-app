@@ -58,8 +58,9 @@ describe('BookCard', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Test Book')).toBeInTheDocument();
-    expect(screen.getByText('by Test Author')).toBeInTheDocument();
+    expect(screen.getByText('A test book description')).toBeInTheDocument();
+    expect(screen.queryByText('Test Book')).not.toBeInTheDocument();
+    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
   });
 
   it('should render in grid view by default', () => {
@@ -74,12 +75,10 @@ describe('BookCard', () => {
       </TestWrapper>
     );
 
-    // In grid view, the layout should be vertical (no flex class on main container)
-    // We can test this by checking that elements are arranged vertically
-    const title = screen.getByText('Test Book');
-    const author = screen.getByText('by Test Author');
-    expect(title).toBeInTheDocument();
-    expect(author).toBeInTheDocument();
+    // In grid view, verify description is shown and title/author are hidden
+    expect(screen.getByText('A test book description')).toBeInTheDocument();
+    expect(screen.queryByText('Test Book')).not.toBeInTheDocument();
+    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
   });
 
   it('should render in list view when listView prop is true', () => {
@@ -95,12 +94,10 @@ describe('BookCard', () => {
       </TestWrapper>
     );
 
-    // In list view, the layout should be horizontal (flex layout)
-    // We can test this by checking that elements are arranged properly
-    const title = screen.getByText('Test Book');
-    const author = screen.getByText('by Test Author');
-    expect(title).toBeInTheDocument();
-    expect(author).toBeInTheDocument();
+    // In list view, verify description is shown and title/author are hidden
+    expect(screen.getByText('A test book description')).toBeInTheDocument();
+    expect(screen.queryByText('Test Book')).not.toBeInTheDocument();
+    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
   });
 
   it('should render book cover image correctly in grid view', () => {

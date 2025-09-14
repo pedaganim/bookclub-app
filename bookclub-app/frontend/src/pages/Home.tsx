@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { Book, BookClub } from '../types';
+import { Book, BookClub, BookListResponse } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
 import AllBooksCard from '../components/AllBooksCard';
@@ -56,11 +56,15 @@ const Home: React.FC = () => {
         let aggregated: Book[] = [];
         let tokenLocal: string | undefined = undefined;
         for (let i = 0; i < Math.ceil(maxTotal / perPage); i++) {
-          const resp = await apiService.listBooks({ userId: user.userId, limit: perPage, nextToken: tokenLocal });
-          if (Array.isArray((resp as any)?.items)) {
-            aggregated = aggregated.concat((resp as any).items as Book[]);
+          const resp: BookListResponse = await apiService.listBooks({
+            userId: user.userId,
+            limit: perPage,
+            nextToken: tokenLocal,
+          });
+          if (Array.isArray(resp.items)) {
+            aggregated = aggregated.concat(resp.items as Book[]);
           }
-          tokenLocal = (resp as any)?.nextToken || undefined;
+          tokenLocal = resp.nextToken || undefined;
           if (!tokenLocal || aggregated.length >= maxTotal) break;
         }
         setBooks(aggregated);
