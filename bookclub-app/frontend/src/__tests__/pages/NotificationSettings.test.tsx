@@ -4,9 +4,18 @@ import '@testing-library/jest-dom';
 import NotificationSettings from '../../pages/NotificationSettings';
 import { apiService } from '../../services/api';
 
-jest.mock('../../services/api');
+// Provide a manual mock so Jest does not import the real module (which pulls axios ESM)
+jest.mock('../../services/api', () => ({
+  apiService: {
+    getNotificationPrefs: jest.fn(),
+    updateNotificationPrefs: jest.fn(),
+  },
+}));
 
-const mockedApi = apiService as jest.Mocked<typeof apiService>;
+const mockedApi = apiService as unknown as {
+  getNotificationPrefs: jest.Mock;
+  updateNotificationPrefs: jest.Mock;
+};
 
 describe('NotificationSettings Page', () => {
   beforeEach(() => {
@@ -42,13 +51,14 @@ describe('NotificationSettings Page', () => {
       expect(screen.getByText('Email Notifications')).toBeInTheDocument();
     });
 
-    // Toggle a specific pref (comment_on_your_book was false -> becomes true)
-    const commentLabel = screen.getByText('Comments on my book');
-    const row = commentLabel.closest('div')?.parentElement as HTMLElement; // row container
-    const toggle = row.querySelector('input[type="checkbox"]') as HTMLInputElement;
-    expect(toggle).toBeInTheDocument();
-    expect(toggle.checked).toBe(false);
-    fireEvent.click(toggle);
+    // Wait for prefs to render, then toggle a specific pref (comment_on_your_book was false -> becomes true)
+    // Use role-based queries: checkboxes are [master, dm, new_book, comment, reminder, new_member, announcement]
+    const checkboxes = await screen.findAllByRole('checkbox');
+    // comment_on_your_book is the 4th checkbox (index 3)
+    const commentToggle = checkboxes[3] as HTMLInputElement;
+    expect(commentToggle).toBeInTheDocument();
+    expect(commentToggle.checked).toBe(false);
+    fireEvent.click(commentToggle);
 
     // Save
     const saveBtn = screen.getByRole('button', { name: /save changes/i });
