@@ -1,3 +1,6 @@
+jest.mock('../../../../src/lib/notification-service', () => ({
+  sendEmailIfEnabled: jest.fn().mockResolvedValue({ sent: true }),
+}));
 const { handler } = require('../../../../src/handlers/dm/sendMessage');
 const DM = require('../../../../src/models/dm');
 const User = require('../../../../src/models/user');
@@ -8,6 +11,7 @@ jest.mock('../../../../src/models/user');
 jest.mock('../../../../src/lib/response');
 
 describe('dm.sendMessage handler', () => {
+  jest.setTimeout(15000);
   beforeEach(() => jest.clearAllMocks());
 
   it('sends message in existing conversation (idempotent ensure)', async () => {

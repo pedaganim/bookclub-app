@@ -47,6 +47,16 @@
   <text x="560" y="250" class="label">Amazon Textract</text>
   <text x="560" y="270" class="small">OCR for book covers</text>
 
+  <!-- Transcribe -->
+  <rect x="540" y="310" width="180" height="80" class="box"/>
+  <text x="560" y="350" class="label">Amazon Transcribe</text>
+  <text x="560" y="370" class="small">Voice search</text>
+
+  <!-- SES Email -->
+  <rect x="780" y="260" width="160" height="80" class="box"/>
+  <text x="810" y="300" class="label">Amazon SES</text>
+  <text x="800" y="318" class="small">Email notifications</text>
+
   <!-- Flows -->
   <line x1="220" y1="120" x2="280" y2="120" class="arrow"/>
   <text x="230" y="110" class="small">HTTPS</text>
@@ -63,6 +73,14 @@
   <line x1="630" y1="160" x2="630" y2="210" class="arrowGray"/>
   <text x="640" y="190" class="small">Analyze</text>
 
+  <!-- Lambda to Transcribe (optional) -->
+  <line x1="630" y1="160" x2="630" y2="310" class="arrowGray"/>
+  <text x="640" y="240" class="small">Transcribe</text>
+
+  <!-- Lambda to SES (email) -->
+  <line x1="720" y1="120" x2="780" y2="300" class="arrowGray"/>
+  <text x="730" y="210" class="small">Email</text>
+
   <!-- Notes -->
   <text x="40" y="220" class="small">Flow:</text>
   <text x="40" y="240" class="small">1) Client calls API Gateway</text>
@@ -70,4 +88,6 @@
   <text x="40" y="280" class="small">3) Lambda reads/writes to DynamoDB</text>
   <text x="40" y="300" class="small">4) Lambda puts/gets objects from S3</text>
   <text x="40" y="320" class="small">5) Lambda optionally calls Textract for OCR</text>
+  <text x="40" y="340" class="small">6) Lambda optionally calls Transcribe for voice search</text>
+  <text x="40" y="360" class="small">7) Lambda sends emails via Amazon SES for notifications</text>
 </svg>

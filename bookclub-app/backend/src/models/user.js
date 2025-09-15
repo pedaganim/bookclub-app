@@ -3,6 +3,7 @@ const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 const LocalStorage = require('../lib/local-storage');
 const AWS = require('../lib/aws-config');
+const { sendAdminNewUserNotification } = require('../lib/notification-service');
 
 // Initialize Cognito
 const cognito = new AWS.CognitoIdentityServiceProvider();
@@ -60,6 +61,8 @@ class User {
       };
 
       await dynamoDb.put(getTableName('users'), user);
+      // Fire-and-forget admin notification
+      try { await sendAdminNewUserNotification(user); } catch (e) { /* noop */ }
       return { ...user, password: undefined };
     } catch (error) {
       if (error.code === 'UsernameExistsException') {
@@ -195,6 +198,7 @@ class User {
       updatedAt: timestamp,
     };
     await dynamoDb.put(getTableName('users'), user);
+    try { await sendAdminNewUserNotification(user); } catch (e) { /* noop */ }
     return user;
   }
 }
