@@ -87,9 +87,27 @@ async function sendEmailIfEnabled(userId, type, templateId, templateData) {
   return { sent: true };
 }
 
+// Admin notifications
+async function sendAdminNewUserNotification(user) {
+  const to = process.env.ADMIN_NOTIFY_EMAIL || 'madhukar.pedagani@gmail.com';
+  if (!to) return { skipped: 'no_admin_email' };
+  const subject = `New user signed up: ${user?.name || user?.email || user?.userId || 'Unknown'}`;
+  const lines = [
+    `User ID: ${user?.userId || ''}`,
+    `Name: ${user?.name || ''}`,
+    `Email: ${user?.email || ''}`,
+    `Created At: ${user?.createdAt || new Date().toISOString()}`,
+  ].join('\n');
+  const text = `A new user has signed up on BookClub.\n\n${lines}`;
+  const html = `<p>A new user has signed up on BookClub.</p><pre>${lines}</pre>`;
+  await sendEmail(to, subject, text, html);
+  return { sent: true };
+}
+
 module.exports = {
   DEFAULT_PREFS,
   getUserPrefs,
   setUserPrefs,
   sendEmailIfEnabled,
+  sendAdminNewUserNotification,
 };

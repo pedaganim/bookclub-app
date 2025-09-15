@@ -29,6 +29,7 @@ provider:
     COGNITO_CLIENT_ID: !Ref UserPoolClient
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
+    ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
   iam:
     role:
       statements:
