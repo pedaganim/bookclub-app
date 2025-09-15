@@ -20,19 +20,6 @@ const Sidebar: React.FC = () => {
           📚 Browse Our Library
         </NavLink>
         <NavLink
-          to="/"
-          end
-          className={({ isActive }) => `${baseLink} ${isActive ? active : inactive}`}
-        >
-          All Books
-        </NavLink>
-        <NavLink
-          to="/my-books"
-          className={({ isActive }) => `${baseLink} ${isActive ? active : inactive}`}
-        >
-          My Books
-        </NavLink>
-        <NavLink
           to="/clubs"
           className={({ isActive }) => `${baseLink} ${isActive ? active : inactive}`}
         >
