@@ -197,6 +197,15 @@ const Home: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  // Watch for navigation state to open AddBookModal
+  useEffect(() => {
+    if (location.state && (location.state as any).openAddBooks) {
+      setShowAddModal(true);
+      // Clear the state to prevent reopening on refresh/back navigation
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, location.pathname, navigate]);
+
   // Derive displayed items and pagination flags
   const displayedBooks = filter === 'my-books'
     ? books.slice(myPageIndex * pageSize, myPageIndex * pageSize + pageSize)
