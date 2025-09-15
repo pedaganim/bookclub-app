@@ -22,21 +22,23 @@ describe('Pagination Component', () => {
   it('renders page size selector with correct options', () => {
     render(<Pagination {...defaultProps} />);
     
-    const select = screen.getByDisplayValue('10');
-    expect(select).toBeInTheDocument();
+    // Get all selects with value 10 (mobile and desktop)
+    const selects = screen.getAllByDisplayValue('10');
+    expect(selects).toHaveLength(2); // mobile and desktop versions
     
-    // Check if all page size options are available
-    fireEvent.click(select);
-    expect(screen.getByText('25')).toBeInTheDocument();
-    expect(screen.getByText('50')).toBeInTheDocument();
-    expect(screen.getByText('100')).toBeInTheDocument();
+    // Check if all page size options are available in the first select
+    fireEvent.click(selects[0]);
+    expect(screen.getAllByText('25').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('50').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('100').length).toBeGreaterThanOrEqual(1);
   });
 
   it('calls onPageSizeChange when page size is changed', () => {
     render(<Pagination {...defaultProps} />);
     
-    const select = screen.getByDisplayValue('10');
-    fireEvent.change(select, { target: { value: '25' } });
+    // Get the first select (mobile version)
+    const selects = screen.getAllByDisplayValue('10');
+    fireEvent.change(selects[0], { target: { value: '25' } });
     
     expect(defaultProps.onPageSizeChange).toHaveBeenCalledWith(25);
   });
@@ -44,36 +46,45 @@ describe('Pagination Component', () => {
   it('enables next button when hasNextPage is true', () => {
     render(<Pagination {...defaultProps} />);
     
-    const nextButton = screen.getByText('Next');
-    expect(nextButton).not.toBeDisabled();
+    // Get all Next buttons (mobile and desktop)
+    const nextButtons = screen.getAllByText('Next');
+    expect(nextButtons[0]).not.toBeDisabled();
   });
 
   it('disables next button when hasNextPage is false', () => {
     render(<Pagination {...defaultProps} hasNextPage={false} />);
     
-    const nextButton = screen.getByText('Next');
-    expect(nextButton).toBeDisabled();
+    // Get all Next buttons (mobile and desktop)
+    const nextButtons = screen.getAllByText('Next');
+    expect(nextButtons[0]).toBeDisabled();
   });
 
   it('enables previous button when hasPreviousPage is true', () => {
     render(<Pagination {...defaultProps} hasPreviousPage={true} />);
     
-    const prevButton = screen.getByText('Previous');
+    // Check for both "Prev" (mobile) and "Previous" (desktop) buttons
+    const prevButton = screen.getByText('Prev');
+    const previousButton = screen.getByText('Previous');
     expect(prevButton).not.toBeDisabled();
+    expect(previousButton).not.toBeDisabled();
   });
 
   it('disables previous button when hasPreviousPage is false', () => {
     render(<Pagination {...defaultProps} />);
     
-    const prevButton = screen.getByText('Previous');
+    // Check for both "Prev" (mobile) and "Previous" (desktop) buttons
+    const prevButton = screen.getByText('Prev');
+    const previousButton = screen.getByText('Previous');
     expect(prevButton).toBeDisabled();
+    expect(previousButton).toBeDisabled();
   });
 
   it('calls onNextPage when next button is clicked', () => {
     render(<Pagination {...defaultProps} />);
     
-    const nextButton = screen.getByText('Next');
-    fireEvent.click(nextButton);
+    // Get all Next buttons and click the first one
+    const nextButtons = screen.getAllByText('Next');
+    fireEvent.click(nextButtons[0]);
     
     expect(defaultProps.onNextPage).toHaveBeenCalled();
   });
@@ -81,7 +92,8 @@ describe('Pagination Component', () => {
   it('calls onPreviousPage when previous button is clicked', () => {
     render(<Pagination {...defaultProps} hasPreviousPage={true} />);
     
-    const prevButton = screen.getByText('Previous');
+    // Click the mobile "Prev" button
+    const prevButton = screen.getByText('Prev');
     fireEvent.click(prevButton);
     
     expect(defaultProps.onPreviousPage).toHaveBeenCalled();
@@ -102,12 +114,17 @@ describe('Pagination Component', () => {
   it('disables controls when loading', () => {
     render(<Pagination {...defaultProps} isLoading={true} />);
     
-    const select = screen.getByDisplayValue('10');
-    const nextButton = screen.getByText('Next');
-    const prevButton = screen.getByText('Previous');
+    // Get all selects and buttons
+    const selects = screen.getAllByDisplayValue('10');
+    const nextButtons = screen.getAllByText('Next');
+    const prevButton = screen.getByText('Prev');
+    const previousButton = screen.getByText('Previous');
     
-    expect(select).toBeDisabled();
-    expect(nextButton).toBeDisabled();
+    expect(selects[0]).toBeDisabled();
+    expect(selects[1]).toBeDisabled();
+    expect(nextButtons[0]).toBeDisabled();
+    expect(nextButtons[1]).toBeDisabled();
     expect(prevButton).toBeDisabled();
+    expect(previousButton).toBeDisabled();
   });
 });
