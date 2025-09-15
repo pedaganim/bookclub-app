@@ -88,6 +88,23 @@ class ApiService {
     return response.data.data!;
   }
 
+  // Notification preferences
+  async getNotificationPrefs(): Promise<{ emailOptIn: boolean; prefs: Record<string, boolean> }>{
+    const response = await this.api.get('/users/me/notifications');
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to fetch notification preferences');
+    }
+    return response.data.data as { emailOptIn: boolean; prefs: Record<string, boolean> };
+  }
+
+  async updateNotificationPrefs(update: { emailOptIn?: boolean; prefs?: Record<string, boolean> }): Promise<{ emailOptIn: boolean; prefs: Record<string, boolean> }>{
+    const response = await this.api.put('/users/me/notifications', update);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to update notification preferences');
+    }
+    return response.data.data as { emailOptIn: boolean; prefs: Record<string, boolean> };
+  }
+
   async updateProfile(updates: ProfileUpdateData): Promise<User> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.put('/users/me', updates);
     if (!response.data.success) {
