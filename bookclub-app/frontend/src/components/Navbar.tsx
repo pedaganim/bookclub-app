@@ -1,10 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAddBooksClick = () => {
+    navigate('/', { state: { openAddBooks: true } });
+  };
 
   return (
     <nav className="bg-white shadow-lg">
@@ -37,12 +42,12 @@ const Navbar: React.FC = () => {
                 >
                   My Books
                 </Link>
-                <Link
-                  to="/"
+                <button
+                  onClick={handleAddBooksClick}
                   className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Add Books
-                </Link>
+                </button>
                 <Link
                   to="/clubs"
                   className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
