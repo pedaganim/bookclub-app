@@ -276,7 +276,7 @@ const MessagesLinkWithUnread: React.FC = () => {
     if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(() => {
       loadUnread();
-    }, 30000) as unknown as number; // 30s
+    }, 60000) as unknown as number; // 60s
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
@@ -321,7 +321,7 @@ const MobileMessagesLinkWithUnread: React.FC<{ closeMobileMenu: () => void }> = 
     if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(() => {
       loadUnread();
-    }, 30000) as unknown as number;
+    }, 60000) as unknown as number;
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
