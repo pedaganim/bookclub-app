@@ -1,20 +1,3 @@
-  getNotificationPrefs:
-    handler: src/handlers/notifications/getPrefs.handler
-    events:
-      - http:
-          path: users/me/notifications
-          method: get
-          cors: true
-          authorizer: aws_iam
-  setNotificationPrefs:
-    handler: src/handlers/notifications/setPrefs.handler
-    events:
-      - http:
-          path: users/me/notifications
-          method: put
-          cors: true
-          authorizer: aws_iam
-    NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
 service: bookclub-app
 frameworkVersion: '3'
 
@@ -432,6 +415,25 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId: 
               Ref: ApiGatewayAuthorizer
+  
+  # Notification preference functions
+  getNotificationPrefs:
+    handler: src/handlers/notifications/getPrefs.handler
+    events:
+      - http:
+          path: users/me/notifications
+          method: get
+          cors: true
+          authorizer: aws_iam
+
+  setNotificationPrefs:
+    handler: src/handlers/notifications/setPrefs.handler
+    events:
+      - http:
+          path: users/me/notifications
+          method: put
+          cors: true
+          authorizer: aws_iam
   
   # File upload
   generateUploadUrl:
