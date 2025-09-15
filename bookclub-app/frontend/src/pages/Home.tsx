@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
 import { Book, BookListResponse } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
@@ -124,24 +123,6 @@ const Home: React.FC = () => {
     fetchBooks(query || undefined, pageSize, null);
   };
 
-  const handleFilterChange = (newFilter: 'all' | 'my-books') => {
-    setFilter(newFilter);
-    setSearchQuery(''); // Clear search when changing filters
-    // Reset pagination when changing filters
-    setPreviousTokens([]);
-    setNextToken(null);
-    setCurrentPageToken(null);
-    setMyPageIndex(0);
-    setTotalCount(undefined);
-    // Navigate to keep URL and UI in sync
-    if (newFilter === 'my-books') {
-      navigate('/my-books');
-    } else {
-      navigate('/');
-    }
-    fetchBooks(searchQuery || undefined, pageSize, null);
-  };
-
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
     // Reset pagination when changing page size
@@ -258,21 +239,7 @@ const Home: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            {/* Public Library Link */}
-            <Link
-              to="/library"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
-            >
-              📚 Browse Your Library
-            </Link>
-            {activeTab === 'books' && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"
-              >
-                Add Books
-              </button>
-            )}
+            {/* Internal navigation buttons removed - users should use top navigation */}
           </div>
         </div>
 
@@ -327,26 +294,7 @@ const Home: React.FC = () => {
             <div className="mb-6">
               <div className="flex justify-between items-center">
                 <div className="flex space-x-4">
-                  <button
-                    onClick={() => handleFilterChange('all')}
-                    className={`px-4 py-2 rounded-md font-medium ${
-                      filter === 'all'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    All Books
-                  </button>
-                  <button
-                    onClick={() => handleFilterChange('my-books')}
-                    className={`px-4 py-2 rounded-md font-medium ${
-                      filter === 'my-books'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    My Books
-                  </button>
+                  {/* Filter buttons removed - navigation should be through top nav */}
                 </div>
                 <div className="flex space-x-2">
                   <button
