@@ -424,7 +424,10 @@ functions:
           path: users/me/notifications
           method: get
           cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
 
   setNotificationPrefs:
     handler: src/handlers/notifications/setPrefs.handler
@@ -433,7 +436,10 @@ functions:
           path: users/me/notifications
           method: put
           cors: true
-          authorizer: aws_iam
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   
   # File upload
   generateUploadUrl:
