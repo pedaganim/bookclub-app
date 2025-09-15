@@ -27,10 +27,13 @@ const Pagination: React.FC<PaginationProps> = ({
   startIndex,
 }) => {
   const pageSizeOptions = [10, 25, 50, 100];
-  const effectiveTotal = typeof totalCount === 'number' ? totalCount : currentItemsCount;
-  const showRange = typeof totalCount === 'number' && typeof startIndex === 'number' && startIndex > 0;
+  const hasTotal = typeof totalCount === 'number';
+  const showRange = typeof startIndex === 'number' && startIndex > 0;
+  const computedEnd = showRange ? startIndex! + Math.max(currentItemsCount, 0) - 1 : undefined;
   const rangeStart = showRange ? startIndex : undefined;
-  const rangeEnd = showRange ? Math.min(startIndex! + currentItemsCount - 1, effectiveTotal) : undefined;
+  const rangeEnd = showRange
+    ? (hasTotal ? Math.min(computedEnd!, totalCount as number) : computedEnd)
+    : undefined;
 
   return (
     <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
@@ -55,9 +58,17 @@ const Pagination: React.FC<PaginationProps> = ({
           </div>
           <div className="text-sm text-gray-700">
             {showRange ? (
-              <>{rangeStart}-{rangeEnd} of {effectiveTotal}</>
+              hasTotal && (rangeStart as number) <= (totalCount as number) ? (
+                <>{rangeStart}-{rangeEnd} of {totalCount}</>
+              ) : (
+                <>{rangeStart}-{rangeEnd}</>
+              )
             ) : (
-              <>{currentItemsCount} of {effectiveTotal}</>
+              hasTotal ? (
+                <>{currentItemsCount} of {totalCount}</>
+              ) : (
+                <>{currentItemsCount}</>
+              )
             )}
           </div>
         </div>
@@ -104,9 +115,17 @@ const Pagination: React.FC<PaginationProps> = ({
 
         <div className="text-sm text-gray-700">
           {showRange ? (
-            <>Showing {rangeStart}-{rangeEnd} of {effectiveTotal} books</>
+            hasTotal && (rangeStart as number) <= (totalCount as number) ? (
+              <>Showing {rangeStart}-{rangeEnd} of {totalCount} books</>
+            ) : (
+              <>Showing {rangeStart}-{rangeEnd} books</>
+            )
           ) : (
-            <>Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''} of total {effectiveTotal} book{effectiveTotal !== 1 ? 's' : ''}</>
+            hasTotal ? (
+              <>Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''} of total {totalCount} book{(totalCount as number) !== 1 ? 's' : ''}</>
+            ) : (
+              <>Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''}</>
+            )
           )}
         </div>
 
