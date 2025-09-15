@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Book, BookListResponse } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
-import AllBooksCard from '../components/AllBooksCard';
+import PublicBookCard from '../components/PublicBookCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import AddBookModal from '../components/AddBookModal';
@@ -353,10 +353,10 @@ const Home: React.FC = () => {
                 }>
                   {displayedBooks.map((book) => (
                     filter === 'all' ? (
-                      <AllBooksCard
+                      <PublicBookCard
                         key={book.bookId}
                         book={book}
-                        listView={viewMode === 'list'}
+                        // Using the same card in both views to ensure borrow/profile actions are available
                       />
                     ) : (
                       <BookCard
