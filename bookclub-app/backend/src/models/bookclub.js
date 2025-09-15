@@ -56,7 +56,7 @@ class BookClub {
       Limit: 1,
     };
     const result = await dynamoDb.query(params);
-    return result[0] || null;
+    return (result.Items && result.Items[0]) || null;
   }
 
   static async update(clubId, updates) {
@@ -134,7 +134,8 @@ class BookClub {
       KeyConditionExpression: 'clubId = :clubId',
       ExpressionAttributeValues: { ':clubId': clubId },
     };
-    return dynamoDb.query(params);
+    const result = await dynamoDb.query(params);
+    return result.Items || [];
   }
 
   static async getUserClubs(userId) {
@@ -162,10 +163,11 @@ class BookClub {
       ExpressionAttributeValues: { ':userId': userId },
     };
     const memberships = await dynamoDb.query(params);
-    
+    const items = memberships.Items || [];
+
     // Get club details for each membership
     const clubs = [];
-    for (const membership of memberships) {
+    for (const membership of items) {
       const club = await this.getById(membership.clubId);
       if (club) {
         clubs.push({

@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
                   to="/about"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  About US
+                  About Us
                 </Link>
               </>
             )}
@@ -229,7 +229,7 @@ const Navbar: React.FC = () => {
                     className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                     onClick={closeMobileMenu}
                   >
-                    About US
+                    About Us
                   </Link>
                   <Link
                     to="/login"
@@ -276,7 +276,7 @@ const MessagesLinkWithUnread: React.FC = () => {
     if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(() => {
       loadUnread();
-    }, 30000) as unknown as number; // 30s
+    }, 60000) as unknown as number; // 60s
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
@@ -321,7 +321,7 @@ const MobileMessagesLinkWithUnread: React.FC<{ closeMobileMenu: () => void }> = 
     if (pollRef.current) window.clearInterval(pollRef.current);
     pollRef.current = window.setInterval(() => {
       loadUnread();
-    }, 30000) as unknown as number;
+    }, 60000) as unknown as number;
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
