@@ -99,16 +99,16 @@ describe('Pagination Component', () => {
     expect(defaultProps.onPreviousPage).toHaveBeenCalled();
   });
 
-  it('displays current items count correctly', () => {
+  it('displays current items count correctly when total is unknown', () => {
     render(<Pagination {...defaultProps} currentItemsCount={5} />);
     
-    expect(screen.getByText('Showing 5 books of total 5 books')).toBeInTheDocument();
+    expect(screen.getByText('Showing 5 books')).toBeInTheDocument();
   });
 
-  it('displays singular form for 1 book', () => {
+  it('displays singular form for 1 book when total is unknown', () => {
     render(<Pagination {...defaultProps} currentItemsCount={1} />);
     
-    expect(screen.getByText('Showing 1 book of total 1 book')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1 book')).toBeInTheDocument();
   });
 
   it('disables controls when loading', () => {
