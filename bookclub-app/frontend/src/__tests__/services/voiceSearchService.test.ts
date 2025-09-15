@@ -30,7 +30,12 @@ describe('VoiceSearchService', () => {
       
       expect(voiceSearchService.isSupported()).toBe(false);
       
-      navigator.mediaDevices = originalMediaDevices;
+      // Restore using Object.defineProperty since mediaDevices is read-only
+      Object.defineProperty(navigator, 'mediaDevices', {
+        value: originalMediaDevices,
+        writable: true,
+        configurable: true
+      });
     });
   });
 
