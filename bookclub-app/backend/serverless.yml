@@ -1,3 +1,20 @@
+  getNotificationPrefs:
+    handler: src/handlers/notifications/getPrefs.handler
+    events:
+      - http:
+          path: users/me/notifications
+          method: get
+          cors: true
+          authorizer: aws_iam
+  setNotificationPrefs:
+    handler: src/handlers/notifications/setPrefs.handler
+    events:
+      - http:
+          path: users/me/notifications
+          method: put
+          cors: true
+          authorizer: aws_iam
+    NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
 service: bookclub-app
 frameworkVersion: '3'
 
@@ -11,6 +28,7 @@ provider:
     COGNITO_USER_POOL_ID: !Ref UserPool
     COGNITO_CLIENT_ID: !Ref UserPoolClient
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
+    NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
   iam:
     role:
       statements:
@@ -43,6 +61,11 @@ provider:
             - s3:GetObject
             - s3:DeleteObject
           Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: "*"
         - Effect: Allow
           Action:
             - cognito-idp:AdminConfirmSignUp

@@ -1,6 +1,7 @@
 const { success, error } = require('../../lib/response');
 const User = require('../../models/user');
 const DM = require('../../models/dm');
+const { sendEmailIfEnabled } = require('../../lib/notification-service');
 
 exports.handler = async (event) => {
   try {
@@ -33,7 +34,26 @@ exports.handler = async (event) => {
     const conv = await DM.ensureConversation(userId, toUserId);
     if (conv.conversationId !== conversationId) return error('Conversation ID does not match participants', 403);
 
-    const msg = await DM.sendMessage({ conversationId, fromUserId: userId, toUserId, content: content.trim() });
+    const trimmed = content.trim();
+    const msg = await DM.sendMessage({ conversationId, fromUserId: userId, toUserId, content: trimmed });
+
+    // Fire-and-forget notification (do not block response on email failures)
+    try {
+      const sender = await User.getById(userId);
+      const fromName = sender?.name || 'A user';
+      const baseUrl = process.env.APP_BASE_URL || 'https://booklub.shop';
+      const conversationUrl = `${baseUrl.replace(/\/$/, '')}/messages/${conversationId}`;
+      await sendEmailIfEnabled(
+        toUserId,
+        'dm_message_received',
+        'dm_message_received',
+        { fromName, snippet: trimmed.slice(0, 140), conversationUrl }
+      );
+    } catch (notifyErr) {
+      // eslint-disable-next-line no-console
+      console.warn('DM email notification skipped/failed:', notifyErr?.message || notifyErr);
+    }
+
     return success(msg);
   } catch (e) {
     // eslint-disable-next-line no-console
