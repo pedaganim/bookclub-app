@@ -91,7 +91,6 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <span className="text-gray-700 text-sm">Welcome, {user?.name}</span>
                 <Link
                   to="/profile"
                   className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -110,12 +109,6 @@ const Navbar: React.FC = () => {
                     </div>
                   )}
                   <span>Profile</span>
-                </Link>
-                <Link
-                  to="/settings/notifications"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Notifications
                 </Link>
                 <button
                   onClick={logout}
@@ -210,13 +203,6 @@ const Navbar: React.FC = () => {
                     onClick={closeMobileMenu}
                   >
                     Profile Settings
-                  </Link>
-                  <Link
-                    to="/settings/notifications"
-                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
-                    onClick={closeMobileMenu}
-                  >
-                    Notifications
                   </Link>
                   <button
                     onClick={() => {
