@@ -23,32 +23,51 @@ const Navbar: React.FC = () => {
                 );
               })()}
             </Link>
+            {isAuthenticated && (
+              <>
+                <Link
+                  to="/library"
+                  className="ml-8 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  📚 Browse Library
+                </Link>
+                <Link
+                  to="/my-books"
+                  className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  My Books
+                </Link>
+                <Link
+                  to="/"
+                  className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Add Books
+                </Link>
+                <Link
+                  to="/clubs"
+                  className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  My Clubs
+                </Link>
+                <MessagesLinkWithUnread />
+              </>
+            )}
             {!isAuthenticated && (
-              // Public Library link shown only when not signed in; moved to Sidebar for signed-in users
-              <Link
-                to="/library"
-                className="ml-8 text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium border border-indigo-200 hover:border-indigo-300 transition-colors"
-              >
-                📚 Your Library
-              </Link>
+              <>
+                <Link
+                  to="/library"
+                  className="ml-8 text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium border border-indigo-200 hover:border-indigo-300 transition-colors"
+                >
+                  📚 Browse Library
+                </Link>
+                <Link
+                  to="/about"
+                  className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  About US
+                </Link>
+              </>
             )}
-            {isAuthenticated && (
-              <Link
-                to="/clubs"
-                className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                My Clubs
-              </Link>
-            )}
-            {isAuthenticated && (
-              <MessagesLinkWithUnread />
-            )}
-            <Link
-              to="/about"
-              className="ml-4 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              About US
-            </Link>
           </div>
           
           <div className="flex items-center space-x-4">
