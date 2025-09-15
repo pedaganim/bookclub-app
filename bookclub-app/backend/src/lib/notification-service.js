@@ -74,15 +74,38 @@ async function sendEmail(to, subject, text, html) {
       },
     },
   };
-  await ses.sendEmail(params).promise();
+  try {
+    const res = await ses.sendEmail(params).promise();
+    // eslint-disable-next-line no-console
+    console.log('[Notify][SES] Sent email', { to, messageId: res.MessageId });
+    return res;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[Notify][SES] Failed to send email', { to, subject, error: err && (err.message || err.code || String(err)) });
+    throw err;
+  }
 }
 
 async function sendEmailIfEnabled(userId, type, templateId, templateData) {
   const { emailOptIn, prefs, email, name } = await getUserPrefs(userId);
-  if (!emailOptIn) return { skipped: 'opted_out' };
-  if (!prefs[type]) return { skipped: 'type_disabled' };
-  if (!email) return { skipped: 'no_email' };
+  if (!emailOptIn) {
+    // eslint-disable-next-line no-console
+    console.log('[Notify] Skipping email: user opted out', { userId, type });
+    return { skipped: 'opted_out' };
+  }
+  if (!prefs[type]) {
+    // eslint-disable-next-line no-console
+    console.log('[Notify] Skipping email: type disabled', { userId, type });
+    return { skipped: 'type_disabled' };
+  }
+  if (!email) {
+    // eslint-disable-next-line no-console
+    console.warn('[Notify] Skipping email: user has no email', { userId, type });
+    return { skipped: 'no_email' };
+  }
   const { subject, text, html } = renderTemplate(templateId, templateData);
+  // eslint-disable-next-line no-console
+  console.log('[Notify] Sending email', { userId, type, to: email, subject });
   await sendEmail(email, subject, text, html);
   return { sent: true };
 }
