@@ -36,3 +36,44 @@
     transform: rotate(360deg);
   }
 }
+
+/* Mobile-specific enhancements */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better text readability on mobile */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Improve spacing for mobile */
+  .mobile-spacing {
+    padding: 1rem;
+  }
+  
+  /* Better focus states for mobile */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
+  }
+}
+
+/* Ensure smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improve tap targets */
+@media (hover: none) and (pointer: coarse) {
+  button, a {
+    padding: 0.75rem 1rem;
+  }
+}

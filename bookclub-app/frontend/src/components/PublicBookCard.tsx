@@ -87,7 +87,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
         />
       </div>
       
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {/* Description */}
         {book.description && (
           <div className="mb-3">
@@ -95,7 +95,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
               className="text-gray-700 text-sm leading-relaxed"
               style={{
                 display: '-webkit-box',
-                WebkitLineClamp: 4,
+                WebkitLineClamp: 3,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
               }}
@@ -118,17 +118,22 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
             }
           } catch {}
           return (
-            <div className="flex items-center justify-between gap-2">
+            <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
               <button
                 type="button"
-                className={`text-xs font-medium text-white px-3 py-1 rounded-md ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
                 title={`Borrow from ${getDisplayUsername(book)}`}
                 onClick={handleBorrowClick}
                 disabled={sending}
               >
                 {sending ? 'Sending…' : `Borrow from ${getDisplayUsername(book)}`}
               </button>
-              <a href={`/users/${book.userId}`} className="text-xs text-indigo-700 hover:underline">View profile</a>
+              <a 
+                href={`/users/${book.userId}`} 
+                className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+              >
+                View profile
+              </a>
             </div>
           );
         })()}
