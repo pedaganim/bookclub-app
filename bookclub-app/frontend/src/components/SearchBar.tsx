@@ -67,6 +67,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       onSearch(transcript.trim());
       
     } catch (error: any) {
+      // eslint-disable-next-line no-console
       console.error('Voice search failed:', error);
       setVoiceSearchError(error.message || 'Voice search failed. Please try again.');
     } finally {

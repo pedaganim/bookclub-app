@@ -22,14 +22,21 @@ class VoiceSearchService {
    * Check if voice search is supported in the current browser
    */
   isSupported(): boolean {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+    return !!(
+      navigator.mediaDevices && 
+      typeof navigator.mediaDevices.getUserMedia === 'function' && 
+      typeof window.MediaRecorder === 'function'
+    );
   }
 
   /**
    * Check if Web Speech API is supported (for real-time transcription)
    */
   isWebSpeechSupported(): boolean {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    return !!(
+      typeof window.SpeechRecognition === 'function' || 
+      typeof window.webkitSpeechRecognition === 'function'
+    );
   }
 
   /**
@@ -51,7 +58,7 @@ class VoiceSearchService {
         mimeType: 'audio/webm;codecs=opus' // Good compression for speech
       });
 
-      this.mediaRecorder.ondataavailable = (event) => {
+      this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) {
           this.audioChunks.push(event.data);
         }
@@ -59,6 +66,7 @@ class VoiceSearchService {
 
       this.mediaRecorder.start();
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to start voice recording:', error);
       throw new Error('Could not access microphone. Please ensure microphone permissions are granted.');
     }
@@ -80,7 +88,8 @@ class VoiceSearchService {
         resolve(audioBlob);
       };
 
-      this.mediaRecorder.onerror = (event) => {
+      this.mediaRecorder.onerror = (event: Event) => {
+        // eslint-disable-next-line no-console
         console.error('MediaRecorder error:', event);
         this.cleanup();
         reject(new Error('Recording failed'));
@@ -144,6 +153,7 @@ class VoiceSearchService {
 
       return response;
     } catch (error: any) {
+      // eslint-disable-next-line no-console
       console.error('Failed to transcribe audio:', error);
       throw new Error(error.message || 'Failed to transcribe audio. Please try again.');
     }
@@ -167,12 +177,13 @@ class VoiceSearchService {
       recognition.lang = languageCode;
       recognition.maxAlternatives = 1;
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         resolve(transcript);
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: any) => {
+        // eslint-disable-next-line no-console
         console.error('Speech recognition error:', event.error);
         reject(new Error(`Speech recognition failed: ${event.error}`));
       };
@@ -205,6 +216,7 @@ class VoiceSearchService {
       try {
         return await this.transcribeWithWebSpeech(languageCode);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('Web Speech API failed, falling back to AWS Transcribe:', error);
         // Fall through to AWS Transcribe
       }
@@ -216,6 +228,7 @@ class VoiceSearchService {
     // Auto-stop recording after maxDuration
     const timeoutId = setTimeout(() => {
       if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+        // eslint-disable-next-line no-console
         this.stopRecording().catch(console.error);
       }
     }, maxDuration);
