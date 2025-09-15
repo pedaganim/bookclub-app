@@ -380,6 +380,42 @@ class ApiService {
     }
     return response.data.data || null;
   }
+
+  // Generic request method for custom endpoints
+  async request<T>(endpoint: string, options: {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    body?: string;
+    headers?: Record<string, string>;
+  } = {}): Promise<T> {
+    const { method = 'GET', body, headers = {} } = options;
+    
+    const config = {
+      method: method.toLowerCase(),
+      url: endpoint,
+      data: body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      }
+    };
+
+    const response = await this.api.request(config);
+    
+    // Handle direct response (not wrapped in ApiResponse)
+    if (response.data && typeof response.data === 'object' && 'transcript' in response.data) {
+      return response.data as T;
+    }
+    
+    // Handle wrapped response
+    if (response.data?.success !== undefined) {
+      if (!response.data.success) {
+        throw new Error(response.data.error?.message || 'Request failed');
+      }
+      return response.data.data as T;
+    }
+    
+    return response.data as T;
+  }
 }
 
 export const apiService = new ApiService();

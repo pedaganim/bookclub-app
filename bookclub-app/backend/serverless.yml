@@ -54,6 +54,12 @@ provider:
             - textract:DetectDocumentText
             - textract:AnalyzeDocument
           Resource: "*"
+        - Effect: Allow
+          Action:
+            - transcribe:StartTranscriptionJob
+            - transcribe:GetTranscriptionJob
+            - transcribe:DeleteTranscriptionJob
+          Resource: "*"
 
 custom:
   appConfig: ${file(./config/app.${self:provider.stage}.json)}
@@ -635,6 +641,39 @@ functions:
     handler: src/custom-resources/s3-bucket-manager.handler
     timeout: 300
     role: S3BucketManagerRole
+
+  # Voice search transcription function
+  voiceTranscribe:
+    handler: src/handlers/voice/transcribe.handler
+    events:
+      - http:
+          method: POST
+          path: /voice/transcribe
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+      - http:
+          method: OPTIONS
+          path: /voice/transcribe
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
 
 resources:
   Resources:
