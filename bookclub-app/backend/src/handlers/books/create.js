@@ -32,6 +32,31 @@ function assignIsbnFromMetadata(existingIsbn10, existingIsbn13, extractedIsbn) {
   return result;
 }
 
+// --- Handler (moved to top for readability) ---
+module.exports.handler = async (event) => {
+  try {
+    const userId = getUserIdFromEvent(event);
+    if (!userId) return response.unauthorized('Missing or invalid authentication');
+
+    const data = parseBody(event);
+    const isExtractingFromImage = isTextractFlow(data);
+    const initialValidationError = validateInitialInput(data, isExtractingFromImage);
+    if (initialValidationError) return initialValidationError;
+
+    let bookData = buildInitialBookData(data);
+    bookData = await maybeEnrichWithMetadata(data, bookData);
+    bookData = await maybeApplyTextractExtraction(data, bookData);
+
+    const finalValidationError = validateFinalBookData(bookData);
+    if (finalValidationError) return finalValidationError;
+
+    const created = await Book.create(bookData, userId);
+    return response.success(created, 201);
+  } catch (error) {
+    return response.error(error);
+  }
+};
+
 // --- Helpers ---
 const getUserIdFromEvent = (event) => {
   const claims = event?.requestContext?.authorizer?.claims;
@@ -149,27 +174,4 @@ const validateFinalBookData = (bookData) => {
   });
 };
 
-// --- Handler ---
-module.exports.handler = async (event) => {
-  try {
-    const userId = getUserIdFromEvent(event);
-    if (!userId) return response.unauthorized('Missing or invalid authentication');
-
-    const data = parseBody(event);
-    const isExtractingFromImage = isTextractFlow(data);
-    const initialValidationError = validateInitialInput(data, isExtractingFromImage);
-    if (initialValidationError) return initialValidationError;
-
-    let bookData = buildInitialBookData(data);
-    bookData = await maybeEnrichWithMetadata(data, bookData);
-    bookData = await maybeApplyTextractExtraction(data, bookData);
-
-    const finalValidationError = validateFinalBookData(bookData);
-    if (finalValidationError) return finalValidationError;
-
-    const created = await Book.create(bookData, userId);
-    return response.success(created, 201);
-  } catch (error) {
-    return response.error(error);
-  }
-};
+// end handlers
