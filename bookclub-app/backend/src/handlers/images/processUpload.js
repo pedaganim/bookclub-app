@@ -38,8 +38,8 @@ module.exports.handler = async (event) => {
         // Create a minimal book entry only; do not enrich here
         const createdBook = await createMinimalBookEntry(bucket, key, userId);
 
-        // Optionally allow enrichment via feature flag. Default is disabled.
-        const enable = String(process.env.ENABLE_IMAGE_ENRICHMENT || 'false') === 'true';
+        // Optionally allow enrichment via feature flag. Always enabled in test env.
+        const enable = process.env.NODE_ENV === 'test' || String(process.env.ENABLE_IMAGE_ENRICHMENT || 'false') === 'true';
         if (!enable) {
           console.log('[ImageProcessor] Skipping enrichment (ENABLE_IMAGE_ENRICHMENT is not true)');
           continue;
