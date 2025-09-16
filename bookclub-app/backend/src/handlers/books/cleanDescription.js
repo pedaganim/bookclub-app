@@ -23,6 +23,11 @@ module.exports.handler = async (event) => {
     const sourceText = existing.textractExtractedText || existing.description || '';
     const cleaned = cleanText(sourceText);
 
+    // Idempotency: skip if unchanged
+    if (existing.clean_description && existing.clean_description === cleaned) {
+      return success({ bookId, cleaned: true, skipped: true });
+    }
+
     // Update book with clean_description (does not change ownership enforcement)
     await Book.update(bookId, existing.userId, { clean_description: cleaned });
 

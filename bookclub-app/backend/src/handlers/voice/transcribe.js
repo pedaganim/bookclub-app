@@ -89,7 +89,16 @@ const internalError = (message, details) => ({
 });
 
 const parseJsonBody = (body) => {
-  try { return body ? JSON.parse(body) : null; } catch { return null; }
+  if (body === undefined || body === null) return null;
+  if (typeof body === 'string' && body.trim().length === 0) {
+    throw new Error('Malformed JSON');
+  }
+  try {
+    return JSON.parse(body);
+  } catch (e) {
+    // Bubble up to trigger 500 per legacy test expectations
+    throw new Error('Malformed JSON');
+  }
 };
 
 const validateAudioData = (audioData) => {

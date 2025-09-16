@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Book } from '../types';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -102,33 +103,37 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       {/* Image - Consistent portrait aspect ratio and crop */}
-      <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
-        <img
-          src={book.coverImage || defaultBookImage}
-          alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
-          className="w-full h-full object-cover object-center"
-          onError={(e) => {
-            // Fallback to default image if cover image fails to load
-            (e.target as HTMLImageElement).src = defaultBookImage;
-          }}
-        />
-      </div>
+      <Link to={`/books/${book.bookId}`} aria-label={book.title ? `View details for ${book.title}` : 'View book details'}>
+        <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
+          <img
+            src={book.coverImage || defaultBookImage}
+            alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
+            className="w-full h-full object-cover object-center"
+            onError={(e) => {
+              // Fallback to default image if cover image fails to load
+              (e.target as HTMLImageElement).src = defaultBookImage;
+            }}
+          />
+        </div>
+      </Link>
       
       <div className="p-3 sm:p-4">
         {/* Description */}
         {book.description && (
           <div className="mb-3">
-            <p
-              className="text-gray-700 text-sm leading-relaxed"
-              style={{
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}
-            >
-              {formatDescription(book.description)}
-            </p>
+            <Link to={`/books/${book.bookId}`} className="hover:underline">
+              <p
+                className="text-gray-700 text-sm leading-relaxed"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {formatDescription(book.description)}
+              </p>
+            </Link>
           </div>
         )}
         

@@ -11,6 +11,7 @@ import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
+import BookDetails from './pages/BookDetails';
 import Clubs from './pages/Clubs';
 import BrowseClubs from './pages/BrowseClubs';
 import Messages from './pages/Messages';
@@ -31,6 +32,10 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
+                  <Route
+                    path="/books/:bookId"
+                    element={<BookDetails />}
+                  />
                   <Route
                     path="/messages"
                     element={

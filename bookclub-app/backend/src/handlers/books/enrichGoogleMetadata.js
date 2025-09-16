@@ -4,12 +4,20 @@ const bookMetadataService = require('../../lib/book-metadata');
 
 module.exports.handler = async (event) => {
   try {
+    if (String(process.env.ENABLE_GOOGLE_ENRICHMENT || 'true') !== 'true') {
+      return success({ skipped: true, reason: 'Google enrichment disabled' });
+    }
     const detail = event?.detail || {};
     const bookId = detail.bookId;
     if (!bookId) return error('Missing bookId in event detail', 400);
 
     const existing = await Book.getById(bookId);
     if (!existing) return error('Book not found', 404);
+
+    // Idempotency: skip if we already have google_metadata
+    if (existing.google_metadata && existing.google_metadata.source) {
+      return success({ bookId, enriched: true, skipped: true });
+    }
 
     // Query Google metadata using available hints
     const metadata = await bookMetadataService.searchBookMetadata({

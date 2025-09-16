@@ -532,6 +532,9 @@ functions:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
               - 'Book.TextractCompleted'
+          deadLetterQueueArn: !GetAtt CleanDescriptionDLQ.Arn
+          retryPolicy:
+            maximumRetryAttempts: 3
 
   enrichGoogleMetadata:
     handler: src/handlers/books/enrichGoogleMetadata.handler
@@ -543,6 +546,9 @@ functions:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
               - 'Book.TextractCompleted'
+          deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
+          retryPolicy:
+            maximumRetryAttempts: 3
 
 # Club-related functions
   createClub:
@@ -837,6 +843,17 @@ functions:
 
 resources:
   Resources:
+    CleanDescriptionDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-clean-description-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    EnrichGoogleMetadataDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-enrich-google-metadata-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
       Type: AWS::IAM::Role
