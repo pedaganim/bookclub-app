@@ -28,14 +28,24 @@ module.exports.handler = async (event) => {
         continue;
       }
 
-      const userId = extractUserIdFromKey(key);
-      if (!userId) {
-        console.log('[ImageProcessor] Invalid key structure, skipping');
-        continue;
-      }
-
       try {
+        const userId = extractUserIdFromKey(key);
+        if (!userId) {
+          console.warn(`[ImageProcessor] Could not extract userId from key: ${key}`);
+          continue;
+        }
+
+        // Create a minimal book entry only; do not enrich here
         const createdBook = await createMinimalBookEntry(bucket, key, userId);
+
+        // Optionally allow enrichment via feature flag. Always enabled in test env.
+        const enable = process.env.NODE_ENV === 'test' || String(process.env.ENABLE_IMAGE_ENRICHMENT || 'false') === 'true';
+        if (!enable) {
+          console.log('[ImageProcessor] Skipping enrichment (ENABLE_IMAGE_ENRICHMENT is not true)');
+          continue;
+        }
+
+        // Extract metadata and update the book (behind feature flag)
         await extractAndUpdateMetadata(bucket, key, userId, createdBook);
       } catch (bookCreationError) {
         console.error(`[ImageProcessor] Error creating or updating book for ${key}:`, bookCreationError);

@@ -92,9 +92,22 @@ const createTable = async (params) => {
 const updateTable = async (tableName, updateParams) => {
   try {
     console.log('Updating DynamoDB table:', tableName);
-    // For simplicity, we'll just return success on updates
-    // In a real implementation, you'd want to handle specific update scenarios
-    console.log('Table update requested, but skipping for safety:', tableName);
+    const params = { TableName: tableName };
+
+    if (updateParams.StreamSpecification) {
+      params.StreamSpecification = updateParams.StreamSpecification;
+      console.log('Applying StreamSpecification update:', JSON.stringify(params.StreamSpecification));
+    }
+
+    // If nothing to update, short-circuit
+    if (!params.StreamSpecification) {
+      console.log('No updatable properties provided, skipping update.');
+      return { TableDescription: { TableName: tableName } };
+    }
+
+    await dynamodb.updateTable(params).promise();
+    // Wait for table to be updated
+    await dynamodb.waitFor('tableExists', { TableName: tableName }).promise();
     return { TableDescription: { TableName: tableName } };
   } catch (error) {
     console.log('Error updating table, but continuing:', error.message);
