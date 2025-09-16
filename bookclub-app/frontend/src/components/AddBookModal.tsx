@@ -61,14 +61,26 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             // Upload image to S3 only
             const uploadData = await apiService.generateUploadUrl(image.file.type, image.file.name);
             await apiService.uploadFile(uploadData.uploadUrl, image.file);
-            // Create a minimal book with empty fields
+            // Parse bucket and key from returned fileUrl (https://{bucket}.s3.amazonaws.com/{key})
+            let s3Bucket: string | undefined;
+            let s3Key: string | undefined;
+            try {
+              const url = new URL(uploadData.fileUrl);
+              const host = url.hostname; // e.g., my-bucket.s3.amazonaws.com
+              s3Bucket = host.split('.s3.amazonaws.com')[0];
+              s3Key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+            } catch {
+              // Fallback to fileKey if parsing fails
+              s3Key = uploadData.fileKey;
+            }
+
+            // Create a book using Textract flow (allowing missing title/author initially)
             const book = await apiService.createBook({
-              title: '',
-              author: '',
-              description: '',
               coverImage: uploadData.fileUrl,
               status: 'available',
-              enrichWithMetadata: false,
+              extractFromImage: true,
+              s3Bucket,
+              s3Key,
             });
             success += 1;
             onBookAdded(book);
