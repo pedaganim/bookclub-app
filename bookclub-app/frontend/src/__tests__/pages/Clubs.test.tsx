@@ -93,7 +93,7 @@ describe('Clubs page', () => {
     render(<Clubs />);
 
     await waitFor(() => {
-      expect(screen.getByText('You have no clubs yet.')).toBeInTheDocument();
+      expect(screen.getByText('You have no clubs yet')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Create Club'));

@@ -104,6 +104,7 @@ export interface BookClub {
   inviteCode: string;
   isPrivate: boolean;
   memberLimit?: number;
+  memberCount?: number;
   createdAt: string;
   updatedAt: string;
   // Added when user is a member

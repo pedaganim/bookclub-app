@@ -92,7 +92,16 @@ const Clubs: React.FC = () => {
           </div>
         )}
         {(!Array.isArray(clubs) || clubs.length === 0) ? (
-          <div className="text-gray-600">You have no clubs yet.</div>
+          <div className="text-gray-700 bg-white border border-gray-200 rounded-lg p-6">
+            <div className="text-lg font-medium mb-2">You have no clubs yet</div>
+            <p className="text-sm mb-4">Browse public clubs to discover communities and request to join.</p>
+            <button
+              onClick={() => navigate('/clubs/browse')}
+              className="px-4 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              Browse Clubs
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
             {clubs.map((club) => (
