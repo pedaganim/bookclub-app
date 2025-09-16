@@ -1,79 +1,3 @@
-  browseClubs:
-    handler: src/handlers/clubs/browse.handler
-    events:
-      - http:
-          method: GET
-          path: /clubs/browse
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-
-  listJoinRequests:
-    handler: src/handlers/clubs/listRequests.handler
-    events:
-      - http:
-          method: GET
-          path: /clubs/{clubId}/requests
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
-  approveJoinRequest:
-    handler: src/handlers/clubs/approveRequest.handler
-    events:
-      - http:
-          method: POST
-          path: /clubs/{clubId}/requests/{userId}/approve
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
-  rejectJoinRequest:
-    handler: src/handlers/clubs/rejectRequest.handler
-    events:
-      - http:
-          method: POST
-          path: /clubs/{clubId}/requests/{userId}/reject
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-# requestJoinClub defined under functions: section below
 service: bookclub-app
 frameworkVersion: '3'
 
@@ -718,6 +642,84 @@ functions:
       - http:
           method: DELETE
           path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  # Public browse clubs (no authorizer)
+  browseClubs:
+    handler: src/handlers/clubs/browse.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/browse
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  # Admin endpoints to manage join requests
+  listJoinRequests:
+    handler: src/handlers/clubs/listRequests.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}/requests
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  approveJoinRequest:
+    handler: src/handlers/clubs/approveRequest.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/requests/{userId}/approve
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  rejectJoinRequest:
+    handler: src/handlers/clubs/rejectRequest.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/requests/{userId}/reject
           cors:
             origin: '*'
             headers:
