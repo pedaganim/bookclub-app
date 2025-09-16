@@ -126,7 +126,9 @@ class Book {
     const result = await dynamoDb.scan(params);
     
     // Enrich books with user names
-    const enrichedBooks = await this.enrichBooksWithUserNames(result.Items || []);
+    let enrichedBooks = await this.enrichBooksWithUserNames(result.Items || []);
+    // Enrich with club info when available
+    enrichedBooks = await this.enrichBooksWithClubInfo(enrichedBooks);
     
     return {
       items: enrichedBooks,

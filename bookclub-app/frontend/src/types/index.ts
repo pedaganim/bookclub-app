@@ -30,6 +30,10 @@ export interface Book {
   updatedAt: string;
   // User name from users table
   userName?: string;
+  // Optional club context for the book (if applicable)
+  clubId?: string;
+  clubName?: string;
+  clubIsPrivate?: boolean;
 }
 
 export interface BookMetadata {
@@ -100,11 +104,13 @@ export interface BookClub {
   inviteCode: string;
   isPrivate: boolean;
   memberLimit?: number;
+  memberCount?: number;
   createdAt: string;
   updatedAt: string;
   // Added when user is a member
   userRole?: 'admin' | 'member';
   joinedAt?: string;
+  userStatus?: 'active' | 'pending';
 }
 
 export interface BookClubMember {

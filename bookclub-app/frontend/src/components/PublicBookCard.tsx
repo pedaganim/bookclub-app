@@ -5,12 +5,39 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface PublicBookCardProps {
   book: Book;
+  isMemberOfBookClub?: boolean; // default true; when false and book has clubId, show Join Club
 }
 
-const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
+const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClub = true }) => {
   const [sending, setSending] = React.useState(false);
   const notificationCtx = React.useContext(NotificationContext);
   const { isAuthenticated, user } = useAuth();
+  const [requestingJoin, setRequestingJoin] = React.useState(false);
+  const [joinRequested, setJoinRequested] = React.useState(false);
+  const navigateToJoin = () => {
+    window.location.assign('/clubs');
+    try { window.history.replaceState({ openJoin: true }, ''); } catch {}
+  };
+  const requestToJoin = async () => {
+    if (!isAuthenticated) {
+      window.location.assign('/login');
+      return;
+    }
+    if (!book.clubId) return;
+    try {
+      setRequestingJoin(true);
+      const { apiService } = await import('../services/api');
+      const res = await apiService.requestClubJoin(book.clubId);
+      if (res.status === 'pending' || res.status === 'active') {
+        setJoinRequested(true);
+        notificationCtx?.addNotification('success', res.status === 'active' ? 'Joined club!' : 'Request to join sent');
+      }
+    } catch (e) {
+      notificationCtx?.addNotification('error', 'Could not request to join club');
+    } finally {
+      setRequestingJoin(false);
+    }
+  };
   // Function to format description text properly
   const formatDescription = (text?: string) => {
     if (!text) return '';
@@ -107,6 +134,44 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
         
         {/* Borrow action */}
         {(() => {
+          // If the book belongs to a club and the viewer is not a member, show Join Club
+          if (book.clubId && !isMemberOfBookClub) {
+            const joinLabel = book.clubName ? `Join ${book.clubName}` : 'Join Club';
+            const isPrivateClub = !!book.clubIsPrivate;
+            return (
+              <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
+                {isPrivateClub ? (
+                  <button
+                    type="button"
+                    className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${requestingJoin || joinRequested ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                    title={joinRequested ? 'Request sent' : 'Request to Join'}
+                    onClick={requestToJoin}
+                    disabled={requestingJoin || joinRequested}
+                  >
+                    {joinRequested ? 'Requested' : 'Request to Join'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                    title={joinLabel}
+                    onClick={navigateToJoin}
+                    disabled={sending}
+                  >
+                    {joinLabel}
+                  </button>
+                )}
+                {book.userId && (
+                  <a 
+                    href={`/users/${book.userId}`} 
+                    className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+                  >
+                    View owner profile
+                  </a>
+                )}
+              </div>
+            );
+          }
           // Hide borrow button if this is the current user's own book
           try {
             const savedUser = localStorage.getItem('user');

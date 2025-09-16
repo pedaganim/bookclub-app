@@ -48,7 +48,9 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, onLeave, onCopyInvite }) => {
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <div className="flex items-center gap-1">
               <UserGroupIcon className="h-4 w-4" />
-              <span>Members</span>
+              <span>
+                {typeof club.memberCount === 'number' ? `${club.memberCount} Members` : 'Members'}
+              </span>
             </div>
             <span>•</span>
             <div className="flex items-center gap-1">

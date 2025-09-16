@@ -338,6 +338,54 @@ class ApiService {
     }
   }
 
+  async requestClubJoin(clubId: string): Promise<{ status: 'pending' | 'active' }> {
+    const response: AxiosResponse<ApiResponse<{ status: 'pending' | 'active' }>> = await this.api.post(`/clubs/${clubId}/request`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to request club join');
+    }
+    // Some handlers may return plain object without ApiResponse
+    const data = (response.data && (response.data as any).data) || (response.data as any);
+    return (data && data.status) ? data : { status: 'pending' };
+  }
+
+  // Browse public clubs
+  async browseClubs(params?: { limit?: number; nextToken?: string; search?: string }): Promise<{ items: BookClub[]; nextToken?: string }> {
+    const query = new URLSearchParams();
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.nextToken) query.append('nextToken', params.nextToken);
+    if (params?.search) query.append('search', params.search);
+    const response: AxiosResponse<ApiResponse<{ items: BookClub[]; nextToken?: string }>> = await this.api.get(`/clubs/browse?${query.toString()}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to browse clubs');
+    }
+    return response.data.data!;
+  }
+
+  // Admin - list pending join requests for a club
+  async listJoinRequests(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; status: string; requestedAt?: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ items: Array<{ clubId: string; userId: string; status: string; requestedAt?: string }> }>> = await this.api.get(`/clubs/${clubId}/requests`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list join requests');
+    }
+    return response.data.data!;
+  }
+
+  // Admin - approve join request
+  async approveJoinRequest(clubId: string, userId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<{ approved: boolean }>> = await this.api.post(`/clubs/${clubId}/requests/${userId}/approve`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to approve join request');
+    }
+  }
+
+  // Admin - reject join request
+  async rejectJoinRequest(clubId: string, userId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<{ rejected: boolean }>> = await this.api.post(`/clubs/${clubId}/requests/${userId}/reject`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to reject join request');
+    }
+  }
+
   // Direct Messaging
   async dmCreateConversation(toUserId: string): Promise<DMConversation> {
     const response: AxiosResponse<ApiResponse<DMConversation>> = await this.api.post('/dm/conversations', { toUserId });

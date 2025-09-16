@@ -24,6 +24,7 @@ const Messages: React.FC = () => {
   const [msgError, setMsgError] = useState('');
   const [composerText, setComposerText] = useState('');
   const pollRef = useRef<number | undefined>(undefined);
+  const listEndRef = useRef<HTMLDivElement | null>(null);
 
   // Load conversation list
   useEffect(() => {
@@ -56,12 +57,17 @@ const Messages: React.FC = () => {
       setLoadingMsgs(true);
       setMsgError('');
       const res = await apiService.dmListMessages(convId, 30);
-      setMessages(res.items || []);
+      const items = (res.items || []).slice().sort((a: DMMessage, b: DMMessage) => {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+      setMessages(items);
       // setNextToken(res.nextToken);
     } catch (e: any) {
       setMsgError(e.message || 'Failed to load messages');
     } finally {
       setLoadingMsgs(false);
+      // Notify others (e.g., Navbar) that DM state may have changed
+      document.dispatchEvent(new Event('dm:updated'));
     }
   };
 
@@ -70,7 +76,10 @@ const Messages: React.FC = () => {
     (async () => {
       await loadMessages(routeConversationId);
       // Mark as read when opening thread
-      try { await apiService.dmMarkRead(routeConversationId); } catch {}
+      try {
+        await apiService.dmMarkRead(routeConversationId);
+        document.dispatchEvent(new Event('dm:updated'));
+      } catch {}
     })();
 
     // Polling
@@ -117,11 +126,16 @@ const Messages: React.FC = () => {
     try {
       setComposerText('');
       const msg = await apiService.dmSendMessage(routeConversationId, otherUserId, text);
-      setMessages((prev) => [msg, ...prev]); // since list is descending by createdAt
+      setMessages((prev) => [...prev, msg]); // newest at the end (bottom)
     } catch (e: any) {
       setMsgError(e.message || 'Failed to send message');
     }
   };
+
+  // Auto-scroll to bottom when messages change or when switching conversations
+  useEffect(() => {
+    listEndRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [messages, routeConversationId]);
 
   if (!isAuthenticated) {
     return (
@@ -240,6 +254,7 @@ const Messages: React.FC = () => {
                           </div>
                         </li>
                       ))}
+                      <div ref={listEndRef} />
                     </ul>
                   )}
                 </div>

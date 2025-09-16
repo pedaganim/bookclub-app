@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Clubs from '../../pages/Clubs';
+// react-router-dom is mocked below for unit tests
 
 // Mock apiService
 jest.mock('../../services/api', () => ({
@@ -12,6 +13,13 @@ jest.mock('../../services/api', () => ({
     deleteClub: jest.fn(),
   },
 }));
+
+// Provide a virtual mock for react-router-dom to avoid requiring the real router in unit tests
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => jest.fn(),
+  useLocation: () => ({ pathname: '/clubs', state: undefined }),
+  Link: ({ children }: any) => <a>{children}</a>,
+}), { virtual: true });
 
 // Mock AuthContext to simulate authenticated user
 jest.mock('../../contexts/AuthContext', () => ({
@@ -85,7 +93,7 @@ describe('Clubs page', () => {
     render(<Clubs />);
 
     await waitFor(() => {
-      expect(screen.getByText('You have no clubs yet.')).toBeInTheDocument();
+      expect(screen.getByText('You have no clubs yet')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Create Club'));

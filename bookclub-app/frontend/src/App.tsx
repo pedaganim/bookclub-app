@@ -12,6 +12,7 @@ import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
 import Clubs from './pages/Clubs';
+import BrowseClubs from './pages/BrowseClubs';
 import Messages from './pages/Messages';
 import UserProfile from './pages/UserProfile';
 import NotificationSettings from './pages/NotificationSettings';
@@ -63,6 +64,14 @@ function App() {
                     }
                   />
                   <Route path="/" element={<Navigate to="/library" replace />} />
+                  <Route
+                    path="/clubs/browse"
+                    element={
+                      <ProtectedRoute>
+                        <BrowseClubs />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/my-books"
                     element={

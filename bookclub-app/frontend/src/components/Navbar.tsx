@@ -10,7 +10,8 @@ const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleAddBooksClick = () => {
-    navigate('/', { state: { openAddBooks: true } });
+    // Navigate to /my-books so the Home page opens the AddBookModal without being affected by any root redirects
+    navigate('/my-books', { state: { openAddBooks: true } });
     setIsMobileMenuOpen(false);
   };
 
@@ -65,6 +66,12 @@ const Navbar: React.FC = () => {
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   My Clubs
+                </Link>
+                <Link
+                  to="/clubs/browse"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Browse Clubs
                 </Link>
                 <MessagesLinkWithUnread />
               </>
@@ -196,6 +203,13 @@ const Navbar: React.FC = () => {
                   >
                     My Clubs
                   </Link>
+                  <Link
+                    to="/clubs/browse"
+                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    Browse Clubs
+                  </Link>
                   <MobileMessagesLinkWithUnread closeMobileMenu={closeMobileMenu} />
                   <Link
                     to="/profile"
@@ -251,18 +265,17 @@ export default Navbar;
 
 // Helper component to show Messages link with an unread badge
 const MessagesLinkWithUnread: React.FC = () => {
+  const { user } = useAuth();
   const [unread, setUnread] = useState(0);
   const pollRef = useRef<number | undefined>(undefined);
 
   const loadUnread = async () => {
+    if (!user?.userId) return;
     try {
       const res = await apiService.dmListConversations(50);
-      const total = (res.items || []).reduce((sum, c: any) => {
-        // We cannot know current userId here; sum both as approximation and rely on markRead for accuracy.
-        // Better approach would consume userId from AuthContext, but keep minimal coupling.
-        const a = Number(c.unreadCountForUserA || 0);
-        const b = Number(c.unreadCountForUserB || 0);
-        return sum + Math.max(a, b); // approximation
+      const total = (res.items || []).reduce((sum: number, c: any) => {
+        const forMe = c.userAId === user.userId ? Number(c.unreadCountForUserA || 0) : Number(c.unreadCountForUserB || 0);
+        return sum + forMe;
       }, 0);
       setUnread(total);
     } catch {
@@ -276,10 +289,18 @@ const MessagesLinkWithUnread: React.FC = () => {
     pollRef.current = window.setInterval(() => {
       loadUnread();
     }, 60000) as unknown as number; // 60s
+
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadUnread(); };
+    const onDmUpdated = () => loadUnread();
+    window.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('dm:updated', onDmUpdated as EventListener);
+
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
+      window.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('dm:updated', onDmUpdated as EventListener);
     };
-  }, []);
+  }, [user?.userId]);
 
   return (
     <Link
@@ -298,16 +319,17 @@ const MessagesLinkWithUnread: React.FC = () => {
 
 // Mobile version of MessagesLinkWithUnread
 const MobileMessagesLinkWithUnread: React.FC<{ closeMobileMenu: () => void }> = ({ closeMobileMenu }) => {
+  const { user } = useAuth();
   const [unread, setUnread] = useState(0);
   const pollRef = useRef<number | undefined>(undefined);
 
   const loadUnread = async () => {
+    if (!user?.userId) return;
     try {
       const res = await apiService.dmListConversations(50);
-      const total = (res.items || []).reduce((sum, c: any) => {
-        const a = Number(c.unreadCountForUserA || 0);
-        const b = Number(c.unreadCountForUserB || 0);
-        return sum + Math.max(a, b);
+      const total = (res.items || []).reduce((sum: number, c: any) => {
+        const forMe = c.userAId === user.userId ? Number(c.unreadCountForUserA || 0) : Number(c.unreadCountForUserB || 0);
+        return sum + forMe;
       }, 0);
       setUnread(total);
     } catch {
@@ -321,10 +343,15 @@ const MobileMessagesLinkWithUnread: React.FC<{ closeMobileMenu: () => void }> = 
     pollRef.current = window.setInterval(() => {
       loadUnread();
     }, 60000) as unknown as number;
+
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadUnread(); };
+    window.addEventListener('visibilitychange', onVisibility);
+
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
+      window.removeEventListener('visibilitychange', onVisibility);
     };
-  }, []);
+  }, [user?.userId]);
 
   return (
     <Link

@@ -37,6 +37,83 @@ class BookClub {
     return club;
   }
 
+  static async listPendingRequests(clubId) {
+    if (isOffline()) {
+      const all = await LocalStorage.getClubMembers(clubId);
+      return (all || []).filter(m => m.status === 'pending');
+    }
+    const params = {
+      TableName: getTableName('bookclub-members'),
+      KeyConditionExpression: 'clubId = :clubId',
+      ExpressionAttributeValues: { ':clubId': clubId },
+      FilterExpression: '#status = :pending',
+      ExpressionAttributeNames: { '#status': 'status' },
+    };
+    const result = await dynamoDb.query(params);
+    return result.Items || [];
+  }
+
+  static async approveJoinRequest(clubId, userId) {
+    const timestamp = new Date().toISOString();
+    if (isOffline()) {
+      const member = await LocalStorage.getClubMember(clubId, userId);
+      const updated = { ...(member || { clubId, userId, role: 'member' }), status: 'active', joinedAt: timestamp };
+      await LocalStorage.createClubMember(updated);
+      return updated;
+    }
+    const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } = dynamoDb.generateUpdateExpression({ status: 'active', joinedAt: timestamp });
+    const params = {
+      TableName: getTableName('bookclub-members'),
+      Key: { clubId, userId },
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+    const result = await dynamoDb.update(params);
+    return result.Attributes;
+  }
+
+  static async rejectJoinRequest(clubId, userId) {
+    if (isOffline()) {
+      await LocalStorage.deleteClubMember(clubId, userId);
+      return { success: true };
+    }
+    await dynamoDb.delete(getTableName('bookclub-members'), { clubId, userId });
+    return { success: true };
+  }
+
+  static async listPublicClubs(limit = 10, nextToken = null, search = null) {
+    if (isOffline()) {
+      let clubs = await LocalStorage.listClubs();
+      clubs = (clubs || []).filter(c => !c.isPrivate);
+      if (search) {
+        const q = search.toLowerCase();
+        clubs = clubs.filter(c => c.name?.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q) || c.location?.toLowerCase().includes(q));
+      }
+      return { items: clubs.slice(0, limit), nextToken: clubs.length > limit ? 'has-more' : null };
+    }
+    const params = {
+      TableName: getTableName('bookclub-groups'),
+      Limit: limit,
+      FilterExpression: 'attribute_not_exists(isPrivate) OR isPrivate = :false',
+      ExpressionAttributeValues: { ':false': false },
+    };
+    if (search) {
+      params.FilterExpression += ' AND (contains(#name, :q) OR contains(#desc, :q) OR contains(#loc, :q))';
+      params.ExpressionAttributeNames = { ...(params.ExpressionAttributeNames || {}), '#name': 'name', '#desc': 'description', '#loc': 'location' };
+      params.ExpressionAttributeValues[':q'] = search;
+    }
+    if (nextToken) {
+      params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+    }
+    const result = await dynamoDb.scan(params);
+    return {
+      items: result.Items || [],
+      nextToken: result.LastEvaluatedKey ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64') : null,
+    };
+  }
+
   static async getById(clubId) {
     if (isOffline()) {
       return LocalStorage.getClubById(clubId);
@@ -104,6 +181,7 @@ class BookClub {
       userId,
       role,
       joinedAt: timestamp,
+      status: 'active',
     };
 
     if (isOffline()) {
@@ -113,6 +191,35 @@ class BookClub {
 
     await dynamoDb.put(getTableName('bookclub-members'), membership);
     return membership;
+  }
+
+  static async createJoinRequest(clubId, userId) {
+    const timestamp = new Date().toISOString();
+    const record = {
+      clubId,
+      userId,
+      role: 'member',
+      joinedAt: null,
+      status: 'pending',
+      requestedAt: timestamp,
+    };
+
+    if (isOffline()) {
+      // In offline, overwrite or create a pending record
+      await LocalStorage.createClubMember(record);
+      return record;
+    }
+
+    // Check if already a member
+    const existing = await dynamoDb.get(getTableName('bookclub-members'), { clubId, userId });
+    if (existing && existing.status === 'active') {
+      const err = new Error('Already a member of this club');
+      err.code = 'AlreadyMember';
+      throw err;
+    }
+
+    await dynamoDb.put(getTableName('bookclub-members'), record);
+    return record;
   }
 
   static async removeMember(clubId, userId) {
@@ -174,6 +281,7 @@ class BookClub {
           ...club,
           userRole: membership.role,
           joinedAt: membership.joinedAt,
+          userStatus: membership.status || 'active',
         });
       }
     }
