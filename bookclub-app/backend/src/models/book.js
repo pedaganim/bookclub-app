@@ -165,6 +165,15 @@ class Book {
     }));
   }
 
+  // Enrich books with club info when available. For now this is a no-op passthrough
+  // to ensure compatibility with existing data where club fields may be absent.
+  // Future enhancement: look up club details by clubId from the bookclub-groups table
+  // and attach clubName/clubIsPrivate, etc.
+  static async enrichBooksWithClubInfo(books) {
+    if (!Array.isArray(books) || books.length === 0) return books;
+    return books;
+  }
+
   static async update(bookId, userId, updates) {
     const timestamp = new Date().toISOString();
     const updateData = {
