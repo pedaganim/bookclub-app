@@ -13,6 +13,8 @@ describe('Pagination Component', () => {
     onPreviousPage: jest.fn(),
     currentItemsCount: 10,
     isLoading: false,
+    itemLabelSingular: 'book',
+    itemLabelPlural: 'books',
   };
 
   beforeEach(() => {

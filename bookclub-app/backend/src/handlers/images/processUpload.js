@@ -1,12 +1,59 @@
 const Book = require('../../models/book');
 const textractService = require('../../lib/textract-service');
 const { DynamoDB } = require('../../lib/aws-config');
+const { publishEvent } = require('../../lib/event-bus');
 const { getTableName } = require('../../lib/table-names');
 
 // Constants
 const METADATA_SOURCE_PENDING = 'image-upload-pending';
 const PLACEHOLDER_AUTHOR = 'Unknown Author';
 const PROCESSING_DESCRIPTION = 'Book uploaded via image - metadata processing in progress';
+
+// --- Handler (moved to top for readability) ---
+module.exports.handler = async (event) => {
+  console.log('[ImageProcessor] Processing S3 event:', JSON.stringify(event, null, 2));
+
+  try {
+    for (const record of event.Records) {
+      if (!isS3Event(record)) {
+        console.log('[ImageProcessor] Skipping non-S3 event');
+        continue;
+      }
+
+      const { bucket, key } = parseS3Record(record);
+      console.log(`[ImageProcessor] Processing image: s3://${bucket}/${key}`);
+
+      if (!shouldProcessKey(key)) {
+        console.log('[ImageProcessor] Skipping non-book-cover image');
+        continue;
+      }
+
+      const userId = extractUserIdFromKey(key);
+      if (!userId) {
+        console.log('[ImageProcessor] Invalid key structure, skipping');
+        continue;
+      }
+
+      try {
+        const createdBook = await createMinimalBookEntry(bucket, key, userId);
+        await extractAndUpdateMetadata(bucket, key, userId, createdBook);
+      } catch (bookCreationError) {
+        console.error(`[ImageProcessor] Error creating or updating book for ${key}:`, bookCreationError);
+        // Continue processing other images even if one fails
+      }
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: `Processed ${event.Records.length} image(s)`,
+      }),
+    };
+  } catch (error) {
+    console.error('[ImageProcessor] Error processing S3 event:', error);
+    throw error;
+  }
+};
 
 /**
  * Utility function to remove undefined fields from an object
@@ -86,118 +133,76 @@ async function cacheExtractedMetadata(s3Bucket, s3Key, userId, extractionResult)
   }
 }
 
-/**
- * Lambda function to automatically create book entries from uploaded images
- * Triggered by S3 ObjectCreated events
- * 
- * Flow:
- * 1. Create minimal book entries with uploaded cover images
- * 2. Metadata extraction and enrichment happens asynchronously via other lambdas
- */
-module.exports.handler = async (event) => {
-  console.log('[ImageProcessor] Processing S3 event:', JSON.stringify(event, null, 2));
+// --- Helpers ---
+const isS3Event = (record) => record?.eventSource === 'aws:s3';
 
+const parseS3Record = (record) => ({
+  bucket: record.s3.bucket.name,
+  key: decodeURIComponent(record.s3.object.key.replace(/\+/g, ' ')),
+});
+
+const shouldProcessKey = (key) => key && key.startsWith('book-covers/');
+
+const extractUserIdFromKey = (key) => {
+  const parts = key.split('/');
+  if (parts.length < 3) return null;
+  return parts[1];
+};
+
+const createMinimalBookEntry = async (bucket, key, userId) => {
+  const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
+  const bookData = {
+    title: deriveBookTitleFromFilename(key),
+    author: PLACEHOLDER_AUTHOR,
+    description: PROCESSING_DESCRIPTION,
+    coverImage: fileUrl,
+    metadataSource: METADATA_SOURCE_PENDING,
+  };
+  const createdBook = await Book.create(bookData, userId);
+  console.log(`[ImageProcessor] Created book entry for uploaded image: ${createdBook.bookId} - ${key}`);
+  return createdBook;
+};
+
+const extractAndUpdateMetadata = async (bucket, key, userId, createdBook) => {
   try {
-    // Process each record in the S3 event
-    for (const record of event.Records) {
-      if (record.eventSource !== 'aws:s3') {
-        console.log('[ImageProcessor] Skipping non-S3 event');
-        continue;
-      }
-
-      const bucket = record.s3.bucket.name;
-      const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
-      
-      console.log(`[ImageProcessor] Processing image: s3://${bucket}/${key}`);
-
-      // Only process book cover images (skip other uploads)
-      if (!key.startsWith('book-covers/')) {
-        console.log('[ImageProcessor] Skipping non-book-cover image');
-        continue;
-      }
-
-      // Extract userId from the key path (book-covers/userId/filename)
-      const keyParts = key.split('/');
-      if (keyParts.length < 3) {
-        console.log('[ImageProcessor] Invalid key structure, skipping');
-        continue;
-      }
-      const userId = keyParts[1];
-
+    console.log(`[ImageProcessor] Starting metadata extraction for ${key}...`);
+    const extractionResult = await textractService.extractTextFromImage(bucket, key);
+    if (extractionResult && extractionResult.bookMetadata) {
+      console.log(`[ImageProcessor] Metadata extraction successful for ${key}`);
+      await cacheExtractedMetadata(bucket, key, userId, extractionResult);
+      const { bookMetadata, extractedText } = extractionResult;
+      const updatedBookData = {
+        title: bookMetadata.title || deriveBookTitleFromFilename(key),
+        author: bookMetadata.author ?? PLACEHOLDER_AUTHOR,
+        description: bookMetadata.description || extractedText.fullText || PROCESSING_DESCRIPTION,
+        isbn10: bookMetadata.isbn && bookMetadata.isbn.length === 10 ? bookMetadata.isbn : undefined,
+        isbn13: bookMetadata.isbn && bookMetadata.isbn.length === 13 ? bookMetadata.isbn : undefined,
+        publisher: bookMetadata.publisher,
+        publishedDate: bookMetadata.publishedDate,
+        textractExtractedText: extractedText.fullText,
+        textractConfidence: extractionResult.confidence,
+        metadataSource: 'textract-auto-processed',
+      };
+      const cleaned = removeUndefinedFields(updatedBookData);
+      await Book.update(createdBook.bookId, userId, cleaned);
+      console.log(`[ImageProcessor] Updated book ${createdBook.bookId} with extracted metadata`);
+      // Emit event to trigger downstream processors
       try {
-        // Create minimal book entry with uploaded image
-        const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
-        
-        const bookData = {
-          title: deriveBookTitleFromFilename(key), // Derive from filename - will be updated by metadata processing
-          author: PLACEHOLDER_AUTHOR, // Placeholder - will be updated by metadata processing
-          description: PROCESSING_DESCRIPTION,
-          coverImage: fileUrl,
-          metadataSource: METADATA_SOURCE_PENDING
-        };
-
-        const createdBook = await Book.create(bookData, userId);
-        
-        console.log(`[ImageProcessor] Created book entry for uploaded image: ${createdBook.bookId} - ${key}`);
-
-        // Asynchronously extract metadata and update the book
-        // This happens in the background to not block the response
-        try {
-          console.log(`[ImageProcessor] Starting metadata extraction for ${key}...`);
-          
-          const extractionResult = await textractService.extractTextFromImage(bucket, key);
-          
-          if (extractionResult && extractionResult.bookMetadata) {
-            console.log(`[ImageProcessor] Metadata extraction successful for ${key}`);
-            
-            // Cache the extracted metadata for future use
-            await cacheExtractedMetadata(bucket, key, userId, extractionResult);
-            
-            // Update the book with extracted metadata
-            const { bookMetadata, extractedText } = extractionResult;
-            const updatedBookData = {
-              // Only update if we have better data than placeholders
-              title: bookMetadata.title || bookData.title,
-              author: bookMetadata.author ?? PLACEHOLDER_AUTHOR,
-              description: bookMetadata.description || extractedText.fullText || PROCESSING_DESCRIPTION,
-              isbn10: bookMetadata.isbn && bookMetadata.isbn.length === 10 ? bookMetadata.isbn : undefined,
-              isbn13: bookMetadata.isbn && bookMetadata.isbn.length === 13 ? bookMetadata.isbn : undefined,
-              publisher: bookMetadata.publisher,
-              publishedDate: bookMetadata.publishedDate,
-              textractExtractedText: extractedText.fullText,
-              textractConfidence: extractionResult.confidence,
-              metadataSource: 'textract-auto-processed'
-            };
-            
-            // Remove undefined fields using utility function
-            const cleanedBookData = removeUndefinedFields(updatedBookData);
-            
-            await Book.update(createdBook.bookId, userId, cleanedBookData);
-            
-            console.log(`[ImageProcessor] Updated book ${createdBook.bookId} with extracted metadata`);
-          } else {
-            console.log(`[ImageProcessor] No metadata extracted for ${key}, book remains with placeholder data`);
-          }
-        } catch (metadataError) {
-          console.error(`[ImageProcessor] Metadata extraction failed for ${key}:`, metadataError);
-          // Book creation succeeded, but metadata extraction failed
-          // The book will remain with placeholder data, which is acceptable
-        }
-
-      } catch (bookCreationError) {
-        console.error(`[ImageProcessor] Error creating book entry for ${key}:`, bookCreationError);
-        // Continue processing other images even if one fails
+        await publishEvent('Book.TextractCompleted', {
+          bookId: createdBook.bookId,
+          userId,
+          s3Bucket: bucket,
+          s3Key: key,
+          hasDescription: !!cleaned.description,
+        });
+        console.log('[ImageProcessor] Published Book.TextractCompleted event');
+      } catch (e) {
+        console.error('[ImageProcessor] Failed to publish Book.TextractCompleted event:', e);
       }
+    } else {
+      console.log(`[ImageProcessor] No metadata extracted for ${key}, book remains with placeholder data`);
     }
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: `Processed ${event.Records.length} image(s)`,
-      }),
-    };
-  } catch (error) {
-    console.error('[ImageProcessor] Error processing S3 event:', error);
-    throw error;
+  } catch (metadataError) {
+    console.error(`[ImageProcessor] Metadata extraction failed for ${key}:`, metadataError);
   }
 };

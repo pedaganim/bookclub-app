@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import { useAuth } from '../contexts/AuthContext';
+import { NavLink } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 
 const PAGE_SIZE_DEFAULT = 12;
@@ -154,9 +155,40 @@ const BrowseClubs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Browse Clubs</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
         </div>
+        {/* Secondary tabs */}
+        <div className="mb-6 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+            <NavLink
+              to="/clubs"
+              className={({ isActive }) =>
+                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                  isActive
+                    ? 'border-indigo-600 text-indigo-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`
+              }
+            >
+              My Clubs
+            </NavLink>
+            <NavLink
+              to="/clubs/browse"
+              end
+              className={({ isActive }) =>
+                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                  isActive
+                    ? 'border-indigo-600 text-indigo-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`
+              }
+            >
+              Browse Clubs
+            </NavLink>
+          </nav>
+        </div>
+
         <SearchBar onSearch={onSearch} placeholder="Search clubs by name, description, location…" className="mb-4" />
 
         {content}
@@ -171,6 +203,8 @@ const BrowseClubs: React.FC = () => {
             onPreviousPage={handlePrevious}
             currentItemsCount={clubs?.length || 0}
             isLoading={loading}
+            itemLabelSingular="club"
+            itemLabelPlural="clubs"
           />
         </div>
       </div>

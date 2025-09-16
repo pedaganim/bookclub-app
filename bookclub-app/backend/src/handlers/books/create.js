@@ -32,136 +32,146 @@ function assignIsbnFromMetadata(existingIsbn10, existingIsbn13, extractedIsbn) {
   return result;
 }
 
+// --- Handler (moved to top for readability) ---
 module.exports.handler = async (event) => {
   try {
-    // Derive userId from Cognito authorizer claims (configured in API Gateway)
-    const claims = event?.requestContext?.authorizer?.claims;
-    const userId = claims?.sub || null;
-    if (!userId) {
-      return response.unauthorized('Missing or invalid authentication');
-    }
+    const userId = getUserIdFromEvent(event);
+    if (!userId) return response.unauthorized('Missing or invalid authentication');
 
-    const data = JSON.parse(event.body);
+    const data = parseBody(event);
+    const isExtractingFromImage = isTextractFlow(data);
+    const initialValidationError = validateInitialInput(data, isExtractingFromImage);
+    if (initialValidationError) return initialValidationError;
 
-    // Validate input - title and author are required unless extracting from image
-    const isExtractingFromImage = data.extractFromImage && data.s3Bucket && data.s3Key;
-    
-    if (!isExtractingFromImage && (!data.title || !data.author)) {
-      return response.validationError({
-        title: data.title ? undefined : 'Title is required',
-        author: data.author ? undefined : 'Author is required',
-      });
-    }
+    let bookData = buildInitialBookData(data);
+    bookData = await maybeEnrichWithMetadata(data, bookData);
+    bookData = await maybeApplyTextractExtraction(data, bookData);
 
-    // Prepare book data
-    let bookData = {
-      title: data.title,
-      author: data.author,
-      description: data.description,
-      coverImage: data.coverImage,
-      images: data.images, // Support for additional images
-      status: data.status,
-    };
-
-    // Optional metadata enrichment
-    if (data.enrichWithMetadata || data.isbn) {
-      try {
-        console.log('[BookCreate] Attempting metadata enrichment...');
-        const metadata = await bookMetadataService.searchBookMetadata({
-          isbn: data.isbn,
-          title: data.title,
-          author: data.author,
-        });
-
-        if (metadata) {
-          console.log('[BookCreate] Metadata found, enriching book data');
-          // Enrich with metadata, but preserve user input if provided
-          bookData = {
-            ...bookData,
-            // Only use metadata for empty fields
-            description: bookData.description || metadata.description,
-            coverImage: bookData.coverImage || metadata.thumbnail,
-            // Add metadata fields that weren't in original schema
-            isbn10: metadata.isbn10,
-            isbn13: metadata.isbn13,
-            publishedDate: metadata.publishedDate,
-            pageCount: metadata.pageCount,
-            categories: metadata.categories,
-            language: metadata.language,
-            publisher: metadata.publisher,
-            metadataSource: metadata.source,
-          };
-        }
-      } catch (error) {
-        console.error('[BookCreate] Metadata enrichment failed:', error);
-        // Continue with original data - metadata enrichment failure shouldn't break book creation
-      }
-    }
-
-    // Textract image metadata extraction
-    if (data.extractFromImage && data.s3Bucket && data.s3Key) {
-      try {
-        console.log('[BookCreate] Attempting to retrieve pre-extracted metadata...');
-        
-        // First, check if we have pre-extracted metadata from automatic processing
-        let extractionResult = await imageMetadataService.getExtractedMetadata(data.s3Bucket, data.s3Key);
-        
-        if (!extractionResult) {
-          console.log('[BookCreate] No pre-extracted metadata found, running Textract extraction...');
-          extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
-        } else {
-          console.log('[BookCreate] Using pre-extracted metadata from automatic processing');
-        }
-        
-        if (extractionResult && extractionResult.bookMetadata) {
-          const { bookMetadata, extractedText } = extractionResult;
-          console.log('[BookCreate] Textract extraction successful');
-          
-          // Merge Textract metadata, preserving user input and previous metadata
-          const isbnAssignment = assignIsbnFromMetadata(
-            bookData.isbn10,
-            bookData.isbn13,
-            bookMetadata.isbn
-          );
-          
-          bookData = {
-            ...bookData,
-            // Use Textract data only for empty fields, prioritizing user input
-            title: bookData.title || bookMetadata.title,
-            author: bookData.author || bookMetadata.author,
-            description: bookData.description || bookMetadata.description || extractedText.fullText || extractedText,
-            isbn10: isbnAssignment.isbn10,
-            isbn13: isbnAssignment.isbn13,
-            publisher: bookData.publisher || bookMetadata.publisher,
-            publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
-            textractExtractedText: extractedText.fullText || extractedText,
-            textractConfidence: extractionResult.confidence,
-            textractSource: bookMetadata.extractionSource,
-            textractExtractedAt: extractionResult.extractedAt,
-            isPreExtracted: extractionResult.isPreExtracted || false,
-          };
-        }
-      } catch (error) {
-        console.error('[BookCreate] Textract extraction failed:', error);
-        // Continue with original data - Textract failure shouldn't break book creation
-      }
-    }
-
-    // Final validation - ensure we have at least title and author after all enrichment
-    if (!bookData.title || !bookData.author) {
-      const missingFields = [];
-      if (!bookData.title) missingFields.push('title');
-      if (!bookData.author) missingFields.push('author');
-      
-      return response.validationError({
-        extraction: `Could not extract required fields: ${missingFields.join(', ')}. Please provide them manually or try a different image.`
-      });
-    }
+    const finalValidationError = validateFinalBookData(bookData);
+    if (finalValidationError) return finalValidationError;
 
     const created = await Book.create(bookData, userId);
-
     return response.success(created, 201);
   } catch (error) {
     return response.error(error);
   }
 };
+
+// --- Helpers ---
+const getUserIdFromEvent = (event) => {
+  const claims = event?.requestContext?.authorizer?.claims;
+  return claims?.sub || null;
+};
+
+const parseBody = (event) => {
+  try {
+    return JSON.parse(event.body || '{}');
+  } catch (e) {
+    return {};
+  }
+};
+
+const isTextractFlow = (data) => Boolean(data.extractFromImage && data.s3Bucket && data.s3Key);
+
+const validateInitialInput = (data, isExtracting) => {
+  if (!isExtracting && (!data.title || !data.author)) {
+    return response.validationError({
+      title: data.title ? undefined : 'Title is required',
+      author: data.author ? undefined : 'Author is required',
+    });
+  }
+  return null;
+};
+
+const buildInitialBookData = (data) => ({
+  title: data.title,
+  author: data.author,
+  description: data.description,
+  coverImage: data.coverImage,
+  images: data.images, // Support for additional images
+  status: data.status,
+});
+
+const maybeEnrichWithMetadata = async (data, bookData) => {
+  if (!(data.enrichWithMetadata || data.isbn)) return bookData;
+  try {
+    console.log('[BookCreate] Attempting metadata enrichment...');
+    const metadata = await bookMetadataService.searchBookMetadata({
+      isbn: data.isbn,
+      title: data.title,
+      author: data.author,
+    });
+    if (!metadata) return bookData;
+    console.log('[BookCreate] Metadata found, enriching book data');
+    return {
+      ...bookData,
+      description: bookData.description || metadata.description,
+      coverImage: bookData.coverImage || metadata.thumbnail,
+      isbn10: metadata.isbn10,
+      isbn13: metadata.isbn13,
+      publishedDate: metadata.publishedDate,
+      pageCount: metadata.pageCount,
+      categories: metadata.categories,
+      language: metadata.language,
+      publisher: metadata.publisher,
+      metadataSource: metadata.source,
+    };
+  } catch (error) {
+    console.error('[BookCreate] Metadata enrichment failed:', error);
+    return bookData;
+  }
+};
+
+const maybeApplyTextractExtraction = async (data, bookData) => {
+  if (!isTextractFlow(data)) return bookData;
+  try {
+    console.log('[BookCreate] Attempting to retrieve pre-extracted metadata...');
+    let extractionResult = await imageMetadataService.getExtractedMetadata(data.s3Bucket, data.s3Key);
+    if (!extractionResult) {
+      console.log('[BookCreate] No pre-extracted metadata found, running Textract extraction...');
+      extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
+    } else {
+      console.log('[BookCreate] Using pre-extracted metadata from automatic processing');
+    }
+    if (extractionResult && extractionResult.bookMetadata) {
+      const { bookMetadata, extractedText } = extractionResult;
+      console.log('[BookCreate] Textract extraction successful');
+      const isbnAssignment = assignIsbnFromMetadata(
+        bookData.isbn10,
+        bookData.isbn13,
+        bookMetadata.isbn
+      );
+      return {
+        ...bookData,
+        title: bookData.title || bookMetadata.title,
+        author: bookData.author || bookMetadata.author,
+        description: bookData.description || bookMetadata.description || extractedText.fullText || extractedText,
+        isbn10: isbnAssignment.isbn10,
+        isbn13: isbnAssignment.isbn13,
+        publisher: bookData.publisher || bookMetadata.publisher,
+        publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
+        textractExtractedText: extractedText.fullText || extractedText,
+        textractConfidence: extractionResult.confidence,
+        textractSource: bookMetadata.extractionSource,
+        textractExtractedAt: extractionResult.extractedAt,
+        isPreExtracted: extractionResult.isPreExtracted || false,
+      };
+    }
+    return bookData;
+  } catch (error) {
+    console.error('[BookCreate] Textract extraction failed:', error);
+    return bookData;
+  }
+};
+
+const validateFinalBookData = (bookData) => {
+  if (bookData.title && bookData.author) return null;
+  const missingFields = [];
+  if (!bookData.title) missingFields.push('title');
+  if (!bookData.author) missingFields.push('author');
+  return response.validationError({
+    extraction: `Could not extract required fields: ${missingFields.join(', ')}. Please provide them manually or try a different image.`
+  });
+};
+
+// end handlers

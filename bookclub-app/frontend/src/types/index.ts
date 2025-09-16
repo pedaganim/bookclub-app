@@ -26,6 +26,11 @@ export interface Book {
   language?: string;
   publisher?: string;
   metadataSource?: string;
+  // Event-driven enrichment fields (optional)
+  textractExtractedText?: string;
+  textractConfidence?: number;
+  clean_description?: string;
+  google_metadata?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
   // User name from users table

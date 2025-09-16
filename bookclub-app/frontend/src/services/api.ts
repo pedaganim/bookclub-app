@@ -115,13 +115,16 @@ class ApiService {
 
   // Book methods
   async createBook(bookData: {
-    title: string;
-    author: string;
+    title?: string;
+    author?: string;
     description?: string;
     coverImage?: string;
     status?: string;
     isbn?: string;
     enrichWithMetadata?: boolean;
+    extractFromImage?: boolean;
+    s3Bucket?: string;
+    s3Key?: string;
   }): Promise<Book> {
     const response: AxiosResponse<ApiResponse<Book>> = await this.api.post('/books', bookData);
     if (!response.data.success) {

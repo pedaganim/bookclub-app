@@ -13,6 +13,8 @@ provider:
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
+    EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'default'}
+    EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
   iam:
     role:
       statements:
@@ -66,6 +68,10 @@ provider:
             - transcribe:StartTranscriptionJob
             - transcribe:GetTranscriptionJob
             - transcribe:DeleteTranscriptionJob
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - events:PutEvents
           Resource: "*"
 
 custom:
@@ -515,6 +521,35 @@ functions:
             - prefix: book-covers/
           existing: true
 
+  # Event-driven processors
+  cleanDescription:
+    handler: src/handlers/books/cleanDescription.handler
+    events:
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'Book.TextractCompleted'
+          deadLetterQueueArn: !GetAtt CleanDescriptionDLQ.Arn
+          retryPolicy:
+            maximumRetryAttempts: 3
+
+  enrichGoogleMetadata:
+    handler: src/handlers/books/enrichGoogleMetadata.handler
+    events:
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'Book.TextractCompleted'
+          deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
+          retryPolicy:
+            maximumRetryAttempts: 3
+
 # Club-related functions
   createClub:
     handler: src/handlers/clubs/create.handler
@@ -808,6 +843,17 @@ functions:
 
 resources:
   Resources:
+    CleanDescriptionDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-clean-description-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    EnrichGoogleMetadataDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-enrich-google-metadata-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
       Type: AWS::IAM::Role

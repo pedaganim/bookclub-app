@@ -25,6 +25,13 @@ jest.mock('../../contexts/NotificationContext', () => ({
   useNotification: () => ({ addNotification: mockAddNotification }),
 }));
 
+// Mock react-router-dom to avoid requiring Router context in unit tests
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => jest.fn(),
+  Link: ({ children }: any) => <a>{children}</a>,
+  NavLink: ({ children }: any) => <a>{children}</a>,
+}), { virtual: true });
+
 describe('BrowseClubs page', () => {
   beforeEach(() => {
     jest.clearAllMocks();
