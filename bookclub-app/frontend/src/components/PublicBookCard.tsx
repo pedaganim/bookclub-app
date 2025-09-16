@@ -16,7 +16,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const [joinRequested, setJoinRequested] = React.useState(false);
   const navigateToJoin = () => {
     window.location.assign('/clubs');
-    try { history.replaceState({ openJoin: true }, ''); } catch {}
+    try { window.history.replaceState({ openJoin: true }, ''); } catch {}
   };
   const requestToJoin = async () => {
     if (!isAuthenticated) {
