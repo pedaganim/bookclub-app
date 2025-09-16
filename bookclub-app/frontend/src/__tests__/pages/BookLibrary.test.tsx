@@ -126,7 +126,7 @@ describe('BookLibrary', () => {
     await waitFor(() => {
       expect(apiService.listBooksPublic).toHaveBeenCalledWith({ 
         search: undefined, 
-        limit: 10, 
+        limit: 25, 
         nextToken: undefined 
       });
     });

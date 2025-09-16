@@ -3,6 +3,8 @@ import { BookClub } from '../types';
 import { apiService } from '../services/api';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const PAGE_SIZE_DEFAULT = 12;
 
@@ -15,6 +17,9 @@ const BrowseClubs: React.FC = () => {
   const [nextToken, setNextToken] = useState<string | undefined>(undefined);
   const [tokenStack, setTokenStack] = useState<string[]>([]); // to support Previous
   const [requestingId, setRequestingId] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
+  const { addNotification } = useNotification();
 
   const load = useCallback(async (opts?: { search?: string; limit?: number; nextToken?: string }) => {
     try {
@@ -38,6 +43,23 @@ const BrowseClubs: React.FC = () => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, pageSize]);
+
+  // Load current user's clubs to hide join option for existing memberships
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!isAuthenticated) {
+          setUserClubIds(new Set());
+          return;
+        }
+        const res = await apiService.getUserClubs();
+        const ids = new Set<string>((res.items || []).map((c: BookClub) => c.clubId));
+        setUserClubIds(ids);
+      } catch {
+        setUserClubIds(new Set());
+      }
+    })();
+  }, [isAuthenticated]);
 
   const onSearch = (q: string) => {
     setTokenStack([]);
@@ -66,13 +88,10 @@ const BrowseClubs: React.FC = () => {
     try {
       setRequestingId(club.clubId);
       const res = await apiService.requestClubJoin(club.clubId);
-      if (res.status === 'pending') {
-        alert('Request sent. An admin will review your request.');
-      } else {
-        alert('Joined club!');
-      }
+      // Always show request sent to keep messaging consistent
+      addNotification('success', 'Request sent');
     } catch (e: any) {
-      alert(e.message || 'Failed to request join');
+      addNotification('error', e.message || 'Failed to request join');
     } finally {
       setRequestingId(null);
     }
@@ -105,6 +124,9 @@ const BrowseClubs: React.FC = () => {
                   {club.isPrivate && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">Private</span>
                   )}
+                  {userClubIds.has(club.clubId) && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Member</span>
+                  )}
                 </div>
                 {club.description && (
                   <p className="text-sm text-gray-600 mt-1 line-clamp-3">{club.description}</p>
@@ -113,13 +135,15 @@ const BrowseClubs: React.FC = () => {
               </div>
             </div>
             <div className="mt-4">
-              <button
-                onClick={() => handleRequestJoin(club)}
-                disabled={requestingId === club.clubId}
-                className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-              >
-                {club.isPrivate ? 'Request to Join' : 'Request to Join'}
-              </button>
+              {!userClubIds.has(club.clubId) && (
+                <button
+                  onClick={() => handleRequestJoin(club)}
+                  disabled={requestingId === club.clubId}
+                  className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                >
+                  {club.isPrivate ? 'Request to Join' : 'Request to Join'}
+                </button>
+              )}
             </div>
           </div>
         ))}

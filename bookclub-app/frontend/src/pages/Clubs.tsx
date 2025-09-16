@@ -6,7 +6,7 @@ import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
 import ManageRequestsModal from '../components/ManageRequestsModal';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 
 const Clubs: React.FC = () => {
   const [clubs, setClubs] = useState<BookClub[]>([]);
@@ -79,12 +79,42 @@ const Clubs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6 gap-2">
-          <h1 className="text-3xl font-bold text-gray-900">My Clubs</h1>
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowJoin(true)} className="px-3 py-2 text-sm bg-white border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-50">Join Club</button>
             <button onClick={() => setShowCreate(true)} className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Create Club</button>
           </div>
+        </div>
+        {/* Secondary tabs */}
+        <div className="mb-6 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+            <NavLink
+              to="/clubs"
+              end
+              className={({ isActive }) =>
+                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                  isActive
+                    ? 'border-indigo-600 text-indigo-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`
+              }
+            >
+              My Clubs
+            </NavLink>
+            <NavLink
+              to="/clubs/browse"
+              className={({ isActive }) =>
+                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                  isActive
+                    ? 'border-indigo-600 text-indigo-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`
+              }
+            >
+              Browse Clubs
+            </NavLink>
+          </nav>
         </div>
         {error && (
           <div className="mb-6 rounded-md bg-red-50 p-4">

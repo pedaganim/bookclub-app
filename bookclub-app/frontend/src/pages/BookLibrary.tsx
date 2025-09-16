@@ -11,10 +11,13 @@ const BookLibrary: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
+  // Track counts of items actually shown on each visited page to compute accurate ranges
+  const [previousPageCounts, setPreviousPageCounts] = useState<number[]>([]);
+  const [shownBeforeCurrent, setShownBeforeCurrent] = useState<number>(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const { isAuthenticated, user } = useAuth();
@@ -45,13 +48,17 @@ const BookLibrary: React.FC = () => {
       if (currentPageToken === null) {
         // If no more pages, total is just current items length
         if (!hasMore) {
-          setTotalCount(Array.isArray(response.items) ? response.items.length : 0);
+          const initial = Array.isArray(response.items) ? response.items.length : 0;
+          // apply same filter for own books if logged in
+          const initialFiltered = (isAuthenticated && user?.userId) ? filtered.length : initial;
+          setTotalCount(initialFiltered);
         } else {
           // Compute total by walking the remaining pages in the background
           const initial = Array.isArray(response.items) ? response.items.length : 0;
+          const initialFiltered = (isAuthenticated && user?.userId) ? filtered.length : initial;
           void (async () => {
             try {
-              let count = initial;
+              let count = initialFiltered;
               let tokenLocal: string | undefined = response.nextToken || undefined;
               const perPage = Math.max(pageSize, 50); // speed up counting a bit
               while (tokenLocal) {
@@ -60,7 +67,11 @@ const BookLibrary: React.FC = () => {
                   limit: perPage,
                   nextToken: tokenLocal,
                 });
-                count += Array.isArray(resp.items) ? resp.items.length : 0;
+                const batch = Array.isArray(resp.items) ? resp.items : [];
+                const batchFiltered = (isAuthenticated && user?.userId)
+                  ? batch.filter((b) => b.userId !== user.userId)
+                  : batch;
+                count += batchFiltered.length;
                 tokenLocal = resp.nextToken || undefined;
               }
               setTotalCount(count);
@@ -75,7 +86,7 @@ const BookLibrary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pageSize, currentPageToken]);
+  }, [pageSize, currentPageToken, isAuthenticated, user?.userId]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -83,6 +94,8 @@ const BookLibrary: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    setPreviousPageCounts([]);
+    setShownBeforeCurrent(0);
     setTotalCount(undefined);
     fetchBooks(query || undefined, pageSize, null);
   };
@@ -93,14 +106,18 @@ const BookLibrary: React.FC = () => {
     setPreviousTokens([]);
     setNextToken(null);
     setCurrentPageToken(null);
+    setPreviousPageCounts([]);
+    setShownBeforeCurrent(0);
     setTotalCount(undefined);
     fetchBooks(searchQuery || undefined, newPageSize, null);
   };
 
   const handleNextPage = () => {
     if (hasNextPage && nextToken) {
-      // Store current page's starting token in history for going back
+      // Store current page's starting token and count in history for going back
       setPreviousTokens(prev => [...prev, currentPageToken]);
+      setPreviousPageCounts(prev => [...prev, books.length]);
+      setShownBeforeCurrent(prev => prev + books.length);
       setCurrentPageToken(nextToken);
       fetchBooks(searchQuery || undefined, pageSize, nextToken);
     }
@@ -113,6 +130,11 @@ const BookLibrary: React.FC = () => {
       const poppedToken = newPreviousTokens.pop();
       const previousPageToken = poppedToken !== undefined ? poppedToken : null;
       setPreviousTokens(newPreviousTokens);
+      // Adjust shown count using the count stack
+      const newCounts = [...previousPageCounts];
+      const lastCount = newCounts.pop() || 0;
+      setPreviousPageCounts(newCounts);
+      setShownBeforeCurrent(prev => Math.max(0, prev - lastCount));
       setCurrentPageToken(previousPageToken);
       
       fetchBooks(searchQuery || undefined, pageSize, previousPageToken);
@@ -176,7 +198,7 @@ const BookLibrary: React.FC = () => {
             currentItemsCount={books.length}
             isLoading={loading}
             totalCount={totalCount}
-            startIndex={(previousTokens.length * pageSize) + (books.length ? 1 : 0)}
+            startIndex={shownBeforeCurrent + (books.length ? 1 : 0)}
           />
         </div>
 
@@ -228,7 +250,7 @@ const BookLibrary: React.FC = () => {
                 currentItemsCount={books.length}
                 isLoading={loading}
                 totalCount={totalCount}
-                startIndex={(previousTokens.length * pageSize) + (books.length ? 1 : 0)}
+                startIndex={shownBeforeCurrent + (books.length ? 1 : 0)}
               />
             </div>
           </>

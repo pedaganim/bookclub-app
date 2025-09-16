@@ -14,6 +14,17 @@ jest.mock('../../services/api', () => ({
 
 const { apiService } = require('../../services/api');
 
+// Mock AuthContext
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ isAuthenticated: true, user: { userId: 'user-1', name: 'Tester' } }),
+}));
+
+// Mock NotificationContext
+const mockAddNotification = jest.fn();
+jest.mock('../../contexts/NotificationContext', () => ({
+  useNotification: () => ({ addNotification: mockAddNotification }),
+}));
+
 describe('BrowseClubs page', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -95,9 +106,6 @@ describe('BrowseClubs page', () => {
     ] });
     (apiService.requestClubJoin as jest.Mock).mockResolvedValue({ status: 'pending' });
 
-    // mock window.alert
-    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
     render(<BrowseClubs />);
 
     await waitFor(() => {
@@ -108,9 +116,7 @@ describe('BrowseClubs page', () => {
 
     await waitFor(() => {
       expect(apiService.requestClubJoin).toHaveBeenCalledWith('c1');
-      expect(alertSpy).toHaveBeenCalled();
+      expect(mockAddNotification).toHaveBeenCalledWith('success', 'Request sent');
     });
-
-    alertSpy.mockRestore();
   });
 });

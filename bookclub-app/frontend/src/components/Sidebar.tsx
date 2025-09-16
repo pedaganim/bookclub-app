@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
           to="/clubs"
           className={({ isActive }) => `${baseLink} ${isActive ? active : inactive}`}
         >
-          My Clubs
+          Clubs
         </NavLink>
         <NavLink
           to="/messages"
