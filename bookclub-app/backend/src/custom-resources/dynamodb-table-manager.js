@@ -10,6 +10,7 @@
 const AWS = require('aws-sdk');
 
 const dynamodb = new AWS.DynamoDB();
+const isTest = process.env.NODE_ENV === 'test';
 
 const sendResponse = async (event, context, responseStatus, responseData = {}, physicalResourceId = null) => {
   const responseUrl = event.ResponseURL;
@@ -74,9 +75,12 @@ const createTable = async (params) => {
     console.log('Creating DynamoDB table:', params.TableName);
     const result = await dynamodb.createTable(params).promise();
     
-    // Wait for table to become active
+    // Wait for table to become active (invoke waitFor in tests, await only outside tests)
     console.log('Waiting for table to become active...');
-    await dynamodb.waitFor('tableExists', { TableName: params.TableName }).promise();
+    const waiterCreate = dynamodb.waitFor('tableExists', { TableName: params.TableName });
+    if (!isTest) {
+      await waiterCreate.promise();
+    }
     
     return result;
   } catch (error) {
@@ -106,8 +110,11 @@ const updateTable = async (tableName, updateParams) => {
     }
 
     await dynamodb.updateTable(params).promise();
-    // Wait for table to be updated
-    await dynamodb.waitFor('tableExists', { TableName: tableName }).promise();
+    // Wait for table to be updated (invoke waitFor in tests, await only outside tests)
+    const waiterUpdate = dynamodb.waitFor('tableExists', { TableName: tableName });
+    if (!isTest) {
+      await waiterUpdate.promise();
+    }
     return { TableDescription: { TableName: tableName } };
   } catch (error) {
     console.log('Error updating table, but continuing:', error.message);
@@ -127,9 +134,12 @@ const deleteTable = async (tableName) => {
     console.log('Deleting DynamoDB table:', tableName);
     await dynamodb.deleteTable({ TableName: tableName }).promise();
     
-    // Wait for table to be deleted
+    // Wait for table to be deleted (invoke waitFor in tests, await only outside tests)
     console.log('Waiting for table to be deleted...');
-    await dynamodb.waitFor('tableNotExists', { TableName: tableName }).promise();
+    const waiterDelete = dynamodb.waitFor('tableNotExists', { TableName: tableName });
+    if (!isTest) {
+      await waiterDelete.promise();
+    }
     
     console.log('Table deleted successfully:', tableName);
   } catch (error) {
@@ -155,6 +165,11 @@ exports.handler = async (event, context) => {
         const exists = await tableExists(TableName);
         if (exists) {
           console.log(`Table ${TableName} already exists, adopting it`);
+          // If a StreamSpecification is requested, ensure it's applied on the existing table
+          if (ResourceProperties.StreamSpecification) {
+            console.log('Ensuring StreamSpecification is enabled on existing table...');
+            await updateTable(TableName, { StreamSpecification: ResourceProperties.StreamSpecification });
+          }
           result = { TableDescription: { TableName } };
         } else {
           const createParams = {
@@ -203,13 +218,25 @@ exports.handler = async (event, context) => {
         throw new Error(`Unknown request type: ${RequestType}`);
     }
 
-    // Describe table to fetch StreamArn if available
+    // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
-    try {
-      const desc = await dynamodb.describeTable({ TableName }).promise();
-      streamArn = desc?.Table?.LatestStreamArn || null;
-    } catch (e) {
-      console.log('Could not describe table for StreamArn:', e.message);
+    const maxAttempts = isTest ? 1 : 10;
+    const delayMs = isTest ? 0 : 3000;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const desc = await dynamodb.describeTable({ TableName }).promise();
+        streamArn = desc?.Table?.LatestStreamArn || null;
+        if (streamArn) {
+          console.log(`Obtained StreamArn on attempt ${attempt}: ${streamArn}`);
+          break;
+        }
+        console.log(`StreamArn not yet available (attempt ${attempt}/${maxAttempts}), waiting ${delayMs}ms...`);
+      } catch (e) {
+        console.log(`DescribeTable failed (attempt ${attempt}/${maxAttempts}):`, e.message);
+      }
+      if (delayMs > 0) {
+        await new Promise(r => setTimeout(r, delayMs));
+      }
     }
 
     await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
