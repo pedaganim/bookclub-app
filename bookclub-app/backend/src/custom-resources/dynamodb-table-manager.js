@@ -220,8 +220,9 @@ exports.handler = async (event, context) => {
 
     // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
-    const maxAttempts = isTest ? 1 : 10;
-    const delayMs = isTest ? 0 : 3000;
+    const wantStream = !!ResourceProperties.StreamSpecification?.StreamEnabled;
+    const maxAttempts = isTest ? 1 : (wantStream ? 20 : 10);
+    const delayMs = isTest ? 0 : 5000;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const desc = await dynamodb.describeTable({ TableName }).promise();
@@ -239,6 +240,9 @@ exports.handler = async (event, context) => {
       }
     }
 
+    if (wantStream && !streamArn && !isTest) {
+      throw new Error('StreamArn not available after enabling streams');
+    }
     await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
   } catch (error) {
     console.error('Error:', error);
