@@ -5,12 +5,20 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface PublicBookCardProps {
   book: Book;
+  isMemberOfBookClub?: boolean; // default true; when false and book has clubId, show Join Club
 }
 
-const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
+const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClub = true }) => {
   const [sending, setSending] = React.useState(false);
   const notificationCtx = React.useContext(NotificationContext);
   const { isAuthenticated, user } = useAuth();
+  const navigateToJoin = () => {
+    window.location.assign('/clubs');
+    // We also set navigation state for React Router consumers via history API when available
+    try {
+      history.replaceState({ openJoin: true }, '');
+    } catch {}
+  };
   // Function to format description text properly
   const formatDescription = (text?: string) => {
     if (!text) return '';
@@ -107,6 +115,31 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book }) => {
         
         {/* Borrow action */}
         {(() => {
+          // If the book belongs to a club and the viewer is not a member, show Join Club
+          if (book.clubId && !isMemberOfBookClub) {
+            const label = book.clubName ? `Join ${book.clubName}` : 'Join Club';
+            return (
+              <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
+                <button
+                  type="button"
+                  className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                  title={label}
+                  onClick={navigateToJoin}
+                  disabled={sending}
+                >
+                  {label}
+                </button>
+                {book.userId && (
+                  <a 
+                    href={`/users/${book.userId}`} 
+                    className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+                  >
+                    View owner profile
+                  </a>
+                )}
+              </div>
+            );
+          }
           // Hide borrow button if this is the current user's own book
           try {
             const savedUser = localStorage.getItem('user');

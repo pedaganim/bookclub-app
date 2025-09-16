@@ -30,6 +30,10 @@ export interface Book {
   updatedAt: string;
   // User name from users table
   userName?: string;
+  // Optional club context for the book (if applicable)
+  clubId?: string;
+  clubName?: string;
+  clubIsPrivate?: boolean;
 }
 
 export interface BookMetadata {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Book } from '../types';
+import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
+import { useAuth } from '../contexts/AuthContext';
 
 const BookLibrary: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -16,6 +17,9 @@ const BookLibrary: React.FC = () => {
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
+  const { isAuthenticated, user } = useAuth();
+  const [userClubs, setUserClubs] = useState<BookClub[]>([]);
+  const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
@@ -27,7 +31,12 @@ const BookLibrary: React.FC = () => {
         limit: currentPageSize || pageSize,
         nextToken: token || undefined 
       });
-      setBooks(Array.isArray(response.items) ? response.items : []);
+      const items = Array.isArray(response.items) ? response.items : [];
+      // If logged in, hide own books from the public library view
+      const filtered = (isAuthenticated && user?.userId)
+        ? items.filter((b) => b.userId !== user.userId)
+        : items;
+      setBooks(filtered);
       const hasMore = !!response.nextToken;
       setHasNextPage(hasMore);
       setNextToken(response.nextToken || null);
@@ -114,6 +123,26 @@ const BookLibrary: React.FC = () => {
     fetchBooks();
   }, [fetchBooks]);
 
+  // Load user's clubs to determine membership for Join vs Borrow action
+  useEffect(() => {
+    (async () => {
+      if (!isAuthenticated) {
+        setUserClubs([]);
+        setUserClubIdSet(new Set());
+        return;
+      }
+      try {
+        const res = await apiService.getUserClubs();
+        const items = res.items || [];
+        setUserClubs(items);
+        setUserClubIdSet(new Set(items.map((c) => c.clubId)));
+      } catch {
+        setUserClubs([]);
+        setUserClubIdSet(new Set());
+      }
+    })();
+  }, [isAuthenticated]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -129,7 +158,7 @@ const BookLibrary: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Your Library</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Library</h1>
           <p className="text-base sm:text-lg text-gray-600">
             Discover books shared by our community
           </p>
@@ -182,6 +211,7 @@ const BookLibrary: React.FC = () => {
                 <PublicBookCard
                   key={book.bookId}
                   book={book}
+                  isMemberOfBookClub={book.clubId ? userClubIdSet.has(book.clubId) : true}
                 />
               ))}
             </div>

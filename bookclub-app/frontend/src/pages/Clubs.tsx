@@ -4,6 +4,8 @@ import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
+import JoinClubModal from '../components/JoinClubModal';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Clubs: React.FC = () => {
   const [clubs, setClubs] = useState<BookClub[]>([]);
@@ -12,6 +14,9 @@ const Clubs: React.FC = () => {
   const { user } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
+  const [showJoin, setShowJoin] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const load = async () => {
     try {
@@ -27,6 +32,16 @@ const Clubs: React.FC = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Open Join modal if requested via navigation state
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.openJoin) {
+      setShowJoin(true);
+      // clear the state so it doesn't persist on refresh/back
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const isCreator = (club: BookClub) => user?.userId && club.createdBy === user.userId;
 
@@ -60,9 +75,12 @@ const Clubs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-2">
           <h1 className="text-3xl font-bold text-gray-900">My Clubs</h1>
-          <button onClick={() => setShowCreate(true)} className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Create Club</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowJoin(true)} className="px-3 py-2 text-sm bg-white border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-50">Join Club</button>
+            <button onClick={() => setShowCreate(true)} className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Create Club</button>
+          </div>
         </div>
         {error && (
           <div className="mb-6 rounded-md bg-red-50 p-4">
@@ -109,6 +127,13 @@ const Clubs: React.FC = () => {
           <CreateClubModal
             onClose={() => setShowCreate(false)}
             onClubCreated={(club) => { setClubs(prev => [club, ...prev]); setShowCreate(false); }}
+          />
+        )}
+
+        {showJoin && (
+          <JoinClubModal
+            onClose={() => setShowJoin(false)}
+            onClubJoined={async (club) => { setShowJoin(false); await load(); }}
           />
         )}
 
