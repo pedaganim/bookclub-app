@@ -12,12 +12,31 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const [sending, setSending] = React.useState(false);
   const notificationCtx = React.useContext(NotificationContext);
   const { isAuthenticated, user } = useAuth();
+  const [requestingJoin, setRequestingJoin] = React.useState(false);
+  const [joinRequested, setJoinRequested] = React.useState(false);
   const navigateToJoin = () => {
     window.location.assign('/clubs');
-    // We also set navigation state for React Router consumers via history API when available
+    try { history.replaceState({ openJoin: true }, ''); } catch {}
+  };
+  const requestToJoin = async () => {
+    if (!isAuthenticated) {
+      window.location.assign('/login');
+      return;
+    }
+    if (!book.clubId) return;
     try {
-      history.replaceState({ openJoin: true }, '');
-    } catch {}
+      setRequestingJoin(true);
+      const { apiService } = await import('../services/api');
+      const res = await apiService.requestClubJoin(book.clubId);
+      if (res.status === 'pending' || res.status === 'active') {
+        setJoinRequested(true);
+        notificationCtx?.addNotification('success', res.status === 'active' ? 'Joined club!' : 'Request to join sent');
+      }
+    } catch (e) {
+      notificationCtx?.addNotification('error', 'Could not request to join club');
+    } finally {
+      setRequestingJoin(false);
+    }
   };
   // Function to format description text properly
   const formatDescription = (text?: string) => {
@@ -117,18 +136,31 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
         {(() => {
           // If the book belongs to a club and the viewer is not a member, show Join Club
           if (book.clubId && !isMemberOfBookClub) {
-            const label = book.clubName ? `Join ${book.clubName}` : 'Join Club';
+            const joinLabel = book.clubName ? `Join ${book.clubName}` : 'Join Club';
+            const isPrivateClub = !!book.clubIsPrivate;
             return (
               <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
-                <button
-                  type="button"
-                  className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                  title={label}
-                  onClick={navigateToJoin}
-                  disabled={sending}
-                >
-                  {label}
-                </button>
+                {isPrivateClub ? (
+                  <button
+                    type="button"
+                    className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${requestingJoin || joinRequested ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                    title={joinRequested ? 'Request sent' : 'Request to Join'}
+                    onClick={requestToJoin}
+                    disabled={requestingJoin || joinRequested}
+                  >
+                    {joinRequested ? 'Requested' : 'Request to Join'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                    title={joinLabel}
+                    onClick={navigateToJoin}
+                    disabled={sending}
+                  >
+                    {joinLabel}
+                  </button>
+                )}
                 {book.userId && (
                   <a 
                     href={`/users/${book.userId}`} 

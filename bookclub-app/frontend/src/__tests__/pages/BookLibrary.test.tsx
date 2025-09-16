@@ -11,6 +11,17 @@ jest.mock('../../services/api', () => ({
   },
 }));
 
+// Mock AuthContext so tests don't require wrapping in provider
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ isAuthenticated: false, user: null }),
+}));
+
+// Provide a virtual mock for react-router-dom to avoid requiring the real router in unit tests
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => jest.fn(),
+  Link: ({ children }: any) => <a>{children}</a>,
+}), { virtual: true });
+
 // Mock the PublicBookCard component to simplify testing
 jest.mock('../../components/PublicBookCard', () => {
   return function MockPublicBookCard({ book }: { book: any }) {
@@ -42,7 +53,7 @@ describe('BookLibrary', () => {
     render(<BookLibrary />);
     
     await waitFor(() => {
-      expect(screen.getByText('Your Library')).toBeInTheDocument();
+      expect(screen.getByText('Library')).toBeInTheDocument();
     });
     expect(screen.getByText('Discover books shared by our community')).toBeInTheDocument();
   });

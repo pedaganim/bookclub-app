@@ -109,6 +109,7 @@ export interface BookClub {
   // Added when user is a member
   userRole?: 'admin' | 'member';
   joinedAt?: string;
+  userStatus?: 'active' | 'pending';
 }
 
 export interface BookClubMember {

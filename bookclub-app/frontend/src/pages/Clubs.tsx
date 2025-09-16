@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
+import ManageRequestsModal from '../components/ManageRequestsModal';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Clubs: React.FC = () => {
@@ -15,6 +16,7 @@ const Clubs: React.FC = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
   const [showJoin, setShowJoin] = useState(false);
+  const [manageClubId, setManageClubId] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -44,6 +46,8 @@ const Clubs: React.FC = () => {
   }, [location.state, location.pathname, navigate]);
 
   const isCreator = (club: BookClub) => user?.userId && club.createdBy === user.userId;
+  const isAdmin = (club: BookClub) => club.userRole === 'admin' || isCreator(club);
+  const isPending = (club: BookClub) => club.userStatus === 'pending';
 
   const handleDelete = async (club: BookClub) => {
     if (!isCreator(club)) return;
@@ -103,6 +107,9 @@ const Clubs: React.FC = () => {
                       {club.isPrivate && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">Private</span>
                       )}
+                      {isPending(club) && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Pending</span>
+                      )}
                     </div>
                     {club.description && (
                       <p className="text-sm text-gray-600 mt-1">{club.description}</p>
@@ -110,10 +117,11 @@ const Clubs: React.FC = () => {
                     <div className="text-sm text-gray-500 mt-1">{club.location}</div>
                   </div>
                   <div className="flex gap-2">
-                    {isCreator(club) && (
+                    {isAdmin(club) && !isPending(club) && (
                       <>
                         <button onClick={() => handleEdit(club)} className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">Edit</button>
                         <button onClick={() => handleDelete(club)} className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">Delete</button>
+                        <button onClick={() => setManageClubId(club.clubId)} className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100">Manage Requests</button>
                       </>
                     )}
                   </div>
@@ -147,6 +155,13 @@ const Clubs: React.FC = () => {
               setClubs(prev => prev.map(c => (c.clubId === current.clubId ? updated : c)));
               setEditingClub(null);
             }}
+          />
+        )}
+
+        {manageClubId && (
+          <ManageRequestsModal
+            clubId={manageClubId}
+            onClose={() => setManageClubId(null)}
           />
         )}
       </div>

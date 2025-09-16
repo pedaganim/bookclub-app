@@ -37,30 +37,6 @@ class Book {
       return book;
     }
 
-  static async enrichBooksWithClubInfo(books) {
-    if (!books || books.length === 0) return books;
-    // Collect distinct clubIds present on books
-    const clubIds = [...new Set(books.map((b) => b.clubId).filter(Boolean))];
-    if (clubIds.length === 0) return books;
-    const BookClub = require('./bookclub');
-    const clubMap = {};
-    await Promise.all(clubIds.map(async (clubId) => {
-      try {
-        const club = await BookClub.getById(clubId);
-        if (club) {
-          clubMap[clubId] = { name: club.name, isPrivate: !!club.isPrivate };
-        }
-      } catch (e) {
-        // ignore failures; leave without club info
-      }
-    }));
-    return books.map((b) => (
-      b && b.clubId && clubMap[b.clubId]
-        ? { ...b, clubName: clubMap[b.clubId].name, clubIsPrivate: clubMap[b.clubId].isPrivate }
-        : b
-    ));
-  }
-
     await dynamoDb.put(getTableName('books'), book);
     return book;
   }

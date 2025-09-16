@@ -1,0 +1,157 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BookClub } from '../types';
+import { apiService } from '../services/api';
+import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
+
+const PAGE_SIZE_DEFAULT = 12;
+
+const BrowseClubs: React.FC = () => {
+  const [clubs, setClubs] = useState<BookClub[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
+  const [nextToken, setNextToken] = useState<string | undefined>(undefined);
+  const [tokenStack, setTokenStack] = useState<string[]>([]); // to support Previous
+  const [requestingId, setRequestingId] = useState<string | null>(null);
+
+  const load = useCallback(async (opts?: { search?: string; limit?: number; nextToken?: string }) => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await apiService.browseClubs({
+        search: opts?.search ?? search,
+        limit: opts?.limit ?? pageSize,
+        nextToken: opts?.nextToken,
+      });
+      setClubs(res.items || []);
+      setNextToken(res.nextToken);
+    } catch (e: any) {
+      setError(e.message || 'Failed to browse clubs');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, pageSize]);
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, pageSize]);
+
+  const onSearch = (q: string) => {
+    setTokenStack([]);
+    setNextToken(undefined);
+    setSearch(q);
+  };
+
+  const handleNext = async () => {
+    if (!nextToken) return;
+    setTokenStack(prev => [...prev, nextToken]);
+    await load({ nextToken, search, limit: pageSize });
+  };
+
+  const handlePrevious = async () => {
+    if (tokenStack.length === 0) return;
+    const newStack = [...tokenStack];
+    const prevToken = newStack.pop();
+    setTokenStack(newStack);
+    await load({ nextToken: prevToken, search, limit: pageSize });
+  };
+
+  const hasPrevious = tokenStack.length > 0;
+  const hasNext = Boolean(nextToken);
+
+  const handleRequestJoin = async (club: BookClub) => {
+    try {
+      setRequestingId(club.clubId);
+      const res = await apiService.requestClubJoin(club.clubId);
+      if (res.status === 'pending') {
+        alert('Request sent. An admin will review your request.');
+      } else {
+        alert('Joined club!');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Failed to request join');
+    } finally {
+      setRequestingId(null);
+    }
+  };
+
+  const content = useMemo(() => {
+    if (loading) {
+      return (
+        <div className="flex justify-center py-12 text-gray-600">Loading…</div>
+      );
+    }
+    if (error) {
+      return (
+        <div className="rounded bg-red-50 text-red-700 p-3">{error}</div>
+      );
+    }
+    if (!clubs || clubs.length === 0) {
+      return (
+        <div className="py-8 text-gray-600">No clubs found.</div>
+      );
+    }
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {clubs.map((club) => (
+          <div key={club.clubId} className="bg-white rounded-lg shadow p-4 border border-gray-200">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">{club.name}</h3>
+                  {club.isPrivate && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">Private</span>
+                  )}
+                </div>
+                {club.description && (
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-3">{club.description}</p>
+                )}
+                <div className="text-xs text-gray-500 mt-1">{club.location}</div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => handleRequestJoin(club)}
+                disabled={requestingId === club.clubId}
+                className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+              >
+                {club.isPrivate ? 'Request to Join' : 'Request to Join'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }, [loading, error, clubs, requestingId]);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Browse Clubs</h1>
+        </div>
+        <SearchBar onSearch={onSearch} placeholder="Search clubs by name, description, location…" className="mb-4" />
+
+        {content}
+
+        <div className="mt-6">
+          <Pagination
+            pageSize={pageSize}
+            onPageSizeChange={(size) => setPageSize(size)}
+            hasNextPage={hasNext}
+            hasPreviousPage={hasPrevious}
+            onNextPage={handleNext}
+            onPreviousPage={handlePrevious}
+            currentItemsCount={clubs?.length || 0}
+            isLoading={loading}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BrowseClubs;
