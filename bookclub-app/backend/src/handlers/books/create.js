@@ -43,11 +43,10 @@ module.exports.handler = async (event) => {
     const initialValidationError = validateInitialInput(data, isExtractingFromImage);
     if (initialValidationError) return initialValidationError;
 
-    let bookData = buildInitialBookData(data);
-    bookData = await maybeEnrichWithMetadata(data, bookData);
-    bookData = await maybeApplyTextractExtraction(data, bookData);
+    // Build minimal book data only; do NOT enrich here. All enrichment is deferred to later events.
+    const bookData = buildInitialBookData(data);
 
-    const finalValidationError = validateFinalBookData(bookData);
+    const finalValidationError = validateFinalBookData(bookData, isExtractingFromImage);
     if (finalValidationError) return finalValidationError;
 
     const created = await Book.create(bookData, userId);
@@ -74,6 +73,7 @@ const parseBody = (event) => {
 const isTextractFlow = (data) => Boolean(data.extractFromImage && data.s3Bucket && data.s3Key);
 
 const validateInitialInput = (data, isExtracting) => {
+  // When extracting from image, allow minimal payload (no title/author required)
   if (!isExtracting && (!data.title || !data.author)) {
     return response.validationError({
       title: data.title ? undefined : 'Title is required',
@@ -92,79 +92,15 @@ const buildInitialBookData = (data) => ({
   status: data.status,
 });
 
-const maybeEnrichWithMetadata = async (data, bookData) => {
-  if (!(data.enrichWithMetadata || data.isbn)) return bookData;
-  try {
-    console.log('[BookCreate] Attempting metadata enrichment...');
-    const metadata = await bookMetadataService.searchBookMetadata({
-      isbn: data.isbn,
-      title: data.title,
-      author: data.author,
-    });
-    if (!metadata) return bookData;
-    console.log('[BookCreate] Metadata found, enriching book data');
-    return {
-      ...bookData,
-      description: bookData.description || metadata.description,
-      coverImage: bookData.coverImage || metadata.thumbnail,
-      isbn10: metadata.isbn10,
-      isbn13: metadata.isbn13,
-      publishedDate: metadata.publishedDate,
-      pageCount: metadata.pageCount,
-      categories: metadata.categories,
-      language: metadata.language,
-      publisher: metadata.publisher,
-      metadataSource: metadata.source,
-    };
-  } catch (error) {
-    console.error('[BookCreate] Metadata enrichment failed:', error);
-    return bookData;
-  }
-};
+// Enrichment removed from create handler to ensure minimal creation only.
+const maybeEnrichWithMetadata = async (_data, bookData) => bookData;
 
-const maybeApplyTextractExtraction = async (data, bookData) => {
-  if (!isTextractFlow(data)) return bookData;
-  try {
-    console.log('[BookCreate] Attempting to retrieve pre-extracted metadata...');
-    let extractionResult = await imageMetadataService.getExtractedMetadata(data.s3Bucket, data.s3Key);
-    if (!extractionResult) {
-      console.log('[BookCreate] No pre-extracted metadata found, running Textract extraction...');
-      extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
-    } else {
-      console.log('[BookCreate] Using pre-extracted metadata from automatic processing');
-    }
-    if (extractionResult && extractionResult.bookMetadata) {
-      const { bookMetadata, extractedText } = extractionResult;
-      console.log('[BookCreate] Textract extraction successful');
-      const isbnAssignment = assignIsbnFromMetadata(
-        bookData.isbn10,
-        bookData.isbn13,
-        bookMetadata.isbn
-      );
-      return {
-        ...bookData,
-        title: bookData.title || bookMetadata.title,
-        author: bookData.author || bookMetadata.author,
-        description: bookData.description || bookMetadata.description || extractedText.fullText || extractedText,
-        isbn10: isbnAssignment.isbn10,
-        isbn13: isbnAssignment.isbn13,
-        publisher: bookData.publisher || bookMetadata.publisher,
-        publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
-        textractExtractedText: extractedText.fullText || extractedText,
-        textractConfidence: extractionResult.confidence,
-        textractSource: bookMetadata.extractionSource,
-        textractExtractedAt: extractionResult.extractedAt,
-        isPreExtracted: extractionResult.isPreExtracted || false,
-      };
-    }
-    return bookData;
-  } catch (error) {
-    console.error('[BookCreate] Textract extraction failed:', error);
-    return bookData;
-  }
-};
+// Textract extraction removed from create handler to defer enrichment to later events.
+const maybeApplyTextractExtraction = async (_data, bookData) => bookData;
 
-const validateFinalBookData = (bookData) => {
+const validateFinalBookData = (bookData, isExtracting) => {
+  // When extracting from image, allow minimal creation without title/author
+  if (isExtracting) return null;
   if (bookData.title && bookData.author) return null;
   const missingFields = [];
   if (!bookData.title) missingFields.push('title');

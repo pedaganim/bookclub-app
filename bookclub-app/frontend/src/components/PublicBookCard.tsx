@@ -116,6 +116,12 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
           />
         </div>
       </Link>
+      {/* Screen-reader only "View details" control for accessibility */}
+      <div className="sr-only">
+        <Link to={`/books/${book.bookId}`}>
+          {book.title ? `View details for ${book.title}` : 'View book details'}
+        </Link>
+      </div>
       
       <div className="p-3 sm:p-4">
         {/* Description */}
