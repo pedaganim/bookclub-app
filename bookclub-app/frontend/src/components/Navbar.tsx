@@ -65,13 +65,7 @@ const Navbar: React.FC = () => {
                   to="/clubs"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  My Clubs
-                </Link>
-                <Link
-                  to="/clubs/browse"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Browse Clubs
+                  Clubs
                 </Link>
                 <MessagesLinkWithUnread />
               </>
@@ -201,14 +195,7 @@ const Navbar: React.FC = () => {
                     className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                     onClick={closeMobileMenu}
                   >
-                    My Clubs
-                  </Link>
-                  <Link
-                    to="/clubs/browse"
-                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
-                    onClick={closeMobileMenu}
-                  >
-                    Browse Clubs
+                    Clubs
                   </Link>
                   <MobileMessagesLinkWithUnread closeMobileMenu={closeMobileMenu} />
                   <Link

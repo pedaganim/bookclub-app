@@ -19,6 +19,7 @@ jest.mock('react-router-dom', () => ({
   useNavigate: () => jest.fn(),
   useLocation: () => ({ pathname: '/clubs', state: undefined }),
   Link: ({ children }: any) => <a>{children}</a>,
+  NavLink: ({ children }: any) => <a>{children}</a>,
 }), { virtual: true });
 
 // Mock AuthContext to simulate authenticated user
