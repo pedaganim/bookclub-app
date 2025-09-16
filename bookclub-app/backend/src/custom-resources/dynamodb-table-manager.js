@@ -168,6 +168,10 @@ exports.handler = async (event, context) => {
             createParams.GlobalSecondaryIndexes = GlobalSecondaryIndexes;
           }
 
+          if (ResourceProperties.StreamSpecification) {
+            createParams.StreamSpecification = ResourceProperties.StreamSpecification;
+          }
+
           result = await createTable(createParams);
           
           // Set TTL if specified
