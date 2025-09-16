@@ -92,7 +92,6 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <span className="text-gray-700 text-sm">Welcome, {user?.name}</span>
                 <Link
                   to="/profile"
                   className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"

@@ -15,6 +15,7 @@ import Clubs from './pages/Clubs';
 import BrowseClubs from './pages/BrowseClubs';
 import Messages from './pages/Messages';
 import UserProfile from './pages/UserProfile';
+import NotificationSettings from './pages/NotificationSettings';
 
 function App() {
   return (
@@ -62,19 +63,12 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/" element={<Navigate to="/library" replace />} />
                   <Route
                     path="/clubs/browse"
                     element={
                       <ProtectedRoute>
                         <BrowseClubs />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/"
-                    element={
-                      <ProtectedRoute>
-                        <Home />
                       </ProtectedRoute>
                     }
                   />
@@ -94,7 +88,15 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="*" element={<Navigate to="/" />} />
+                  <Route
+                    path="/settings/notifications"
+                    element={
+                      <ProtectedRoute>
+                        <NotificationSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<Navigate to="/library" replace />} />
                 </Routes>
               </main>
             </div>

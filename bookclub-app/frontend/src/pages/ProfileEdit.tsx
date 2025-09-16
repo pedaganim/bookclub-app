@@ -199,6 +199,22 @@ const ProfileEdit: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Notification Settings - moved under Profile */}
+      <div className="bg-white shadow rounded-lg mt-6">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Notification Settings</h3>
+          <p className="text-sm text-gray-600">Manage your email notification preferences.</p>
+        </div>
+        <div className="px-6 py-4">
+          <a
+            href="/settings/notifications"
+            className="inline-flex items-center px-4 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 text-sm font-medium"
+          >
+            Open Notification Settings
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
