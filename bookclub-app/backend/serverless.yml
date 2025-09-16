@@ -15,6 +15,8 @@ provider:
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
     EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'default'}
     EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
+    ENABLE_IMAGE_ENRICHMENT: ${env:ENABLE_IMAGE_ENRICHMENT, 'false'}
+    ENABLE_STREAM_ENRICHMENT: ${env:ENABLE_STREAM_ENRICHMENT, 'true'}
   iam:
     role:
       statements:
@@ -72,6 +74,13 @@ provider:
         - Effect: Allow
           Action:
             - events:PutEvents
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeStream
+            - dynamodb:ListStreams
+            - dynamodb:GetShardIterator
+            - dynamodb:GetRecords
           Resource: "*"
 
 custom:
@@ -532,6 +541,7 @@ functions:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
               - 'Book.TextractCompleted'
+              - 'Book.EnrichmentRequested'
           deadLetterQueueArn: !GetAtt CleanDescriptionDLQ.Arn
           retryPolicy:
             maximumRetryAttempts: 3
@@ -546,9 +556,23 @@ functions:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
               - 'Book.TextractCompleted'
+              - 'Book.EnrichmentRequested'
           deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
           retryPolicy:
             maximumRetryAttempts: 3
+
+  # DynamoDB Streams processor for Books table
+  booksStreamProcessor:
+    handler: src/handlers/books/streamProcessor.handler
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::Sub: arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:service}-books-${self:provider.stage}/stream/*
+          batchSize: 10
+          maximumBatchingWindow: 5
+          startingPosition: LATEST
+          enabled: true
 
 # Club-related functions
   createClub:
@@ -1086,6 +1110,9 @@ resources:
         KeySchema:
           - AttributeName: bookId
             KeyType: HASH
+        StreamSpecification:
+          StreamEnabled: true
+          StreamViewType: NEW_AND_OLD_IMAGES
         GlobalSecondaryIndexes:
           - IndexName: UserIdIndex
             KeySchema:

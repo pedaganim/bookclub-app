@@ -90,6 +90,9 @@ const buildInitialBookData = (data) => ({
   coverImage: data.coverImage,
   images: data.images, // Support for additional images
   status: data.status,
+  // Persist original upload location for downstream processors
+  s3Bucket: data.s3Bucket,
+  s3Key: data.s3Key,
 });
 
 // Enrichment removed from create handler to ensure minimal creation only.
