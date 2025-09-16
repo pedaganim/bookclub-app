@@ -13,6 +13,9 @@ provider:
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
+    # Default club auto-join (optional). Set one of these in the environment for your stage
+    DEFAULT_WELCOME_CLUB_ID: ${env:DEFAULT_WELCOME_CLUB_ID, ''}
+    DEFAULT_WELCOME_CLUB_INVITE_CODE: ${env:DEFAULT_WELCOME_CLUB_INVITE_CODE, ''}
   iam:
     role:
       statements:

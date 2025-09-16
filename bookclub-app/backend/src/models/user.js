@@ -4,6 +4,7 @@ const dynamoDb = require('../lib/dynamodb');
 const LocalStorage = require('../lib/local-storage');
 const AWS = require('../lib/aws-config');
 const { sendAdminNewUserNotification } = require('../lib/notification-service');
+const BookClub = require('./bookclub');
 
 // Initialize Cognito
 const cognito = new AWS.CognitoIdentityServiceProvider();
@@ -63,6 +64,8 @@ class User {
       await dynamoDb.put(getTableName('users'), user);
       // Fire-and-forget admin notification
       try { await sendAdminNewUserNotification(user); } catch (e) { /* noop */ }
+      // Auto-join default club if configured
+      try { await User._tryJoinDefaultClub(user.userId); } catch (e) { /* noop */ }
       return { ...user, password: undefined };
     } catch (error) {
       if (error.code === 'UsernameExistsException') {
@@ -199,7 +202,30 @@ class User {
     };
     await dynamoDb.put(getTableName('users'), user);
     try { await sendAdminNewUserNotification(user); } catch (e) { /* noop */ }
+    try { await User._tryJoinDefaultClub(user.userId); } catch (e) { /* noop */ }
     return user;
+  }
+
+  static async _tryJoinDefaultClub(userId) {
+    const clubIdEnv = process.env.DEFAULT_WELCOME_CLUB_ID;
+    const inviteEnv = process.env.DEFAULT_WELCOME_CLUB_INVITE_CODE;
+    try {
+      if (clubIdEnv) {
+        const already = await BookClub.isMember(clubIdEnv, userId);
+        if (!already) await BookClub.addMember(clubIdEnv, userId, 'member');
+        return;
+      }
+      if (inviteEnv) {
+        const club = await BookClub.getByInviteCode(inviteEnv);
+        if (club && club.clubId) {
+          const already = await BookClub.isMember(club.clubId, userId);
+          if (!already) await BookClub.addMember(club.clubId, userId, 'member');
+        }
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[User] Failed to auto-join default club', { userId, error: err && (err.message || String(err)) });
+    }
   }
 }
 
