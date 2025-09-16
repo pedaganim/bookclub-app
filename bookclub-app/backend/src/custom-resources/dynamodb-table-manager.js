@@ -75,10 +75,11 @@ const createTable = async (params) => {
     console.log('Creating DynamoDB table:', params.TableName);
     const result = await dynamodb.createTable(params).promise();
     
-    // Wait for table to become active
+    // Wait for table to become active (invoke waitFor in tests, await only outside tests)
+    console.log('Waiting for table to become active...');
+    const waiterCreate = dynamodb.waitFor('tableExists', { TableName: params.TableName });
     if (!isTest) {
-      console.log('Waiting for table to become active...');
-      await dynamodb.waitFor('tableExists', { TableName: params.TableName }).promise();
+      await waiterCreate.promise();
     }
     
     return result;
@@ -109,9 +110,10 @@ const updateTable = async (tableName, updateParams) => {
     }
 
     await dynamodb.updateTable(params).promise();
-    // Wait for table to be updated
+    // Wait for table to be updated (invoke waitFor in tests, await only outside tests)
+    const waiterUpdate = dynamodb.waitFor('tableExists', { TableName: tableName });
     if (!isTest) {
-      await dynamodb.waitFor('tableExists', { TableName: tableName }).promise();
+      await waiterUpdate.promise();
     }
     return { TableDescription: { TableName: tableName } };
   } catch (error) {
@@ -132,10 +134,11 @@ const deleteTable = async (tableName) => {
     console.log('Deleting DynamoDB table:', tableName);
     await dynamodb.deleteTable({ TableName: tableName }).promise();
     
-    // Wait for table to be deleted
+    // Wait for table to be deleted (invoke waitFor in tests, await only outside tests)
+    console.log('Waiting for table to be deleted...');
+    const waiterDelete = dynamodb.waitFor('tableNotExists', { TableName: tableName });
     if (!isTest) {
-      console.log('Waiting for table to be deleted...');
-      await dynamodb.waitFor('tableNotExists', { TableName: tableName }).promise();
+      await waiterDelete.promise();
     }
     
     console.log('Table deleted successfully:', tableName);
