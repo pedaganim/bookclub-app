@@ -155,6 +155,11 @@ exports.handler = async (event, context) => {
         const exists = await tableExists(TableName);
         if (exists) {
           console.log(`Table ${TableName} already exists, adopting it`);
+          // If a StreamSpecification is requested, ensure it's applied on the existing table
+          if (ResourceProperties.StreamSpecification) {
+            console.log('Ensuring StreamSpecification is enabled on existing table...');
+            await updateTable(TableName, { StreamSpecification: ResourceProperties.StreamSpecification });
+          }
           result = { TableDescription: { TableName } };
         } else {
           const createParams = {
@@ -203,13 +208,23 @@ exports.handler = async (event, context) => {
         throw new Error(`Unknown request type: ${RequestType}`);
     }
 
-    // Describe table to fetch StreamArn if available
+    // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
-    try {
-      const desc = await dynamodb.describeTable({ TableName }).promise();
-      streamArn = desc?.Table?.LatestStreamArn || null;
-    } catch (e) {
-      console.log('Could not describe table for StreamArn:', e.message);
+    const maxAttempts = 10;
+    const delayMs = 3000;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const desc = await dynamodb.describeTable({ TableName }).promise();
+        streamArn = desc?.Table?.LatestStreamArn || null;
+        if (streamArn) {
+          console.log(`Obtained StreamArn on attempt ${attempt}: ${streamArn}`);
+          break;
+        }
+        console.log(`StreamArn not yet available (attempt ${attempt}/${maxAttempts}), waiting ${delayMs}ms...`);
+      } catch (e) {
+        console.log(`DescribeTable failed (attempt ${attempt}/${maxAttempts}):`, e.message);
+      }
+      await new Promise(r => setTimeout(r, delayMs));
     }
 
     await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
