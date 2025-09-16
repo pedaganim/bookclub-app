@@ -734,6 +734,27 @@ functions:
             authorizerId:
               Ref: ApiGatewayAuthorizer
 
+  # Request to join a club (member action)
+  requestJoinClub:
+    handler: src/handlers/clubs/request.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/request
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   # Custom resource function for DynamoDB table management
   dynamoTableManager:
     handler: src/custom-resources/dynamodb-table-manager.handler
