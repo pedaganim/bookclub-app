@@ -12,6 +12,8 @@ interface PaginationProps {
   isLoading?: boolean;
   totalCount?: number;
   startIndex?: number; // 1-based start index of the current page items, if available
+  itemLabelSingular?: string;
+  itemLabelPlural?: string;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -25,6 +27,8 @@ const Pagination: React.FC<PaginationProps> = ({
   isLoading = false,
   totalCount,
   startIndex,
+  itemLabelSingular = 'item',
+  itemLabelPlural = 'items',
 }) => {
   const pageSizeOptions = [10, 25, 50, 100];
   const hasTotal = typeof totalCount === 'number';
@@ -34,6 +38,7 @@ const Pagination: React.FC<PaginationProps> = ({
   const rangeEnd = showRange
     ? (hasTotal ? Math.min(computedEnd!, totalCount as number) : computedEnd)
     : undefined;
+  const labelFor = (count: number) => (count === 1 ? itemLabelSingular : itemLabelPlural);
 
   return (
     <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
@@ -110,21 +115,21 @@ const Pagination: React.FC<PaginationProps> = ({
               </option>
             ))}
           </select>
-          <span className="text-sm text-gray-700">books per page</span>
+          <span className="text-sm text-gray-700">{itemLabelPlural} per page</span>
         </div>
 
         <div className="text-sm text-gray-700">
           {showRange ? (
             hasTotal && (rangeStart as number) <= (totalCount as number) ? (
-              <>Showing {rangeStart}-{rangeEnd} of {totalCount} books</>
+              <>Showing {rangeStart}-{rangeEnd} of {totalCount} {labelFor(totalCount as number)}</>
             ) : (
-              <>Showing {rangeStart}-{rangeEnd} books</>
+              <>Showing {rangeStart}-{rangeEnd} {labelFor(currentItemsCount)}</>
             )
           ) : (
             hasTotal ? (
-              <>Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''} of total {totalCount} book{(totalCount as number) !== 1 ? 's' : ''}</>
+              <>Showing {currentItemsCount} {labelFor(currentItemsCount)} of total {totalCount} {labelFor(totalCount as number)}</>
             ) : (
-              <>Showing {currentItemsCount} book{currentItemsCount !== 1 ? 's' : ''}</>
+              <>Showing {currentItemsCount} {labelFor(currentItemsCount)}</>
             )
           )}
         </div>
