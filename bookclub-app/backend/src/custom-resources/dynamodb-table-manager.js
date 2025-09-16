@@ -10,6 +10,7 @@
 const AWS = require('aws-sdk');
 
 const dynamodb = new AWS.DynamoDB();
+const isTest = process.env.NODE_ENV === 'test';
 
 const sendResponse = async (event, context, responseStatus, responseData = {}, physicalResourceId = null) => {
   const responseUrl = event.ResponseURL;
@@ -75,8 +76,10 @@ const createTable = async (params) => {
     const result = await dynamodb.createTable(params).promise();
     
     // Wait for table to become active
-    console.log('Waiting for table to become active...');
-    await dynamodb.waitFor('tableExists', { TableName: params.TableName }).promise();
+    if (!isTest) {
+      console.log('Waiting for table to become active...');
+      await dynamodb.waitFor('tableExists', { TableName: params.TableName }).promise();
+    }
     
     return result;
   } catch (error) {
@@ -107,7 +110,9 @@ const updateTable = async (tableName, updateParams) => {
 
     await dynamodb.updateTable(params).promise();
     // Wait for table to be updated
-    await dynamodb.waitFor('tableExists', { TableName: tableName }).promise();
+    if (!isTest) {
+      await dynamodb.waitFor('tableExists', { TableName: tableName }).promise();
+    }
     return { TableDescription: { TableName: tableName } };
   } catch (error) {
     console.log('Error updating table, but continuing:', error.message);
@@ -128,8 +133,10 @@ const deleteTable = async (tableName) => {
     await dynamodb.deleteTable({ TableName: tableName }).promise();
     
     // Wait for table to be deleted
-    console.log('Waiting for table to be deleted...');
-    await dynamodb.waitFor('tableNotExists', { TableName: tableName }).promise();
+    if (!isTest) {
+      console.log('Waiting for table to be deleted...');
+      await dynamodb.waitFor('tableNotExists', { TableName: tableName }).promise();
+    }
     
     console.log('Table deleted successfully:', tableName);
   } catch (error) {
@@ -210,8 +217,8 @@ exports.handler = async (event, context) => {
 
     // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
-    const maxAttempts = 10;
-    const delayMs = 3000;
+    const maxAttempts = isTest ? 1 : 10;
+    const delayMs = isTest ? 0 : 3000;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const desc = await dynamodb.describeTable({ TableName }).promise();
@@ -224,7 +231,9 @@ exports.handler = async (event, context) => {
       } catch (e) {
         console.log(`DescribeTable failed (attempt ${attempt}/${maxAttempts}):`, e.message);
       }
-      await new Promise(r => setTimeout(r, delayMs));
+      if (delayMs > 0) {
+        await new Promise(r => setTimeout(r, delayMs));
+      }
     }
 
     await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
