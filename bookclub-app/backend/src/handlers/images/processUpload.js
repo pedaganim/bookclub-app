@@ -1,6 +1,7 @@
 const Book = require('../../models/book');
 const textractService = require('../../lib/textract-service');
 const { DynamoDB } = require('../../lib/aws-config');
+const { publishEvent } = require('../../lib/event-bus');
 const { getTableName } = require('../../lib/table-names');
 
 // Constants
@@ -185,6 +186,19 @@ const extractAndUpdateMetadata = async (bucket, key, userId, createdBook) => {
       const cleaned = removeUndefinedFields(updatedBookData);
       await Book.update(createdBook.bookId, userId, cleaned);
       console.log(`[ImageProcessor] Updated book ${createdBook.bookId} with extracted metadata`);
+      // Emit event to trigger downstream processors
+      try {
+        await publishEvent('Book.TextractCompleted', {
+          bookId: createdBook.bookId,
+          userId,
+          s3Bucket: bucket,
+          s3Key: key,
+          hasDescription: !!cleaned.description,
+        });
+        console.log('[ImageProcessor] Published Book.TextractCompleted event');
+      } catch (e) {
+        console.error('[ImageProcessor] Failed to publish Book.TextractCompleted event:', e);
+      }
     } else {
       console.log(`[ImageProcessor] No metadata extracted for ${key}, book remains with placeholder data`);
     }
