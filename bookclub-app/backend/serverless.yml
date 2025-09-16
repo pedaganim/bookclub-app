@@ -561,18 +561,9 @@ functions:
           retryPolicy:
             maximumRetryAttempts: 3
 
-  # DynamoDB Streams processor for Books table
+  # DynamoDB Streams processor for Books table (event mapping added via Resources since table is a CustomResource)
   booksStreamProcessor:
     handler: src/handlers/books/streamProcessor.handler
-    events:
-      - stream:
-          type: dynamodb
-          arn:
-            Fn::Sub: arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:service}-books-${self:provider.stage}/stream/*
-          batchSize: 10
-          maximumBatchingWindow: 5
-          startingPosition: LATEST
-          enabled: true
 
 # Club-related functions
   createClub:
@@ -1123,9 +1114,17 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 5
               WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+
+    # Explicit EventSourceMapping to wire DynamoDB Stream to the stream processor Lambda
+    BooksTableStreamToProcessor:
+      Type: AWS::Lambda::EventSourceMapping
+      Properties:
+        EventSourceArn: !GetAtt BooksTable.StreamArn
+        FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
+        BatchSize: 10
+        MaximumBatchingWindowInSeconds: 5
+        StartingPosition: LATEST
+        Enabled: true
 
     DmConversationsTable:
       Type: AWS::CloudFormation::CustomResource

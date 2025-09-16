@@ -199,7 +199,16 @@ exports.handler = async (event, context) => {
         throw new Error(`Unknown request type: ${RequestType}`);
     }
 
-    await sendResponse(event, context, 'SUCCESS', { TableName }, TableName);
+    // Describe table to fetch StreamArn if available
+    let streamArn = null;
+    try {
+      const desc = await dynamodb.describeTable({ TableName }).promise();
+      streamArn = desc?.Table?.LatestStreamArn || null;
+    } catch (e) {
+      console.log('Could not describe table for StreamArn:', e.message);
+    }
+
+    await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
   } catch (error) {
     console.error('Error:', error);
     await sendResponse(event, context, 'FAILED', { Error: error.message });
