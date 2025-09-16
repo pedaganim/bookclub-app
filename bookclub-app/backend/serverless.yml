@@ -892,8 +892,11 @@ resources:
                     - dynamodb:CreateTable
                     - dynamodb:DeleteTable
                     - dynamodb:DescribeTable
+                    - dynamodb:UpdateTable
                     - dynamodb:UpdateTimeToLive
                     - dynamodb:DescribeTimeToLive
+                    - dynamodb:ListStreams
+                    - dynamodb:DescribeStream
                   Resource: 
                     - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-*-${self:provider.stage}
 
