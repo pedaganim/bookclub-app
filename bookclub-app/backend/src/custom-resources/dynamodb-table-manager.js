@@ -169,6 +169,10 @@ exports.handler = async (event, context) => {
           if (ResourceProperties.StreamSpecification) {
             console.log('Ensuring StreamSpecification is enabled on existing table...');
             await updateTable(TableName, { StreamSpecification: ResourceProperties.StreamSpecification });
+            // Give AWS a brief moment to attach a new StreamArn after enabling
+            if (!isTest) {
+              await new Promise(r => setTimeout(r, 5000));
+            }
           }
           result = { TableDescription: { TableName } };
         } else {
@@ -221,7 +225,7 @@ exports.handler = async (event, context) => {
     // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
     const wantStream = !!ResourceProperties.StreamSpecification?.StreamEnabled;
-    const maxAttempts = isTest ? 1 : (wantStream ? 20 : 10);
+    const maxAttempts = isTest ? 1 : (wantStream ? 60 : 12); // up to ~5 min for streams
     const delayMs = isTest ? 0 : 5000;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
