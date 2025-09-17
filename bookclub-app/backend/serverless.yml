@@ -591,6 +591,7 @@ functions:
     image: ocrWorker
     timeout: 60
     memorySize: 2048
+    architecture: x86_64
     environment:
       PYTHONUNBUFFERED: '1'
 # Club-related functions
@@ -839,6 +840,12 @@ functions:
     timeout: 300
     role: DynamoTableManagerRole
 
+  # Custom resource to ensure Event Source Mapping is enabled post-deploy
+  eventSourceMappingManager:
+    handler: src/custom-resources/event-source-mapping-manager.handler
+    timeout: 120
+    role: EventSourceMappingManagerRole
+
   # Custom resource function for Cognito IdP create-or-update
   cognitoResourceManager:
     handler: src/custom-resources/cognito-resource-manager.handler
@@ -934,6 +941,38 @@ resources:
       Properties:
         Action: lambda:InvokeFunction
         FunctionName: !Ref DynamoTableManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    # IAM role for Event Source Mapping Manager custom resource
+    EventSourceMappingManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: EventSourceMappingManagerPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - lambda:ListEventSourceMappings
+                    - lambda:UpdateEventSourceMapping
+                  Resource: '*'
+
+    # Permission for CloudFormation to invoke the event source mapping manager
+    EventSourceMappingManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref EventSourceMappingManagerLambdaFunction
         Principal: cloudformation.amazonaws.com
 
 
@@ -1156,6 +1195,16 @@ resources:
         MaximumBatchingWindowInSeconds: 5
         StartingPosition: LATEST
         Enabled: true
+
+    # Ensure mapping is enabled (reassert after any stream ARN rotation)
+    EnsureBooksStreamMappingEnabled:
+      Type: AWS::CloudFormation::CustomResource
+      Properties:
+        ServiceToken: !GetAtt EventSourceMappingManagerLambdaFunction.Arn
+        FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
+        EventSourceArn: !GetAtt BooksTable.StreamArn
+      DependsOn:
+        - BooksTableStreamToProcessor
 
     DmConversationsTable:
       Type: AWS::CloudFormation::CustomResource
