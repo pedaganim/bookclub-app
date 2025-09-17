@@ -52,14 +52,16 @@ module.exports.handler = async (event) => {
 
     await Book.update(bookId, existing.userId, update);
     // Publish post-enrichment event for downstream processors (e.g., MCP OCR)
-    try {
-      await publishEvent('Book.GoogleMetadataEnriched', {
-        bookId,
-        userId: existing.userId,
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn('[EnrichGoogleMetadata] Failed to publish GoogleMetadataEnriched:', e.message);
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        await publishEvent('Book.GoogleMetadataEnriched', {
+          bookId,
+          userId: existing.userId,
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[EnrichGoogleMetadata] Failed to publish GoogleMetadataEnriched:', e.message);
+      }
     }
     return success({ bookId, enriched: true });
   } catch (e) {
