@@ -565,6 +565,19 @@ functions:
   booksStreamProcessor:
     handler: src/handlers/books/streamProcessor.handler
 
+  # MCP analyzer: runs after Google metadata enrichment
+  mcpAnalyzeImage:
+    handler: src/handlers/books/mcpAnalyzeImage.handler
+    environment:
+      ENABLE_MCP_ANALYZER: ${env:ENABLE_MCP_ANALYZER, 'true'}
+    events:
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'Book.GoogleMetadataEnriched'
 # Club-related functions
   createClub:
     handler: src/handlers/clubs/create.handler
