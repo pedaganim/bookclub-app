@@ -59,6 +59,10 @@ module.exports.handler = async (event) => {
 
     // Build minimal book data, then optionally enrich (gated for prod; on in tests)
     let bookData = buildInitialBookData(data);
+    // Ensure a clear metadataSource is present for image-based flows
+    if (isExtractingFromImage && !bookData.metadataSource) {
+      bookData.metadataSource = 'image-upload-pending';
+    }
     bookData = await maybeEnrichWithMetadata(data, bookData);
     bookData = await maybeApplyTextractExtraction(data, bookData);
 
