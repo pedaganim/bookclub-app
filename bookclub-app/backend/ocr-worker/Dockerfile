@@ -1,5 +1,5 @@
-# Lambda Python 3.11 base image
-FROM public.ecr.aws/lambda/python:3.11
+# Lambda Python 3.10 base image (PaddlePaddle wheels are reliably available for py3.10)
+FROM public.ecr.aws/lambda/python:3.10
 
 # Install system deps (if any minimal needed). Using manylinux wheels avoids heavy system libs.
 # Install Python dependencies
