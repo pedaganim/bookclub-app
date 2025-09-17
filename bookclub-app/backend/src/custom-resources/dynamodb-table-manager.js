@@ -99,8 +99,26 @@ const updateTable = async (tableName, updateParams) => {
     const params = { TableName: tableName };
 
     if (updateParams.StreamSpecification) {
-      params.StreamSpecification = updateParams.StreamSpecification;
-      console.log('Applying StreamSpecification update:', JSON.stringify(params.StreamSpecification));
+      // Fetch current spec to avoid unnecessary updates that rotate StreamArn
+      try {
+        const desc = await dynamodb.describeTable({ TableName: tableName }).promise();
+        const current = desc?.Table?.StreamSpecification || {};
+        const desired = updateParams.StreamSpecification || {};
+        const currentEnabled = !!current.StreamEnabled;
+        const desiredEnabled = !!desired.StreamEnabled;
+        const currentView = current.StreamViewType || null;
+        const desiredView = desired.StreamViewType || null;
+        const needsChange = currentEnabled !== desiredEnabled || (desiredEnabled && currentView !== desiredView);
+        if (!needsChange) {
+          console.log('StreamSpecification already desired; skipping UpdateTable');
+        } else {
+          params.StreamSpecification = desired;
+          console.log('Applying StreamSpecification update:', JSON.stringify(params.StreamSpecification));
+        }
+      } catch (e) {
+        console.log('DescribeTable before update failed, proceeding with cautious update:', e.message);
+        params.StreamSpecification = updateParams.StreamSpecification;
+      }
     }
 
     // If nothing to update, short-circuit
@@ -167,12 +185,8 @@ exports.handler = async (event, context) => {
           console.log(`Table ${TableName} already exists, adopting it`);
           // If a StreamSpecification is requested, ensure it's applied on the existing table
           if (ResourceProperties.StreamSpecification) {
-            console.log('Ensuring StreamSpecification is enabled on existing table...');
+            console.log('Ensuring StreamSpecification is enabled on existing table (no-op if already matching)...');
             await updateTable(TableName, { StreamSpecification: ResourceProperties.StreamSpecification });
-            // Give AWS a brief moment to attach a new StreamArn after enabling
-            if (!isTest) {
-              await new Promise(r => setTimeout(r, 5000));
-            }
           }
           result = { TableDescription: { TableName } };
         } else {
