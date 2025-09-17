@@ -18,6 +18,16 @@ const BookDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
+  // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
+  const asText = (v: any): string => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    // Anything else (objects/arrays), do not render as text
+    return '';
+  };
+  const hasText = (v: any): boolean => asText(v).trim().length > 0;
+
   useEffect(() => {
     (async () => {
       try {
@@ -62,7 +72,8 @@ const BookDetails: React.FC = () => {
 
   if (!book) return null;
 
-  const cover = book.coverImage || "data:image/svg+xml,%3csvg width='300' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='300' height='400' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
+  const cover = (typeof (book.coverImage as any) === 'string' && (book.coverImage as any)) ||
+    "data:image/svg+xml,%3csvg width='300' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='300' height='400' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -78,8 +89,8 @@ const BookDetails: React.FC = () => {
               </div>
             </div>
             <div className="sm:w-2/3 mt-4 sm:mt-0">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{book.title || 'Untitled Book'}</h1>
-              <p className="text-gray-700 mb-1"><span className="font-medium">Author:</span> {book.author || 'Unknown'}</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{asText(book.title) || 'Untitled Book'}</h1>
+              <p className="text-gray-700 mb-1"><span className="font-medium">Author:</span> {asText(book.author) || 'Unknown'}</p>
               {book.userName && (
                 <p className="text-gray-700 mb-1"><span className="font-medium">Owner:</span> {book.userName}</p>
               )}
@@ -95,19 +106,25 @@ const BookDetails: React.FC = () => {
                 </p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm">
-                {book.isbn10 && (<p className="text-gray-600"><span className="font-medium">ISBN-10:</span> {book.isbn10}</p>)}
-                {book.isbn13 && (<p className="text-gray-600"><span className="font-medium">ISBN-13:</span> {book.isbn13}</p>)}
-                {book.publishedDate && (<p className="text-gray-600"><span className="font-medium">Published:</span> {book.publishedDate}</p>)}
-                {book.pageCount && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {book.pageCount}</p>)}
-                {book.language && (<p className="text-gray-600"><span className="font-medium">Language:</span> {book.language}</p>)}
-                {book.publisher && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {book.publisher}</p>)}
+                {hasText(book.isbn10) && (<p className="text-gray-600"><span className="font-medium">ISBN-10:</span> {asText(book.isbn10)}</p>)}
+                {hasText(book.isbn13) && (<p className="text-gray-600"><span className="font-medium">ISBN-13:</span> {asText(book.isbn13)}</p>)}
+                {hasText(book.publishedDate) && (<p className="text-gray-600"><span className="font-medium">Published:</span> {asText(book.publishedDate)}</p>)}
+                {hasText(book.pageCount) && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {asText(book.pageCount)}</p>)}
+                {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
+                {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
               </div>
             </div>
           </div>
 
           {/* Tabs for content sections */}
           <div className="mt-6">
-            <TabView book={book} />
+            <TabView book={{
+              ...book,
+              // Coerce fields used inside tabs to safe strings
+              description: asText(book.description) || undefined,
+              textractExtractedText: asText((book as any).textractExtractedText) || undefined,
+              clean_description: asText((book as any).clean_description) || undefined,
+            }} />
           </div>
         </div>
       </div>
