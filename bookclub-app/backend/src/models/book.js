@@ -1,9 +1,21 @@
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
-const LocalStorage = require('../lib/local-storage');
 
 const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
+
+// Lazy loader to avoid requiring local-storage in AWS Lambda
+let _LocalStorage = null;
+function LocalStorage() {
+  if (!_LocalStorage) {
+    // Require only when actually needed in offline/dev
+    // This prevents `.local-storage` mkdir attempts in Lambda runtime
+    // where the filesystem path is not writable.
+    // eslint-disable-next-line global-require
+    _LocalStorage = require('../lib/local-storage');
+  }
+  return _LocalStorage;
+}
 
 class Book {
   static async create(bookData, userId) {
@@ -33,7 +45,7 @@ class Book {
     };
 
     if (isOffline()) {
-      await LocalStorage.createBook(book);
+      await LocalStorage().createBook(book);
       return book;
     }
 
@@ -43,14 +55,14 @@ class Book {
 
   static async getById(bookId) {
     if (isOffline()) {
-      return LocalStorage.getBook(bookId);
+      return LocalStorage().getBook(bookId);
     }
     return dynamoDb.get(getTableName('books'), { bookId });
   }
 
   static async listByUser(userId, limit = 10, nextToken = null) {
     if (isOffline()) {
-      const result = await LocalStorage.listBooks(userId);
+      const result = await LocalStorage().listBooks(userId);
       // For offline mode, we'll implement simple pagination later if needed
       return {
         items: result.slice(0, limit),
@@ -85,7 +97,7 @@ class Book {
 
   static async listAll(limit = 10, nextToken = null, searchQuery = null) {
     if (isOffline()) {
-      let result = await LocalStorage.listBooks();
+      let result = await LocalStorage().listBooks();
       
       // Apply search filter if provided
       if (searchQuery) {
@@ -182,7 +194,7 @@ class Book {
     };
 
     if (isOffline()) {
-      return LocalStorage.updateBook(bookId, updateData);
+      return LocalStorage().updateBook(bookId, updateData);
     }
 
     const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } = 
@@ -213,7 +225,7 @@ class Book {
 
   static async delete(bookId, userId) {
     if (isOffline()) {
-      return LocalStorage.deleteBook(bookId);
+      return LocalStorage().deleteBook(bookId);
     }
 
     const params = {

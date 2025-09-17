@@ -3,6 +3,8 @@ const Book = require('../../models/book');
 const bookMetadataService = require('../../lib/book-metadata');
 const textractService = require('../../lib/textract-service');
 const imageMetadataService = require('../../lib/image-metadata-service');
+const { DynamoDB } = require('../../lib/aws-config');
+const { getTableName } = require('../../lib/table-names');
 
 /**
  * Helper function to assign ISBN based on extracted metadata
@@ -40,6 +42,18 @@ module.exports.handler = async (event) => {
 
     const data = parseBody(event);
     const isExtractingFromImage = isTextractFlow(data);
+    // Idempotency: if using extractFromImage with s3 info, reuse existing mapping
+    if (isExtractingFromImage && process.env.NODE_ENV !== 'test') {
+      const existingId = await getMappedBookId(data.s3Bucket, data.s3Key);
+      if (existingId) {
+        try {
+          const existing = await Book.getById(existingId);
+          if (existing) {
+            return response.success(existing, 200);
+          }
+        } catch (_) {}
+      }
+    }
     const initialValidationError = validateInitialInput(data, isExtractingFromImage);
     if (initialValidationError) return initialValidationError;
 
@@ -52,6 +66,9 @@ module.exports.handler = async (event) => {
     if (finalValidationError) return finalValidationError;
 
     const created = await Book.create(bookData, userId);
+    if (isExtractingFromImage && data.s3Bucket && data.s3Key && process.env.NODE_ENV !== 'test') {
+      await setMappedBookId(data.s3Bucket, data.s3Key, created.bookId, userId);
+    }
     return response.success(created, 201);
   } catch (error) {
     return response.error(error);
@@ -73,6 +90,35 @@ const parseBody = (event) => {
 };
 
 const isTextractFlow = (data) => Boolean(data.extractFromImage && data.s3Bucket && data.s3Key);
+
+// --- Idempotency helpers (shared pattern with image processor) ---
+const getMappedBookId = async (bucket, key) => {
+  try {
+    const dynamodb = new DynamoDB.DocumentClient();
+    const cacheKey = `bookForS3:${bucket}:${key}`;
+    const res = await dynamodb.get({ TableName: getTableName('metadata-cache'), Key: { cacheKey } }).promise();
+    return res.Item?.bookId || null;
+  } catch (e) {
+    console.warn('[BookCreate] getMappedBookId failed:', e.message);
+    return null;
+  }
+};
+
+const setMappedBookId = async (bucket, key, bookId, userId) => {
+  try {
+    const dynamodb = new DynamoDB.DocumentClient();
+    const cacheKey = `bookForS3:${bucket}:${key}`;
+    const timestamp = new Date().toISOString();
+    const ttl = Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000);
+    await dynamodb.put({
+      TableName: getTableName('metadata-cache'),
+      Item: { cacheKey, bookId, userId, s3Bucket: bucket, s3Key: key, mappedAt: timestamp, ttl },
+      ConditionExpression: 'attribute_not_exists(cacheKey)'
+    }).promise().catch(() => {});
+  } catch (e) {
+    console.warn('[BookCreate] setMappedBookId failed:', e.message);
+  }
+};
 
 const validateInitialInput = (data, isExtracting) => {
   // When extracting from image, allow minimal payload (no title/author required)
