@@ -6,6 +6,11 @@ provider:
   runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: ${self:custom.appConfig.region}
+  ecr:
+    images:
+      ocrWorker:
+        path: ocr-worker
+        file: Dockerfile
   environment:
     STAGE: ${self:provider.stage}
     COGNITO_USER_POOL_ID: !Ref UserPool
@@ -565,6 +570,29 @@ functions:
   booksStreamProcessor:
     handler: src/handlers/books/streamProcessor.handler
 
+  # MCP analyzer: runs after Google metadata enrichment
+  mcpAnalyzeImage:
+    handler: src/handlers/books/mcpAnalyzeImage.handler
+    environment:
+      ENABLE_MCP_ANALYZER: ${env:ENABLE_MCP_ANALYZER, 'true'}
+      MCP_OCR_WORKER_NAME: !Ref McpOcrWorkerLambdaFunction
+    events:
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'Book.GoogleMetadataEnriched'
+
+  # Optional OCR worker (scaffold). In production, convert this to a container image function.
+  # For now, it is defined for reference and can be deployed separately with proper dependencies.
+  mcpOcrWorker:
+    image: ocrWorker
+    timeout: 60
+    memorySize: 2048
+    environment:
+      PYTHONUNBUFFERED: '1'
 # Club-related functions
   createClub:
     handler: src/handlers/clubs/create.handler
