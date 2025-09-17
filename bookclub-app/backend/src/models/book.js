@@ -31,6 +31,9 @@ class Book {
       coverImage: bookData.coverImage || null,
       images: bookData.images || null, // Additional images beyond cover
       status: bookData.status || 'available', // available, borrowed, reading
+      // Persist original upload location for downstream processors (Textract, etc.)
+      s3Bucket: bookData.s3Bucket || null,
+      s3Key: bookData.s3Key || null,
       // Additional metadata fields (optional)
       isbn10: bookData.isbn10 || null,
       isbn13: bookData.isbn13 || null,

@@ -35,8 +35,26 @@ module.exports.handler = async (event) => {
 
       const bookId = readAttr(newImage, 'bookId');
       const userId = readAttr(newImage, 'userId');
-      const s3Bucket = readAttr(newImage, 's3Bucket');
-      const s3Key = readAttr(newImage, 's3Key');
+      let s3Bucket = readAttr(newImage, 's3Bucket');
+      let s3Key = readAttr(newImage, 's3Key');
+      // Fallback: try to derive from coverImage URL if not present on item
+      if ((!s3Bucket || !s3Key)) {
+        const coverImage = readAttr(newImage, 'coverImage');
+        // Expected format: https://<bucket>.s3.amazonaws.com/<key>
+        if (typeof coverImage === 'string') {
+          try {
+            const url = new URL(coverImage);
+            const hostMatch = url.hostname.match(/^(.*)\.s3\.amazonaws\.com$/);
+            if (hostMatch && hostMatch[1]) {
+              s3Bucket = hostMatch[1];
+              // url.pathname starts with '/'
+              s3Key = decodeURIComponent(url.pathname.replace(/^\//, ''));
+            }
+          } catch (_) {
+            // ignore parse errors
+          }
+        }
+      }
       const alreadyTextractedAt = readAttr(newImage, 'textractExtractedAt');
 
       // Idempotency/guard: if both clean_description and google_metadata exist, skip
