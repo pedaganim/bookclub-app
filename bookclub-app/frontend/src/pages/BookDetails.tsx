@@ -28,6 +28,58 @@ const BookDetails: React.FC = () => {
   };
   const hasText = (v: any): boolean => asText(v).trim().length > 0;
 
+  const renderGoogleMetadata = (meta: any) => {
+    if (!meta || typeof meta !== 'object') return null;
+    const v = (meta as any).volumeInfo || meta;
+    const title = asText(v.title);
+    const authors = Array.isArray(v.authors) ? v.authors.filter(Boolean).join(', ') : asText(v.authors);
+    const publisher = asText(v.publisher);
+    const publishedDate = asText(v.publishedDate);
+    const categories = Array.isArray(v.categories) ? v.categories.filter(Boolean).join(', ') : asText(v.categories);
+    const pageCount = typeof v.pageCount === 'number' ? String(v.pageCount) : asText(v.pageCount);
+    const language = asText(v.language);
+    const description = asText(v.description);
+    const identifiers = Array.isArray(v.industryIdentifiers)
+      ? v.industryIdentifiers
+          .map((id: any) => {
+            const type = asText(id?.type);
+            const val = asText(id?.identifier);
+            return type && val ? `${type}: ${val}` : val || '';
+          })
+          .filter(Boolean)
+          .join(' · ')
+      : '';
+
+    const rows: Array<{ label: string; value: string }> = [];
+    if (title) rows.push({ label: 'Title', value: title });
+    if (authors) rows.push({ label: 'Authors', value: authors });
+    if (publisher) rows.push({ label: 'Publisher', value: publisher });
+    if (publishedDate) rows.push({ label: 'Published', value: publishedDate });
+    if (categories) rows.push({ label: 'Categories', value: categories });
+    if (pageCount) rows.push({ label: 'Pages', value: pageCount });
+    if (language) rows.push({ label: 'Language', value: language });
+    if (identifiers) rows.push({ label: 'Identifiers', value: identifiers });
+
+    return (
+      <div className="space-y-2">
+        {rows.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            {rows.map((r, i) => (
+              <p key={i} className="text-gray-700"><span className="font-medium">{r.label}:</span> {r.value}</p>
+            ))}
+          </div>
+        )}
+        {description && (
+          <Section title="Description">{description}</Section>
+        )}
+        {/* Fallback raw JSON (collapsed view could be added later) */}
+        {!rows.length && !description && (
+          <Section title="Google Metadata (raw)"><pre className="text-xs overflow-auto">{JSON.stringify(meta, null, 2)}</pre></Section>
+        )}
+      </div>
+    );
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -116,80 +168,51 @@ const BookDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* Tabs for content sections */}
-          <div className="mt-6">
-            <TabView book={{
-              ...book,
-              // Coerce fields used inside tabs to safe strings
-              description: asText(book.description) || undefined,
-              textractExtractedText: asText((book as any).textractExtractedText) || undefined,
-              clean_description: asText((book as any).clean_description) || undefined,
-            }} />
+          {/* Inline sections (no tabs) */}
+          <div className="mt-6 space-y-4">
+            {/* Overview */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Overview</h3>
+              {hasText(book.description) ? (
+                <Section title="Description">{asText(book.description)}</Section>
+              ) : (
+                <div className="text-sm text-gray-500">No description available.</div>
+              )}
+            </div>
+
+            {/* Extracted */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Extracted</h3>
+              {hasText((book as any).textractExtractedText) ? (
+                <Section title={`Extracted Text${(book as any).textractConfidence ? ` (confidence ${(book as any).textractConfidence}%)` : ''}`}>
+                  {asText((book as any).textractExtractedText)}
+                </Section>
+              ) : (
+                <div className="text-sm text-gray-500">No extracted text available.</div>
+              )}
+            </div>
+
+            {/* Cleaned */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Cleaned</h3>
+              {hasText((book as any).clean_description) ? (
+                <Section title="Clean Description">{asText((book as any).clean_description)}</Section>
+              ) : (
+                <div className="text-sm text-gray-500">No cleaned description available.</div>
+              )}
+            </div>
+
+            {/* Google Metadata */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Metadata</h3>
+              {(book as any).google_metadata ? (
+                renderGoogleMetadata((book as any).google_metadata)
+              ) : (
+                <div className="text-sm text-gray-500">No Google metadata available.</div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-const TabView: React.FC<{ book: Book }> = ({ book }) => {
-  const tabs = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'extracted', label: 'Extracted' },
-    { key: 'clean', label: 'Cleaned' },
-    { key: 'google', label: 'Google Metadata' },
-  ] as const;
-  const [active, setActive] = React.useState<typeof tabs[number]['key']>('overview');
-  return (
-    <div>
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-          {tabs.map(t => (
-            <button
-              key={t.key}
-              type="button"
-              className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${active === t.key ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-              onClick={() => setActive(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="mt-4">
-        {active === 'overview' && (
-          <>
-            {book.description ? (
-              <Section title="Description">{book.description}</Section>
-            ) : (
-              <div className="text-sm text-gray-500">No description available.</div>
-            )}
-          </>
-        )}
-        {active === 'extracted' && (
-          book.textractExtractedText ? (
-            <Section title={`Extracted Text${book.textractConfidence ? ` (confidence ${book.textractConfidence}%)` : ''}`}>
-              {book.textractExtractedText}
-            </Section>
-          ) : (
-            <div className="text-sm text-gray-500">No extracted text available.</div>
-          )
-        )}
-        {active === 'clean' && (
-          book.clean_description ? (
-            <Section title="Clean Description">{book.clean_description}</Section>
-          ) : (
-            <div className="text-sm text-gray-500">No cleaned description available.</div>
-          )
-        )}
-        {active === 'google' && (
-          book.google_metadata ? (
-            <Section title="Google Metadata (raw)"><pre className="text-xs overflow-auto">{JSON.stringify(book.google_metadata, null, 2)}</pre></Section>
-          ) : (
-            <div className="text-sm text-gray-500">No Google metadata available.</div>
-          )
-        )}
       </div>
     </div>
   );
