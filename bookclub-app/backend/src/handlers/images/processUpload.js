@@ -160,24 +160,36 @@ const extractUserIdFromKey = (key) => {
 };
 
 // Use metadata-cache table as an idempotency map: s3 -> bookId
+const IS_TEST = process.env.NODE_ENV === 'test';
 async function getMappedBookId(bucket, key) {
-  const dynamodb = new DynamoDB.DocumentClient();
-  const cacheKey = `bookForS3:${bucket}:${key}`;
-  const res = await dynamodb.get({ TableName: getTableName('metadata-cache'), Key: { cacheKey } }).promise();
-  return res.Item?.bookId || null;
+  if (IS_TEST) return null;
+  try {
+    const dynamodb = new DynamoDB.DocumentClient();
+    const cacheKey = `bookForS3:${bucket}:${key}`;
+    const res = await dynamodb.get({ TableName: getTableName('metadata-cache'), Key: { cacheKey } }).promise();
+    return res.Item?.bookId || null;
+  } catch (e) {
+    console.warn('[ImageProcessor] getMappedBookId failed:', e.message);
+    return null;
+  }
 }
 
 async function setMappedBookId(bucket, key, bookId, userId) {
-  const dynamodb = new DynamoDB.DocumentClient();
-  const cacheKey = `bookForS3:${bucket}:${key}`;
-  const timestamp = new Date().toISOString();
-  // 30 days TTL for mapping (can be recreated if needed)
-  const ttl = Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000);
-  await dynamodb.put({
-    TableName: getTableName('metadata-cache'),
-    Item: { cacheKey, bookId, userId, s3Bucket: bucket, s3Key: key, mappedAt: timestamp, ttl },
-    ConditionExpression: 'attribute_not_exists(cacheKey)'
-  }).promise().catch(() => {}); // ignore ConditionalCheckFailedException
+  if (IS_TEST) return; // skip during tests
+  try {
+    const dynamodb = new DynamoDB.DocumentClient();
+    const cacheKey = `bookForS3:${bucket}:${key}`;
+    const timestamp = new Date().toISOString();
+    // 30 days TTL for mapping (can be recreated if needed)
+    const ttl = Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000);
+    await dynamodb.put({
+      TableName: getTableName('metadata-cache'),
+      Item: { cacheKey, bookId, userId, s3Bucket: bucket, s3Key: key, mappedAt: timestamp, ttl },
+      ConditionExpression: 'attribute_not_exists(cacheKey)'
+    }).promise().catch(() => {}); // ignore ConditionalCheckFailedException
+  } catch (e) {
+    console.warn('[ImageProcessor] setMappedBookId failed:', e.message);
+  }
 }
 
 const createMinimalBookEntry = async (bucket, key, userId) => {

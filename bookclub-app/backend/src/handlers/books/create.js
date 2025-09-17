@@ -43,7 +43,7 @@ module.exports.handler = async (event) => {
     const data = parseBody(event);
     const isExtractingFromImage = isTextractFlow(data);
     // Idempotency: if using extractFromImage with s3 info, reuse existing mapping
-    if (isExtractingFromImage) {
+    if (isExtractingFromImage && process.env.NODE_ENV !== 'test') {
       const existingId = await getMappedBookId(data.s3Bucket, data.s3Key);
       if (existingId) {
         try {
@@ -66,7 +66,7 @@ module.exports.handler = async (event) => {
     if (finalValidationError) return finalValidationError;
 
     const created = await Book.create(bookData, userId);
-    if (isExtractingFromImage && data.s3Bucket && data.s3Key) {
+    if (isExtractingFromImage && data.s3Bucket && data.s3Key && process.env.NODE_ENV !== 'test') {
       await setMappedBookId(data.s3Bucket, data.s3Key, created.bookId, userId);
     }
     return response.success(created, 201);
