@@ -159,7 +159,36 @@ const extractUserIdFromKey = (key) => {
   return parts[1];
 };
 
+// Use metadata-cache table as an idempotency map: s3 -> bookId
+async function getMappedBookId(bucket, key) {
+  const dynamodb = new DynamoDB.DocumentClient();
+  const cacheKey = `bookForS3:${bucket}:${key}`;
+  const res = await dynamodb.get({ TableName: getTableName('metadata-cache'), Key: { cacheKey } }).promise();
+  return res.Item?.bookId || null;
+}
+
+async function setMappedBookId(bucket, key, bookId, userId) {
+  const dynamodb = new DynamoDB.DocumentClient();
+  const cacheKey = `bookForS3:${bucket}:${key}`;
+  const timestamp = new Date().toISOString();
+  // 30 days TTL for mapping (can be recreated if needed)
+  const ttl = Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000);
+  await dynamodb.put({
+    TableName: getTableName('metadata-cache'),
+    Item: { cacheKey, bookId, userId, s3Bucket: bucket, s3Key: key, mappedAt: timestamp, ttl },
+    ConditionExpression: 'attribute_not_exists(cacheKey)'
+  }).promise().catch(() => {}); // ignore ConditionalCheckFailedException
+}
+
 const createMinimalBookEntry = async (bucket, key, userId) => {
+  // Check idempotent mapping first
+  const existingBookId = await getMappedBookId(bucket, key);
+  if (existingBookId) {
+    console.log(`[ImageProcessor] Found existing book mapping for ${key}: ${existingBookId}`);
+    const existing = await Book.getById(existingBookId).catch(() => null);
+    return existing || { bookId: existingBookId, userId };
+  }
+
   const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
   const bookData = {
     title: deriveBookTitleFromFilename(key),
@@ -167,8 +196,11 @@ const createMinimalBookEntry = async (bucket, key, userId) => {
     description: PROCESSING_DESCRIPTION,
     coverImage: fileUrl,
     metadataSource: METADATA_SOURCE_PENDING,
+    s3Bucket: bucket,
+    s3Key: key,
   };
   const createdBook = await Book.create(bookData, userId);
+  await setMappedBookId(bucket, key, createdBook.bookId, userId);
   console.log(`[ImageProcessor] Created book entry for uploaded image: ${createdBook.bookId} - ${key}`);
   return createdBook;
 };
