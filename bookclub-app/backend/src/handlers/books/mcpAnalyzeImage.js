@@ -26,9 +26,15 @@ module.exports.handler = async (event) => {
     if (process.env.OPENAI_API_KEY && cleanText && process.env.NODE_ENV !== 'test') {
       try {
         const prompt = `You are given a cleaned textual description of a book (from cover and metadata).\n` +
-          `Extract likely candidates for the book's title and author(s). Return strict JSON with this shape:\n` +
-          `{"title_candidates":[{"value":"string","confidence":0..1}],"author_candidates":[{"value":"string","confidence":0..1}]}` +
-          `\nFocus on short, plausible strings. Do not include subtitles in title. Combine multi-author names with comma.\n` +
+          `Extract the following in STRICT JSON (no commentary):\n` +
+          `{"title_candidates":[{"value":"string","confidence":0..1}],` +
+          `"author_candidates":[{"value":"string","confidence":0..1}],` +
+          `"categories":["string"],` +
+          `"age_group":"children|middle_grade|young_adult|adult|all_ages",` +
+          `"audience":["string"],` +
+          `"themes":["string"],` +
+          `"content_warnings":["string"]}` +
+          `\nRules:\n- Title candidates must be short and exclude subtitles.\n- Author candidates must be names (comma-separated when multiple).\n- Categories are high-level genres/taxonomy terms (3-6 items).\n- Age group must be one of the enumerated values.\n- Audience could include tags like \"parents\", \"educators\", \"romance_readers\", etc.\n- Themes capture topical ideas like \"friendship\", \"self-discovery\".\n- Content warnings capture sensitive topics if present.\n` +
           `\nCLEAN_DESCRIPTION:\n` + cleanText.slice(0, 4000);
 
         if (debugMcp) {
@@ -92,6 +98,11 @@ module.exports.handler = async (event) => {
       title_candidates: titleCandidates,
       author_candidates: authorCandidates,
       language_guess: 'en',
+      categories: Array.isArray(llmResult?.categories) ? llmResult.categories.slice(0, 10) : [],
+      age_group: typeof llmResult?.age_group === 'string' ? llmResult.age_group : null,
+      audience: Array.isArray(llmResult?.audience) ? llmResult.audience.slice(0, 10) : [],
+      themes: Array.isArray(llmResult?.themes) ? llmResult.themes.slice(0, 10) : [],
+      content_warnings: Array.isArray(llmResult?.content_warnings) ? llmResult.content_warnings.slice(0, 10) : [],
     };
 
     if (debugMcp) {

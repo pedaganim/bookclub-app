@@ -8,7 +8,7 @@ provider:
   region: ${self:custom.appConfig.region}
   ecr:
     images:
-      ocrWorker:
+      ocrworker:
         path: ocr-worker
         file: Dockerfile
   environment:
@@ -629,7 +629,7 @@ functions:
   # For now, it is defined for reference and can be deployed separately with proper dependencies.
   mcpOcrWorker:
     image:
-      name: ocrWorker
+      name: ocrworker
     timeout: 60
     memorySize: 2048
     architecture: x86_64
