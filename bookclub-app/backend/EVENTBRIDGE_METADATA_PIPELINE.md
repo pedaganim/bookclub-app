@@ -226,10 +226,13 @@ Response:
 - DynamoDB table updates
 
 ### Environment Variables
-- `EVENT_BUS_NAME`: EventBridge bus name
-- `EVENT_BUS_SOURCE`: Event source identifier
-- `ENABLE_VISION_LLM`: Toggle for LLM processing
-- `OPENAI_API_KEY`: Vision API access
+- `EVENT_BUS_NAME`: EventBridge bus name (default: 'default')
+- `EVENT_BUS_SOURCE`: Event source identifier (default: 'bookclub.app')
+- `VISION_LLM_PROVIDER`: LLM provider ('openai' or 'anthropic')
+- `OPENAI_API_KEY`: OpenAI Vision API access key (optional - falls back to mock)
+- `ANTHROPIC_API_KEY`: Anthropic Claude Vision API key (optional - falls back to mock)
+
+**Important**: All vision services gracefully degrade to mock responses when API keys are not configured, ensuring the pipeline continues to function for testing and development.
 
 ### Security
 - IAM roles and policies
