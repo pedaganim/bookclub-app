@@ -43,6 +43,9 @@ class Book {
       language: bookData.language || null,
       publisher: bookData.publisher || null,
       metadataSource: bookData.metadataSource || null,
+      // New advanced metadata column for EventBridge-triggered extraction
+      advancedMetadata: bookData.advancedMetadata || null,
+      lastMetadataExtraction: bookData.lastMetadataExtraction || null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };

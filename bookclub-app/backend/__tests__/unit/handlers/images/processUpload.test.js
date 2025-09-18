@@ -2,11 +2,13 @@ const { handler } = require('../../../../src/handlers/images/processUpload');
 const Book = require('../../../../src/models/book');
 const textractService = require('../../../../src/lib/textract-service');
 const { DynamoDB } = require('../../../../src/lib/aws-config');
+const { publishEvent } = require('../../../../src/lib/event-bus');
 
 // Mock the dependencies
 jest.mock('../../../../src/models/book');
 jest.mock('../../../../src/lib/textract-service');
 jest.mock('../../../../src/lib/aws-config');
+jest.mock('../../../../src/lib/event-bus');
 
 describe('processUpload handler', () => {
   let mockDynamoDBPut;
@@ -30,7 +32,10 @@ describe('processUpload handler', () => {
       userId: 'user123'
     });
 
-    // Mock textract service
+    // Mock event bus
+    publishEvent.mockResolvedValue({});
+
+    // Mock textract service (not needed for new EventBridge flow but keeping for compatibility)
     textractService.extractTextFromImage = jest.fn().mockResolvedValue({
       extractedText: {
         fullText: 'Sample Book Title by Sample Author',
@@ -59,7 +64,7 @@ describe('processUpload handler', () => {
     DynamoDB.DocumentClient = jest.fn().mockImplementation(() => mockDocumentClient);
   });
 
-  it('should create book entry and extract metadata for uploaded image', async () => {
+  it('should create book entry and publish EventBridge event for uploaded image', async () => {
     const event = {
       Records: [
         {
@@ -72,7 +77,14 @@ describe('processUpload handler', () => {
       ]
     };
 
-    await handler(event);
+    const result = await handler(event);
+
+    expect(result).toEqual({
+      statusCode: 200,
+      body: JSON.stringify({
+        message: 'Processed 1 image(s)'
+      })
+    });
 
     // Should create book with minimal data first
     expect(Book.create).toHaveBeenCalledWith(
@@ -86,32 +98,18 @@ describe('processUpload handler', () => {
       'user123'
     );
 
-    // Should extract metadata
-    expect(textractService.extractTextFromImage).toHaveBeenCalledWith('test-bucket', 'book-covers/user123/test-image.jpg');
+    // Should publish EventBridge event instead of direct metadata extraction
+    expect(publishEvent).toHaveBeenCalledWith('S3.ObjectCreated', {
+      bucket: 'test-bucket',
+      key: 'book-covers/user123/test-image.jpg',
+      userId: 'user123',
+      bookId: 'test-book-id',
+      eventType: 'book-cover-uploaded'
+    });
 
-    // Should update book with extracted metadata
-    expect(Book.update).toHaveBeenCalledWith(
-      'test-book-id',
-      'user123',
-      expect.objectContaining({
-        title: 'Sample Book Title',
-        author: 'Sample Author',
-        description: 'Sample description',
-        metadataSource: 'textract-auto-processed'
-      })
-    );
-
-    // Should cache metadata
-    expect(mockDynamoDBPut).toHaveBeenCalledWith(
-      expect.objectContaining({
-        TableName: 'bookclub-app-metadata-cache-dev',
-        Item: expect.objectContaining({
-          cacheKey: 'textract:test-bucket:book-covers/user123/test-image.jpg',
-          userId: 'user123',
-          confidence: 85
-        })
-      })
-    );
+    // Should NOT extract metadata directly (this is now EventBridge-triggered)
+    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
+    expect(Book.update).not.toHaveBeenCalled();
   });
 
   it('should handle non-S3 events gracefully', async () => {
@@ -190,14 +188,14 @@ describe('processUpload handler', () => {
     // Should create book
     expect(Book.create).toHaveBeenCalled();
     
-    // Should attempt metadata extraction
-    expect(textractService.extractTextFromImage).toHaveBeenCalled();
+    // Should publish EventBridge event even if textract would fail (new architecture)
+    expect(publishEvent).toHaveBeenCalled();
     
-    // Should not update book if metadata extraction fails
+    // Should NOT attempt direct metadata extraction (now EventBridge-triggered)
+    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
+    
+    // Should not update book during upload (now done by EventBridge handler)
     expect(Book.update).not.toHaveBeenCalled();
-    
-    // Should not cache metadata if extraction fails
-    expect(mockDynamoDBPut).not.toHaveBeenCalled();
   });
 
   it('should handle book creation failure gracefully', async () => {
@@ -265,11 +263,14 @@ describe('processUpload handler', () => {
       coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user456/test-image2.jpg'
     }), 'user456');
     
-    // Should extract metadata for both images
-    expect(textractService.extractTextFromImage).toHaveBeenCalledTimes(2);
+    // Should publish EventBridge events for both images
+    expect(publishEvent).toHaveBeenCalledTimes(2);
     
-    // Should update both books
-    expect(Book.update).toHaveBeenCalledTimes(2);
+    // Should NOT extract metadata directly for either image (now EventBridge-triggered)
+    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
+    
+    // Should not update books during upload (now done by EventBridge handler)
+    expect(Book.update).not.toHaveBeenCalled();
   });
 
   it('should derive meaningful titles from various filename formats', async () => {

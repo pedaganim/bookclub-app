@@ -22,6 +22,10 @@ provider:
     EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
     ENABLE_IMAGE_ENRICHMENT: ${env:ENABLE_IMAGE_ENRICHMENT, 'false'}
     ENABLE_STREAM_ENRICHMENT: ${env:ENABLE_STREAM_ENRICHMENT, 'true'}
+    # Vision LLM API Configuration (Optional - services gracefully fallback to mocks)
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY}
+    VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
   iam:
     role:
       statements:
@@ -343,6 +347,27 @@ functions:
             authorizerId: 
               Ref: ApiGatewayAuthorizer
   
+  # Advanced metadata extraction API endpoint
+  extractBookMetadataAPI:
+    handler: src/handlers/books/extractMetadata.handler
+    events:
+      - http:
+          method: POST
+          path: /books/{bookId}/extract-metadata
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+  
   bookMetadata:
     handler: src/handlers/books/metadata.handler
     events:
@@ -534,6 +559,22 @@ functions:
           rules:
             - prefix: book-covers/
           existing: true
+
+  # Advanced metadata extraction triggered by EventBridge
+  extractBookMetadata:
+    handler: src/handlers/images/extractBookMetadata.handler
+    timeout: 300  # Allow up to 5 minutes for complex metadata extraction
+    events:
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'S3.ObjectCreated'
+          deadLetterQueueArn: !GetAtt ExtractBookMetadataDLQ.Arn
+          retryPolicy:
+            maximumRetryAttempts: 2
 
   # Event-driven processors
   cleanDescription:
@@ -903,6 +944,12 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-enrich-google-metadata-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    ExtractBookMetadataDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-extract-book-metadata-dlq
         MessageRetentionPeriod: 1209600 # 14 days
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:

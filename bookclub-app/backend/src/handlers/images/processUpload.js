@@ -38,15 +38,17 @@ module.exports.handler = async (event) => {
         // Create a minimal book entry only; do not enrich here
         const createdBook = await createMinimalBookEntry(bucket, key, userId);
 
-        // Optionally allow enrichment via feature flag. Always enabled in test env.
-        const enable = process.env.NODE_ENV === 'test' || String(process.env.ENABLE_IMAGE_ENRICHMENT || 'false') === 'true';
-        if (!enable) {
-          console.log('[ImageProcessor] Skipping enrichment (ENABLE_IMAGE_ENRICHMENT is not true)');
-          continue;
-        }
-
-        // Extract metadata and update the book (behind feature flag)
-        await extractAndUpdateMetadata(bucket, key, userId, createdBook);
+        // Publish EventBridge event for downstream metadata processing
+        // This replaces the direct metadata extraction to implement EventBridge-triggered processing
+        await publishEvent('S3.ObjectCreated', {
+          bucket,
+          key,
+          userId,
+          bookId: createdBook.bookId,
+          eventType: 'book-cover-uploaded'
+        });
+        
+        console.log(`[ImageProcessor] Published S3.ObjectCreated event for book: ${createdBook.bookId}`);
       } catch (bookCreationError) {
         console.error(`[ImageProcessor] Error creating or updating book for ${key}:`, bookCreationError);
         // Continue processing other images even if one fails
@@ -217,46 +219,3 @@ const createMinimalBookEntry = async (bucket, key, userId) => {
   return createdBook;
 };
 
-const extractAndUpdateMetadata = async (bucket, key, userId, createdBook) => {
-  try {
-    console.log(`[ImageProcessor] Starting metadata extraction for ${key}...`);
-    const extractionResult = await textractService.extractTextFromImage(bucket, key);
-    if (extractionResult && extractionResult.bookMetadata) {
-      console.log(`[ImageProcessor] Metadata extraction successful for ${key}`);
-      await cacheExtractedMetadata(bucket, key, userId, extractionResult);
-      const { bookMetadata, extractedText } = extractionResult;
-      const updatedBookData = {
-        title: bookMetadata.title || deriveBookTitleFromFilename(key),
-        author: bookMetadata.author ?? PLACEHOLDER_AUTHOR,
-        description: bookMetadata.description || extractedText.fullText || PROCESSING_DESCRIPTION,
-        isbn10: bookMetadata.isbn && bookMetadata.isbn.length === 10 ? bookMetadata.isbn : undefined,
-        isbn13: bookMetadata.isbn && bookMetadata.isbn.length === 13 ? bookMetadata.isbn : undefined,
-        publisher: bookMetadata.publisher,
-        publishedDate: bookMetadata.publishedDate,
-        textractExtractedText: extractedText.fullText,
-        textractConfidence: extractionResult.confidence,
-        metadataSource: 'textract-auto-processed',
-      };
-      const cleaned = removeUndefinedFields(updatedBookData);
-      await Book.update(createdBook.bookId, userId, cleaned);
-      console.log(`[ImageProcessor] Updated book ${createdBook.bookId} with extracted metadata`);
-      // Emit event to trigger downstream processors
-      try {
-        await publishEvent('Book.TextractCompleted', {
-          bookId: createdBook.bookId,
-          userId,
-          s3Bucket: bucket,
-          s3Key: key,
-          hasDescription: !!cleaned.description,
-        });
-        console.log('[ImageProcessor] Published Book.TextractCompleted event');
-      } catch (e) {
-        console.error('[ImageProcessor] Failed to publish Book.TextractCompleted event:', e);
-      }
-    } else {
-      console.log(`[ImageProcessor] No metadata extracted for ${key}, book remains with placeholder data`);
-    }
-  } catch (metadataError) {
-    console.error(`[ImageProcessor] Metadata extraction failed for ${key}:`, metadataError);
-  }
-};
