@@ -80,6 +80,44 @@ const BookDetails: React.FC = () => {
     );
   };
 
+  const renderMcpMetadata = (meta: any) => {
+    if (!meta || typeof meta !== 'object') return null;
+    const titleCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).title_candidates) ? (meta as any).title_candidates : [];
+    const authorCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).author_candidates) ? (meta as any).author_candidates : [];
+    const lang = asText((meta as any).language_guess) || 'en';
+    const source = asText((meta as any).source) || 'mcp';
+
+    const fmt = (arr: Array<{ value: string; confidence?: number }>) =>
+      arr.filter(Boolean).map((c, i) => (
+        <li key={i} className="text-sm text-gray-700">
+          <span className="font-medium">{asText(c.value)}</span>
+          {typeof c.confidence === 'number' && (
+            <span className="text-gray-500"> (conf {Math.round((c.confidence as number) * 100)}%)</span>
+          )}
+        </li>
+      ));
+
+    return (
+      <div className="space-y-2">
+        <div className="text-sm text-gray-600">Source: {source} · Language: {lang}</div>
+        {titleCands.length > 0 ? (
+          <Section title="Title Candidates">
+            <ul className="list-disc ml-5 space-y-1">{fmt(titleCands)}</ul>
+          </Section>
+        ) : (
+          <div className="text-sm text-gray-500">No title candidates.</div>
+        )}
+        {authorCands.length > 0 ? (
+          <Section title="Author Candidates">
+            <ul className="list-disc ml-5 space-y-1">{fmt(authorCands)}</ul>
+          </Section>
+        ) : (
+          <div className="text-sm text-gray-500">No author candidates.</div>
+        )}
+      </div>
+    );
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -209,6 +247,16 @@ const BookDetails: React.FC = () => {
                 renderGoogleMetadata((book as any).google_metadata)
               ) : (
                 <div className="text-sm text-gray-500">No Google metadata available.</div>
+              )}
+            </div>
+
+            {/* MCP Analysis */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">MCP Analysis</h3>
+              {(book as any).mcp_metadata ? (
+                renderMcpMetadata((book as any).mcp_metadata)
+              ) : (
+                <div className="text-sm text-gray-500">No MCP analysis available.</div>
               )}
             </div>
           </div>
