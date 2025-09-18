@@ -4,10 +4,12 @@ const Book = require('../../src/models/book');
 const textractService = require('../../src/lib/textract-service');
 const { DynamoDB } = require('../../src/lib/aws-config');
 const { getTableName } = require('../../src/lib/table-names');
+const { publishEvent } = require('../../src/lib/event-bus');
 
 // Mock AWS services for integration test
 jest.mock('../../src/lib/aws-config');
 jest.mock('../../src/lib/textract-service');
+jest.mock('../../src/lib/event-bus');
 
 describe('Add Books Flow - End-to-End Integration', () => {
   let mockDynamoDBPut, mockDynamoDBUpdate, mockDocumentClient;
@@ -37,6 +39,9 @@ describe('Add Books Flow - End-to-End Integration', () => {
     };
     
     DynamoDB.DocumentClient = jest.fn().mockImplementation(() => mockDocumentClient);
+
+    // Mock EventBridge
+    publishEvent.mockResolvedValue({});
 
     // Mock Textract service with realistic extraction result
     textractService.extractTextFromImage = jest.fn().mockResolvedValue({
@@ -115,48 +120,33 @@ describe('Add Books Flow - End-to-End Integration', () => {
         'user123'
       );
 
-      // Verify metadata extraction was triggered
-      expect(textractService.extractTextFromImage).toHaveBeenCalledWith(
-        'test-bucket',
-        'book-covers/user123/clean-code.jpg'
-      );
+      // Verify minimal book was created
+      expect(Book.create).toHaveBeenCalled();
 
-      // Verify metadata was cached in DynamoDB
-      expect(mockDynamoDBPut).toHaveBeenCalledWith(
-        expect.objectContaining({
-          TableName: getTableName('metadata-cache'),
-          Item: expect.objectContaining({
-            cacheKey: 'textract:test-bucket:book-covers/user123/clean-code.jpg',
-            userId: 'user123',
-            metadata: expect.objectContaining({
-              title: 'Clean Code',
-              author: 'Robert C. Martin',
-              isbn: '9780132350884'
-            }),
-            confidence: 93
-          })
-        })
-      );
+      // Verify EventBridge event was published instead of direct metadata extraction
+      expect(publishEvent).toHaveBeenCalledWith('S3.ObjectCreated', {
+        bucket: 'test-bucket',
+        key: 'book-covers/user123/clean-code.jpg',
+        userId: 'user123',
+        bookId: 'test-book-id',
+        eventType: 'book-cover-uploaded'
+      });
 
-      // Verify book was updated with extracted metadata
-      expect(Book.update).toHaveBeenCalledWith(
-        'test-book-id',
-        'user123',
-        expect.objectContaining({
-          title: 'Clean Code',
-          author: 'Robert C. Martin',
-          description: 'A Handbook of Agile Software Craftsmanship',
-          isbn13: '9780132350884',
-          metadataSource: 'textract-auto-processed',
-          textractExtractedText: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin',
-          textractConfidence: 93
-        })
-      );
+      // Verify metadata extraction is NO LONGER triggered directly (now EventBridge-triggered)
+      expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
+
+      // Book update is also no longer done during upload (now done by EventBridge handler)
+      expect(Book.update).not.toHaveBeenCalled();
+
+      // Metadata caching is also no longer done during upload
+      expect(mockDynamoDBPut).not.toHaveBeenCalled();
+
+      // Verify result indicates processing completed
     });
 
     it('should handle metadata extraction failure gracefully', async () => {
-      // Mock Textract failure
-      textractService.extractTextFromImage.mockRejectedValue(new Error('Textract service unavailable'));
+      // In the new EventBridge architecture, failures would occur in the EventBridge handler,
+      // not during upload. The upload should always succeed and publish an event.
 
       const s3Event = {
         Records: [
@@ -191,13 +181,16 @@ describe('Add Books Flow - End-to-End Integration', () => {
         'user123'
       );
 
-      // Verify metadata extraction was attempted
-      expect(textractService.extractTextFromImage).toHaveBeenCalled();
+      // Verify EventBridge event was published (upload processing always succeeds)
+      expect(publishEvent).toHaveBeenCalled();
 
-      // Verify no metadata caching occurred
+      // Verify metadata extraction is not attempted during upload
+      expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
+
+      // Verify no metadata caching occurred during upload
       expect(mockDynamoDBPut).not.toHaveBeenCalled();
 
-      // Verify book was not updated (remains with placeholder data)
+      // Verify book was not updated during upload (remains with placeholder data)
       expect(Book.update).not.toHaveBeenCalled();
     });
 
@@ -241,11 +234,14 @@ describe('Add Books Flow - End-to-End Integration', () => {
         title: 'Book2'
       }), 'user456');
 
-      // Verify metadata extraction was called for both books
-      expect(textractService.extractTextFromImage).toHaveBeenCalledTimes(2);
+      // Verify EventBridge events were published for both books
+      expect(publishEvent).toHaveBeenCalledTimes(2);
 
-      // Verify both books were updated
-      expect(Book.update).toHaveBeenCalledTimes(2);
+      // Verify metadata extraction is NOT called during upload for either book
+      expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
+
+      // Verify neither book was updated during upload
+      expect(Book.update).not.toHaveBeenCalled();
     });
 
     it('should skip non-book-cover images', async () => {
