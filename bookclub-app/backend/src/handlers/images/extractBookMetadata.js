@@ -1,6 +1,9 @@
 const Book = require('../../models/book');
 const textractService = require('../../lib/textract-service');
 const bookMetadataService = require('../../lib/book-metadata');
+const imagePreprocessingService = require('../../lib/image-preprocessing');
+const barcodeDetectionService = require('../../lib/barcode-detection');
+const visionLLMService = require('../../lib/vision-llm');
 const { publishEvent } = require('../../lib/event-bus');
 
 /**
@@ -88,29 +91,55 @@ async function extractMetadataFromImage(bucket, key) {
   try {
     console.log(`[MetadataExtractor] Starting advanced image processing for s3://${bucket}/${key}`);
     
-    // 1. Basic OCR extraction using existing Textract service
+    // Step 1: Advanced image preprocessing for better accuracy
+    console.log('[MetadataExtractor] Phase 1a: Image preprocessing');
+    const preprocessingResult = await imagePreprocessingService.preprocessImage(bucket, key, {
+      deskew: true,
+      denoise: true,
+      normalize: true,
+      enhanceContrast: true,
+      createVariants: true
+    });
+
+    // Step 2: Barcode detection for fast ISBN lookup
+    console.log('[MetadataExtractor] Phase 1b: Barcode detection');
+    const barcodeResult = await barcodeDetectionService.detectBarcodes(bucket, key, {
+      formats: ['EAN-13', 'ISBN-13', 'ISBN-10'],
+      confidenceThreshold: 0.8
+    });
+
+    // Step 3: OCR extraction using existing Textract service
+    console.log('[MetadataExtractor] Phase 1c: OCR text extraction');
     const textractResult = await textractService.extractTextFromImage(bucket, key);
     
-    // 2. TODO: Advanced image preprocessing (deskew, denoise, normalize)
-    // This would be implemented in future iterations with additional services
-    
-    // 3. TODO: Barcode detection for ISBN lookup
-    // This would use computer vision to detect barcodes on book covers
-    
-    // 4. TODO: Vision LLM service integration
-    // This would use OpenAI Vision API for advanced text analysis
-    
-    if (textractResult && textractResult.bookMetadata) {
-      return {
-        success: true,
-        data: {
-          textract: textractResult,
-          // Future: barcode, visionLLM, etc.
-        }
-      };
+    // Step 4: Vision LLM analysis for advanced parsing
+    console.log('[MetadataExtractor] Phase 1d: Vision LLM analysis');
+    const visionResult = await visionLLMService.analyzeBookCover(bucket, key, {
+      provider: process.env.VISION_LLM_PROVIDER || 'openai',
+      extract_categories: true,
+      extract_series: true,
+      extract_edition: true
+    });
+
+    // Validate that we have at least one successful extraction
+    const hasTextract = textractResult && textractResult.bookMetadata;
+    const hasBarcode = barcodeResult && barcodeResult.success;
+    const hasVision = visionResult && visionResult.success;
+
+    if (!hasTextract && !hasBarcode && !hasVision) {
+      return { success: false, error: 'All extraction methods failed' };
     }
+
+    return {
+      success: true,
+      data: {
+        preprocessing: preprocessingResult,
+        barcode: barcodeResult,
+        textract: textractResult,
+        vision: visionResult
+      }
+    };
     
-    return { success: false, error: 'No metadata extracted' };
   } catch (error) {
     console.error('[MetadataExtractor] Error in extractMetadataFromImage:', error);
     return { success: false, error: error.message };
@@ -121,66 +150,181 @@ async function extractMetadataFromImage(bucket, key) {
  * Phase 2: Build advanced metadata structure with confidence and provenance
  */
 async function buildAdvancedMetadata(extractionData, bucket, key) {
-  const { textract } = extractionData;
-  const { bookMetadata, extractedText, confidence } = textract;
+  const { preprocessing, barcode, textract, vision } = extractionData;
   
-  // Create advanced metadata structure
+  console.log('[MetadataExtractor] Phase 2: Building advanced metadata structure');
+  
+  // Initialize metadata structure
   const advancedMetadata = {
     extractedAt: new Date().toISOString(),
-    source: {
-      bucket,
-      key
-    },
-    metadata: {
-      title: bookMetadata.title || null,
-      author: bookMetadata.author || null,
-      isbn10: bookMetadata.isbn && bookMetadata.isbn.length === 10 ? bookMetadata.isbn : null,
-      isbn13: bookMetadata.isbn && bookMetadata.isbn.length === 13 ? bookMetadata.isbn : null,
-      publisher: bookMetadata.publisher || null,
-      publishedDate: bookMetadata.publishedDate || null,
-      description: bookMetadata.description || extractedText.fullText || null
-    },
-    confidence: {
-      overall: confidence || 0,
-      title: bookMetadata.title ? confidence || 0 : 0,
-      author: bookMetadata.author ? confidence || 0 : 0,
-      isbn: bookMetadata.isbn ? confidence || 0 : 0,
-      publisher: bookMetadata.publisher ? confidence || 0 : 0,
-      publishedDate: bookMetadata.publishedDate ? confidence || 0 : 0
-    },
-    provenance: {
-      textract: {
-        extractedText: extractedText.fullText,
-        confidence: confidence || 0,
-        textBlocks: extractedText.blocks?.length || 0
-      }
-      // Future: barcode, visionLLM, catalog lookups, etc.
-    },
-    overallConfidence: confidence || 0
+    source: { bucket, key },
+    metadata: {},
+    confidence: {},
+    provenance: {},
+    overallConfidence: 0
   };
 
-  // TODO: Phase 3: Catalog connector integration
-  // If we have an ISBN, look up authoritative metadata from Google Books, Open Library
-  if (bookMetadata.isbn) {
+  // Step 1: Extract ISBN from barcode (highest priority)
+  let primaryISBN = null;
+  if (barcode?.success && barcode.isbns?.length > 0) {
+    const isbnData = barcode.isbns[0]; // Use first detected ISBN
+    primaryISBN = isbnData.isbn13 || isbnData.isbn10;
+    
+    advancedMetadata.metadata.isbn10 = isbnData.isbn10;
+    advancedMetadata.metadata.isbn13 = isbnData.isbn13;
+    advancedMetadata.confidence.isbn = isbnData.confidence;
+    advancedMetadata.provenance.barcode = {
+      type: 'isbn_barcode',
+      confidence: isbnData.confidence,
+      position: isbnData.position,
+      format: isbnData.format
+    };
+  }
+
+  // Step 2: Extract metadata from Textract OCR
+  if (textract?.bookMetadata) {
+    const { bookMetadata, extractedText, confidence } = textract;
+    
+    // Use textract data if no barcode ISBN found
+    if (!primaryISBN && bookMetadata.isbn) {
+      primaryISBN = bookMetadata.isbn;
+      advancedMetadata.metadata.isbn13 = bookMetadata.isbn.length === 13 ? bookMetadata.isbn : null;
+      advancedMetadata.metadata.isbn10 = bookMetadata.isbn.length === 10 ? bookMetadata.isbn : null;
+    }
+    
+    advancedMetadata.metadata.title = bookMetadata.title || null;
+    advancedMetadata.metadata.author = bookMetadata.author || null;
+    advancedMetadata.metadata.publisher = bookMetadata.publisher || null;
+    advancedMetadata.metadata.publishedDate = bookMetadata.publishedDate || null;
+    advancedMetadata.metadata.description = bookMetadata.description || extractedText.fullText || null;
+    
+    // Textract confidence scores
+    advancedMetadata.confidence.title = bookMetadata.title ? confidence || 0 : 0;
+    advancedMetadata.confidence.author = bookMetadata.author ? confidence || 0 : 0;
+    advancedMetadata.confidence.publisher = bookMetadata.publisher ? confidence || 0 : 0;
+    
+    advancedMetadata.provenance.textract = {
+      extractedText: extractedText.fullText,
+      confidence: confidence || 0,
+      textBlocks: extractedText.blocks?.length || 0
+    };
+  }
+
+  // Step 3: Enhance with Vision LLM analysis
+  if (vision?.success && vision.metadata) {
+    const visionMetadata = vision.metadata;
+    const visionConfidence = vision.confidence;
+    
+    // Use vision data to enhance or validate OCR results
+    if (visionMetadata.title && (!advancedMetadata.metadata.title || visionConfidence.title > advancedMetadata.confidence.title)) {
+      advancedMetadata.metadata.title = visionMetadata.title;
+      advancedMetadata.confidence.title = visionConfidence.title || 0.8;
+    }
+    
+    if (visionMetadata.authors?.length > 0) {
+      advancedMetadata.metadata.author = visionMetadata.authors.join(', ');
+      advancedMetadata.confidence.author = Math.max(advancedMetadata.confidence.author || 0, visionConfidence.authors || 0.8);
+    }
+    
+    // Vision-specific metadata
+    advancedMetadata.metadata.subtitle = visionMetadata.subtitle || null;
+    advancedMetadata.metadata.series = visionMetadata.series || null;
+    advancedMetadata.metadata.edition = visionMetadata.edition || null;
+    advancedMetadata.metadata.categories = visionMetadata.categories || [];
+    advancedMetadata.metadata.language = visionMetadata.language || null;
+    
+    advancedMetadata.provenance.vision = {
+      provider: vision.provider,
+      model: vision.model,
+      confidence: visionConfidence.overall,
+      visualAnalysis: visionMetadata.visualAnalysis
+    };
+  }
+
+  // Step 4: Catalog lookup for authoritative metadata
+  if (primaryISBN) {
     try {
-      const catalogMetadata = await bookMetadataService.searchBookMetadata({ isbn: bookMetadata.isbn });
+      console.log('[MetadataExtractor] Phase 2b: Catalog lookup for ISBN:', primaryISBN);
+      const catalogMetadata = await bookMetadataService.searchBookMetadata({ isbn: primaryISBN });
+      
       if (catalogMetadata) {
-        // TODO: Implement resolver/ranker to merge and score candidate editions
-        // For now, just add catalog data to provenance
+        // Catalog data has highest authority for factual information
+        if (catalogMetadata.title) {
+          advancedMetadata.metadata.title = catalogMetadata.title;
+          advancedMetadata.confidence.title = 0.95; // High confidence for catalog data
+        }
+        
+        if (catalogMetadata.authors) {
+          const authors = Array.isArray(catalogMetadata.authors) ? catalogMetadata.authors.join(', ') : catalogMetadata.authors;
+          advancedMetadata.metadata.author = authors;
+          advancedMetadata.confidence.author = 0.95;
+        }
+        
+        if (catalogMetadata.publisher) {
+          advancedMetadata.metadata.publisher = catalogMetadata.publisher;
+          advancedMetadata.confidence.publisher = 0.95;
+        }
+        
+        if (catalogMetadata.publishedDate) {
+          advancedMetadata.metadata.publishedDate = catalogMetadata.publishedDate;
+          advancedMetadata.confidence.publishedDate = 0.95;
+        }
+        
+        // Additional catalog-only fields
+        advancedMetadata.metadata.pageCount = catalogMetadata.pageCount || null;
+        advancedMetadata.metadata.language = catalogMetadata.language || advancedMetadata.metadata.language;
+        
         advancedMetadata.provenance.catalog = {
           source: catalogMetadata.source,
-          confidence: 95, // Higher confidence for catalog lookups
+          confidence: 0.95,
           data: catalogMetadata
         };
-        // Update overall confidence if catalog lookup was successful
-        advancedMetadata.overallConfidence = Math.max(advancedMetadata.overallConfidence, 90);
       }
     } catch (error) {
       console.warn('[MetadataExtractor] Catalog lookup failed:', error.message);
     }
   }
 
+  // Step 5: Calculate overall confidence score
+  advancedMetadata.overallConfidence = calculateOverallConfidence(advancedMetadata.confidence, advancedMetadata.provenance);
+
+  console.log(`[MetadataExtractor] Advanced metadata built with ${advancedMetadata.overallConfidence}% overall confidence`);
   return advancedMetadata;
+}
+
+/**
+ * Calculate overall confidence score based on available data sources
+ */
+function calculateOverallConfidence(confidence, provenance) {
+  const weights = {
+    catalog: 0.4,    // Highest weight for authoritative catalog data
+    barcode: 0.3,    // High weight for barcode ISBN
+    vision: 0.2,     // Medium weight for AI vision analysis
+    textract: 0.1    // Lower weight for basic OCR
+  };
+  
+  const sources = Object.keys(provenance);
+  const fieldWeights = { title: 0.3, author: 0.3, isbn: 0.25, publisher: 0.15 };
+  
+  let totalScore = 0;
+  let maxPossibleScore = 0;
+  
+  // Calculate weighted confidence for each field
+  Object.entries(fieldWeights).forEach(([field, fieldWeight]) => {
+    if (confidence[field] > 0) {
+      // Boost confidence based on data source quality
+      let sourceMultiplier = 1.0;
+      if (provenance.catalog && field !== 'isbn') sourceMultiplier = 1.2;
+      else if (provenance.barcode && field === 'isbn') sourceMultiplier = 1.2;
+      else if (provenance.vision) sourceMultiplier = 1.1;
+      
+      const fieldScore = Math.min(confidence[field] * sourceMultiplier, 1.0);
+      totalScore += fieldScore * fieldWeight;
+    }
+    maxPossibleScore += fieldWeight;
+  });
+  
+  return maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
 }
 
 /**
