@@ -22,10 +22,9 @@ provider:
     EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
     ENABLE_IMAGE_ENRICHMENT: ${env:ENABLE_IMAGE_ENRICHMENT, 'false'}
     ENABLE_STREAM_ENRICHMENT: ${env:ENABLE_STREAM_ENRICHMENT, 'true'}
-    # Vision LLM API Configuration via SSM Parameter Store (set these as SecureString parameters)
-    # e.g., /bookclub/dev/OPENAI_API_KEY and /bookclub/dev/ANTHROPIC_API_KEY
-    OPENAI_API_KEY: ${ssm:/bookclub/${self:provider.stage}/OPENAI_API_KEY~true}
-    ANTHROPIC_API_KEY: ${ssm:/bookclub/${self:provider.stage}/ANTHROPIC_API_KEY~true}
+    # Vision LLM API Configuration (Optional - services gracefully fallback to mocks)
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
   iam:
     role:
@@ -59,11 +58,6 @@ provider:
             - s3:GetObject
             - s3:DeleteObject
           Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
-        - Effect: Allow
-          Action:
-            - ssm:GetParameter
-            - ssm:GetParameters
-          Resource: "*"
         - Effect: Allow
           Action:
             - ses:SendEmail
