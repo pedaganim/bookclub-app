@@ -1,5 +1,6 @@
 const Book = require('../../models/book');
 const { success, error } = require('../../lib/response');
+const { publishEvent } = require('../../lib/event-bus');
 
 // Simple cleaner: remove excessive whitespace, non-printable chars; trim length
 function cleanText(input) {
@@ -30,6 +31,14 @@ module.exports.handler = async (event) => {
 
     // Update book with clean_description (does not change ownership enforcement)
     await Book.update(bookId, existing.userId, { clean_description: cleaned });
+
+    // Emit event for downstream processors
+    try {
+      await publishEvent('Book.CleanDescriptionCompleted', { bookId, userId: existing.userId });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[CleanDescription] Failed to publish CleanDescriptionCompleted:', e.message);
+    }
 
     return success({ bookId, cleaned: cleaned.length > 0 });
   } catch (e) {
