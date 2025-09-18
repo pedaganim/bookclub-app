@@ -272,6 +272,32 @@ Response:
 - `OPENAI_API_KEY`: OpenAI Vision API access key (optional - falls back to mock)
 - `ANTHROPIC_API_KEY`: Anthropic Claude Vision API key (optional - falls back to mock)
 
+### Setup Instructions
+
+**1. Copy environment template:**
+```bash
+cp .env.example .env
+```
+
+**2. Add your API keys to `.env`:**
+```bash
+# Get OpenAI API key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Get Anthropic API key from: https://console.anthropic.com/
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
+```
+
+**3. Set provider preference:**
+```bash
+VISION_LLM_PROVIDER=openai  # or 'anthropic'
+```
+
+**4. Deploy with environment variables:**
+```bash
+serverless deploy
+```
+
 **Important**: All vision services gracefully degrade to mock responses when API keys are not configured, ensuring the pipeline continues to function for testing and development.
 
 ### Security

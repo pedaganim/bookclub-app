@@ -22,6 +22,10 @@ provider:
     EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
     ENABLE_IMAGE_ENRICHMENT: ${env:ENABLE_IMAGE_ENRICHMENT, 'false'}
     ENABLE_STREAM_ENRICHMENT: ${env:ENABLE_STREAM_ENRICHMENT, 'true'}
+    # Vision LLM API Configuration (Optional - services gracefully fallback to mocks)
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY}
+    VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
   iam:
     role:
       statements:
