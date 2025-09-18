@@ -26,6 +26,8 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
+    OLLAMA_ENDPOINT: ${env:OLLAMA_ENDPOINT, ''}
+    OLLAMA_MODEL: ${env:OLLAMA_MODEL, ''}
   iam:
     role:
       statements:
