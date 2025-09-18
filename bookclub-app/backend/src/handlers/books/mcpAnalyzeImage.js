@@ -2,7 +2,9 @@ const Book = require('../../models/book');
 const { success, error } = require('../../lib/response');
 const { publishEvent } = require('../../lib/event-bus');
 
-// MCP OCR analyzer orchestrator: invokes containerized OCR worker if present; falls back to stub.
+// MCP analyzer: now runs after Clean Description is completed.
+// It uses OpenAI (if configured) to extract title/author candidates from clean_description (text-only),
+// and falls back to existing and Google metadata heuristics.
 module.exports.handler = async (event) => {
   try {
     if (String(process.env.ENABLE_MCP_ANALYZER || 'true') !== 'true') {
@@ -15,43 +17,53 @@ module.exports.handler = async (event) => {
     const existing = await Book.getById(bookId);
     if (!existing) return error('Book not found', 404);
 
-    // Resolve image location
-    let { s3Bucket, s3Key } = existing;
-    if (!s3Bucket || !s3Key) {
-      const coverImage = existing.coverImage;
-      if (typeof coverImage === 'string') {
-        try {
-          const url = new URL(coverImage);
-          const hostMatch = url.hostname.match(/^(.*)\.s3\.amazonaws\.com$/);
-          if (hostMatch && hostMatch[1]) {
-            s3Bucket = hostMatch[1];
-            s3Key = decodeURIComponent(url.pathname.replace(/^\//, ''));
-          }
-        } catch (_) {}
-      }
-    }
+    // Prepare clean description input
+    const cleanText = existing.clean_description || existing.description || existing.textractExtractedText || '';
 
-    // If OCR worker is configured, invoke it
-    let workerResult = null;
-    const workerName = process.env.MCP_OCR_WORKER_NAME;
-    if (workerName && process.env.NODE_ENV !== 'test') {
+    // Try OpenAI text analysis if configured
+    let llmResult = null;
+    if (process.env.OPENAI_API_KEY && cleanText && process.env.NODE_ENV !== 'test') {
       try {
-        const AWS = require('aws-sdk');
-        const lambda = new AWS.Lambda({ apiVersion: '2015-03-31' });
-        const invokeRes = await lambda.invoke({
-          FunctionName: workerName,
-          InvocationType: 'RequestResponse',
-          Payload: JSON.stringify({ s3Bucket, s3Key, imageUrl: existing.coverImage }),
-        }).promise();
-        if (invokeRes.Payload) {
-          const parsed = JSON.parse(invokeRes.Payload);
-          if (parsed && parsed.title_candidates) {
-            workerResult = parsed;
+        const prompt = `You are given a cleaned textual description of a book (from cover and metadata).\n` +
+          `Extract likely candidates for the book's title and author(s). Return strict JSON with this shape:\n` +
+          `{"title_candidates":[{"value":"string","confidence":0..1}],"author_candidates":[{"value":"string","confidence":0..1}]}` +
+          `\nFocus on short, plausible strings. Do not include subtitles in title. Combine multi-author names with comma.\n` +
+          `\nCLEAN_DESCRIPTION:\n` + cleanText.slice(0, 4000);
+
+        const body = {
+          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'Return only valid JSON. No commentary.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.1,
+          max_tokens: 300,
+        };
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const content = data.choices?.[0]?.message?.content || '';
+          try {
+            const parsed = JSON.parse(content);
+            if (parsed && (parsed.title_candidates || parsed.author_candidates)) llmResult = parsed;
+          } catch (_) {
+            // ignore parse failure; fallback below
           }
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn('[MCPAnalyze] OpenAI response not OK:', resp.status, resp.statusText);
         }
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('[MCPAnalyze] OCR worker invoke failed, falling back to stub:', e.message);
+        console.warn('[MCPAnalyze] OpenAI analysis failed, falling back:', e.message);
       }
     }
 
@@ -60,22 +72,22 @@ module.exports.handler = async (event) => {
     const gmTitle = gm.title || (gm.volumeInfo && gm.volumeInfo.title);
     const gmAuthors = gm.authors || (gm.volumeInfo && gm.volumeInfo.authors) || [];
 
-    const titleCandidates = workerResult?.title_candidates ? workerResult.title_candidates.slice(0, 5) : [];
+    const titleCandidates = llmResult?.title_candidates ? llmResult.title_candidates.slice(0, 5) : [];
     if (existing.title) titleCandidates.push({ value: existing.title, confidence: 0.6 });
     if (gmTitle && (!existing.title || existing.title !== gmTitle)) titleCandidates.push({ value: gmTitle, confidence: 0.5 });
 
-    const authorCandidates = workerResult?.author_candidates ? workerResult.author_candidates.slice(0, 5) : [];
+    const authorCandidates = llmResult?.author_candidates ? llmResult.author_candidates.slice(0, 5) : [];
     if (existing.author) authorCandidates.push({ value: existing.author, confidence: 0.6 });
     if (Array.isArray(gmAuthors) && gmAuthors.length) authorCandidates.push({ value: gmAuthors.join(', '), confidence: 0.5 });
 
     const mcp = {
-      source: workerResult ? 'mcp-ocr-worker' : 'mcp-stub',
+      source: llmResult ? 'mcp-openai-clean-description' : 'mcp-stub',
       analyzedAt: new Date().toISOString(),
-      s3Bucket: s3Bucket || null,
-      s3Key: s3Key || null,
+      s3Bucket: null,
+      s3Key: null,
       title_candidates: titleCandidates,
       author_candidates: authorCandidates,
-      language_guess: workerResult?.language_guess || 'en',
+      language_guess: 'en',
     };
 
     await Book.update(bookId, existing.userId, { mcp_metadata: mcp });
