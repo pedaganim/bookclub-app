@@ -22,6 +22,7 @@ module.exports.handler = async (event) => {
 
     // Try OpenAI text analysis if configured
     let llmResult = null;
+    const debugMcp = String(process.env.MCP_DEBUG || '').toLowerCase() === 'true' || (process.env.STAGE && process.env.STAGE !== 'prod');
     if (process.env.OPENAI_API_KEY && cleanText && process.env.NODE_ENV !== 'test') {
       try {
         const prompt = `You are given a cleaned textual description of a book (from cover and metadata).\n` +
@@ -29,6 +30,11 @@ module.exports.handler = async (event) => {
           `{"title_candidates":[{"value":"string","confidence":0..1}],"author_candidates":[{"value":"string","confidence":0..1}]}` +
           `\nFocus on short, plausible strings. Do not include subtitles in title. Combine multi-author names with comma.\n` +
           `\nCLEAN_DESCRIPTION:\n` + cleanText.slice(0, 4000);
+
+        if (debugMcp) {
+          // eslint-disable-next-line no-console
+          console.log('[MCPAnalyze][Debug]', { bookId, promptPreview: prompt.slice(0, 500), promptLength: prompt.length });
+        }
 
         const body = {
           model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -51,6 +57,10 @@ module.exports.handler = async (event) => {
         if (resp.ok) {
           const data = await resp.json();
           const content = data.choices?.[0]?.message?.content || '';
+          if (debugMcp) {
+            // eslint-disable-next-line no-console
+            console.log('[MCPAnalyze][Debug] raw content preview:', content.slice(0, 500));
+          }
           try {
             const parsed = JSON.parse(content);
             if (parsed && (parsed.title_candidates || parsed.author_candidates)) llmResult = parsed;
@@ -67,18 +77,12 @@ module.exports.handler = async (event) => {
       }
     }
 
-    // Stub OCR result or worker fallback: use existing title/author or google metadata as candidates
-    const gm = existing.google_metadata || {};
-    const gmTitle = gm.title || (gm.volumeInfo && gm.volumeInfo.title);
-    const gmAuthors = gm.authors || (gm.volumeInfo && gm.volumeInfo.authors) || [];
-
+    // Build candidates from LLM result and existing fields only (no google_metadata fallback)
     const titleCandidates = llmResult?.title_candidates ? llmResult.title_candidates.slice(0, 5) : [];
     if (existing.title) titleCandidates.push({ value: existing.title, confidence: 0.6 });
-    if (gmTitle && (!existing.title || existing.title !== gmTitle)) titleCandidates.push({ value: gmTitle, confidence: 0.5 });
 
     const authorCandidates = llmResult?.author_candidates ? llmResult.author_candidates.slice(0, 5) : [];
     if (existing.author) authorCandidates.push({ value: existing.author, confidence: 0.6 });
-    if (Array.isArray(gmAuthors) && gmAuthors.length) authorCandidates.push({ value: gmAuthors.join(', '), confidence: 0.5 });
 
     const mcp = {
       source: llmResult ? 'mcp-openai-clean-description' : 'mcp-stub',
@@ -89,6 +93,15 @@ module.exports.handler = async (event) => {
       author_candidates: authorCandidates,
       language_guess: 'en',
     };
+
+    if (debugMcp) {
+      // eslint-disable-next-line no-console
+      console.log('[MCPAnalyze][Debug] candidates summary', {
+        bookId,
+        titleCandidates: titleCandidates.map(t => t.value).slice(0, 3),
+        authorCandidates: authorCandidates.map(a => a.value).slice(0, 3),
+      });
+    }
 
     await Book.update(bookId, existing.userId, { mcp_metadata: mcp });
 
