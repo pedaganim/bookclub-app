@@ -601,8 +601,7 @@ functions:
             source:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
-              - 'Book.TextractCompleted'
-              - 'Book.EnrichmentRequested'
+              - 'Book.MCPAnalyzedCompleted'
           deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
           retryPolicy:
             maximumRetryAttempts: 3
@@ -629,7 +628,8 @@ functions:
   # Optional OCR worker (scaffold). In production, convert this to a container image function.
   # For now, it is defined for reference and can be deployed separately with proper dependencies.
   mcpOcrWorker:
-    image: ocrWorker
+    image:
+      name: ocrWorker
     timeout: 60
     memorySize: 2048
     architecture: x86_64
