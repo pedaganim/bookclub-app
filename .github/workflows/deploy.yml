@@ -59,11 +59,31 @@ jobs:
         working-directory: bookclub-app/backend
         run: npm ci
 
+      - name: Ollama health check (non-blocking)
+        env:
+          VISION_LLM_PROVIDER: ${{ vars.VISION_LLM_PROVIDER }}
+          OLLAMA_ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+        run: |
+          set +e
+          if [ "${VISION_LLM_PROVIDER}" = "ollama" ] && [ -n "${OLLAMA_ENDPOINT}" ]; then
+            echo "Checking Ollama endpoint: $OLLAMA_ENDPOINT"
+            curl -sS --max-time 5 "$OLLAMA_ENDPOINT/api/tags" | head -c 500 || echo "(no response)"
+            echo "(Non-blocking)"
+          else
+            echo "Skipping Ollama health check (provider=${VISION_LLM_PROVIDER}, endpoint=${OLLAMA_ENDPOINT:+set})"
+          fi
+
       - name: Deploy backend (Serverless)
         working-directory: bookclub-app/backend
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          # LLM provider configuration via GitHub Actions secrets
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VISION_LLM_PROVIDER: ${{ vars.VISION_LLM_PROVIDER }}
+          OLLAMA_ENDPOINT: ${{ secrets.OLLAMA_ENDPOINT }}
+          OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL }}
         run: npx serverless deploy --stage prod
 
       - name: Diagnostics CFN state and Serverless info (non-blocking)
