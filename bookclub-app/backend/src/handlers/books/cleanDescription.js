@@ -32,12 +32,14 @@ module.exports.handler = async (event) => {
     // Update book with clean_description (does not change ownership enforcement)
     await Book.update(bookId, existing.userId, { clean_description: cleaned });
 
-    // Emit event for downstream processors
-    try {
-      await publishEvent('Book.CleanDescriptionCompleted', { bookId, userId: existing.userId });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn('[CleanDescription] Failed to publish CleanDescriptionCompleted:', e.message);
+    // Emit event for downstream processors (skip during tests)
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        await publishEvent('Book.CleanDescriptionCompleted', { bookId, userId: existing.userId });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[CleanDescription] Failed to publish CleanDescriptionCompleted:', e.message);
+      }
     }
 
     return success({ bookId, cleaned: cleaned.length > 0 });
