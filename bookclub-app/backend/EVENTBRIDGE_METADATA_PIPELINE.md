@@ -109,6 +109,46 @@ Downstream Processors
 }
 ```
 
+## Cost Analysis
+
+### Vision LLM API Pricing
+
+**OpenAI Vision API:**
+- GPT-4 Vision Preview: $0.01-0.03 per image
+- GPT-4 Turbo Vision: $0.01-0.02 per image
+- Pricing varies based on image size and detail level
+- Input tokens: $0.01 per 1K tokens
+
+**Anthropic Claude Vision API:**
+- Claude-3 Opus: ~$0.015 per image
+- Claude-3 Sonnet: ~$0.003 per image
+- Claude-3 Haiku: ~$0.001 per image
+- Pricing based on input tokens and image processing
+
+### Cost Optimization Strategies
+
+**Tiered Processing Pipeline:**
+1. **Barcode Detection** (Free) - First attempt for ISBN lookup
+2. **OCR Processing** (AWS Textract costs) - Text extraction if no barcode
+3. **Vision LLM** (Expensive) - Only for complex cases or enhanced accuracy
+
+**Built-in Cost Controls:**
+- Environment variable toggles for expensive services
+- Configurable confidence thresholds to limit LLM usage
+- Graceful fallbacks to free alternatives when APIs unavailable
+- Cost estimation and monitoring capabilities
+
+### Monthly Cost Estimates
+
+| Usage Level | Images/Month | Estimated Cost |
+|-------------|--------------|----------------|
+| Low         | 100         | $1-5          |
+| Medium      | 1,000       | $10-50        |
+| High        | 10,000      | $100-500      |
+| Enterprise  | 100,000     | $1,000-5,000  |
+
+**Note:** Costs assume 20% of images require LLM processing (80% handled by free barcode/OCR methods).
+
 ## Configuration
 
 ### EventBridge Settings

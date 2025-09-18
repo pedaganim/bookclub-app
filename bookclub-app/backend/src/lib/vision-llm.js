@@ -521,28 +521,71 @@ Be precise and only include information that is clearly visible. Use null for un
     return {
       isAvailable: this.isAvailable,
       supportedProviders: ['openai', 'anthropic'],
+      supportedModels: {
+        openai: ['gpt-4-vision-preview', 'gpt-4-turbo-vision', 'gpt-4o'],
+        anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku']
+      },
       averageProcessingTime: '10-30 seconds',
       accuracyRate: 0.88,
-      apiCostPerImage: '$0.01-$0.05'
+      costRange: '$0.001-$0.015 per image',
+      recommendedModels: {
+        budget: 'claude-3-haiku ($0.001/image)',
+        balanced: 'claude-3-sonnet ($0.003/image)', 
+        premium: 'claude-3-opus ($0.015/image)'
+      },
+      costOptimization: {
+        freeAlternatives: ['barcode-detection', 'ocr-textract'],
+        fallbackEnabled: true,
+        tieredProcessing: true
+      }
     };
   }
 
   /**
-   * Estimate processing cost
+   * Estimate processing cost for an image
    */
   estimateCost(provider, model, options = {}) {
     const costs = {
       'openai': {
-        'gpt-4-vision-preview': 0.01,
-        'gpt-4-turbo-vision': 0.02
+        'gpt-4-vision-preview': 0.01,  // Base cost, can go up to 0.03 for high detail
+        'gpt-4-turbo-vision': 0.01,    // More efficient pricing
+        'gpt-4o': 0.005                // Latest model with better pricing
       },
       'anthropic': {
-        'claude-3-opus': 0.015,
-        'claude-3-sonnet': 0.003
+        'claude-3-opus': 0.015,        // Most expensive, highest quality
+        'claude-3-sonnet': 0.003,      // Balanced cost/performance
+        'claude-3-haiku': 0.001        // Cheapest option
       }
     };
 
-    return costs[provider]?.[model] || 0.01;
+    const baseCost = costs[provider]?.[model] || 0.01;
+    
+    // Adjust for image complexity and detail level
+    const detailMultiplier = options.high_detail ? 2.5 : 1.0;
+    const complexityMultiplier = options.extract_categories ? 1.2 : 1.0;
+    
+    return baseCost * detailMultiplier * complexityMultiplier;
+  }
+
+  /**
+   * Get detailed cost breakdown for monitoring
+   */
+  getCostBreakdown(provider, model, monthlyVolume = 1000) {
+    const costPerImage = this.estimateCost(provider, model);
+    const monthlyCost = costPerImage * monthlyVolume;
+    
+    return {
+      provider,
+      model,
+      costPerImage: `$${costPerImage.toFixed(3)}`,
+      monthlyVolume,
+      monthlyCost: `$${monthlyCost.toFixed(2)}`,
+      annualCost: `$${(monthlyCost * 12).toFixed(2)}`,
+      costOptimization: {
+        barcodeFirstSavings: `${((1 - 0.2) * 100).toFixed(0)}%`, // 80% handled by free barcode detection
+        recommendedModel: provider === 'anthropic' ? 'claude-3-sonnet' : 'gpt-4-turbo-vision'
+      }
+    };
   }
 }
 
