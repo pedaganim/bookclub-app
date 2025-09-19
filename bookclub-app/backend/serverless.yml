@@ -26,6 +26,9 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
+    # Strands Agent Configuration for orchestrated AI workflows
+    STRANDS_STRATEGY: ${env:STRANDS_STRATEGY, 'best-effort'}
+    ENABLE_BEDROCK_VISION: ${env:ENABLE_BEDROCK_VISION, 'true'}
     # MCP analyzer debug logging (set to 'true' to enable verbose logs)
     MCP_DEBUG: ${env:MCP_DEBUG, ''}
   iam:
@@ -85,6 +88,12 @@ provider:
         - Effect: Allow
           Action:
             - events:PutEvents
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+            - bedrock:ListFoundationModels
+            - bedrock:GetFoundationModel
           Resource: "*"
         - Effect: Allow
           Action:
