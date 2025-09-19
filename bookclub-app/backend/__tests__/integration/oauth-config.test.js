@@ -7,6 +7,15 @@ describe('OAuth Configuration', () => {
   beforeAll(() => {
     const serverlessPath = path.join(__dirname, '../../serverless.yml');
     yamlContent = fs.readFileSync(serverlessPath, 'utf8');
+    // Also include external resources file if serverless.yml references it
+    const resPath = path.join(__dirname, '../../cloudformation-resources.yml');
+    if (fs.existsSync(resPath)) {
+      try {
+        yamlContent += '\n' + fs.readFileSync(resPath, 'utf8');
+      } catch (_) {
+        // ignore read errors, keep original content
+      }
+    }
   });
 
   describe('Google Identity Provider', () => {
