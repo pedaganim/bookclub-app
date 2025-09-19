@@ -621,7 +621,22 @@ functions:
             maximumRetryAttempts: 2
 
   # Event-driven processors
-  # cleanDescription trigger removed (Textract/CleanDescription pipeline disabled)
+  # Keep cleanDescription rule but disabled to allow safe stack updates (prevents CFN delete failure when external targets exist)
+  cleanDescription:
+    handler: src/handlers/books/cleanDescription.handler
+    events:
+      - eventBridge:
+          enabled: false
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'Book.TextractCompleted'
+              - 'Book.EnrichmentRequested'
+          deadLetterQueueArn: !GetAtt CleanDescriptionDLQ.Arn
+          retryPolicy:
+            maximumRetryAttempts: 3
 
   enrichGoogleMetadata:
     handler: src/handlers/books/enrichGoogleMetadata.handler
