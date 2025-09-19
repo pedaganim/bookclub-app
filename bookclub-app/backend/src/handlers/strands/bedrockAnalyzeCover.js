@@ -9,12 +9,16 @@ const BOOKS_TABLE = process.env.SERVICE_NAME ? `${process.env.SERVICE_NAME}-book
 exports.handler = async (event) => {
   try {
     // Support HTTP, EventBridge detail, and S3 event invocations
+    console.log('[Strands][BedrockAnalyze] Incoming event keys:', Object.keys(event || {}));
     let body = {};
     if (event?.httpMethod) {
+      console.log('[Strands][BedrockAnalyze] Invocation type: API Gateway (HTTP)');
       body = JSON.parse(event.body || '{}');
     } else if (event?.detail) {
+      console.log('[Strands][BedrockAnalyze] Invocation type: EventBridge');
       body = event.detail;
     } else if (Array.isArray(event?.Records) && event.Records[0]?.s3) {
+      console.log('[Strands][BedrockAnalyze] Invocation type: S3 Event');
       const rec = event.Records[0];
       const s3info = rec.s3;
       const bucketName = s3info.bucket?.name;
@@ -23,6 +27,7 @@ exports.handler = async (event) => {
     }
 
     // Accept multiple shapes: { bucket,key } or { s3Bucket,s3Key } or { fileUrl }
+    console.log('[Strands][BedrockAnalyze] Body keys after source parse:', Object.keys(body || {}));
     let bucket = body.bucket || body.s3Bucket || process.env.BOOK_COVERS_BUCKET;
     let key = body.key || body.s3Key; // required
     if (!key && body.fileUrl) {
@@ -38,17 +43,26 @@ exports.handler = async (event) => {
     }
     const contentType = body.contentType || 'image/jpeg';
     const bookId = body.bookId; // optional but recommended
+    console.log('[Strands][BedrockAnalyze] Derived params:', {
+      hasBucket: !!bucket,
+      hasKey: !!key,
+      contentType,
+      hasBookId: !!bookId,
+    });
 
     if (!bucket || !key) {
       const msg = 'Missing required parameters: bucket and key';
       console.warn('[Strands][BedrockAnalyze] Missing params. Body keys:', Object.keys(body || {}));
+      console.warn('[Strands][BedrockAnalyze] Env fallback BOOK_COVERS_BUCKET present:', !!process.env.BOOK_COVERS_BUCKET);
       if (event?.httpMethod) {
         return { statusCode: 400, body: JSON.stringify({ error: msg }) };
       }
       throw new Error(msg);
     }
 
+    console.log('[Strands][BedrockAnalyze] Analyzing image at s3://'+bucket+'/'+key);
     const metadata = await analyzeCoverImage({ bucket, key, contentType });
+    console.log('[Strands][BedrockAnalyze] Analysis complete. Keys:', Object.keys(metadata || {}));
 
     // Persist into Books table if a bookId is provided
     if (bookId) {

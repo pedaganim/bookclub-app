@@ -38,7 +38,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
     // Make non-blocking: kick off background uploads and immediately free the UI
     setError('');
-    setStatusMessage('Uploading in background... You can keep adding more images.');
+    setStatusMessage('Uploading ... ');
 
     try {
       const validImages = uploadedImages; // no validation client-side

@@ -144,6 +144,10 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
 
   # Strands + Bedrock analyzer endpoint (HTTP + can be invoked by S3)
   bedrockAnalyzeCover:
