@@ -40,6 +40,28 @@ async function sendResponse(event, context, status, data = {}, physicalResourceI
   });
 }
 
+// Simple retry with exponential backoff and jitter for throttled Lambda API calls
+async function withRetry(fn, { maxAttempts = 8, baseMs = 300 } = {}) {
+  let attempt = 0;
+  /* eslint-disable no-constant-condition */
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      const code = err && (err.code || err.name || '');
+      const retryable = err && (err.retryable === true || code === 'TooManyRequestsException' || code === 'ThrottlingException' || code === 'Throttling');
+      attempt += 1;
+      if (!retryable || attempt >= maxAttempts) throw err;
+      const backoff = baseMs * Math.pow(2, attempt - 1);
+      const jitter = Math.floor(Math.random() * 0.4 * backoff);
+      const delay = Math.min(5000, Math.floor(0.8 * backoff) + jitter);
+      // eslint-disable-next-line no-console
+      console.warn(`Retrying after ${delay}ms due to ${code} (attempt ${attempt}/${maxAttempts})`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+
 exports.handler = async (event, context) => {
   // eslint-disable-next-line no-console
   console.log('Event:', JSON.stringify(event, null, 2));
@@ -62,20 +84,13 @@ exports.handler = async (event, context) => {
     }
 
     // Look up mappings for this function (and filter by EventSourceArn if provided)
-    const res = await lambda.listEventSourceMappings({ FunctionName }).promise();
+    const res = await withRetry(() => lambda.listEventSourceMappings({ FunctionName }).promise());
     const mappings = (res.EventSourceMappings || []).filter(m => !EventSourceArn || m.EventSourceArn === EventSourceArn);
 
-    // If no mapping exists for this source, create it
-    if (!mappings.length && EventSourceArn) {
-      await lambda.createEventSourceMapping({
-        FunctionName,
-        EventSourceArn,
-        BatchSize,
-        MaximumBatchingWindowInSeconds,
-        StartingPosition,
-        Enabled: true,
-      }).promise();
-      await sendResponse(event, context, 'SUCCESS', { FunctionName, Created: true }, FunctionName);
+    // If no mapping exists, do not create here. CFN owns the EventSourceMapping resource.
+    // Return success and rely on the CFN EventSourceMapping to be present.
+    if (!mappings.length) {
+      await sendResponse(event, context, 'SUCCESS', { FunctionName, MappingsFound: 0, Note: 'No mappings found; skipping create.' }, FunctionName);
       return;
     }
 
@@ -84,7 +99,7 @@ exports.handler = async (event, context) => {
     for (const m of mappings) {
       const state = (m.State || '').toLowerCase();
       if (state !== 'enabled') {
-        await lambda.updateEventSourceMapping({ UUID: m.UUID, Enabled: true }).promise();
+        await withRetry(() => lambda.updateEventSourceMapping({ UUID: m.UUID, Enabled: true }).promise());
         updated += 1;
       }
     }
