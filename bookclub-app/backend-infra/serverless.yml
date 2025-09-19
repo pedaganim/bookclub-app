@@ -1,0 +1,226 @@
+service: bookclub-app-infra
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'prod'}
+  region: ${file(../backend/config/app.${self:provider.stage}.json):region}
+  environment:
+    STAGE: ${self:provider.stage}
+
+plugins:
+  - serverless-offline
+
+package:
+  individually: true
+  patterns:
+    - '!**/*'
+    # Reuse the existing custom resource handlers from the app repo
+    - '../backend/src/custom-resources/**'
+
+functions:
+  # Reuse existing custom resource lambdas by referencing the app repo code.
+  # NOTE: Handlers point outside this service folder on purpose. Serverless will package them.
+  dynamoTableManager:
+    handler: ../backend/src/custom-resources/dynamodb-table-manager.handler
+    timeout: 300
+    role: DynamoTableManagerRole
+
+  s3BucketManager:
+    handler: ../backend/src/custom-resources/s3-bucket-manager.handler
+    timeout: 300
+    role: S3BucketManagerRole
+
+  cognitoResourceManager:
+    handler: ../backend/src/custom-resources/cognito-resource-manager.handler
+    timeout: 300
+    role: CognitoResourceManagerRole
+
+resources:
+  Resources:
+    # ---------------------------
+    # Stable, rarely changing infra
+    # ---------------------------
+
+    # SQS DLQs
+    CleanDescriptionDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-clean-description-dlq
+        MessageRetentionPeriod: 1209600
+
+    EnrichGoogleMetadataDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-enrich-google-metadata-dlq
+        MessageRetentionPeriod: 1209600
+
+    ExtractBookMetadataDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-extract-book-metadata-dlq
+        MessageRetentionPeriod: 1209600
+
+    # Cognito (UserPool, Client, Domain) and optional Google IdP
+    # NOTE: Copy the corresponding blocks from backend/serverless.yml here during migration.
+
+    # DynamoDB tables (Users, Books, MetadataCache, DM tables, Clubs)
+    # NOTE: Copy the CustomResource-backed table definitions here during migration.
+
+    # S3 bucket for covers (managed by custom resource)
+    # NOTE: Copy BookCoversBucket resource here during migration.
+
+    # -------------
+    # IAM roles for the above custom resources
+    # -------------
+    DynamoTableManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: DynamoDBTableManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - dynamodb:CreateTable
+                    - dynamodb:DeleteTable
+                    - dynamodb:DescribeTable
+                    - dynamodb:UpdateTable
+                    - dynamodb:UpdateTimeToLive
+                    - dynamodb:DescribeTimeToLive
+                    - dynamodb:ListStreams
+                    - dynamodb:DescribeStream
+                  Resource:
+                    - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-*-${self:provider.stage}
+
+    DynamoTableManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref DynamoTableManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    S3BucketManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: S3BucketManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:CreateBucket
+                    - s3:DeleteBucket
+                    - s3:GetBucketPolicy
+                    - s3:PutBucketPolicy
+                    - s3:GetBucketCors
+                    - s3:PutBucketCors
+                    - s3:GetPublicAccessBlock
+                    - s3:PutPublicAccessBlock
+                    - s3:GetBucketLocation
+                    - s3:ListBucket
+                  Resource:
+                    - arn:aws:s3:::${self:service}-${self:provider.stage}-*
+
+    S3BucketManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref S3BucketManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    CognitoResourceManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: CognitoIdpManager
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - cognito-idp:DescribeIdentityProvider
+                    - cognito-idp:CreateIdentityProvider
+                    - cognito-idp:UpdateIdentityProvider
+                    - cognito-idp:DeleteIdentityProvider
+                  Resource: '*'
+
+    CognitoResourceManagerInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref CognitoResourceManagerLambdaFunction
+        Principal: cloudformation.amazonaws.com
+
+    # ---------------------------
+    # SSM Parameters to publish infra outputs for the app stack
+    # ---------------------------
+    # NOTE: During migration, update these to reference actual resource values
+    SsmUserPoolId:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /bookclub/${self:provider.stage}/user_pool_id
+        Type: String
+        Value: ''
+
+    SsmUserPoolClientId:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /bookclub/${self:provider.stage}/user_pool_client_id
+        Type: String
+        Value: ''
+
+    SsmBookCoversBucket:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /bookclub/${self:provider.stage}/book_covers_bucket
+        Type: String
+        Value: ''
+
+    SsmBooksTableStreamArn:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /bookclub/${self:provider.stage}/books_table_stream_arn
+        Type: String
+        Value: ''
+
+  Outputs:
+    # Mirror SSM values via Outputs for visibility (optional)
+    UserPoolId:
+      Value: !Ref SsmUserPoolId
+    UserPoolClientId:
+      Value: !Ref SsmUserPoolClientId
+    BookCoversBucketName:
+      Value: !Ref SsmBookCoversBucket
+    BooksTableStreamArn:
+      Value: !Ref SsmBooksTableStreamArn
