@@ -8,12 +8,18 @@ const BOOKS_TABLE = process.env.SERVICE_NAME ? `${process.env.SERVICE_NAME}-book
 
 exports.handler = async (event) => {
   try {
-    // Support both HTTP and EventBridge invocations
+    // Support HTTP, EventBridge detail, and S3 event invocations
     let body = {};
     if (event?.httpMethod) {
       body = JSON.parse(event.body || '{}');
     } else if (event?.detail) {
       body = event.detail;
+    } else if (Array.isArray(event?.Records) && event.Records[0]?.s3) {
+      const rec = event.Records[0];
+      const s3info = rec.s3;
+      const bucketName = s3info.bucket?.name;
+      const objectKey = decodeURIComponent(s3info.object?.key || '');
+      body = { bucket: bucketName, key: objectKey };
     }
 
     const bucket = body.bucket || process.env.BOOK_COVERS_BUCKET;
