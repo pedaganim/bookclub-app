@@ -107,9 +107,24 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
 
   // Claude 3 returns { content: [{ type: 'text', text: '...'}] }
   const text = Array.isArray(json.content) && json.content[0] && json.content[0].text ? json.content[0].text : '';
+  // Safe debug logging of raw text (truncated)
+  try {
+    const snippet = (text || '').slice(0, 500);
+    // eslint-disable-next-line no-console
+    console.log('[Bedrock] Raw text (truncated 500):', snippet);
+  } catch (_) {}
+
   // Try to parse model's text as JSON
   let parsed;
-  try { parsed = JSON.parse(text); } catch (_) { parsed = {}; }
+  try { parsed = JSON.parse(text); } catch (e) { parsed = {}; }
+
+  // Safe debug logging of parsed JSON (truncated)
+  try {
+    const serialized = JSON.stringify(parsed);
+    const truncated = serialized.length > 1200 ? (serialized.slice(0, 1200) + '...') : serialized;
+    // eslint-disable-next-line no-console
+    console.log('[Bedrock] Parsed JSON (truncated 1200):', truncated);
+  } catch (_) {}
   return normalizeMetadata(parsed);
 }
 
