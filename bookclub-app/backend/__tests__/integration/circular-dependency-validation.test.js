@@ -11,6 +11,15 @@ describe('Serverless Configuration - Circular Dependency Validation', () => {
   beforeAll(() => {
     const configPath = path.join(__dirname, '../../serverless.yml');
     serverlessConfigContent = fs.readFileSync(configPath, 'utf8');
+    // Include external resources file content if present
+    const resPath = path.join(__dirname, '../../cloudformation-resources.yml');
+    if (fs.existsSync(resPath)) {
+      try {
+        serverlessConfigContent += '\n' + fs.readFileSync(resPath, 'utf8');
+      } catch (_) {
+        // ignore read errors
+      }
+    }
   });
 
   test('should not have explicit dependency causing circular reference', () => {

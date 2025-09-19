@@ -2,6 +2,8 @@
  * Vision LLM Service
  * Advanced book cover analysis using AI vision models
  */
+const { LLM_CONFIG, getProvider, getModel, isConfigured } = require('../config/llm-config');
+
 class VisionLLMService {
   constructor() {
     this.isAvailable = this.checkAvailability();
@@ -13,14 +15,12 @@ class VisionLLMService {
    * Check if vision LLM services are available
    */
   checkAvailability() {
-    const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
-    const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
-    
-    if (!hasOpenAIKey && !hasAnthropicKey) {
+    const provider = getProvider();
+    const available = isConfigured(provider);
+    if (!available) {
       console.warn('[VisionLLM] No API keys configured for vision services');
       return false;
     }
-    
     return true;
   }
 
@@ -42,8 +42,8 @@ class VisionLLMService {
     }
 
     const {
-      provider = 'openai', // 'openai' or 'anthropic'
-      model = 'gpt-4-vision-preview',
+      provider = getProvider(), // 'openai' | 'anthropic' | 'ollama'
+      model = getModel(provider),
       confidence_threshold = 0.7,
       extract_categories = true,
       extract_series = true,
@@ -113,6 +113,8 @@ class VisionLLMService {
         return this.analyzeWithOpenAI(imageUrl, model, options);
       case 'anthropic':
         return this.analyzeWithAnthropic(imageUrl, model, options);
+      case 'ollama':
+        return this.analyzeWithOllama(imageUrl, model, options);
       default:
         throw new Error(`Unsupported vision provider: ${provider}`);
     }
@@ -123,7 +125,7 @@ class VisionLLMService {
    */
   async analyzeWithOpenAI(imageUrl, model, options) {
     try {
-      if (!process.env.OPENAI_API_KEY) {
+      if (!LLM_CONFIG.openai.apiKey) {
         console.log('[VisionLLM] OpenAI API key not configured, using mock response');
         return this.getMockOpenAIResponse();
       }
@@ -150,7 +152,7 @@ class VisionLLMService {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${LLM_CONFIG.openai.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody),
@@ -243,7 +245,7 @@ class VisionLLMService {
    */
   async analyzeWithAnthropic(imageUrl, model, options) {
     try {
-      if (!process.env.ANTHROPIC_API_KEY) {
+      if (!LLM_CONFIG.anthropic.apiKey) {
         console.log('[VisionLLM] Anthropic API key not configured, using mock response');
         return this.getMockAnthropicResponse();
       }
@@ -279,7 +281,7 @@ class VisionLLMService {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'x-api-key': LLM_CONFIG.anthropic.apiKey,
           'Content-Type': 'application/json',
           'anthropic-version': '2023-06-01'
         },
@@ -520,10 +522,11 @@ Be precise and only include information that is clearly visible. Use null for un
   getServiceMetrics() {
     return {
       isAvailable: this.isAvailable,
-      supportedProviders: ['openai', 'anthropic'],
+      supportedProviders: ['openai', 'anthropic', 'ollama'],
       supportedModels: {
         openai: ['gpt-4-vision-preview', 'gpt-4-turbo-vision', 'gpt-4o'],
-        anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku']
+        anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
+        ollama: [LLM_CONFIG.ollama.model || 'model']
       },
       averageProcessingTime: '10-30 seconds',
       accuracyRate: 0.88,

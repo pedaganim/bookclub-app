@@ -10,6 +10,15 @@ describe('Serverless Configuration', () => {
   beforeAll(() => {
     const configPath = path.join(__dirname, '../../serverless.yml');
     serverlessConfigContent = fs.readFileSync(configPath, 'utf8');
+    // Append external resources file content if present, since serverless.yml now references it
+    const resPath = path.join(__dirname, '../../cloudformation-resources.yml');
+    if (fs.existsSync(resPath)) {
+      try {
+        serverlessConfigContent += '\n' + fs.readFileSync(resPath, 'utf8');
+      } catch (_) {
+        // ignore read errors
+      }
+    }
   });
 
   test('should have all required DynamoDB tables defined', () => {
