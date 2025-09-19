@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { NotificationContext } from '../contexts/NotificationContext';
 import { Book } from '../types';
 
 const Section: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
@@ -17,6 +19,9 @@ const BookDetails: React.FC = () => {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const { isAuthenticated, user } = useAuth();
+  const notificationCtx = React.useContext(NotificationContext);
+  const [deleting, setDeleting] = useState(false);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
   const asText = (v: any): string => {
@@ -219,6 +224,53 @@ const BookDetails: React.FC = () => {
 
   const cover = (typeof (book.coverImage as any) === 'string' && (book.coverImage as any)) ||
     "data:image/svg+xml,%3csvg width='300' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='300' height='400' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
+
+  const isOwner = !!(user?.userId && book.userId && user.userId === (book.userId as any));
+
+  const handleEdit = () => {
+    if (!bookId) return;
+    // Navigate to an edit page if one exists; otherwise, fall back to update API via prompt (simple UX)
+    try {
+      window.location.assign(`/books/${bookId}/edit`);
+    } catch {}
+  };
+
+  const handleDelete = async () => {
+    if (!bookId || deleting) return;
+    const confirm = window.confirm('Are you sure you want to delete this book? This cannot be undone.');
+    if (!confirm) return;
+    try {
+      setDeleting(true);
+      await apiService.deleteBook(bookId);
+      notificationCtx?.addNotification('success', 'Book deleted');
+      window.location.assign('/library');
+    } catch (e: any) {
+      notificationCtx?.addNotification('error', e?.message || 'Failed to delete book');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleBorrow = async () => {
+    if (!isAuthenticated) {
+      window.location.assign('/login');
+      return;
+    }
+    try {
+      const { apiService } = await import('../services/api');
+      const { trackBorrowIntent } = await import('../services/analytics');
+      const conversation = await apiService.dmCreateConversation(book.userId as any);
+      const title = book.title ? `"${book.title}"` : 'your book';
+      const message = `Hi! I'm interested in borrowing ${title}. Is it available?`;
+      await apiService.dmSendMessage(conversation.conversationId, book.userId as any, message);
+      try { trackBorrowIntent(book.userId as any, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'BookDetails' }); } catch {}
+      notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
+      window.location.assign(`/messages/${conversation.conversationId}`);
+    } catch (e) {
+      notificationCtx?.addNotification('error', 'Could not start a chat. Opening Messages…');
+      window.location.assign('/messages');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
