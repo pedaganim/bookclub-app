@@ -22,13 +22,26 @@ exports.handler = async (event) => {
       body = { bucket: bucketName, key: objectKey };
     }
 
-    const bucket = body.bucket || process.env.BOOK_COVERS_BUCKET;
-    const key = body.key; // required
+    // Accept multiple shapes: { bucket,key } or { s3Bucket,s3Key } or { fileUrl }
+    let bucket = body.bucket || body.s3Bucket || process.env.BOOK_COVERS_BUCKET;
+    let key = body.key || body.s3Key; // required
+    if (!key && body.fileUrl) {
+      try {
+        const url = new URL(body.fileUrl);
+        // host like my-bucket.s3.amazonaws.com
+        const host = url.hostname;
+        const parsedBucket = host.split('.s3.amazonaws.com')[0];
+        const parsedKey = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+        bucket = bucket || parsedBucket;
+        key = key || parsedKey;
+      } catch (_) {}
+    }
     const contentType = body.contentType || 'image/jpeg';
     const bookId = body.bookId; // optional but recommended
 
     if (!bucket || !key) {
       const msg = 'Missing required parameters: bucket and key';
+      console.warn('[Strands][BedrockAnalyze] Missing params. Body keys:', Object.keys(body || {}));
       if (event?.httpMethod) {
         return { statusCode: 400, body: JSON.stringify({ error: msg }) };
       }
