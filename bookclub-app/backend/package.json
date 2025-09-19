@@ -28,7 +28,8 @@
   "dependencies": {
     "aws-sdk": "^2.1692.0",
     "uuid": "^9.0.0",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "@aws-sdk/client-bedrock-runtime": "^3.645.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",

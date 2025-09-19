@@ -12,6 +12,7 @@ provider:
         path: ocr-worker
         file: Dockerfile
   environment:
+    SERVICE_NAME: ${self:service}
     STAGE: ${self:provider.stage}
     COGNITO_USER_POOL_ID: !Ref UserPool
     COGNITO_CLIENT_ID: !Ref UserPoolClient
@@ -26,6 +27,8 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
+    # Bedrock vision model (Claude 3 family recommended)
+    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
     OLLAMA_ENDPOINT: ${env:OLLAMA_ENDPOINT, ''}
     OLLAMA_MODEL: ${env:OLLAMA_MODEL, ''}
     # MCP analyzer debug logging (set to 'true' to enable verbose logs)
@@ -87,6 +90,11 @@ provider:
         - Effect: Allow
           Action:
             - events:PutEvents
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+            - bedrock:InvokeModelWithResponseStream
           Resource: "*"
         - Effect: Allow
           Action:
@@ -606,6 +614,10 @@ functions:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
               - 'Book.MCPAnalyzedCompleted'
+<<<<<<< HEAD
+=======
+              - 'Book.StrandsAnalyzedCompleted'
+>>>>>>> e033be9 (Strands + Bedrock: add Bedrock analyzer helper, Lambda handler, serverless wiring, and architecture docs; wire Google enrichment after Strands event)
           deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
           retryPolicy:
             maximumRetryAttempts: 3
@@ -797,6 +809,24 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  # Strands + Bedrock analyzer endpoint (HTTP + can be invoked by EventBridge detail)
+  bedrockAnalyzeCover:
+    handler: src/handlers/strands/bedrockAnalyzeCover.handler
+    timeout: 60
+    memorySize: 1536
+    events:
+      - http:
+          method: POST
+          path: /strands/analyze-cover
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
   # Admin endpoints to manage join requests
   listJoinRequests:
     handler: src/handlers/clubs/listRequests.handler
