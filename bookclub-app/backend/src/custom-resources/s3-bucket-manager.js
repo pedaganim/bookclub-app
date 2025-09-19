@@ -153,9 +153,8 @@ const configureBucket = async (bucketName, config) => {
   const current = await fetchCurrentBucketState(bucketName);
   let changed = false;
 
-  // CORS
+  // CORS (compare and only update if needed)
   if (config.CorsConfiguration) {
-    // Normalize shape from template to SDK shape
     const desiredCors = { CORSRules: config.CorsConfiguration.CorsRules || config.CorsConfiguration.CORSRules || config.CorsConfiguration };
     const currentCors = current.cors ? (current.cors.CORSRules ? current.cors : { CORSRules: current.cors }) : null;
     if (!currentCors || !deepEqual(desiredCors, currentCors)) {
@@ -171,7 +170,7 @@ const configureBucket = async (bucketName, config) => {
     }
   }
 
-  // Public Access Block
+  // Public Access Block (compare and only update if needed)
   if (config.PublicAccessBlockConfiguration) {
     const desiredPab = config.PublicAccessBlockConfiguration;
     if (!current.pab || !deepEqual(desiredPab, current.pab)) {
@@ -187,7 +186,7 @@ const configureBucket = async (bucketName, config) => {
     }
   }
 
-  // Bucket policy for public read
+  // Bucket policy for public read (compare and only update if needed)
   if (config.EnablePublicRead) {
     const desired = desiredPublicReadPolicy(bucketName);
     const isSame = current.policy && deepEqual(current.policy, desired);
