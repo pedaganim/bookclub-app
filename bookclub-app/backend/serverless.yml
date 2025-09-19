@@ -621,20 +621,7 @@ functions:
             maximumRetryAttempts: 2
 
   # Event-driven processors
-  cleanDescription:
-    handler: src/handlers/books/cleanDescription.handler
-    events:
-      - eventBridge:
-          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
-          pattern:
-            source:
-              - ${self:provider.environment.EVENT_BUS_SOURCE}
-            detail-type:
-              - 'Book.TextractCompleted'
-              - 'Book.EnrichmentRequested'
-          deadLetterQueueArn: !GetAtt CleanDescriptionDLQ.Arn
-          retryPolicy:
-            maximumRetryAttempts: 3
+  # cleanDescription trigger removed (Textract/CleanDescription pipeline disabled)
 
   enrichGoogleMetadata:
     handler: src/handlers/books/enrichGoogleMetadata.handler
@@ -660,14 +647,7 @@ functions:
     environment:
       ENABLE_MCP_ANALYZER: ${env:ENABLE_MCP_ANALYZER, 'true'}
       MCP_OCR_WORKER_NAME: !Ref McpOcrWorkerLambdaFunction
-    events:
-      - eventBridge:
-          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
-          pattern:
-            source:
-              - ${self:provider.environment.EVENT_BUS_SOURCE}
-            detail-type:
-              - 'Book.CleanDescriptionCompleted'
+    # Event trigger removed (no longer depends on CleanDescriptionCompleted)
 
   # Optional OCR worker (scaffold). In production, convert this to a container image function.
   # For now, it is defined for reference and can be deployed separately with proper dependencies.

@@ -93,6 +93,30 @@ exports.handler = async (event) => {
         ExpressionAttributeNames: { '#meta': 'mcp_metadata', '#bedrock': 'bedrock' },
         ExpressionAttributeValues: { ':val': metadata, ':ts': new Date().toISOString() },
       }).promise();
+
+      // Step 3: update top-level title/author/description if missing
+      try {
+        const bestTitle = Array.isArray(metadata?.title_candidates) && metadata.title_candidates[0]?.value ? String(metadata.title_candidates[0].value).trim() : undefined;
+        const bestAuthor = Array.isArray(metadata?.author_candidates) && metadata.author_candidates[0]?.value ? String(metadata.author_candidates[0].value).trim() : undefined;
+        const bestDesc = typeof metadata?.description === 'string' ? metadata.description.trim() : undefined;
+        if (bestTitle || bestAuthor || bestDesc) {
+          const names = { '#t': 'title', '#a': 'author', '#d': 'description' };
+          const vals = { ':ts': new Date().toISOString() };
+          const sets = ['updatedAt = :ts'];
+          if (bestTitle) { names['#t'] = 'title'; vals[':t'] = bestTitle; sets.unshift('#t = if_not_exists(#t, :t)'); }
+          if (bestAuthor) { names['#a'] = 'author'; vals[':a'] = bestAuthor; sets.unshift('#a = if_not_exists(#a, :a)'); }
+          if (bestDesc) { names['#d'] = 'description'; vals[':d'] = bestDesc; sets.unshift('#d = if_not_exists(#d, :d)'); }
+          await dynamo.update({
+            TableName: BOOKS_TABLE,
+            Key: { bookId },
+            UpdateExpression: 'SET ' + sets.join(', '),
+            ExpressionAttributeNames: names,
+            ExpressionAttributeValues: vals,
+          }).promise();
+        }
+      } catch (e) {
+        console.warn('[Strands][BedrockAnalyze] Failed to set top-level fields from Bedrock:', e.message);
+      }
     }
 
     // Publish event for downstream enrichment (e.g., Google Books)

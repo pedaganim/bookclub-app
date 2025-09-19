@@ -64,6 +64,7 @@ function normalizeMetadata(obj = {}) {
     themes: Array.isArray(obj.themes) ? obj.themes : [],
     content_warnings: Array.isArray(obj.content_warnings) ? obj.content_warnings : [],
     language_guess: typeof obj.language_guess === 'string' ? obj.language_guess : undefined,
+    description: typeof obj.description === 'string' ? obj.description : undefined,
     source: 'bedrock_claude3',
   };
 }
@@ -75,8 +76,8 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
 
   const systemPrompt =
     'You are analyzing a book cover image. Extract STRICT JSON with the following shape (no commentary): ' +
-    '{"title_candidates":[{"value":"string","confidence":0..1}],"author_candidates":[{"value":"string","confidence":0..1}],"categories":["string"],"age_group":"children|middle_grade|young_adult|adult|all_ages","audience":["string"],"themes":["string"],"content_warnings":["string"],"language_guess":"string"}. ' +
-    'Rules: Title candidates exclude subtitles. Authors are names. Categories are 3-6 high-level genres. Age group from the enum. Audience like parents/educators/etc. Themes like friendship/self-discovery. Content warnings if present.';
+    '{"title_candidates":[{"value":"string","confidence":0..1}],"author_candidates":[{"value":"string","confidence":0..1}],"categories":["string"],"age_group":"children|middle_grade|young_adult|adult|all_ages","audience":["string"],"themes":["string"],"content_warnings":["string"],"language_guess":"string","description":"string"}. ' +
+    'Rules: Title candidates exclude subtitles. Authors are names. Categories are 3-6 high-level genres. Age group from the enum. Audience like parents/educators/etc. Themes like friendship/self-discovery. Content warnings if present. Description should be a concise 1-3 sentence summary suitable for a catalog.';
 
   const userText = instruction || 'Analyze this book cover image and extract metadata as strict JSON.';
 

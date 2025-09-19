@@ -14,6 +14,7 @@ class BookMetadataService {
    */
   async searchBookMetadata(searchParams) {
     const { isbn, title, author } = searchParams;
+    try { console.log('[BookMetadata] searchBookMetadata input:', { isbn, title, author }); } catch (_) {}
     
     // Create a cache key based on search parameters
     const cacheKey = this.generateCacheKey(searchParams);
@@ -41,6 +42,16 @@ class BookMetadataService {
       
       // Cache the result (even if null to avoid repeated API calls)
       await this.cacheMetadata(cacheKey, metadata);
+      try {
+        const summary = metadata ? {
+          title: metadata.title,
+          authors: Array.isArray(metadata.authors) ? metadata.authors.slice(0, 3) : metadata.authors,
+          isbn10: metadata.isbn10,
+          isbn13: metadata.isbn13,
+          source: metadata.source,
+        } : null;
+        console.log('[BookMetadata] search result summary:', summary);
+      } catch (_) {}
       
       return metadata;
     } catch (error) {
@@ -56,12 +67,16 @@ class BookMetadataService {
     try {
       const cleanISBN = isbn.replace(/[^0-9X]/g, ''); // Clean ISBN
       const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanISBN}`;
+      try { console.log('[BookMetadata] Google ISBN URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
       const data = JSON.parse(response);
+      try { console.log('[BookMetadata] Google ISBN items count:', Array.isArray(data.items) ? data.items.length : 0); } catch (_) {}
       
       if (data.items && data.items.length > 0) {
-        return this.parseGoogleBooksResponse(data.items[0]);
+        const parsed = this.parseGoogleBooksResponse(data.items[0]);
+        try { console.log('[BookMetadata] Google ISBN parsed summary:', { title: parsed.title, authors: parsed.authors?.slice?.(0,3), isbn10: parsed.isbn10, isbn13: parsed.isbn13 }); } catch (_) {}
+        return parsed;
       }
     } catch (error) {
       if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
@@ -75,13 +90,16 @@ class BookMetadataService {
     try {
       const cleanISBN = isbn.replace(/[^0-9X]/g, '');
       const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanISBN}&format=json&jscmd=data`;
+      try { console.log('[BookMetadata] OpenLibrary ISBN URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
       const data = JSON.parse(response);
       
       const bookKey = `ISBN:${cleanISBN}`;
       if (data[bookKey]) {
-        return this.parseOpenLibraryResponse(data[bookKey]);
+        const parsed = this.parseOpenLibraryResponse(data[bookKey]);
+        try { console.log('[BookMetadata] OpenLibrary ISBN parsed summary:', { title: parsed.title, authors: parsed.authors?.slice?.(0,3), isbn10: parsed.isbn10, isbn13: parsed.isbn13 }); } catch (_) {}
+        return parsed;
       }
     } catch (error) {
       if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
@@ -107,12 +125,16 @@ class BookMetadataService {
       if (!query) return null;
       
       const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`;
+      try { console.log('[BookMetadata] Google title/author URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
       const data = JSON.parse(response);
+      try { console.log('[BookMetadata] Google title/author items count:', Array.isArray(data.items) ? data.items.length : 0); } catch (_) {}
       
       if (data.items && data.items.length > 0) {
-        return this.parseGoogleBooksResponse(data.items[0]);
+        const parsed = this.parseGoogleBooksResponse(data.items[0]);
+        try { console.log('[BookMetadata] Google title/author parsed summary:', { title: parsed.title, authors: parsed.authors?.slice?.(0,3), isbn10: parsed.isbn10, isbn13: parsed.isbn13 }); } catch (_) {}
+        return parsed;
       }
     } catch (error) {
       if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
@@ -131,12 +153,15 @@ class BookMetadataService {
       params.push('limit=1');
       
       const url = searchUrl + params.join('&');
+      try { console.log('[BookMetadata] OpenLibrary search URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
       const data = JSON.parse(response);
       
       if (data.docs && data.docs.length > 0) {
-        return this.parseOpenLibrarySearchResponse(data.docs[0]);
+        const parsed = this.parseOpenLibrarySearchResponse(data.docs[0]);
+        try { console.log('[BookMetadata] OpenLibrary search parsed summary:', { title: parsed.title, authors: parsed.authors?.slice?.(0,3), isbn10: parsed.isbn10, isbn13: parsed.isbn13 }); } catch (_) {}
+        return parsed;
       }
     } catch (error) {
       if (error.message.includes('Network access blocked') || error.message.includes('External API access not available')) {
