@@ -157,12 +157,6 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-      - s3:
-          bucket: ${self:service}-${self:provider.stage}-book-covers
-          event: s3:ObjectCreated:*
-          rules:
-            - prefix: book-covers/
-          existing: true
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
