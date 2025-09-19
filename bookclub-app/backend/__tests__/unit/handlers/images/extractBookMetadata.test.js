@@ -5,6 +5,7 @@ const bookMetadataService = require('../../../../src/lib/book-metadata');
 const imagePreprocessingService = require('../../../../src/lib/image-preprocessing');
 const barcodeDetectionService = require('../../../../src/lib/barcode-detection');
 const visionLLMService = require('../../../../src/lib/vision-llm');
+const strandsAgentService = require('../../../../src/lib/strands-agent');
 const { publishEvent } = require('../../../../src/lib/event-bus');
 
 // Mock the dependencies
@@ -14,6 +15,7 @@ jest.mock('../../../../src/lib/book-metadata');
 jest.mock('../../../../src/lib/image-preprocessing');
 jest.mock('../../../../src/lib/barcode-detection');
 jest.mock('../../../../src/lib/vision-llm');
+jest.mock('../../../../src/lib/strands-agent');
 jest.mock('../../../../src/lib/event-bus');
 
 describe('extractBookMetadata handler', () => {
@@ -59,6 +61,38 @@ describe('extractBookMetadata handler', () => {
       reason: 'vision_llm_not_available',
       metadata: {}
     });
+
+    // Mock Strands Agent service
+    strandsAgentService.createAgent = jest.fn().mockReturnValue({
+      id: 'test-agent-123',
+      config: { strategy: 'best-effort' },
+      state: { status: 'created' }
+    });
+    
+    strandsAgentService.executeAnalysis = jest.fn().mockResolvedValue({
+      success: true,
+      agentId: 'test-agent-123',
+      processingTime: 15000,
+      metadata: {
+        title: 'Clean Code',
+        authors: ['Robert C. Martin'],
+        categories: ['Programming', 'Software Engineering'],
+        description: 'A handbook of agile software craftsmanship'
+      },
+      confidence: {
+        overall: 0.88,
+        title: 0.92,
+        authors: 0.85
+      },
+      workflow: {
+        completedStrands: ['bedrock-vision'],
+        failedStrands: [],
+        strategy: 'best-effort'
+      },
+      cost: { total: 0.003 }
+    });
+    
+    strandsAgentService.cleanupAgent = jest.fn();
 
     // Mock textract service
     textractService.extractTextFromImage = jest.fn().mockResolvedValue({
@@ -118,7 +152,16 @@ describe('extractBookMetadata handler', () => {
     expect(imagePreprocessingService.preprocessImage).toHaveBeenCalledWith('test-bucket', 'book-covers/user123/test-image.jpg', expect.any(Object));
     expect(barcodeDetectionService.detectBarcodes).toHaveBeenCalledWith('test-bucket', 'book-covers/user123/test-image.jpg', expect.any(Object));
     expect(textractService.extractTextFromImage).toHaveBeenCalledWith('test-bucket', 'book-covers/user123/test-image.jpg');
-    expect(visionLLMService.analyzeBookCover).toHaveBeenCalledWith('test-bucket', 'book-covers/user123/test-image.jpg', expect.any(Object));
+    
+    // Should use Strands Agent for orchestrated vision analysis
+    expect(strandsAgentService.createAgent).toHaveBeenCalled();
+    expect(strandsAgentService.executeAnalysis).toHaveBeenCalledWith(
+      expect.any(String), // agent ID
+      'test-bucket', 
+      'book-covers/user123/test-image.jpg',
+      {} // metadata set by handler
+    );
+    expect(strandsAgentService.cleanupAgent).toHaveBeenCalled();
 
     // Should lookup catalog metadata using ISBN from barcode
     expect(bookMetadataService.searchBookMetadata).toHaveBeenCalledWith({ isbn: '9780132350884' });

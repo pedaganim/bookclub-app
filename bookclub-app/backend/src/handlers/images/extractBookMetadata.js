@@ -4,6 +4,7 @@ const bookMetadataService = require('../../lib/book-metadata');
 const imagePreprocessingService = require('../../lib/image-preprocessing');
 const barcodeDetectionService = require('../../lib/barcode-detection');
 const visionLLMService = require('../../lib/vision-llm');
+const strandsAgentService = require('../../lib/strands-agent');
 const { publishEvent } = require('../../lib/event-bus');
 
 /**
@@ -112,14 +113,44 @@ async function extractMetadataFromImage(bucket, key) {
     console.log('[MetadataExtractor] Phase 1c: OCR text extraction');
     const textractResult = await textractService.extractTextFromImage(bucket, key);
     
-    // Step 4: Vision LLM analysis for advanced parsing
-    console.log('[MetadataExtractor] Phase 1d: Vision LLM analysis');
-    const visionResult = await visionLLMService.analyzeBookCover(bucket, key, {
-      provider: process.env.VISION_LLM_PROVIDER || 'openai',
-      extract_categories: true,
-      extract_series: true,
-      extract_edition: true
+    // Step 4: Strands Agent orchestrated vision analysis for advanced parsing
+    console.log('[MetadataExtractor] Phase 1d: Strands Agent vision analysis');
+    
+    // Create and configure Strands Agent
+    const agentId = `metadata-extraction-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const agent = strandsAgentService.createAgent(agentId, {
+      strategy: process.env.STRANDS_STRATEGY || 'best-effort', // best-effort, cost-optimized, accuracy-first
+      fallbackEnabled: true,
+      enrichWithGoogle: false, // We'll handle Google enrichment separately
+      confidenceThreshold: 0.7,
+      maxStrandAttempts: 3
     });
+
+    // Execute Strands Agent analysis
+    const strandsResult = await strandsAgentService.executeAnalysis(
+      agentId, 
+      bucket, 
+      key, 
+      {} // metadata will be set by the main handler
+    );
+
+    // Clean up agent after completion
+    strandsAgentService.cleanupAgent(agentId);
+
+    // Convert Strands result to match expected format for backward compatibility
+    const visionResult = strandsResult.success ? {
+      success: true,
+      provider: 'strands-agent',
+      metadata: strandsResult.metadata,
+      confidence: strandsResult.confidence,
+      processingTime: strandsResult.processingTime,
+      workflow: strandsResult.workflow,
+      cost: strandsResult.cost
+    } : {
+      success: false,
+      error: strandsResult.error,
+      workflow: strandsResult.workflow
+    };
 
     // Validate that we have at least one successful extraction
     const hasTextract = textractResult && textractResult.bookMetadata;

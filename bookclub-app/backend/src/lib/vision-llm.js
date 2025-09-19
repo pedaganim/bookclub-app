@@ -113,6 +113,8 @@ class VisionLLMService {
         return this.analyzeWithOpenAI(imageUrl, model, options);
       case 'anthropic':
         return this.analyzeWithAnthropic(imageUrl, model, options);
+      case 'bedrock':
+        return this.analyzeWithBedrock(imageUrl, model, options);
       default:
         throw new Error(`Unsupported vision provider: ${provider}`);
     }
@@ -568,8 +570,71 @@ Be precise and only include information that is clearly visible. Use null for un
   }
 
   /**
-   * Get detailed cost breakdown for monitoring
+   * Analyze with AWS Bedrock Vision
    */
+  async analyzeWithBedrock(imageUrl, model, options) {
+    try {
+      // Use the dedicated Bedrock service
+      const bedrockVisionService = require('./bedrock-vision');
+      
+      // Extract S3 info from imageUrl if possible
+      const s3Info = this.parseS3Url(imageUrl);
+      if (!s3Info) {
+        throw new Error('Bedrock provider requires S3 URL format');
+      }
+
+      console.log(`[VisionLLM] Delegating to Bedrock service: ${model}`);
+      
+      const result = await bedrockVisionService.analyzeBookCover(
+        s3Info.bucket, 
+        s3Info.key, 
+        { model, ...options }
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Bedrock analysis failed');
+      }
+
+      // Transform result to match expected format
+      return {
+        ...result.metadata,
+        confidence_indicators: result.confidence,
+        processing_details: {
+          model: result.model,
+          processingTime: result.processingTime,
+          cost: result.cost
+        }
+      };
+
+    } catch (error) {
+      console.error(`[VisionLLM] Bedrock Vision API error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Parse S3 URL to extract bucket and key
+   */
+  parseS3Url(url) {
+    try {
+      // Handle formats: https://bucket.s3.amazonaws.com/key or s3://bucket/key
+      if (url.startsWith('s3://')) {
+        const parts = url.replace('s3://', '').split('/');
+        return {
+          bucket: parts[0],
+          key: parts.slice(1).join('/')
+        };
+      } else if (url.includes('.s3.amazonaws.com/')) {
+        const urlObj = new URL(url);
+        const bucket = urlObj.hostname.split('.')[0];
+        const key = urlObj.pathname.substring(1); // Remove leading /
+        return { bucket, key };
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
   getCostBreakdown(provider, model, monthlyVolume = 1000) {
     const costPerImage = this.estimateCost(provider, model);
     const monthlyCost = costPerImage * monthlyVolume;
