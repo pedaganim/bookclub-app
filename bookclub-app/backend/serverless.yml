@@ -142,7 +142,7 @@ functions:
   # Strands + Bedrock analyzer endpoint (HTTP + can be invoked by S3)
   bedrockAnalyzeCover:
     handler: src/handlers/strands/bedrockAnalyzeCover.handler
-    timeout: 60
+    timeout: 30
     memorySize: 1536
     events:
       - http:
@@ -163,10 +163,6 @@ functions:
           rules:
             - prefix: book-covers/
           existing: true
-          authorizer: 
-            type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
