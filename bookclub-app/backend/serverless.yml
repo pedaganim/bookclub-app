@@ -1053,6 +1053,7 @@ resources:
                   Action:
                     - lambda:ListEventSourceMappings
                     - lambda:UpdateEventSourceMapping
+                    - lambda:CreateEventSourceMapping
                   Resource: '*'
 
     # Permission for CloudFormation to invoke the event source mapping manager
