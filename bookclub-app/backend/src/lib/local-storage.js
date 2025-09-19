@@ -1,6 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
+// Only enable local file storage when running offline (local dev / serverless-offline).
+const OFFLINE = process.env.IS_OFFLINE === 'true'
+  || process.env.NODE_ENV === 'development'
+  || process.env.SERVERLESS_OFFLINE === 'true';
+
 // Use a simple file-based storage for serverless offline
 const STORAGE_DIR = path.join(__dirname, '../../.local-storage');
 const USERS_FILE = path.join(STORAGE_DIR, 'users.json');
@@ -8,20 +13,26 @@ const BOOKS_FILE = path.join(STORAGE_DIR, 'books.json');
 const CLUBS_FILE = path.join(STORAGE_DIR, 'clubs.json');
 const CLUB_MEMBERS_FILE = path.join(STORAGE_DIR, 'club-members.json');
 
-// Ensure storage directory exists
-if (!fs.existsSync(STORAGE_DIR)) {
-  try {
-    fs.mkdirSync(STORAGE_DIR, { recursive: true });
-    console.log('[LocalStorage] Created storage dir:', STORAGE_DIR);
-  } catch (e) {
-    console.error('[LocalStorage] Failed to create storage dir:', STORAGE_DIR, e);
+if (OFFLINE) {
+  // Ensure storage directory exists (local only)
+  if (!fs.existsSync(STORAGE_DIR)) {
+    try {
+      fs.mkdirSync(STORAGE_DIR, { recursive: true });
+      console.log('[LocalStorage] Created storage dir:', STORAGE_DIR);
+    } catch (e) {
+      console.error('[LocalStorage] Failed to create storage dir:', STORAGE_DIR, e);
+    }
+  } else {
+    console.log('[LocalStorage] Using storage dir:', STORAGE_DIR);
   }
 } else {
-  console.log('[LocalStorage] Using storage dir:', STORAGE_DIR);
+  // In AWS Lambda, avoid any filesystem attempts during module load
+  console.log('[LocalStorage] Running in cloud mode; local storage disabled');
 }
 
 class LocalStorage {
   static loadUsers() {
+    if (!OFFLINE) return {};
     try {
       const exists = fs.existsSync(USERS_FILE);
       console.log('[LocalStorage] loadUsers path:', USERS_FILE, 'exists:', exists);
@@ -36,6 +47,7 @@ class LocalStorage {
   }
 
   static saveUsers(users) {
+    if (!OFFLINE) return;
     try {
       console.log('[LocalStorage] saveUsers path:', USERS_FILE);
       fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
@@ -45,6 +57,7 @@ class LocalStorage {
   }
 
   static loadBooks() {
+    if (!OFFLINE) return {};
     try {
       const exists = fs.existsSync(BOOKS_FILE);
       console.log('[LocalStorage] loadBooks path:', BOOKS_FILE, 'exists:', exists);
@@ -59,6 +72,7 @@ class LocalStorage {
   }
 
   static saveBooks(books) {
+    if (!OFFLINE) return;
     try {
       console.log('[LocalStorage] saveBooks path:', BOOKS_FILE);
       fs.writeFileSync(BOOKS_FILE, JSON.stringify(books, null, 2));
@@ -68,6 +82,7 @@ class LocalStorage {
   }
 
   static loadClubs() {
+    if (!OFFLINE) return {};
     try {
       const exists = fs.existsSync(CLUBS_FILE);
       if (exists) {
@@ -81,6 +96,7 @@ class LocalStorage {
   }
 
   static saveClubs(clubs) {
+    if (!OFFLINE) return;
     try {
       fs.writeFileSync(CLUBS_FILE, JSON.stringify(clubs, null, 2));
     } catch (error) {
@@ -89,6 +105,7 @@ class LocalStorage {
   }
 
   static loadClubMembers() {
+    if (!OFFLINE) return {};
     try {
       const exists = fs.existsSync(CLUB_MEMBERS_FILE);
       if (exists) {
@@ -102,6 +119,7 @@ class LocalStorage {
   }
 
   static saveClubMembers(members) {
+    if (!OFFLINE) return;
     try {
       fs.writeFileSync(CLUB_MEMBERS_FILE, JSON.stringify(members, null, 2));
     } catch (error) {
@@ -111,6 +129,7 @@ class LocalStorage {
 
   // User operations
   static async createUser(user) {
+    if (!OFFLINE) return user;
     console.log('Creating user:', user.email);
     const users = this.loadUsers();
     users[user.email] = user;
@@ -120,6 +139,7 @@ class LocalStorage {
   }
 
   static async getUserByEmail(email) {
+    if (!OFFLINE) return null;
     console.log('Looking for user:', email);
     const users = this.loadUsers();
     console.log('Available users:', Object.keys(users));
@@ -129,6 +149,7 @@ class LocalStorage {
   }
 
   static async getUserById(userId) {
+    if (!OFFLINE) return null;
     const users = this.loadUsers();
     for (const user of Object.values(users)) {
       if (user.userId === userId) {
@@ -140,6 +161,7 @@ class LocalStorage {
 
   // Book operations
   static async createBook(book) {
+    if (!OFFLINE) return book;
     const books = this.loadBooks();
     books[book.bookId] = book;
     this.saveBooks(books);
@@ -147,11 +169,13 @@ class LocalStorage {
   }
 
   static async getBook(bookId) {
+    if (!OFFLINE) return null;
     const books = this.loadBooks();
     return books[bookId] || null;
   }
 
   static async listBooks(userId = null) {
+    if (!OFFLINE) return [];
     const books = this.loadBooks();
     const allBooks = Object.values(books);
     if (userId) {
@@ -161,6 +185,7 @@ class LocalStorage {
   }
 
   static async updateBook(bookId, updates) {
+    if (!OFFLINE) return null;
     const books = this.loadBooks();
     const book = books[bookId];
     if (book) {
@@ -173,6 +198,7 @@ class LocalStorage {
   }
 
   static async deleteBook(bookId) {
+    if (!OFFLINE) return false;
     const books = this.loadBooks();
     if (books[bookId]) {
       delete books[bookId];
@@ -184,6 +210,7 @@ class LocalStorage {
 
   // Simple authentication
   static async authenticateUser(email, password) {
+    if (!OFFLINE) return null;
     console.log('Authenticating user:', email);
     const users = this.loadUsers();
     const user = users[email];
@@ -207,6 +234,7 @@ class LocalStorage {
   }
 
   static async verifyToken(token) {
+    if (!OFFLINE) return null;
     if (token.startsWith('local-token-')) {
       const userId = token.replace('local-token-', '');
       return this.getUserById(userId);
@@ -216,6 +244,7 @@ class LocalStorage {
 
   // Club operations
   static async createClub(club) {
+    if (!OFFLINE) return club;
     const clubs = this.loadClubs();
     clubs[club.clubId] = club;
     this.saveClubs(clubs);
@@ -223,11 +252,13 @@ class LocalStorage {
   }
 
   static async getClubById(clubId) {
+    if (!OFFLINE) return null;
     const clubs = this.loadClubs();
     return clubs[clubId] || null;
   }
 
   static async getClubByInviteCode(inviteCode) {
+    if (!OFFLINE) return null;
     const clubs = this.loadClubs();
     for (const club of Object.values(clubs)) {
       if (club.inviteCode === inviteCode) {
@@ -238,6 +269,7 @@ class LocalStorage {
   }
 
   static async deleteClub(clubId) {
+    if (!OFFLINE) return false;
     const clubs = this.loadClubs();
     if (clubs[clubId]) {
       delete clubs[clubId];
@@ -249,6 +281,7 @@ class LocalStorage {
 
   // Club member operations
   static async createClubMember(membership) {
+    if (!OFFLINE) return membership;
     const members = this.loadClubMembers();
     const key = `${membership.clubId}:${membership.userId}`;
     members[key] = membership;
@@ -257,12 +290,14 @@ class LocalStorage {
   }
 
   static async getClubMember(clubId, userId) {
+    if (!OFFLINE) return null;
     const members = this.loadClubMembers();
     const key = `${clubId}:${userId}`;
     return members[key] || null;
   }
 
   static async deleteClubMember(clubId, userId) {
+    if (!OFFLINE) return false;
     const members = this.loadClubMembers();
     const key = `${clubId}:${userId}`;
     if (members[key]) {
@@ -274,21 +309,25 @@ class LocalStorage {
   }
 
   static async getClubMembers(clubId) {
+    if (!OFFLINE) return [];
     const members = this.loadClubMembers();
     return Object.values(members).filter(member => member.clubId === clubId);
   }
 
   static async getUserClubs(userId) {
+    if (!OFFLINE) return [];
     const members = this.loadClubMembers();
     return Object.values(members).filter(member => member.userId === userId);
   }
 
   static async isClubMember(clubId, userId) {
+    if (!OFFLINE) return false;
     const member = await this.getClubMember(clubId, userId);
     return member !== null;
   }
 
   static async deleteAllClubMembers(clubId) {
+    if (!OFFLINE) return;
     const members = this.loadClubMembers();
     const filtered = {};
     for (const [key, member] of Object.entries(members)) {
