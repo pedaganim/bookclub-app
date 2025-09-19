@@ -57,7 +57,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       return book.userName;
     }
     // Fallback to simplified version of the userId
-    return `User ${book.userId.slice(-Math.min(8, book.userId.length))}`;
+    if (book.userId && typeof book.userId === 'string') {
+      const suffixLen = Math.min(8, book.userId.length);
+      return `User ${book.userId.slice(-suffixLen)}`;
+    }
+    return 'User';
   };
 
   // Default placeholder image when no cover image is provided
@@ -204,12 +208,14 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
               >
                 {sending ? 'Sending…' : `Borrow from ${getDisplayUsername(book)}`}
               </button>
-              <a 
-                href={`/users/${book.userId}`} 
-                className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
-              >
-                View profile
-              </a>
+              {book.userId && (
+                <a 
+                  href={`/users/${book.userId}`} 
+                  className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+                >
+                  View profile
+                </a>
+              )}
             </div>
           );
         })()}

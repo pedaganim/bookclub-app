@@ -76,6 +76,16 @@ exports.handler = async (event) => {
 
     // Persist into Books table if a bookId is provided
     if (bookId) {
+      // Step 1: ensure the parent map exists (no-op if already present)
+      await dynamo.update({
+        TableName: BOOKS_TABLE,
+        Key: { bookId },
+        UpdateExpression: 'SET #meta = if_not_exists(#meta, :empty)',
+        ExpressionAttributeNames: { '#meta': 'mcp_metadata' },
+        ExpressionAttributeValues: { ':empty': {} },
+      }).promise();
+
+      // Step 2: set the nested field
       await dynamo.update({
         TableName: BOOKS_TABLE,
         Key: { bookId },

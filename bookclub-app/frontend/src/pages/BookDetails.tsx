@@ -80,12 +80,12 @@ const BookDetails: React.FC = () => {
     );
   };
 
-  const renderMcpMetadata = (meta: any) => {
+  const renderBedrockMetadata = (meta: any) => {
     if (!meta || typeof meta !== 'object') return null;
     const titleCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).title_candidates) ? (meta as any).title_candidates : [];
     const authorCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).author_candidates) ? (meta as any).author_candidates : [];
     const lang = asText((meta as any).language_guess) || 'en';
-    const source = asText((meta as any).source) || 'mcp';
+    const source = asText((meta as any).source) || 'bedrock';
     const categories: string[] = Array.isArray((meta as any).categories) ? (meta as any).categories : [];
     const ageGroup = asText((meta as any).age_group) || '';
     const audience: string[] = Array.isArray((meta as any).audience) ? (meta as any).audience : [];
@@ -273,28 +273,6 @@ const BookDetails: React.FC = () => {
               )}
             </div>
 
-            {/* Extracted */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Extracted</h3>
-              {hasText((book as any).textractExtractedText) ? (
-                <Section title={`Extracted Text${(book as any).textractConfidence ? ` (confidence ${(book as any).textractConfidence}%)` : ''}`}>
-                  {asText((book as any).textractExtractedText)}
-                </Section>
-              ) : (
-                <div className="text-sm text-gray-500">No extracted text available.</div>
-              )}
-            </div>
-
-            {/* Cleaned */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Cleaned</h3>
-              {hasText((book as any).clean_description) ? (
-                <Section title="Clean Description">{asText((book as any).clean_description)}</Section>
-              ) : (
-                <div className="text-sm text-gray-500">No cleaned description available.</div>
-              )}
-            </div>
-
             {/* Google Metadata */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Metadata</h3>
@@ -305,13 +283,13 @@ const BookDetails: React.FC = () => {
               )}
             </div>
 
-            {/* MCP Analysis */}
+            {/* Bedrock Analysis */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">MCP Analysis</h3>
-              {(book as any).mcp_metadata ? (
-                renderMcpMetadata((book as any).mcp_metadata)
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Bedrock Analysis</h3>
+              {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) ? (
+                renderBedrockMetadata((book as any).mcp_metadata.bedrock)
               ) : (
-                <div className="text-sm text-gray-500">No MCP analysis available.</div>
+                <div className="text-sm text-gray-500">No Bedrock analysis available.</div>
               )}
             </div>
           </div>

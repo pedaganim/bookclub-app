@@ -12,7 +12,29 @@ const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 function getBedrockClient() {
   const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return new BedrockRuntimeClient({ region });
+  // Increase maxAttempts so SDK retries throttles internally too
+  return new BedrockRuntimeClient({ region, maxAttempts: 6 });
+}
+
+// Simple retry with exponential backoff + jitter for Bedrock throttling
+async function withRetry(fn, { maxAttempts = 6, baseMs = 300 } = {}) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      const code = err?.name || err?.code || '';
+      const retryable = code === 'ThrottlingException' || code === 'TooManyRequestsException' || err?.$metadata?.httpStatusCode === 429;
+      attempt += 1;
+      if (!retryable || attempt >= maxAttempts) throw err;
+      const backoff = baseMs * Math.pow(2, attempt - 1);
+      const jitter = Math.floor(Math.random() * 0.4 * backoff);
+      const delay = Math.min(5000, Math.floor(0.8 * backoff) + jitter);
+      // eslint-disable-next-line no-console
+      console.warn(`[Bedrock] Throttled, retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
 }
 
 async function getS3ObjectBytes(bucket, key) {
@@ -80,14 +102,29 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
     body,
   });
 
-  const res = await client.send(cmd);
+  const res = await withRetry(() => client.send(cmd));
   const json = JSON.parse(new TextDecoder().decode(res.body));
 
   // Claude 3 returns { content: [{ type: 'text', text: '...'}] }
   const text = Array.isArray(json.content) && json.content[0] && json.content[0].text ? json.content[0].text : '';
+  // Safe debug logging of raw text (truncated)
+  try {
+    const snippet = (text || '').slice(0, 500);
+    // eslint-disable-next-line no-console
+    console.log('[Bedrock] Raw text (truncated 500):', snippet);
+  } catch (_) {}
+
   // Try to parse model's text as JSON
   let parsed;
-  try { parsed = JSON.parse(text); } catch (_) { parsed = {}; }
+  try { parsed = JSON.parse(text); } catch (e) { parsed = {}; }
+
+  // Safe debug logging of parsed JSON (truncated)
+  try {
+    const serialized = JSON.stringify(parsed);
+    const truncated = serialized.length > 1200 ? (serialized.slice(0, 1200) + '...') : serialized;
+    // eslint-disable-next-line no-console
+    console.log('[Bedrock] Parsed JSON (truncated 1200):', truncated);
+  } catch (_) {}
   return normalizeMetadata(parsed);
 }
 

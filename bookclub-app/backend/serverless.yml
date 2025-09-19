@@ -645,7 +645,6 @@ functions:
             source:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
-              - 'Book.MCPAnalyzedCompleted'
               - 'Book.StrandsAnalyzedCompleted'
           deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
           retryPolicy:
