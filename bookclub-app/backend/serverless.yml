@@ -28,6 +28,8 @@ provider:
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
     # MCP analyzer debug logging (set to 'true' to enable verbose logs)
     MCP_DEBUG: ${env:MCP_DEBUG, ''}
+    # Function name for direct invoke from processImageUpload
+    BEDROCK_ANALYZE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-bedrockAnalyzeCover
     # Bedrock vision model (Claude 3 family recommended)
     BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
   iam:
@@ -87,6 +89,10 @@ provider:
         - Effect: Allow
           Action:
             - events:PutEvents
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - lambda:InvokeFunction
           Resource: "*"
         - Effect: Allow
           Action:
@@ -157,6 +163,16 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'S3.ObjectCreated'
+            detail:
+              eventType:
+                - 'book-cover-uploaded'
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
