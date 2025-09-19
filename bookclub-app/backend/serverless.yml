@@ -1284,16 +1284,6 @@ resources:
         StartingPosition: LATEST
         Enabled: true
 
-    # Ensure mapping is enabled (reassert after any stream ARN rotation)
-    EnsureBooksStreamMappingEnabled:
-      Type: AWS::CloudFormation::CustomResource
-      Properties:
-        ServiceToken: !GetAtt EventSourceMappingManagerLambdaFunction.Arn
-        FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
-        EventSourceArn: !GetAtt BooksTable.StreamArn
-      DependsOn:
-        - BooksTableStreamToProcessor
-
     # FINAL safeguard: re-enable the Event Source Mapping at the end of the stack update.
     # This addresses cases where later resources (e.g., table updates or other custom resources)
     # might toggle/replace streams after the initial Ensure step.
