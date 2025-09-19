@@ -46,6 +46,9 @@ exports.handler = async (event, context) => {
   const { RequestType, ResourceProperties } = event;
   const FunctionName = ResourceProperties.FunctionName;
   const EventSourceArn = ResourceProperties.EventSourceArn;
+  const BatchSize = ResourceProperties.BatchSize || 10;
+  const MaximumBatchingWindowInSeconds = ResourceProperties.MaximumBatchingWindowInSeconds || 5;
+  const StartingPosition = ResourceProperties.StartingPosition || 'LATEST';
 
   if (!FunctionName) {
     await sendResponse(event, context, 'FAILED', { Error: 'Missing FunctionName' });
@@ -61,6 +64,20 @@ exports.handler = async (event, context) => {
     // Look up mappings for this function (and filter by EventSourceArn if provided)
     const res = await lambda.listEventSourceMappings({ FunctionName }).promise();
     const mappings = (res.EventSourceMappings || []).filter(m => !EventSourceArn || m.EventSourceArn === EventSourceArn);
+
+    // If no mapping exists for this source, create it
+    if (!mappings.length && EventSourceArn) {
+      await lambda.createEventSourceMapping({
+        FunctionName,
+        EventSourceArn,
+        BatchSize,
+        MaximumBatchingWindowInSeconds,
+        StartingPosition,
+        Enabled: true,
+      }).promise();
+      await sendResponse(event, context, 'SUCCESS', { FunctionName, Created: true }, FunctionName);
+      return;
+    }
 
     // Enable any disabled mappings
     let updated = 0;
