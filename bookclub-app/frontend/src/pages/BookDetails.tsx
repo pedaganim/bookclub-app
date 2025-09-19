@@ -86,6 +86,11 @@ const BookDetails: React.FC = () => {
     const authorCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).author_candidates) ? (meta as any).author_candidates : [];
     const lang = asText((meta as any).language_guess) || 'en';
     const source = asText((meta as any).source) || 'mcp';
+    const categories: string[] = Array.isArray((meta as any).categories) ? (meta as any).categories : [];
+    const ageGroup = asText((meta as any).age_group) || '';
+    const audience: string[] = Array.isArray((meta as any).audience) ? (meta as any).audience : [];
+    const themes: string[] = Array.isArray((meta as any).themes) ? (meta as any).themes : [];
+    const contentWarnings: string[] = Array.isArray((meta as any).content_warnings) ? (meta as any).content_warnings : [];
 
     const fmt = (arr: Array<{ value: string; confidence?: number }>) =>
       arr.filter(Boolean).map((c, i) => (
@@ -114,6 +119,56 @@ const BookDetails: React.FC = () => {
         ) : (
           <div className="text-sm text-gray-500">No author candidates.</div>
         )}
+        {(categories.length || ageGroup || audience.length || themes.length || contentWarnings.length) ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {categories.length > 0 && (
+              <div>
+                <div className="text-sm font-medium text-gray-800 mb-1">Categories</div>
+                <div className="flex flex-wrap gap-1">
+                  {categories.map((c, i) => (
+                    <span key={i} className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">{asText(c)}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {ageGroup && (
+              <div>
+                <div className="text-sm font-medium text-gray-800 mb-1">Age Group</div>
+                <div className="text-sm text-gray-700">{ageGroup}</div>
+              </div>
+            )}
+            {audience.length > 0 && (
+              <div>
+                <div className="text-sm font-medium text-gray-800 mb-1">Audience</div>
+                <div className="flex flex-wrap gap-1">
+                  {audience.map((a, i) => (
+                    <span key={i} className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">{asText(a)}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {themes.length > 0 && (
+              <div>
+                <div className="text-sm font-medium text-gray-800 mb-1">Themes</div>
+                <div className="flex flex-wrap gap-1">
+                  {themes.map((t, i) => (
+                    <span key={i} className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">{asText(t)}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {contentWarnings.length > 0 && (
+              <div className="sm:col-span-2">
+                <div className="text-sm font-medium text-gray-800 mb-1">Content Warnings</div>
+                <div className="flex flex-wrap gap-1">
+                  {contentWarnings.map((w, i) => (
+                    <span key={i} className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">{asText(w)}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     );
   };

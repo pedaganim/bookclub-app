@@ -8,7 +8,7 @@ provider:
   region: ${self:custom.appConfig.region}
   ecr:
     images:
-      ocrWorker:
+      ocrworker:
         path: ocr-worker
         file: Dockerfile
   environment:
@@ -26,6 +26,8 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
+    # MCP analyzer debug logging (set to 'true' to enable verbose logs)
+    MCP_DEBUG: ${env:MCP_DEBUG, ''}
   iam:
     role:
       statements:
@@ -629,7 +631,7 @@ functions:
   # For now, it is defined for reference and can be deployed separately with proper dependencies.
   mcpOcrWorker:
     image:
-      name: ocrWorker
+      name: ocrworker
     timeout: 60
     memorySize: 2048
     architecture: x86_64
