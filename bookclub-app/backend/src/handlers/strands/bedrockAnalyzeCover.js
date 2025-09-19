@@ -79,9 +79,10 @@ exports.handler = async (event) => {
       await dynamo.update({
         TableName: BOOKS_TABLE,
         Key: { bookId },
-        UpdateExpression: 'SET #meta.#bedrock = :val, updatedAt = :ts',
+        // Ensure mcp_metadata map exists before setting nested attribute
+        UpdateExpression: 'SET #meta = if_not_exists(#meta, :empty), #meta.#bedrock = :val, updatedAt = :ts',
         ExpressionAttributeNames: { '#meta': 'mcp_metadata', '#bedrock': 'bedrock' },
-        ExpressionAttributeValues: { ':val': metadata, ':ts': new Date().toISOString() },
+        ExpressionAttributeValues: { ':empty': {}, ':val': metadata, ':ts': new Date().toISOString() },
       }).promise();
     }
 
