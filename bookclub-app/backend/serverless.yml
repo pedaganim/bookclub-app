@@ -26,6 +26,8 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     ANTHROPIC_API_KEY: ${env:ANTHROPIC_API_KEY, ''}
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
+    # MCP analyzer debug logging (set to 'true' to enable verbose logs)
+    MCP_DEBUG: ${env:MCP_DEBUG, ''}
   iam:
     role:
       statements:
