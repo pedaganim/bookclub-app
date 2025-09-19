@@ -25,11 +25,21 @@ exports.handler = async (event) => {
       const objectKey = decodeURIComponent(s3info.object?.key || '');
       body = { bucket: bucketName, key: objectKey };
     }
+    // Fallback: direct Lambda invoke with top-level fields
+    if ((!body || Object.keys(body).length === 0) && (event?.bucket || event?.key || event?.s3Bucket || event?.s3Key)) {
+      console.log('[Strands][BedrockAnalyze] Invocation type: Direct Lambda (top-level payload)');
+      body = {
+        bucket: event.bucket || event.s3Bucket,
+        key: event.key || event.s3Key,
+        bookId: event.bookId,
+        contentType: event.contentType,
+      };
+    }
 
     // Accept multiple shapes: { bucket,key } or { s3Bucket,s3Key } or { fileUrl }
     console.log('[Strands][BedrockAnalyze] Body keys after source parse:', Object.keys(body || {}));
-    let bucket = body.bucket || body.s3Bucket || process.env.BOOK_COVERS_BUCKET;
-    let key = body.key || body.s3Key; // required
+    let bucket = body.bucket || body.s3Bucket || event.bucket || event.s3Bucket || process.env.BOOK_COVERS_BUCKET;
+    let key = body.key || body.s3Key || event.key || event.s3Key; // required
     if (!key && body.fileUrl) {
       try {
         const url = new URL(body.fileUrl);
