@@ -12,7 +12,29 @@ const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 function getBedrockClient() {
   const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
-  return new BedrockRuntimeClient({ region });
+  // Increase maxAttempts so SDK retries throttles internally too
+  return new BedrockRuntimeClient({ region, maxAttempts: 6 });
+}
+
+// Simple retry with exponential backoff + jitter for Bedrock throttling
+async function withRetry(fn, { maxAttempts = 6, baseMs = 300 } = {}) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      const code = err?.name || err?.code || '';
+      const retryable = code === 'ThrottlingException' || code === 'TooManyRequestsException' || err?.$metadata?.httpStatusCode === 429;
+      attempt += 1;
+      if (!retryable || attempt >= maxAttempts) throw err;
+      const backoff = baseMs * Math.pow(2, attempt - 1);
+      const jitter = Math.floor(Math.random() * 0.4 * backoff);
+      const delay = Math.min(5000, Math.floor(0.8 * backoff) + jitter);
+      // eslint-disable-next-line no-console
+      console.warn(`[Bedrock] Throttled, retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
 }
 
 async function getS3ObjectBytes(bucket, key) {
@@ -80,7 +102,7 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
     body,
   });
 
-  const res = await client.send(cmd);
+  const res = await withRetry(() => client.send(cmd));
   const json = JSON.parse(new TextDecoder().decode(res.body));
 
   // Claude 3 returns { content: [{ type: 'text', text: '...'}] }
