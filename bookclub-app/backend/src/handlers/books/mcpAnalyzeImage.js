@@ -114,7 +114,28 @@ module.exports.handler = async (event) => {
       });
     }
 
-    await Book.update(bookId, existing.userId, { mcp_metadata: mcp });
+    // Preserve existing bedrock results by updating nested attribute instead of replacing the whole map
+    const AWS = require('aws-sdk');
+    const dynamo = new AWS.DynamoDB.DocumentClient();
+    const BOOKS_TABLE = process.env.SERVICE_NAME ? `${process.env.SERVICE_NAME}-books-${process.env.STAGE}` : `bookclub-app-books-${process.env.STAGE}`;
+
+    // Step 1: ensure parent map exists
+    await dynamo.update({
+      TableName: BOOKS_TABLE,
+      Key: { bookId },
+      UpdateExpression: 'SET #meta = if_not_exists(#meta, :empty)',
+      ExpressionAttributeNames: { '#meta': 'mcp_metadata' },
+      ExpressionAttributeValues: { ':empty': {} },
+    }).promise();
+
+    // Step 2: set nested MCP field
+    await dynamo.update({
+      TableName: BOOKS_TABLE,
+      Key: { bookId },
+      UpdateExpression: 'SET #meta.#mcp = :val, updatedAt = :ts',
+      ExpressionAttributeNames: { '#meta': 'mcp_metadata', '#mcp': 'mcp' },
+      ExpressionAttributeValues: { ':val': mcp, ':ts': new Date().toISOString() },
+    }).promise();
 
     try {
       await publishEvent('Book.MCPAnalyzedCompleted', { bookId, userId: existing.userId });
