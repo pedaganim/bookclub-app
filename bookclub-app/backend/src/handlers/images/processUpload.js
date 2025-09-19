@@ -1,3 +1,4 @@
+const AWS = require('aws-sdk');
 const Book = require('../../models/book');
 const textractService = require('../../lib/textract-service');
 const { DynamoDB } = require('../../lib/aws-config');
@@ -49,6 +50,13 @@ module.exports.handler = async (event) => {
         });
         
         console.log(`[ImageProcessor] Published S3.ObjectCreated event for book: ${createdBook.bookId}`);
+
+        // Additionally invoke Bedrock analyzer directly (best-effort, no infra changes required)
+        await invokeBedrockAnalyzer({
+          bucket,
+          key,
+          bookId: createdBook.bookId,
+        }).catch(err => console.warn('[ImageProcessor] Bedrock analyzer direct invoke failed:', err.message));
       } catch (bookCreationError) {
         console.error(`[ImageProcessor] Error creating or updating book for ${key}:`, bookCreationError);
         // Continue processing other images even if one fails
@@ -218,4 +226,25 @@ const createMinimalBookEntry = async (bucket, key, userId) => {
   console.log(`[ImageProcessor] Created book entry for uploaded image: ${createdBook.bookId} - ${key}`);
   return createdBook;
 };
+
+async function invokeBedrockAnalyzer({ bucket, key, bookId }) {
+  const functionName = process.env.BEDROCK_ANALYZE_FUNCTION_NAME;
+  if (!functionName) {
+    console.warn('[ImageProcessor] BEDROCK_ANALYZE_FUNCTION_NAME not set; skipping direct invoke');
+    return;
+  }
+  const lambda = new AWS.Lambda();
+  const payload = {
+    bucket,
+    key,
+    bookId,
+    contentType: 'image/jpeg',
+  };
+  await lambda.invoke({
+    FunctionName: functionName,
+    InvocationType: 'Event', // async invoke
+    Payload: JSON.stringify(payload),
+  }).promise();
+  console.log('[ImageProcessor] Invoked Bedrock analyzer lambda for', key);
+}
 

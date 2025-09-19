@@ -28,6 +28,8 @@ provider:
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
     # MCP analyzer debug logging (set to 'true' to enable verbose logs)
     MCP_DEBUG: ${env:MCP_DEBUG, ''}
+    # Function name for direct invoke from processImageUpload
+    BEDROCK_ANALYZE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-bedrockAnalyzeCover
     # Bedrock vision model (Claude 3 family recommended)
     BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
   iam:
@@ -90,6 +92,10 @@ provider:
           Resource: "*"
         - Effect: Allow
           Action:
+            - lambda:InvokeFunction
+          Resource: "*"
+        - Effect: Allow
+          Action:
             - bedrock:InvokeModel
             - bedrock:InvokeModelWithResponseStream
           Resource: "*"
@@ -142,7 +148,7 @@ functions:
   # Strands + Bedrock analyzer endpoint (HTTP + can be invoked by S3)
   bedrockAnalyzeCover:
     handler: src/handlers/strands/bedrockAnalyzeCover.handler
-    timeout: 60
+    timeout: 30
     memorySize: 1536
     events:
       - http:
@@ -157,16 +163,16 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-      - s3:
-          bucket: ${self:service}-${self:provider.stage}-book-covers
-          event: s3:ObjectCreated:*
-          rules:
-            - prefix: book-covers/
-          existing: true
-          authorizer: 
-            type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'S3.ObjectCreated'
+            detail:
+              eventType:
+                - 'book-cover-uploaded'
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
