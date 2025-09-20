@@ -21,6 +21,18 @@ module.exports.handler = async (event) => {
         continue;
       }
 
+async function enqueueBedrockAnalyze({ bucket, key, bookId }) {
+  const queueUrl = process.env.BEDROCK_ANALYZE_QUEUE_URL;
+  if (!queueUrl) throw new Error('BEDROCK_ANALYZE_QUEUE_URL not set');
+  const sqs = new AWS.SQS();
+  const payload = { bucket, key, bookId, contentType: 'image/jpeg' };
+  await sqs.sendMessage({
+    QueueUrl: queueUrl,
+    MessageBody: JSON.stringify(payload),
+  }).promise();
+  console.log('[ImageProcessor] Enqueued Bedrock analyze message for', key);
+}
+
       const { bucket, key } = parseS3Record(record);
       console.log(`[ImageProcessor] Processing image: s3://${bucket}/${key}`);
 
@@ -51,12 +63,22 @@ module.exports.handler = async (event) => {
         
         console.log(`[ImageProcessor] Published S3.ObjectCreated event for book: ${createdBook.bookId}`);
 
-        // Additionally invoke Bedrock analyzer directly (best-effort, no infra changes required)
-        await invokeBedrockAnalyzer({
-          bucket,
-          key,
-          bookId: createdBook.bookId,
-        }).catch(err => console.warn('[ImageProcessor] Bedrock analyzer direct invoke failed:', err.message));
+        // Prefer SQS: enqueue message for Bedrock analyzer worker
+        const queueUrl = process.env.BEDROCK_ANALYZE_QUEUE_URL;
+        if (queueUrl) {
+          await enqueueBedrockAnalyze({
+            bucket,
+            key,
+            bookId: createdBook.bookId,
+          }).catch(err => console.warn('[ImageProcessor] Enqueue to BedrockAnalyzeQueue failed:', err.message));
+        } else {
+          // Fallback to direct lambda invoke if queue not configured
+          await invokeBedrockAnalyzer({
+            bucket,
+            key,
+            bookId: createdBook.bookId,
+          }).catch(err => console.warn('[ImageProcessor] Bedrock analyzer direct invoke failed:', err.message));
+        }
       } catch (bookCreationError) {
         console.error(`[ImageProcessor] Error creating or updating book for ${key}:`, bookCreationError);
         // Continue processing other images even if one fails
