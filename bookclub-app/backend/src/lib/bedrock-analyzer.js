@@ -81,8 +81,8 @@ function normalizeMetadata(obj = {}) {
   };
 }
 
-async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', instruction }) {
-  const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20240620-v1:0';
+async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20240620-v1:0';
   const client = getBedrockClient();
   let bytes = await getS3ObjectBytes(bucket, key);
   // Bedrock image limit is 5MB on the BASE64 payload. So raw bytes must be ~<= 3.75MB.

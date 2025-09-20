@@ -52,6 +52,7 @@ exports.handler = async (event) => {
       } catch (_) {}
     }
     const contentType = body.contentType || 'image/jpeg';
+    const modelId = body.modelId; // optional override
     const bookId = body.bookId; // optional but recommended
     console.log('[Strands][BedrockAnalyze] Derived params:', {
       hasBucket: !!bucket,
@@ -80,7 +81,7 @@ exports.handler = async (event) => {
     }
 
     console.log('[Strands][BedrockAnalyze] Analyzing image at s3://'+bucket+'/'+key);
-    const metadata = await analyzeCoverImage({ bucket, key, contentType });
+    const metadata = await analyzeCoverImage({ bucket, key, contentType, modelId });
     console.log('[Strands][BedrockAnalyze] Analysis complete. Keys:', Object.keys(metadata || {}));
 
     // Persist into Books table if a bookId is provided
@@ -140,7 +141,7 @@ exports.handler = async (event) => {
           EventBusName: process.env.EVENT_BUS_NAME,
           Source: process.env.EVENT_BUS_SOURCE,
           DetailType: 'Book.StrandsAnalyzedCompleted',
-          Detail: JSON.stringify({ bookId, bucket, key, metadata }),
+          Detail: JSON.stringify({ bookId, bucket, key, metadata, modelId }),
         }],
       }).promise();
     }

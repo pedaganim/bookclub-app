@@ -25,6 +25,7 @@ exports.handler = async (event) => {
       const bucket = payload.bucket || payload.s3Bucket;
       const key = payload.key || payload.s3Key;
       const bookId = payload.bookId;
+      const modelId = payload.modelId; // optional override
       const contentType = payload.contentType || 'image/jpeg';
 
       if (!bucket || !key) {
@@ -40,7 +41,7 @@ exports.handler = async (event) => {
         await new Promise(r => setTimeout(r, totalDelay));
       }
 
-      const metadata = await analyzeCoverImage({ bucket, key, contentType });
+      const metadata = await analyzeCoverImage({ bucket, key, contentType, modelId });
 
       if (bookId) {
         // Upsert mcp_metadata.bedrock and overwrite title/author as in API handler
@@ -90,7 +91,7 @@ exports.handler = async (event) => {
             EventBusName: process.env.EVENT_BUS_NAME,
             Source: process.env.EVENT_BUS_SOURCE,
             DetailType: 'Book.StrandsAnalyzedCompleted',
-            Detail: JSON.stringify({ bookId, bucket, key, metadata }),
+            Detail: JSON.stringify({ bookId, bucket, key, metadata, modelId }),
           }],
         }).promise();
       }
