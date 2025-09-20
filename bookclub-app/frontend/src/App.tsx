@@ -12,6 +12,8 @@ import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
 import BookDetails from './pages/BookDetails';
+import AddBook from './pages/AddBook';
+import EditBook from './pages/EditBook';
 import Clubs from './pages/Clubs';
 import BrowseClubs from './pages/BrowseClubs';
 import Messages from './pages/Messages';
@@ -35,6 +37,22 @@ function App() {
                   <Route
                     path="/books/:bookId"
                     element={<BookDetails />}
+                  />
+                  <Route
+                    path="/books/new"
+                    element={
+                      <ProtectedRoute>
+                        <AddBook />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/books/:bookId/edit"
+                    element={
+                      <ProtectedRoute>
+                        <EditBook />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/messages"

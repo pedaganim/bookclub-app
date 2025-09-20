@@ -22,7 +22,6 @@ const BookDetails: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const notificationCtx = React.useContext(NotificationContext);
   const [deleting, setDeleting] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
   const asText = (v: any): string => {
@@ -33,17 +32,6 @@ const BookDetails: React.FC = () => {
     return '';
   };
 
-  const handleSaveEdits = async (updates: Partial<Book>) => {
-    if (!bookId) return;
-    try {
-      const updated = await apiService.updateBook(bookId, updates);
-      setBook(updated);
-      notificationCtx?.addNotification('success', 'Book updated');
-      setShowEditModal(false);
-    } catch (e: any) {
-      notificationCtx?.addNotification('error', e?.message || 'Failed to update book');
-    }
-  };
   const hasText = (v: any): boolean => asText(v).trim().length > 0;
 
   const renderGoogleMetadata = (meta: any) => {
@@ -264,7 +252,8 @@ const BookDetails: React.FC = () => {
   const isOwner = !!(user?.userId && book.userId && user.userId === (book.userId as any));
 
   const handleEdit = () => {
-    setShowEditModal(true);
+    if (!bookId) return;
+    window.location.assign(`/books/${bookId}/edit`);
   };
 
   const handleDelete = async () => {
@@ -413,99 +402,7 @@ const BookDetails: React.FC = () => {
           </div>
         </div>
       </div>
-      {isAuthenticated && isOwner && (
-        <EditModal
-          open={showEditModal}
-          initial={{ title: book.title, author: book.author, description: (book as any).description || '' }}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveEdits}
-        />
-      )}
     </div>
   );
-};
-
+} 
 export default BookDetails;
-
-// Inline Edit Modal
-const EditModal: React.FC<{
-  open: boolean;
-  initial: { title?: string | null; author?: string | null; description?: string | null };
-  onClose: () => void;
-  onSave: (updates: Partial<Book>) => void;
-}> = ({ open, initial, onClose, onSave }) => {
-  const [title, setTitle] = React.useState(initial.title || '');
-  const [author, setAuthor] = React.useState(initial.author || '');
-  const [description, setDescription] = React.useState(initial.description || '');
-  const [saving, setSaving] = React.useState(false);
-  React.useEffect(() => {
-    setTitle(initial.title || '');
-    setAuthor(initial.author || '');
-    setDescription(initial.description || '');
-  }, [initial.title, initial.author, initial.description, open]);
-
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
-        <div className="mt-1">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Book</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Author</label>
-              <input
-                type="text"
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                rows={4}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setSaving(true);
-                  try {
-                    await onSave({ title, author, description });
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-                disabled={saving}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
