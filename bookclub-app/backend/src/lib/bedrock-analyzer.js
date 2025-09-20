@@ -14,11 +14,17 @@ const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 function getBedrockClient() {
   const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
   // Increase maxAttempts so SDK retries throttles internally too
-  return new BedrockRuntimeClient({ region, maxAttempts: 6 });
+  const maxAttempts = parseInt(process.env.BEDROCK_MAX_ATTEMPTS || '8', 10);
+  return new BedrockRuntimeClient({ region, maxAttempts });
 }
 
 // Simple retry with exponential backoff + jitter for Bedrock throttling
-async function withRetry(fn, { maxAttempts = 6, baseMs = 300 } = {}) {
+async function withRetry(fn, { maxAttempts, baseMs } = {}) {
+  const envMax = parseInt(process.env.BEDROCK_MAX_ATTEMPTS || '8', 10);
+  const envBase = parseInt(process.env.BEDROCK_BACKOFF_BASE_MS || '500', 10);
+  const maxCap = parseInt(process.env.BEDROCK_BACKOFF_MAX_MS || '15000', 10);
+  maxAttempts = maxAttempts || envMax;
+  baseMs = baseMs || envBase;
   let attempt = 0;
   while (true) {
     try {
@@ -30,7 +36,7 @@ async function withRetry(fn, { maxAttempts = 6, baseMs = 300 } = {}) {
       if (!retryable || attempt >= maxAttempts) throw err;
       const backoff = baseMs * Math.pow(2, attempt - 1);
       const jitter = Math.floor(Math.random() * 0.4 * backoff);
-      const delay = Math.min(5000, Math.floor(0.8 * backoff) + jitter);
+      const delay = Math.min(maxCap, Math.floor(0.8 * backoff) + jitter);
       // eslint-disable-next-line no-console
       console.warn(`[Bedrock] Throttled, retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})`);
       await new Promise(r => setTimeout(r, delay));
