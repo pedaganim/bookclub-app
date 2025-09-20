@@ -47,6 +47,11 @@ module.exports.handler = async (event) => {
         smallThumbnail: metadata.smallThumbnail,
         publisher: metadata.publisher,
         source: metadata.source || 'google-books',
+        averageRating: metadata.averageRating ?? null,
+        ratingsCount: metadata.ratingsCount ?? null,
+        price: metadata.price || null,
+        buyLink: metadata.buyLink || null,
+        isEbook: metadata.isEbook,
       },
     };
 
