@@ -75,7 +75,7 @@ const BookDetails: React.FC = () => {
     }
     if (priceObj && typeof priceObj.amount === 'number') {
       const currency = priceObj.currencyCode || 'USD';
-      rows.push({ label: 'Price', value: `${currency} ${priceObj.amount.toFixed(2)}` });
+      rows.push({ label: 'Price (approx.)', value: `${currency} ${priceObj.amount.toFixed(2)}` });
     }
 
     return (
