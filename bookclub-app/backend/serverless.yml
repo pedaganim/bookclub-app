@@ -627,6 +627,7 @@ functions:
     events:
       - eventBridge:
           enabled: false
+          ruleName: ${self:service}-${self:provider.stage}-cleanDescription-rule-migrated
           eventBus: ${self:provider.environment.EVENT_BUS_NAME}
           pattern:
             source:
