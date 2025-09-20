@@ -44,6 +44,11 @@ const BookDetails: React.FC = () => {
     const pageCount = typeof v.pageCount === 'number' ? String(v.pageCount) : asText(v.pageCount);
     const language = asText(v.language);
     const description = asText(v.description);
+    const averageRating = (meta as any).averageRating ?? (v as any).averageRating;
+    const ratingsCount = (meta as any).ratingsCount ?? (v as any).ratingsCount;
+    const priceObj = (meta as any).price;
+    const buyLink = (meta as any).buyLink;
+    const isEbook = (meta as any).isEbook;
     const identifiers = Array.isArray(v.industryIdentifiers)
       ? v.industryIdentifiers
           .map((id: any) => {
@@ -64,6 +69,14 @@ const BookDetails: React.FC = () => {
     if (pageCount) rows.push({ label: 'Pages', value: pageCount });
     if (language) rows.push({ label: 'Language', value: language });
     if (identifiers) rows.push({ label: 'Identifiers', value: identifiers });
+    if (typeof averageRating === 'number') {
+      const ratingStr = ratingsCount ? `${averageRating.toFixed(1)} / 5 (${ratingsCount})` : `${averageRating.toFixed(1)} / 5`;
+      rows.push({ label: 'Rating', value: ratingStr });
+    }
+    if (priceObj && typeof priceObj.amount === 'number') {
+      const currency = priceObj.currencyCode || 'USD';
+      rows.push({ label: 'Price', value: `${currency} ${priceObj.amount.toFixed(2)}` });
+    }
 
     return (
       <div className="space-y-2">
@@ -76,6 +89,16 @@ const BookDetails: React.FC = () => {
         )}
         {description && (
           <Section title="Description">{description}</Section>
+        )}
+        {(buyLink || typeof isEbook === 'boolean') && (
+          <div className="flex items-center gap-3 text-sm">
+            {buyLink && (
+              <a href={buyLink} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white">Buy on Google Play</a>
+            )}
+            {typeof isEbook === 'boolean' && (
+              <span className="text-gray-600">Format: {isEbook ? 'eBook' : 'Print'}</span>
+            )}
+          </div>
         )}
         {/* Fallback raw JSON (collapsed view could be added later) */}
         {!rows.length && !description && (

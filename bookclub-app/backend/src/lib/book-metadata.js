@@ -66,7 +66,7 @@ class BookMetadataService {
   async searchByISBN(isbn) {
     try {
       const cleanISBN = isbn.replace(/[^0-9X]/g, ''); // Clean ISBN
-      const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanISBN}`;
+      const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanISBN}&country=US`;
       try { console.log('[BookMetadata] Google ISBN URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
@@ -124,7 +124,7 @@ class BookMetadataService {
       
       if (!query) return null;
       
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`;
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&country=US`;
       try { console.log('[BookMetadata] Google title/author URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
@@ -179,6 +179,8 @@ class BookMetadataService {
    */
   parseGoogleBooksResponse(item) {
     const volumeInfo = item.volumeInfo || {};
+    const saleInfo = item.saleInfo || {};
+    const listPrice = saleInfo.retailPrice || saleInfo.listPrice || null;
     
     return {
       title: volumeInfo.title || null,
@@ -193,7 +195,12 @@ class BookMetadataService {
       thumbnail: volumeInfo.imageLinks?.thumbnail || null,
       smallThumbnail: volumeInfo.imageLinks?.smallThumbnail || null,
       publisher: volumeInfo.publisher || null,
-      source: 'google_books'
+      source: 'google_books',
+      averageRating: typeof volumeInfo.averageRating === 'number' ? volumeInfo.averageRating : null,
+      ratingsCount: typeof volumeInfo.ratingsCount === 'number' ? volumeInfo.ratingsCount : null,
+      price: listPrice && typeof listPrice.amount === 'number' ? { amount: listPrice.amount, currencyCode: listPrice.currencyCode || 'USD' } : null,
+      buyLink: typeof saleInfo.buyLink === 'string' ? saleInfo.buyLink : null,
+      isEbook: typeof saleInfo.isEbook === 'boolean' ? saleInfo.isEbook : undefined
     };
   }
 
