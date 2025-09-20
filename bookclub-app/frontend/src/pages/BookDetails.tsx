@@ -31,6 +31,7 @@ const BookDetails: React.FC = () => {
     // Anything else (objects/arrays), do not render as text
     return '';
   };
+
   const hasText = (v: any): boolean => asText(v).trim().length > 0;
 
   const renderGoogleMetadata = (meta: any) => {
@@ -252,10 +253,7 @@ const BookDetails: React.FC = () => {
 
   const handleEdit = () => {
     if (!bookId) return;
-    // Navigate to an edit page if one exists; otherwise, fall back to update API via prompt (simple UX)
-    try {
-      window.location.assign(`/books/${bookId}/edit`);
-    } catch {}
+    window.location.assign(`/books/${bookId}/edit`);
   };
 
   const handleDelete = async () => {
@@ -406,6 +404,5 @@ const BookDetails: React.FC = () => {
       </div>
     </div>
   );
-};
-
+} 
 export default BookDetails;

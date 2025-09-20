@@ -105,7 +105,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
             </p>
           )}
           {!listView && (
-            <div className="flex items-center justify-between">
+            <div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={book.status} />
                 <Link to={`/books/${book.bookId}`} className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
@@ -113,11 +113,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                 </Link>
               </div>
               {showActions && (
-                <ActionButtons
-                  onEdit={() => setShowEditModal(true)}
-                  onDelete={() => setShowDeleteModal(true)}
-                  loading={loading}
-                />
+                <div className="mt-2">
+                  <ActionButtons
+                    onEdit={() => setShowEditModal(true)}
+                    onDelete={() => setShowDeleteModal(true)}
+                    loading={loading}
+                  />
+                </div>
               )}
             </div>
           )}

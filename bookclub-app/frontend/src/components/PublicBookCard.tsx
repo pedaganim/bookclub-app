@@ -128,6 +128,33 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       </div>
       
       <div className="p-3 sm:p-4">
+        {/* Bedrock summary (if available) */}
+        {(() => {
+          const bedrock = (book as any)?.mcp_metadata?.bedrock;
+          if (!bedrock || typeof bedrock !== 'object') return null;
+          const t0 = Array.isArray(bedrock.title_candidates) && bedrock.title_candidates[0]?.value ? String(bedrock.title_candidates[0].value) : '';
+          const a0 = Array.isArray(bedrock.author_candidates) && bedrock.author_candidates[0]?.value ? String(bedrock.author_candidates[0].value) : '';
+          const lang = typeof bedrock.language_guess === 'string' ? bedrock.language_guess : '';
+          if (!t0 && !a0 && !lang) return null;
+          return (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                {(t0 || a0) && (
+                  <div className="text-xs text-gray-700 truncate">
+                    {t0 && <span className="font-medium">{t0}</span>}
+                    {t0 && a0 && <span className="text-gray-400"> · </span>}
+                    {a0 && <span className="">{a0}</span>}
+                  </div>
+                )}
+              </div>
+              {lang && (
+                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200" title="Language guess">
+                  {lang.toUpperCase()}
+                </span>
+              )}
+            </div>
+          );
+        })()}
         {/* Description */}
         {book.description && (
           <div className="mb-3">
@@ -198,10 +225,10 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
             }
           } catch {}
           return (
-            <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
+            <div className="space-y-2">
               <button
                 type="button"
-                className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                className={`w-full text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
                 title={`Borrow from ${getDisplayUsername(book)}`}
                 onClick={handleBorrowClick}
                 disabled={sending}
@@ -211,7 +238,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
               {book.userId && (
                 <a 
                   href={`/users/${book.userId}`} 
-                  className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+                  className="block text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
                 >
                   View profile
                 </a>

@@ -1,5 +1,6 @@
 const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
 const AWS = require('aws-sdk');
+const sharp = require('sharp');
 
 // Simple helper to fetch an image from S3 and analyze it with a Bedrock vision LLM (Claude 3 family).
 // Returns a normalized metadata object.
@@ -72,7 +73,46 @@ function normalizeMetadata(obj = {}) {
 async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', instruction }) {
   const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20240620-v1:0';
   const client = getBedrockClient();
-  const bytes = await getS3ObjectBytes(bucket, key);
+  let bytes = await getS3ObjectBytes(bucket, key);
+  // Bedrock image limit ~5MB per image in base64 payload; keep raw bytes <= 5MB to be safe
+  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+  try {
+    if (bytes.length > MAX_BYTES) {
+      // Convert to JPEG and iteratively compress/resize until under limit
+      let img = sharp(bytes, { failOnError: false });
+      const meta = await img.metadata();
+      let width = meta.width || 1600;
+      let quality = 80;
+      // Always convert to JPEG for smaller size
+      for (let i = 0; i < 6; i++) {
+        const pipeline = sharp(bytes, { failOnError: false })
+          .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
+          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true });
+        const out = await pipeline.toBuffer();
+        if (out.length <= MAX_BYTES) {
+          bytes = out;
+          contentType = 'image/jpeg';
+          break;
+        }
+        // Reduce further
+        width = width * 0.8;
+        quality = quality * 0.85;
+        bytes = out;
+        contentType = 'image/jpeg';
+      }
+      // Final guard: if still too large, take a heavy downscale
+      if (bytes.length > MAX_BYTES) {
+        bytes = await sharp(bytes, { failOnError: false })
+          .resize({ width: 640, withoutEnlargement: true })
+          .jpeg({ quality: 60, mozjpeg: true })
+          .toBuffer();
+        contentType = 'image/jpeg';
+      }
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[Bedrock] Image compression failed, proceeding with original bytes:', e?.message);
+  }
 
   const systemPrompt =
     'You are analyzing a book cover image. Extract STRICT JSON with the following shape (no commentary): ' +
