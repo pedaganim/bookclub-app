@@ -48,7 +48,6 @@ const BookDetails: React.FC = () => {
     const averageRating = (meta as any).averageRating ?? (v as any).averageRating;
     const ratingsCount = (meta as any).ratingsCount ?? (v as any).ratingsCount;
     const priceObj = (meta as any).price;
-    const buyLink = (meta as any).buyLink;
     const isEbook = (meta as any).isEbook;
     const identifiers = Array.isArray(v.industryIdentifiers)
       ? v.industryIdentifiers
@@ -91,14 +90,9 @@ const BookDetails: React.FC = () => {
         {description && (
           <Section title="Description">{description}</Section>
         )}
-        {(buyLink || typeof isEbook === 'boolean') && (
-          <div className="flex items-center gap-3 text-sm">
-            {buyLink && (
-              <a href={buyLink} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white">Buy on Google Play</a>
-            )}
-            {typeof isEbook === 'boolean' && (
-              <span className="text-gray-600">Format: {isEbook ? 'eBook' : 'Print'}</span>
-            )}
+        {typeof isEbook === 'boolean' && (
+          <div className="text-sm">
+            <span className="text-gray-600">Format: {isEbook ? 'eBook' : 'Print'}</span>
           </div>
         )}
         {/* Fallback raw JSON (collapsed view could be added later) */}
@@ -331,6 +325,13 @@ const BookDetails: React.FC = () => {
                 {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
                 {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
               </div>
+              {book.status === 'borrowed' && (book as any).lentToUserId && (
+                <div className="mt-2">
+                  <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
+                    Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -370,15 +371,7 @@ const BookDetails: React.FC = () => {
 
           {/* Inline sections (no tabs) */}
           <div className="mt-6 space-y-4">
-            {/* Overview */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Overview</h3>
-              {hasText(book.description) ? (
-                <Section title="Description">{asText(book.description)}</Section>
-              ) : (
-                <div className="text-sm text-gray-500">No description available.</div>
-              )}
-            </div>
+            {/* Overview removed: no description field shown */}
 
             {/* Google Metadata */}
             <div>

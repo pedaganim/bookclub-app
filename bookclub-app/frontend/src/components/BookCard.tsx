@@ -98,16 +98,20 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       )}
       <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
         <div className={listView ? "flex-1" : ""}>
-          {/* Title and author intentionally hidden per requirements */}
-          {book.description && (
-            <p className={`text-gray-500 text-sm mb-3 ${listView ? 'line-clamp-2' : 'line-clamp-3'}`}>
-              {book.description}
-            </p>
-          )}
+          {/* Show title and author; remove description */}
+          <div className="mb-3">
+            <div className={`text-gray-900 ${listView ? 'text-base font-semibold' : 'text-sm font-medium'}`}>{book.title || 'Untitled Book'}</div>
+            <div className="text-gray-600 text-xs">{book.author || 'Unknown author'}</div>
+          </div>
           {!listView && (
             <div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={book.status} />
+                {book.status === 'borrowed' && (book as any).lentToUserId && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
+                    Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
+                  </span>
+                )}
                 <Link to={`/books/${book.bookId}`} className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
                   View details
                 </Link>
@@ -128,6 +132,11 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
           <div className="ml-4 flex flex-col items-end space-y-2">
             <div className="flex items-center gap-3">
               <StatusBadge status={book.status} />
+              {book.status === 'borrowed' && (book as any).lentToUserId && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
+                  Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
+                </span>
+              )}
               <Link to={`/books/${book.bookId}`} className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
                 View details
               </Link>
