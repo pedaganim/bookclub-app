@@ -22,9 +22,12 @@ module.exports.handler = async (event) => {
 
     // Derive better hints from Bedrock analysis (if available)
     const bedrock = existing?.mcp_metadata?.bedrock || null;
-    const brTitle = Array.isArray(bedrock?.title_candidates) && bedrock.title_candidates[0]?.value
-      ? String(bedrock.title_candidates[0].value).trim()
+    const brTitles = Array.isArray(bedrock?.title_candidates)
+      ? bedrock.title_candidates
+          .map((c) => (c && c.value ? String(c.value).trim() : ''))
+          .filter(Boolean)
       : undefined;
+    const brTitle = Array.isArray(brTitles) && brTitles.length > 0 ? brTitles[0] : undefined;
     const brAuthor = Array.isArray(bedrock?.author_candidates) && bedrock.author_candidates[0]?.value
       ? String(bedrock.author_candidates[0].value).trim()
       : undefined;
@@ -32,7 +35,9 @@ module.exports.handler = async (event) => {
     // Prefer ISBN if present; otherwise use best available title/author hints
     const lookupParams = {
       isbn: existing.isbn13 || existing.isbn10,
-      title: brTitle || existing.title,
+      // Prefer multiple Bedrock titles when available; fallback to single title
+      titles: Array.isArray(brTitles) && brTitles.length > 1 ? brTitles.slice(0, 3) : undefined,
+      title: (Array.isArray(brTitles) && brTitles.length > 0 ? brTitles[0] : undefined) || existing.title,
       author: brAuthor || existing.author,
     };
 

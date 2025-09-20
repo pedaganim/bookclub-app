@@ -13,8 +13,8 @@ class BookMetadataService {
    * @returns {Promise<Object|null>} Book metadata or null if not found
    */
   async searchBookMetadata(searchParams) {
-    const { isbn, title, author } = searchParams;
-    try { console.log('[BookMetadata] searchBookMetadata input:', { isbn, title, author }); } catch (_) {}
+    const { isbn, title, titles, author, authors } = searchParams;
+    try { console.log('[BookMetadata] searchBookMetadata input:', { isbn, title, titles, author, authors }); } catch (_) {}
     
     // Create a cache key based on search parameters
     const cacheKey = this.generateCacheKey(searchParams);
@@ -36,8 +36,10 @@ class BookMetadataService {
       }
       
       // Strategy 2: Search by title and author if ISBN search fails
-      if (!metadata && (title || author)) {
-        metadata = await this.searchByTitleAuthor(title, author);
+      if (!metadata && (title || titles || author || authors)) {
+        const titleInput = titles && Array.isArray(titles) ? titles : (title ? [title] : undefined);
+        const authorInput = authors && Array.isArray(authors) ? authors : (author ? [author] : undefined);
+        metadata = await this.searchByTitleAuthor(titleInput, authorInput);
       }
       
       // Cache the result (even if null to avoid repeated API calls)
@@ -115,12 +117,20 @@ class BookMetadataService {
   /**
    * Search by title and author
    */
-  async searchByTitleAuthor(title, author) {
+  async searchByTitleAuthor(titleInput, authorInput) {
     try {
-      // Build search query
-      let query = '';
-      if (title) query += `intitle:${encodeURIComponent(title)}`;
-      if (author) query += `${query ? '+' : ''}inauthor:${encodeURIComponent(author)}`;
+      // Normalize to arrays
+      const titleList = Array.isArray(titleInput) ? titleInput.filter(Boolean) : (titleInput ? [titleInput] : []);
+      const authorList = Array.isArray(authorInput) ? authorInput.filter(Boolean) : (authorInput ? [authorInput] : []);
+      // Build search query with multiple intitle/inauthor tokens
+      const parts = [];
+      for (const t of titleList) {
+        parts.push(`intitle:${encodeURIComponent(String(t))}`);
+      }
+      for (const a of authorList) {
+        parts.push(`inauthor:${encodeURIComponent(String(a))}`);
+      }
+      const query = parts.join('+');
       
       if (!query) return null;
       
@@ -148,8 +158,8 @@ class BookMetadataService {
     try {
       let searchUrl = 'https://openlibrary.org/search.json?';
       const params = [];
-      if (title) params.push(`title=${encodeURIComponent(title)}`);
-      if (author) params.push(`author=${encodeURIComponent(author)}`);
+      if (titleList.length > 0) params.push(`title=${encodeURIComponent(titleList.join(' '))}`);
+      if (authorList.length > 0) params.push(`author=${encodeURIComponent(authorList.join(' '))}`);
       params.push('limit=1');
       
       const url = searchUrl + params.join('&');
@@ -267,15 +277,18 @@ class BookMetadataService {
    * Generate cache key for search parameters
    */
   generateCacheKey(searchParams) {
-    const { isbn, title, author } = searchParams;
+    const { isbn, title, titles, author, authors } = searchParams;
     
     if (isbn) {
       return `isbn:${isbn.replace(/[^0-9X]/g, '')}`;
     }
     
+    const normalize = (s) => String(s || '').toLowerCase().trim();
     const parts = [];
-    if (title) parts.push(`title:${title.toLowerCase().trim()}`);
-    if (author) parts.push(`author:${author.toLowerCase().trim()}`);
+    const tList = Array.isArray(titles) ? titles : (title ? [title] : []);
+    const aList = Array.isArray(authors) ? authors : (author ? [author] : []);
+    if (tList.length) parts.push(`titles:${tList.map(normalize).join(',')}`);
+    if (aList.length) parts.push(`authors:${aList.map(normalize).join(',')}`);
     
     return parts.join('|');
   }
