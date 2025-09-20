@@ -14,7 +14,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:coverage:open": "npm run test:coverage && open coverage/lcov-report/index.html"
+    "test:coverage:open": "npm run test:coverage && open coverage/lcov-report/index.html",
+    "replay:bedrock-dlq": "node scripts/replay-bedrock-dlq.js"
   },
   "keywords": [
     "serverless",

@@ -32,6 +32,8 @@ provider:
     BEDROCK_ANALYZE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-bedrockAnalyzeCover
     # Bedrock vision model (Claude 3 family recommended)
     BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
+    # SQS queue for Bedrock analyzer worker
+    BEDROCK_ANALYZE_QUEUE_URL: !Ref BedrockAnalyzeQueue
   iam:
     role:
       statements:
@@ -99,6 +101,10 @@ provider:
             - bedrock:InvokeModel
             - bedrock:InvokeModelWithResponseStream
           Resource: "*"
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: !GetAtt BedrockAnalyzeQueue.Arn
         - Effect: Allow
           Action:
             - dynamodb:DescribeStream
@@ -177,6 +183,17 @@ functions:
             detail:
               eventType:
                 - 'book-cover-uploaded'
+
+  # Bedrock analyzer SQS worker (processes messages one-by-one)
+  bedrockAnalyzeWorker:
+    handler: src/handlers/strands/bedrockAnalyzeWorker.handler
+    timeout: 60
+    memorySize: 1536
+    reservedConcurrency: 1
+    events:
+      - sqs:
+          arn: !GetAtt BedrockAnalyzeQueue.Arn
+          batchSize: 1
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
@@ -991,6 +1008,22 @@ resources:
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-extract-book-metadata-dlq
         MessageRetentionPeriod: 1209600 # 14 days
+
+    # Bedrock analyzer worker queues
+    BedrockAnalyzeDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-bedrock-analyze-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    BedrockAnalyzeQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-bedrock-analyze-queue
+        VisibilityTimeout: 120
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt BedrockAnalyzeDLQ.Arn
+          maxReceiveCount: 5
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
       Type: AWS::IAM::Role
