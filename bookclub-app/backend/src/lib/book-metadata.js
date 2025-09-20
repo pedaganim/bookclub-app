@@ -67,8 +67,9 @@ class BookMetadataService {
    */
   async searchByISBN(isbn) {
     try {
+      const country = process.env.GOOGLE_BOOKS_COUNTRY || 'AU';
       const cleanISBN = isbn.replace(/[^0-9X]/g, ''); // Clean ISBN
-      const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanISBN}&country=US`;
+      const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanISBN}&country=${encodeURIComponent(country)}`;
       try { console.log('[BookMetadata] Google ISBN URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
@@ -119,6 +120,7 @@ class BookMetadataService {
    */
   async searchByTitleAuthor(titleInput, authorInput) {
     try {
+      const country = process.env.GOOGLE_BOOKS_COUNTRY || 'AU';
       // Normalize to arrays
       const titleList = Array.isArray(titleInput) ? titleInput.filter(Boolean) : (titleInput ? [titleInput] : []);
       const authorList = Array.isArray(authorInput) ? authorInput.filter(Boolean) : (authorInput ? [authorInput] : []);
@@ -134,7 +136,7 @@ class BookMetadataService {
       
       if (!query) return null;
       
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&country=US`;
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&country=${encodeURIComponent(country)}`;
       try { console.log('[BookMetadata] Google title/author URL:', url); } catch (_) {}
       
       const response = await this.makeHttpRequest(url);
@@ -278,13 +280,14 @@ class BookMetadataService {
    */
   generateCacheKey(searchParams) {
     const { isbn, title, titles, author, authors } = searchParams;
+    const country = process.env.GOOGLE_BOOKS_COUNTRY || 'AU';
     
     if (isbn) {
-      return `isbn:${isbn.replace(/[^0-9X]/g, '')}`;
+      return `country:${country}|isbn:${isbn.replace(/[^0-9X]/g, '')}`;
     }
     
     const normalize = (s) => String(s || '').toLowerCase().trim();
-    const parts = [];
+    const parts = [`country:${country}`];
     const tList = Array.isArray(titles) ? titles : (title ? [title] : []);
     const aList = Array.isArray(authors) ? authors : (author ? [author] : []);
     if (tList.length) parts.push(`titles:${tList.map(normalize).join(',')}`);
