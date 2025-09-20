@@ -20,12 +20,24 @@ module.exports.handler = async (event) => {
       return success({ bookId, enriched: true, skipped: true });
     }
 
-    // Query Google metadata using available hints
-    const metadata = await bookMetadataService.searchBookMetadata({
+    // Derive better hints from Bedrock analysis (if available)
+    const bedrock = existing?.mcp_metadata?.bedrock || null;
+    const brTitle = Array.isArray(bedrock?.title_candidates) && bedrock.title_candidates[0]?.value
+      ? String(bedrock.title_candidates[0].value).trim()
+      : undefined;
+    const brAuthor = Array.isArray(bedrock?.author_candidates) && bedrock.author_candidates[0]?.value
+      ? String(bedrock.author_candidates[0].value).trim()
+      : undefined;
+
+    // Prefer ISBN if present; otherwise use best available title/author hints
+    const lookupParams = {
       isbn: existing.isbn13 || existing.isbn10,
-      title: existing.title,
-      author: existing.author,
-    });
+      title: brTitle || existing.title,
+      author: brAuthor || existing.author,
+    };
+
+    // Query Google metadata using derived hints
+    const metadata = await bookMetadataService.searchBookMetadata(lookupParams);
 
     if (!metadata) {
       return success({ bookId, enriched: false });

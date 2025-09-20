@@ -225,10 +225,10 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
             }
           } catch {}
           return (
-            <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
+            <div className="space-y-2">
               <button
                 type="button"
-                className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                className={`w-full text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
                 title={`Borrow from ${getDisplayUsername(book)}`}
                 onClick={handleBorrowClick}
                 disabled={sending}
@@ -238,7 +238,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
               {book.userId && (
                 <a 
                   href={`/users/${book.userId}`} 
-                  className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+                  className="block text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
                 >
                   View profile
                 </a>
