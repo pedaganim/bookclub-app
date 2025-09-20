@@ -54,6 +54,11 @@ function toBase64Image(bytes, contentType) {
   };
 }
 
+// Estimate Base64 length without actually encoding: ceil(n/3)*4
+function estimateBase64Length(byteLength) {
+  return Math.ceil(byteLength / 3) * 4;
+}
+
 // Normalize model output to a strict JSON shape.
 function normalizeMetadata(obj = {}) {
   return {
@@ -74,22 +79,23 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
   const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20240620-v1:0';
   const client = getBedrockClient();
   let bytes = await getS3ObjectBytes(bucket, key);
-  // Bedrock image limit ~5MB per image in base64 payload; keep raw bytes <= 5MB to be safe
-  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+  // Bedrock image limit is 5MB on the BASE64 payload. So raw bytes must be ~<= 3.75MB.
+  const BASE64_MAX = 5 * 1024 * 1024; // 5MB
   try {
-    if (bytes.length > MAX_BYTES) {
+    const overLimit = () => estimateBase64Length(bytes.length) > BASE64_MAX;
+    if (overLimit()) {
       // Convert to JPEG and iteratively compress/resize until under limit
       let img = sharp(bytes, { failOnError: false });
       const meta = await img.metadata();
       let width = meta.width || 1600;
       let quality = 80;
       // Always convert to JPEG for smaller size
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 8; i++) {
         const pipeline = sharp(bytes, { failOnError: false })
           .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
           .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true });
         const out = await pipeline.toBuffer();
-        if (out.length <= MAX_BYTES) {
+        if (estimateBase64Length(out.length) <= BASE64_MAX) {
           bytes = out;
           contentType = 'image/jpeg';
           break;
@@ -101,7 +107,7 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
         contentType = 'image/jpeg';
       }
       // Final guard: if still too large, take a heavy downscale
-      if (bytes.length > MAX_BYTES) {
+      if (overLimit()) {
         bytes = await sharp(bytes, { failOnError: false })
           .resize({ width: 640, withoutEnlargement: true })
           .jpeg({ quality: 60, mozjpeg: true })
