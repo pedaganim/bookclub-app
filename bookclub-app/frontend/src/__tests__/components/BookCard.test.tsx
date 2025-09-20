@@ -46,7 +46,7 @@ describe('BookCard', () => {
     (console.error as jest.Mock).mockRestore();
   });
 
-  it('should render book information correctly', () => {
+  it('should render book information correctly (title/author visible, no description)', () => {
     render(
       <TestWrapper>
         <BookCard 
@@ -58,12 +58,12 @@ describe('BookCard', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('A test book description')).toBeInTheDocument();
-    expect(screen.queryByText('Test Book')).not.toBeInTheDocument();
-    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
+    expect(screen.getByText('Test Book')).toBeInTheDocument();
+    expect(screen.getByText('Test Author')).toBeInTheDocument();
+    expect(screen.queryByText('A test book description')).not.toBeInTheDocument();
   });
 
-  it('should render in grid view by default', () => {
+  it('should render in grid view by default (title/author visible, no description)', () => {
     render(
       <TestWrapper>
         <BookCard 
@@ -75,13 +75,13 @@ describe('BookCard', () => {
       </TestWrapper>
     );
 
-    // In grid view, verify description is shown and title/author are hidden
-    expect(screen.getByText('A test book description')).toBeInTheDocument();
-    expect(screen.queryByText('Test Book')).not.toBeInTheDocument();
-    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
+    // In grid view, verify title/author are shown and description is hidden
+    expect(screen.getByText('Test Book')).toBeInTheDocument();
+    expect(screen.getByText('Test Author')).toBeInTheDocument();
+    expect(screen.queryByText('A test book description')).not.toBeInTheDocument();
   });
 
-  it('should render in list view when listView prop is true', () => {
+  it('should render in list view when listView prop is true (title/author visible, no description)', () => {
     render(
       <TestWrapper>
         <BookCard 
@@ -94,10 +94,10 @@ describe('BookCard', () => {
       </TestWrapper>
     );
 
-    // In list view, verify description is shown and title/author are hidden
-    expect(screen.getByText('A test book description')).toBeInTheDocument();
-    expect(screen.queryByText('Test Book')).not.toBeInTheDocument();
-    expect(screen.queryByText('by Test Author')).not.toBeInTheDocument();
+    // In list view, verify title/author are shown and description is hidden
+    expect(screen.getByText('Test Book')).toBeInTheDocument();
+    expect(screen.getByText('Test Author')).toBeInTheDocument();
+    expect(screen.queryByText('A test book description')).not.toBeInTheDocument();
   });
 
   it('should render book cover image correctly in grid view', () => {

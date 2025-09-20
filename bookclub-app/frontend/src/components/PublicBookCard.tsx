@@ -128,6 +128,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       </div>
       
       <div className="p-3 sm:p-4">
+        {/* Title & Author */}
+        <div className="mb-2">
+          <div className="text-sm font-medium text-gray-900 truncate">{book.title || 'Untitled Book'}</div>
+          <div className="text-xs text-gray-600 truncate">{book.author || 'Unknown author'}</div>
+        </div>
         {/* Bedrock summary (if available) */}
         {(() => {
           const bedrock = (book as any)?.mcp_metadata?.bedrock;
@@ -155,24 +160,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
             </div>
           );
         })()}
-        {/* Description */}
-        {book.description && (
-          <div className="mb-3">
-            <Link to={`/books/${book.bookId}`} className="hover:underline">
-              <p
-                className="text-gray-700 text-sm leading-relaxed"
-                style={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {formatDescription(book.description)}
-              </p>
-            </Link>
-          </div>
-        )}
+        {/* Description removed on browse card per requirements */}
         
         {/* Borrow action */}
         {(() => {
@@ -238,7 +226,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
               {book.userId && (
                 <a 
                   href={`/users/${book.userId}`} 
-                  className="block text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
+                  className="block text-center text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
                 >
                   View profile
                 </a>

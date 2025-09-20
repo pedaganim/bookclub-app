@@ -35,11 +35,25 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       return;
     }
 
+    // Basic size validations
+    const MAX_PER_FILE = 10 * 1024 * 1024; // 10MB per file
+    const MAX_TOTAL = 50 * 1024 * 1024; // 50MB total
+    const oversize = fileArray.filter(f => f.size > MAX_PER_FILE);
+    if (oversize.length > 0) {
+      onError(`Some files exceed 10MB and were skipped: ${oversize.map(f => f.name).join(', ')}`);
+    }
+    const accepted = fileArray.filter(f => f.size <= MAX_PER_FILE);
+    const totalSize = accepted.reduce((s, f) => s + f.size, 0) + processedImages.reduce((s, img) => s + (img.file?.size || 0), 0);
+    if (totalSize > MAX_TOTAL) {
+      onError(`Total selected size exceeds 50MB. Please add fewer or smaller images.`);
+      return;
+    }
+
     setIsProcessing(true);
-    setProcessingProgress({ current: 0, total: fileArray.length });
+    setProcessingProgress({ current: 0, total: accepted.length });
 
     try {
-      const results: SelectedImage[] = fileArray.map((file) => ({
+      const results: SelectedImage[] = accepted.map((file) => ({
         file,
         preview: URL.createObjectURL(file),
       }));

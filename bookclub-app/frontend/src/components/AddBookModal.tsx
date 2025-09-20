@@ -17,6 +17,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
+  const [uploadingBatch, setUploadingBatch] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ index: 0, total: 0, success: 0, failed: 0, currentName: '' });
   const { addNotification } = useNotification();
 
   const handleImagesProcessed = (images: SelectedImage[]) => {
@@ -39,6 +41,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     // Make non-blocking: kick off background uploads and immediately free the UI
     setError('');
     setStatusMessage('Uploading ... ');
+    setUploadingBatch(true);
 
     try {
       const validImages = uploadedImages; // no validation client-side
@@ -54,13 +57,50 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
       setUploadedImages([]);
 
       (async () => {
+        const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+        const withRetry = async <T,>(fn: () => Promise<T>, label: string, maxAttempts = 3) => {
+          let attempt = 0;
+          let lastErr: any;
+          while (attempt < maxAttempts) {
+            try {
+              return await fn();
+            } catch (e: any) {
+              lastErr = e;
+              attempt += 1;
+              // Network-ish errors or 429/5xx
+              const status = e?.response?.status;
+              if (attempt >= maxAttempts) break;
+              const backoff = Math.min(2000, 300 * Math.pow(2, attempt - 1));
+              // eslint-disable-next-line no-console
+              console.warn(`[AddBook] ${label} failed (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms`, status || e?.message);
+              await sleep(backoff);
+            }
+          }
+          throw lastErr || new Error(`${label} failed`);
+        };
+
         let success = 0;
+        let failed = 0;
+        setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
         for (let i = 0; i < imagesToUpload.length; i++) {
           const image = imagesToUpload[i];
           try {
-            // Upload image to S3 only
-            const uploadData = await apiService.generateUploadUrl(image.file.type, image.file.name);
-            await apiService.uploadFile(uploadData.uploadUrl, image.file);
+            // Slight stagger between images to avoid burst limits
+            if (i > 0) await sleep(150);
+            setUploadProgress(p => ({ ...p, index: i + 1, currentName: image.file.name }));
+
+            // 1) Get upload URL (retry)
+            const uploadData = await withRetry(
+              () => apiService.generateUploadUrl(image.file.type, image.file.name),
+              'generateUploadUrl'
+            );
+
+            // 2) Upload file to S3 (retry)
+            await withRetry(
+              () => apiService.uploadFile(uploadData.uploadUrl, image.file),
+              'uploadFile'
+            );
+
             // Parse bucket and key from returned fileUrl (https://{bucket}.s3.amazonaws.com/{key})
             let s3Bucket: string | undefined;
             let s3Key: string | undefined;
@@ -74,24 +114,31 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               s3Key = uploadData.fileKey;
             }
 
-            // Create a book using Textract flow (allowing missing title/author initially)
-            const book = await apiService.createBook({
-              coverImage: uploadData.fileUrl,
-              status: 'available',
-              extractFromImage: true,
-              s3Bucket,
-              s3Key,
-            });
+            // 3) Create the book (retry)
+            const book = await withRetry(
+              () => apiService.createBook({
+                coverImage: uploadData.fileUrl,
+                status: 'available',
+                extractFromImage: true,
+                s3Bucket,
+                s3Key,
+              }),
+              'createBook'
+            );
             success += 1;
+            setUploadProgress(p => ({ ...p, success }));
             onBookAdded(book);
           } catch (imageError: any) {
             // eslint-disable-next-line no-console
             console.error(`Background upload failed for an image:`, imageError);
             addNotification?.('error', imageError?.message || 'Failed to upload one of the images');
+            failed += 1;
+            setUploadProgress(p => ({ ...p, failed }));
           }
         }
         addNotification?.('success', `Added ${success}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
         setStatusMessage('');
+        setUploadingBatch(false);
       })();
       
     } catch (err: any) {
@@ -123,9 +170,29 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             </div>
           )}
 
-          {statusMessage && (
+          {(statusMessage || uploadingBatch) && (
             <div className="mb-4 rounded-md p-4 bg-blue-50">
-              <div className="text-sm text-blue-700">{statusMessage}</div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-blue-700">{statusMessage || 'Uploading...'}</div>
+                {uploadingBatch && (
+                  <div className="text-xs text-blue-700">
+                    {uploadProgress.index}/{uploadProgress.total} • Success {uploadProgress.success} · Failed {uploadProgress.failed}
+                  </div>
+                )}
+              </div>
+              {uploadingBatch && (
+                <>
+                  <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
+                    <div
+                      className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${(uploadProgress.success + uploadProgress.failed) / Math.max(uploadProgress.total, 1) * 100}%` }}
+                    ></div>
+                  </div>
+                  {uploadProgress.currentName && (
+                    <div className="mt-2 text-xs text-blue-700 truncate">Current: {uploadProgress.currentName}</div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
