@@ -336,6 +336,40 @@ const BookDetails: React.FC = () => {
             </div>
           </div>
 
+          {/* Actions */}
+          <div className="mt-4 sm:mt-6">
+            {isAuthenticated && isOwner ? (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className={`text-sm font-medium px-4 py-2 rounded-md ${deleting ? 'bg-red-300 cursor-not-allowed text-white' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white'}`}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            ) : (
+              book.userId ? (
+                <button
+                  type="button"
+                  onClick={handleBorrow}
+                  className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+                  title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
+                >
+                  {`Borrow from ${book.userName || 'owner'}`}
+                </button>
+              ) : null
+            )}
+          </div>
+
           {/* Inline sections (no tabs) */}
           <div className="mt-6 space-y-4">
             {/* Overview */}
