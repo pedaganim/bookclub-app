@@ -189,11 +189,11 @@ functions:
     handler: src/handlers/strands/bedrockAnalyzeWorker.handler
     timeout: 60
     memorySize: 1536
-    reservedConcurrency: 1
     events:
       - sqs:
           arn: !GetAtt BedrockAnalyzeQueue.Arn
           batchSize: 1
+          maximumConcurrency: 1
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
