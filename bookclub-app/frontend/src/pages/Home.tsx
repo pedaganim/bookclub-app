@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Book, BookListResponse } from '../types';
 import { apiService } from '../services/api';
@@ -194,14 +194,19 @@ const Home: React.FC = () => {
   const hasPrev = filter === 'my-books' ? myPageIndex > 0 : previousTokens.length > 0;
   const hasNext = filter === 'my-books' ? ((myPageIndex + 1) * pageSize) < books.length : hasNextPage;
 
+  // Guard to avoid multiple navigations when multiple images are added
+  const addedNavigateDone = useRef(false);
   const handleBookAdded = (newBook: Book) => {
-    setBooks([newBook, ...books]);
+    setBooks(prev => [newBook, ...prev]);
     setShowAddModal(false);
-    // Move user to "My Books" after successful upload
-    if (filter !== 'my-books') {
+    // Move user to "My Books" once after successful upload
+    if (filter !== 'my-books' && !addedNavigateDone.current) {
+      addedNavigateDone.current = true;
       setFilter('my-books');
       setMyPageIndex(0);
       navigate('/my-books');
+      // Reset the guard after navigation tick so future sessions can navigate again
+      setTimeout(() => { addedNavigateDone.current = false; }, 500);
     }
   };
 
