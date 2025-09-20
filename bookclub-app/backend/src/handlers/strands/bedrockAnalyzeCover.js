@@ -70,6 +70,15 @@ exports.handler = async (event) => {
       throw new Error(msg);
     }
 
+    // Optional pre-analysis delay to smooth bursts (configurable via env)
+    const baseDelayMs = parseInt(process.env.BEDROCK_PRE_DELAY_MS || '400', 10);
+    const jitterMs = Math.floor(Math.random() * (parseInt(process.env.BEDROCK_PRE_DELAY_JITTER_MS || '400', 10)));
+    const totalDelay = baseDelayMs + jitterMs;
+    if (totalDelay > 0) {
+      console.log(`[Strands][BedrockAnalyze] Pre-delay ${totalDelay}ms before analysis to reduce throttling`);
+      await new Promise(r => setTimeout(r, totalDelay));
+    }
+
     console.log('[Strands][BedrockAnalyze] Analyzing image at s3://'+bucket+'/'+key);
     const metadata = await analyzeCoverImage({ bucket, key, contentType });
     console.log('[Strands][BedrockAnalyze] Analysis complete. Keys:', Object.keys(metadata || {}));
@@ -94,18 +103,23 @@ exports.handler = async (event) => {
         ExpressionAttributeValues: { ':val': metadata, ':ts': new Date().toISOString() },
       }).promise();
 
-      // Step 3: update top-level title/author/description if missing
+      // Step 3: update top-level title/author from Bedrock (overwrite), keep description optional
       try {
         const bestTitle = Array.isArray(metadata?.title_candidates) && metadata.title_candidates[0]?.value ? String(metadata.title_candidates[0].value).trim() : undefined;
         const bestAuthor = Array.isArray(metadata?.author_candidates) && metadata.author_candidates[0]?.value ? String(metadata.author_candidates[0].value).trim() : undefined;
         const bestDesc = typeof metadata?.description === 'string' ? metadata.description.trim() : undefined;
         if (bestTitle || bestAuthor || bestDesc) {
-          const names = { '#t': 'title', '#a': 'author', '#d': 'description' };
+          const names = { '#t': 'title', '#a': 'author' };
           const vals = { ':ts': new Date().toISOString() };
           const sets = ['updatedAt = :ts'];
-          if (bestTitle) { names['#t'] = 'title'; vals[':t'] = bestTitle; sets.unshift('#t = if_not_exists(#t, :t)'); }
-          if (bestAuthor) { names['#a'] = 'author'; vals[':a'] = bestAuthor; sets.unshift('#a = if_not_exists(#a, :a)'); }
-          if (bestDesc) { names['#d'] = 'description'; vals[':d'] = bestDesc; sets.unshift('#d = if_not_exists(#d, :d)'); }
+          if (bestTitle) { names['#t'] = 'title'; vals[':t'] = bestTitle; sets.unshift('#t = :t'); }
+          if (bestAuthor) { names['#a'] = 'author'; vals[':a'] = bestAuthor; sets.unshift('#a = :a'); }
+          // Only set description if missing to avoid overwriting user edits
+          if (bestDesc) {
+            names['#d'] = 'description';
+            vals[':d'] = bestDesc;
+            sets.unshift('#d = if_not_exists(#d, :d)');
+          }
           await dynamo.update({
             TableName: BOOKS_TABLE,
             Key: { bookId },
