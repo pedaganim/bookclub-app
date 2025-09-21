@@ -193,7 +193,7 @@ functions:
       - sqs:
           arn: !GetAtt BedrockAnalyzeQueue.Arn
           batchSize: 1
-          maximumConcurrency: 1
+          maximumConcurrency: 2
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
