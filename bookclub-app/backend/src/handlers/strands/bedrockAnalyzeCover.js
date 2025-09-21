@@ -106,8 +106,20 @@ exports.handler = async (event) => {
 
       // Step 3: update top-level title/author from Bedrock (overwrite), keep description optional
       try {
-        const bestTitle = Array.isArray(metadata?.title_candidates) && metadata.title_candidates[0]?.value ? String(metadata.title_candidates[0].value).trim() : undefined;
-        const bestAuthor = Array.isArray(metadata?.author_candidates) && metadata.author_candidates[0]?.value ? String(metadata.author_candidates[0].value).trim() : undefined;
+        const titleCands = Array.isArray(metadata?.title_candidates)
+          ? metadata.title_candidates
+              .map(c => (c && c.value ? String(c.value).trim() : ''))
+              .filter(Boolean)
+          : [];
+        const guessTitle = typeof metadata?.title_guess === 'string' ? metadata.title_guess.trim() : '';
+        if (guessTitle && !titleCands.includes(guessTitle)) titleCands.unshift(guessTitle);
+        const combinedTitle = titleCands.length > 1 ? titleCands.slice(0, 2).join(' / ') : (titleCands[0] || '');
+        const bestTitle = combinedTitle || undefined;
+
+        const candAuthor = Array.isArray(metadata?.author_candidates) && metadata.author_candidates[0]?.value ? String(metadata.author_candidates[0].value).trim() : '';
+        const guessAuthor = Array.isArray(metadata?.authors_guess) && metadata.authors_guess[0] ? String(metadata.authors_guess[0]).trim() : '';
+        const bestAuthor = (candAuthor || guessAuthor) || undefined;
+
         const bestDesc = typeof metadata?.description === 'string' ? metadata.description.trim() : undefined;
         if (bestTitle || bestAuthor || bestDesc) {
           const names = { '#t': 'title', '#a': 'author' };
@@ -128,6 +140,8 @@ exports.handler = async (event) => {
             ExpressionAttributeNames: names,
             ExpressionAttributeValues: vals,
           }).promise();
+        } else {
+          console.log('[Strands][BedrockAnalyze] Skipping top-level update: no bestTitle/bestAuthor/bestDesc. Keys present:', Object.keys(metadata || {}));
         }
       } catch (e) {
         console.warn('[Strands][BedrockAnalyze] Failed to set top-level fields from Bedrock:', e.message);
