@@ -67,6 +67,12 @@ const Navbar: React.FC = () => {
                 >
                   Clubs
                 </Link>
+                <Link
+                  to="/swap-toys"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  🧸 Swap Toys (Coming soon)
+                </Link>
                 <MessagesLinkWithUnread />
               </>
             )}
@@ -83,6 +89,12 @@ const Navbar: React.FC = () => {
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   About Us
+                </Link>
+                <Link
+                  to="/swap-toys"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  🧸 Swap Toys (Coming soon)
                 </Link>
               </>
             )}
@@ -197,6 +209,13 @@ const Navbar: React.FC = () => {
                   >
                     Clubs
                   </Link>
+                  <Link
+                    to="/swap-toys"
+                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    🧸 Swap Toys (Coming soon)
+                  </Link>
                   <MobileMessagesLinkWithUnread closeMobileMenu={closeMobileMenu} />
                   <Link
                     to="/profile"
@@ -230,6 +249,13 @@ const Navbar: React.FC = () => {
                     onClick={closeMobileMenu}
                   >
                     About Us
+                  </Link>
+                  <Link
+                    to="/swap-toys"
+                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                    onClick={closeMobileMenu}
+                  >
+                    🧸 Swap Toys (Coming soon)
                   </Link>
                   <Link
                     to="/login"

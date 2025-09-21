@@ -131,6 +131,7 @@ module.exports = {
   DEFAULT_PREFS,
   getUserPrefs,
   setUserPrefs,
+  sendEmail,
   sendEmailIfEnabled,
   sendAdminNewUserNotification,
 };
