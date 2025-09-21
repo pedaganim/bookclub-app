@@ -21,16 +21,35 @@
   <text class="title" x="40" y="50">New Flow: SQS-driven Bedrock Analyzer (Colorful AWS-style)</text>
 
   <!-- Legend -->
-  <g transform="translate(1000,24)">
-    <rect class="box" x="0" y="0" width="240" height="112" fill="#ffffff" stroke="#e5e7eb"/>
+  <g transform="translate(980,24)">
+    <rect class="box" x="0" y="0" width="280" height="220" fill="#ffffff" stroke="#e5e7eb"/>
     <text class="label" x="16" y="28">Legend</text>
+    <!-- Row 1 -->
     <g transform="translate(16,44)">
-      <rect width="18" height="18" rx="4" fill="#10b981"/>
-      <text class="small" x="26" y="14">Amazon S3 (uploads)</text>
+      <image href="/icons/aws-api-gateway.svg" x="0" y="-4" width="24" height="24"/>
+      <text class="small" x="32" y="12">Amazon API Gateway</text>
     </g>
     <g transform="translate(16,70)">
-      <rect width="18" height="18" rx="4" fill="#f59e0b"/>
-      <text class="small" x="26" y="14">Amazon SQS (queue, DLQ)</text>
+      <image href="/icons/aws-lambda.svg" x="0" y="-4" width="24" height="24"/>
+      <text class="small" x="32" y="12">AWS Lambda</text>
+    </g>
+    <!-- Row 2 -->
+    <g transform="translate(16,100)">
+      <image href="/icons/aws-s3.svg" x="0" y="-4" width="24" height="24"/>
+      <text class="small" x="32" y="10">Amazon S3</text>
+    </g>
+    <g transform="translate(16,126)">
+      <image href="/icons/aws-sqs.svg" x="0" y="-4" width="24" height="24"/>
+      <text class="small" x="32" y="10">Amazon SQS</text>
+    </g>
+    <!-- Row 3 -->
+    <g transform="translate(16,156)">
+      <image href="/icons/aws-dynamodb.svg" x="0" y="-4" width="24" height="24"/>
+      <text class="small" x="32" y="12">Amazon DynamoDB</text>
+    </g>
+    <g transform="translate(16,186)">
+      <image href="/icons/aws-bedrock.svg" x="0" y="-4" width="24" height="24"/>
+      <text class="small" x="32" y="10">Amazon Bedrock</text>
     </g>
   </g>
 
@@ -43,14 +62,16 @@
   </g>
   <g transform="translate(320,100)">
     <rect class="box" width="240" height="90" fill="#fde68a" stroke="#fbbf24"/>
-    <text class="label" x="16" y="36">API Gateway (HTTP)</text>
+    <image href="/icons/aws-api-gateway.svg" x="16" y="10" width="36" height="36"/>
+    <text class="label" x="66" y="36">API Gateway (HTTP)</text>
     <text class="small" x="16" y="58">/upload-url, /books, /analyze-cover</text>
   </g>
 
   <!-- Row 2: Storage & Events -->
   <g transform="translate(40,240)">
     <rect class="box" width="240" height="100" fill="#86efac" stroke="#22c55e"/>
-    <text class="label" x="16" y="36">Amazon S3</text>
+    <image href="/icons/aws-s3.svg" x="16" y="18" width="36" height="36"/>
+    <text class="label" x="66" y="36">Amazon S3</text>
     <text class="small" x="16" y="58">book-covers/<tspan font-weight="700">userId</tspan>/...</text>
     <text class="small" x="16" y="76">ObjectCreated events</text>
   </g>
@@ -63,14 +84,16 @@
   <!-- Row 3: Lambda producers -->
   <g transform="translate(40,400)">
     <rect class="box" width="300" height="110" fill="#fed7aa" stroke="#f59e0b"/>
-    <text class="label" x="16" y="36">Lambda: processImageUpload</text>
+    <image href="/icons/aws-lambda.svg" x="16" y="20" width="36" height="36"/>
+    <text class="label" x="66" y="36">Lambda: processImageUpload</text>
     <text class="small" x="16" y="58">Creates minimal book</text>
     <text class="small" x="16" y="76">Publishes EventBridge</text>
     <text class="small" x="16" y="94">Enqueues Bedrock analyze (SQS)</text>
   </g>
   <g transform="translate(380,400)">
     <rect class="box" width="300" height="110" fill="#fee2e2" stroke="#ef4444"/>
-    <text class="label" x="16" y="36">Lambda: bedrockAnalyzeCover (HTTP)</text>
+    <image href="/icons/aws-lambda.svg" x="16" y="20" width="36" height="36"/>
+    <text class="label" x="66" y="36">Lambda: bedrockAnalyzeCover (HTTP)</text>
     <text class="small" x="16" y="58">Optional direct invoke</text>
     <text class="small" x="16" y="76">Pre-delay + jitter</text>
   </g>
@@ -78,13 +101,15 @@
   <!-- Row 4: Queue & Worker -->
   <g transform="translate(740,380)">
     <rect class="box" width="250" height="120" fill="#fcd34d" stroke="#f59e0b"/>
-    <text class="label" x="16" y="36">Amazon SQS</text>
+    <image href="/icons/aws-sqs.svg" x="16" y="22" width="36" height="36"/>
+    <text class="label" x="66" y="36">Amazon SQS</text>
     <text class="small" x="16" y="58">BedrockAnalyzeQueue</text>
     <text class="small" x="16" y="76">DLQ for failures</text>
   </g>
   <g transform="translate(1020,380)">
     <rect class="box" width="220" height="120" fill="#fde68a" stroke="#f59e0b"/>
-    <text class="label" x="16" y="36">Lambda: bedrockAnalyzeWorker</text>
+    <image href="/icons/aws-lambda.svg" x="16" y="22" width="36" height="36"/>
+    <text class="label" x="66" y="36">Lambda: bedrockAnalyzeWorker</text>
     <text class="small" x="16" y="58">batchSize=1, maxConc=2</text>
     <text class="small" x="16" y="76">Pre-delay + backoff</text>
   </g>
@@ -92,12 +117,14 @@
   <!-- Row 5: AI & Data -->
   <g transform="translate(740,560)">
     <rect class="box" width="240" height="110" fill="#e9d5ff" stroke="#a78bfa"/>
-    <text class="label" x="16" y="36">Amazon Bedrock (Claude)</text>
+    <image href="/icons/aws-bedrock.svg" x="16" y="22" width="36" height="36"/>
+    <text class="label" x="66" y="36">Amazon Bedrock (Claude)</text>
     <text class="small" x="16" y="58">Model configurable</text>
   </g>
   <g transform="translate(1000,560)">
     <rect class="box" width="240" height="110" fill="#bfdbfe" stroke="#60a5fa"/>
-    <text class="label" x="16" y="36">Amazon DynamoDB</text>
+    <image href="/icons/aws-dynamodb.svg" x="16" y="22" width="36" height="36"/>
+    <text class="label" x="66" y="36">Amazon DynamoDB</text>
     <text class="small" x="16" y="58">Books + metadata-cache</text>
   </g>
 
