@@ -989,6 +989,15 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  # Interest registration (public, no auth) for upcoming features
+  interestRegisterSwapToys:
+    handler: src/handlers/interest/registerSwapToys.handler
+    events:
+      - http:
+          method: POST
+          path: /interest/swap-toys
+          cors: true
+
 resources:
   Resources:
     CleanDescriptionDLQ:

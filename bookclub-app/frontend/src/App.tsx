@@ -19,6 +19,7 @@ import BrowseClubs from './pages/BrowseClubs';
 import Messages from './pages/Messages';
 import UserProfile from './pages/UserProfile';
 import NotificationSettings from './pages/NotificationSettings';
+import SwapToys from './pages/SwapToys';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Navigate to="/login" replace />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/swap-toys" element={<SwapToys />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
                   <Route
