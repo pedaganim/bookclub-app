@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Upload">
+  <path d="M12 3l4 4h-3v5h-2V7H8l4-4z" fill="#4338ca"/>
+  <path d="M5 14v4h14v-4h2v6H3v-6h2z" fill="#6366f1"/>
+</svg>

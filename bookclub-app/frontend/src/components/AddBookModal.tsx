@@ -82,11 +82,14 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         let success = 0;
         let failed = 0;
         setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
+        // Adaptive stagger to reduce bursts
+        const batchSize = imagesToUpload.length;
+        const staggerMs = batchSize <= 3 ? 200 : batchSize <= 7 ? 600 : 1000;
         for (let i = 0; i < imagesToUpload.length; i++) {
           const image = imagesToUpload[i];
           try {
             // Slight stagger between images to avoid burst limits
-            if (i > 0) await sleep(150);
+            if (i > 0) await sleep(staggerMs);
             setUploadProgress(p => ({ ...p, index: i + 1, currentName: image.file.name }));
 
             // 1) Get upload URL (retry)
