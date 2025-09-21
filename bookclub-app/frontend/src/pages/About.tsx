@@ -26,6 +26,22 @@ const About: React.FC = () => {
           </div>
         </section>
 
+        {/* New Flow: SQS-driven Bedrock Analyzer */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold text-gray-900">New Flow: SQS-driven Bedrock Analyzer</h2>
+          <p className="text-gray-700">
+            We introduced an SQS-driven worker to smooth out bursts when analyzing book covers with Amazon Bedrock (Claude). This improves reliability and reduces
+            throttling. The diagram below highlights the new components (SQS queue, DLQ, and worker Lambda) and their interactions.
+          </p>
+          <div className="bg-white border rounded-lg p-4">
+            <img
+              src="/architecture-sqs.svg"
+              alt="SQS-driven Bedrock Analyzer Architecture"
+              className="w-full h-auto"
+            />
+          </div>
+        </section>
+
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold text-gray-900">Links</h2>
           <ul className="list-disc list-inside text-gray-700">
