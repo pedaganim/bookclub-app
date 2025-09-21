@@ -119,11 +119,11 @@ class BookMetadataService {
    * Search by title and author
    */
   async searchByTitleAuthor(titleInput, authorInput) {
+    // Normalize to arrays (function scope so both branches can use)
+    const titleList = Array.isArray(titleInput) ? titleInput.filter(Boolean) : (titleInput ? [titleInput] : []);
+    const authorList = Array.isArray(authorInput) ? authorInput.filter(Boolean) : (authorInput ? [authorInput] : []);
     try {
       const country = process.env.GOOGLE_BOOKS_COUNTRY || 'AU';
-      // Normalize to arrays
-      const titleList = Array.isArray(titleInput) ? titleInput.filter(Boolean) : (titleInput ? [titleInput] : []);
-      const authorList = Array.isArray(authorInput) ? authorInput.filter(Boolean) : (authorInput ? [authorInput] : []);
       // Build search query with multiple intitle/inauthor tokens
       const parts = [];
       for (const t of titleList) {
