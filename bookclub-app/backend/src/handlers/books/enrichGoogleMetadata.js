@@ -22,15 +22,33 @@ module.exports.handler = async (event) => {
 
     // Derive better hints from Bedrock analysis (if available)
     const bedrock = existing?.mcp_metadata?.bedrock || null;
-    const brTitles = Array.isArray(bedrock?.title_candidates)
-      ? bedrock.title_candidates
-          .map((c) => (c && c.value ? String(c.value).trim() : ''))
-          .filter(Boolean)
-      : undefined;
+    // Titles: combine candidates and optional title_guess; keep unique and trimmed
+    const brTitles = (() => {
+      const list = [];
+      if (Array.isArray(bedrock?.title_candidates)) {
+        list.push(
+          ...bedrock.title_candidates
+            .map((c) => (c && c.value ? String(c.value).trim() : ''))
+            .filter(Boolean)
+        );
+      }
+      if (typeof bedrock?.title_guess === 'string') {
+        const guess = bedrock.title_guess.trim();
+        if (guess && !list.includes(guess)) list.unshift(guess);
+      }
+      return list.length ? list : undefined;
+    })();
     const brTitle = Array.isArray(brTitles) && brTitles.length > 0 ? brTitles[0] : undefined;
-    const brAuthor = Array.isArray(bedrock?.author_candidates) && bedrock.author_candidates[0]?.value
-      ? String(bedrock.author_candidates[0].value).trim()
-      : undefined;
+    // Authors: use best candidate or first from authors_guess
+    const brAuthor = (() => {
+      const cand = Array.isArray(bedrock?.author_candidates) && bedrock.author_candidates[0]?.value
+        ? String(bedrock.author_candidates[0].value).trim()
+        : '';
+      const guess = Array.isArray(bedrock?.authors_guess) && bedrock.authors_guess[0]
+        ? String(bedrock.authors_guess[0]).trim()
+        : '';
+      return (cand || guess) || undefined;
+    })();
 
     // Prefer ISBN if present; otherwise use best available title/author hints
     const lookupParams = {

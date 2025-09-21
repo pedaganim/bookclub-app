@@ -77,6 +77,9 @@ function normalizeMetadata(obj = {}) {
     content_warnings: Array.isArray(obj.content_warnings) ? obj.content_warnings : [],
     language_guess: typeof obj.language_guess === 'string' ? obj.language_guess : undefined,
     description: typeof obj.description === 'string' ? obj.description : undefined,
+    // Fallbacks if model returns simpler fields
+    title_guess: typeof obj.title === 'string' ? obj.title : (typeof obj.book_title === 'string' ? obj.book_title : undefined),
+    authors_guess: Array.isArray(obj.authors) ? obj.authors : (typeof obj.author === 'string' ? [obj.author] : (Array.isArray(obj.author_name) ? obj.author_name : [])),
     source: 'bedrock_claude3',
   };
 }
