@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-label="AWS Lambda">
+  <circle cx="24" cy="24" r="22" fill="#f59e0b" opacity="0.15"/>
+  <path d="M14,34 L20,34 L26,20 L31,28 L36,28" stroke="#b45309" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

@@ -26,27 +26,28 @@ const Login: React.FC = () => {
 
         {/* Onboarding Strip */}
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4">
-          <h3 className="text-base sm:text-lg font-medium text-indigo-900">Getting Started with BookClub</h3>
+          <h3 className="text-base sm:text-lg font-medium text-indigo-900">How it works</h3>
           <div className="space-y-3">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
-              <p className="text-sm text-indigo-800">Sign in with your Google account</p>
+              <div className="flex items-center gap-2">
+                <img src="/icons/upload.svg" alt="Upload" className="w-4 h-4" />
+                <p className="text-sm text-indigo-800">Upload a book cover image — we auto-detect title and author</p>
+              </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
-              <p className="text-sm text-indigo-800">Create a new book club or join an existing one</p>
+              <div className="flex items-center gap-2">
+                <img src="/icons/swap.svg" alt="Swap" className="w-4 h-4" />
+                <p className="text-sm text-indigo-800">Swap books with your friends and neighbours</p>
+              </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
-              <p className="text-sm text-indigo-800">Add books to your club's reading list</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
-              <p className="text-sm text-indigo-800">Swap books with other members as part of your club</p>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">5</div>
-              <p className="text-sm text-indigo-800">Schedule meetings and start discussions</p>
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" aria-label="Search"><circle cx="11" cy="11" r="7" stroke="#4338ca" strokeWidth="2" fill="none"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#6366f1" strokeWidth="2" strokeLinecap="round"/></svg>
+                <p className="text-sm text-indigo-800">Search for books within your groups</p>
+              </div>
             </div>
           </div>
         </div>
@@ -59,7 +60,15 @@ const Login: React.FC = () => {
               onClick={async () => {
                 try {
                   const { code_verifier, code_challenge } = await createPkcePair();
+                  // Store in both sessionStorage and localStorage to handle some mobile browsers
+                  // that lose sessionStorage during external redirects
                   sessionStorage.setItem('pkce_code_verifier', code_verifier);
+                  try {
+                    localStorage.setItem('pkce_code_verifier', code_verifier);
+                    localStorage.setItem('pkce_code_verifier_ts', String(Date.now()));
+                  } catch (_) {
+                    // ignore storage quota issues
+                  }
                   const params = new URLSearchParams({
                     response_type: config.cognito.responseType,
                     client_id: config.cognito.userPoolClientId,
