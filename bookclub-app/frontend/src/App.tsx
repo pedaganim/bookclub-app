@@ -20,6 +20,7 @@ import Messages from './pages/Messages';
 import UserProfile from './pages/UserProfile';
 import NotificationSettings from './pages/NotificationSettings';
 import SwapToys from './pages/SwapToys';
+import MobileTabBar from './components/MobileTabBar';
 
 function App() {
   return (
@@ -28,7 +29,7 @@ function App() {
         <AuthProvider>
           <div className="App">
             <Navbar />
-            <main className="min-h-screen bg-gray-50">
+            <main className="min-h-screen bg-gray-50 pb-20 md:pb-0">
               <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Navigate to="/login" replace />} />
@@ -123,8 +124,9 @@ function App() {
                   />
                   <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
-              </main>
-            </div>
+            </main>
+            <MobileTabBar />
+          </div>
         </AuthProvider>
       </NotificationProvider>
     </Router>
