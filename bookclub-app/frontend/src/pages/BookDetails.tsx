@@ -367,9 +367,21 @@ const BookDetails: React.FC = () => {
                 {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
                 {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
                 {(() => {
-                  const age = (book as any).ageGroupFine || (book as any).advancedMetadata?.metadata?.ageGroupFine;
-                  const text = asText(age);
-                  return text ? (<p className="text-gray-600"><span className="font-medium">Audience:</span> {text}</p>) : null;
+                  // Prefer explicit ageGroupFine fields; fallback to Bedrock mcp age_group
+                  const direct = (book as any).ageGroupFine || (book as any).advancedMetadata?.metadata?.ageGroupFine;
+                  const fromBedrock = (book as any).mcp_metadata?.bedrock?.age_group;
+                  const mapBedrock = (v: string) => {
+                    switch ((v || '').toLowerCase()) {
+                      case 'children': return 'early_reader';
+                      case 'middle_grade': return 'middle_grade';
+                      case 'young_adult': return 'young_adult';
+                      case 'adult': return 'adult';
+                      case 'all_ages': return '';
+                      default: return '';
+                    }
+                  };
+                  const resolved = asText(direct) || mapBedrock(asText(fromBedrock));
+                  return resolved ? (<p className="text-gray-600"><span className="font-medium">Audience:</span> {resolved}</p>) : null;
                 })()}
               </div>
               {book.status === 'borrowed' && (book as any).lentToUserId && (

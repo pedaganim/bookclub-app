@@ -75,11 +75,22 @@ function estimateBase64Length(byteLength) {
 
 // Normalize model output to a strict JSON shape.
 function normalizeMetadata(obj = {}) {
+  const mapAgeFine = (v) => {
+    switch (String(v || '').toLowerCase()) {
+      case 'children': return 'early_reader';
+      case 'middle_grade': return 'middle_grade';
+      case 'young_adult': return 'young_adult';
+      case 'adult': return 'adult';
+      case 'all_ages': return null;
+      default: return null;
+    }
+  };
   return {
     title_candidates: Array.isArray(obj.title_candidates) ? obj.title_candidates : [],
     author_candidates: Array.isArray(obj.author_candidates) ? obj.author_candidates : [],
     categories: Array.isArray(obj.categories) ? obj.categories : [],
     age_group: typeof obj.age_group === 'string' ? obj.age_group : null,
+    ageGroupFine: mapAgeFine(obj.age_group),
     audience: Array.isArray(obj.audience) ? obj.audience : [],
     themes: Array.isArray(obj.themes) ? obj.themes : [],
     content_warnings: Array.isArray(obj.content_warnings) ? obj.content_warnings : [],

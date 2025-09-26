@@ -82,13 +82,15 @@ exports.handler = async (event) => {
           const bestAuthor = (candAuthor || guessAuthor) || undefined;
 
           const bestDesc = typeof metadata?.description === 'string' ? metadata.description.trim() : undefined;
-          if (bestTitle || bestAuthor || bestDesc) {
+          const ageFine = typeof metadata?.ageGroupFine === 'string' && metadata.ageGroupFine ? metadata.ageGroupFine : undefined;
+          if (bestTitle || bestAuthor || bestDesc || ageFine) {
             const names = {};
             const vals = { ':ts': new Date().toISOString() };
             const sets = ['updatedAt = :ts'];
             if (bestTitle) { names['#t'] = 'title'; vals[':t'] = bestTitle; sets.unshift('#t = :t'); }
             if (bestAuthor) { names['#a'] = 'author'; vals[':a'] = bestAuthor; sets.unshift('#a = :a'); }
             if (bestDesc) { names['#d'] = 'description'; vals[':d'] = bestDesc; sets.unshift('#d = if_not_exists(#d, :d)'); }
+            if (ageFine) { names['#agf'] = 'ageGroupFine'; vals[':agf'] = ageFine; sets.unshift('#agf = if_not_exists(#agf, :agf)'); }
             await dynamo.update({
               TableName: BOOKS_TABLE,
               Key: { bookId },
