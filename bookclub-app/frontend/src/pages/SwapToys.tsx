@@ -9,9 +9,25 @@ const SwapToys: React.FC = () => {
     try {
       setStatus('loading');
       setMessage('');
+      // Ask the user for their email
+      const input = window.prompt('Enter your email to register interest:');
+      // If user cancels the prompt
+      if (input === null) {
+        setStatus('idle');
+        return;
+      }
+      const email = input.trim();
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setStatus('error');
+        setMessage('Please enter a valid email address.');
+        return;
+      }
+
       await apiService.request<any>('/interest/swap-toys', {
         method: 'POST',
-        body: JSON.stringify({ from: window.location.href }),
+        body: JSON.stringify({ from: window.location.href, email }),
       });
       setStatus('success');
       setMessage('Thanks! Your interest is registered. We\'ll notify you when it\'s ready.');
