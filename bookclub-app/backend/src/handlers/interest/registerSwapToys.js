@@ -23,21 +23,24 @@ exports.handler = async (event) => {
     }
 
     const fromPage = body?.from || event?.headers?.Referer || event?.headers?.referer || '';
+    const providedEmail = (body?.email && String(body.email).trim()) || '';
 
     const subject = 'Swap Toys interest — BookClub';
     const lines = [
       `When: ${new Date().toISOString()}`,
       `From page: ${fromPage}`,
       authUser ? `User: ${authUser.name || ''} (${authUser.email || ''}) [${authUser.userId}]` : 'User: anonymous',
+      providedEmail ? `Interested Email: ${providedEmail}` : null,
       `User Agent: ${event?.headers?.['User-Agent'] || event?.headers?.['user-agent'] || ''}`,
       `IP: ${event?.requestContext?.identity?.sourceIp || ''}`,
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     const text = `A user registered interest in Swap Toys.\n\n${lines}`;
     const html = `<p>A user registered interest in <strong>Swap Toys</strong>.</p><pre>${lines}</pre>`;
 
     // Send email
-    await sendEmail('madhukar.goud@gmail.com', subject, text, html);
+    const to = process.env.ADMIN_NOTIFY_EMAIL || 'madhukar.pedagani@gmail.com';
+    await sendEmail(to, subject, text, html);
 
     return success({ registered: true });
   } catch (e) {
@@ -46,3 +49,4 @@ exports.handler = async (event) => {
     return error('Failed to register interest', 500);
   }
 };
+

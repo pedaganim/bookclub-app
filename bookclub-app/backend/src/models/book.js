@@ -107,10 +107,32 @@ class Book {
       
       // Apply search filter if provided
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        result = result.filter(book => 
-          book.description && book.description.toLowerCase().includes(query)
-        );
+        const q = searchQuery.toLowerCase();
+        result = result.filter(book => {
+          const md = book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
+          const fields = [
+            book.description,
+            book.title,
+            book.author,
+            book.publisher,
+            book.isbn10,
+            book.isbn13,
+            md && md.title,
+            md && md.author,
+            md && md.publisher,
+            md && md.subtitle,
+            md && md.series,
+            md && md.edition,
+            md && md.language,
+          ];
+          const categories = []
+            .concat(Array.isArray(book.categories) ? book.categories : [])
+            .concat(Array.isArray(md.categories) ? md.categories : []);
+          return (
+            fields.some(v => typeof v === 'string' && v.toLowerCase().includes(q)) ||
+            categories.some(v => typeof v === 'string' && v.toLowerCase().includes(q))
+          );
+        });
       }
       
       // For offline mode, we'll implement simple pagination later if needed
@@ -128,12 +150,42 @@ class Book {
 
     // Add search filter if provided
     if (searchQuery) {
-      params.FilterExpression = 'contains(#desc, :searchQuery)';
+      // Build a composite filter across core fields and nested advanced metadata (supported string attributes)
+      params.FilterExpression = [
+        'contains(#desc, :q)',
+        'contains(#title, :q)',
+        'contains(#author, :q)',
+        'contains(#publisher, :q)',
+        'contains(#isbn10, :q)',
+        'contains(#isbn13, :q)',
+        'contains(#am.#md.#mdTitle, :q)',
+        'contains(#am.#md.#mdAuthor, :q)',
+        'contains(#am.#md.#mdPublisher, :q)',
+        'contains(#am.#md.#mdSubtitle, :q)',
+        'contains(#am.#md.#mdSeries, :q)',
+        'contains(#am.#md.#mdEdition, :q)',
+        'contains(#am.#md.#mdLanguage, :q)'
+      ].join(' OR ');
       params.ExpressionAttributeNames = {
-        '#desc': 'description'
+        '#desc': 'description',
+        '#title': 'title',
+        '#author': 'author',
+        '#publisher': 'publisher',
+        '#isbn10': 'isbn10',
+        '#isbn13': 'isbn13',
+        // Nested advancedMetadata paths
+        '#am': 'advancedMetadata',
+        '#md': 'metadata',
+        '#mdTitle': 'title',
+        '#mdAuthor': 'author',
+        '#mdPublisher': 'publisher',
+        '#mdSubtitle': 'subtitle',
+        '#mdSeries': 'series',
+        '#mdEdition': 'edition',
+        '#mdLanguage': 'language',
       };
       params.ExpressionAttributeValues = {
-        ':searchQuery': searchQuery
+        ':q': searchQuery,
       };
     }
 
