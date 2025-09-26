@@ -63,8 +63,8 @@ describe('PublicBookCard', () => {
     const bookWithoutDescription = { ...mockBook, description: '' };
     render(<PublicBookCard book={bookWithoutDescription} />);
     
-    // Should only show the borrow action button
-    expect(screen.getByText('Borrow from User user456')).toBeInTheDocument();
+    // Should only show the borrow action button (generic label without owner name)
+    expect(screen.getByText('Borrow from User')).toBeInTheDocument();
     expect(screen.queryByText('A test book description')).not.toBeInTheDocument();
   });
 
@@ -77,7 +77,8 @@ describe('PublicBookCard', () => {
   it('should display simplified username from userId', () => {
     render(<PublicBookCard book={mockBook} />);
     
-    expect(screen.getByText('Borrow from User user456')).toBeInTheDocument();
+    // Borrow button shows generic label without owner name
+    expect(screen.getByText('Borrow from User')).toBeInTheDocument();
   });
 
   it('should handle fallback when image fails to load', async () => {
