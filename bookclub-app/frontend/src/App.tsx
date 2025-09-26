@@ -11,6 +11,8 @@ import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
+import BlogsIndex from './pages/blogs/BlogsIndex';
+import BlogPost from './pages/blogs/BlogPost';
 import BookDetails from './pages/BookDetails';
 import AddBook from './pages/AddBook';
 import EditBook from './pages/EditBook';
@@ -34,6 +36,8 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Navigate to="/login" replace />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/about/blogs" element={<BlogsIndex />} />
+                  <Route path="/about/blogs/:slug" element={<BlogPost />} />
                   <Route path="/swap-toys" element={<SwapToys />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
