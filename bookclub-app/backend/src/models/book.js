@@ -148,55 +148,45 @@ class Book {
       ScanIndexForward: false,
     };
 
-    // Add search filter if provided
-    if (searchQuery) {
-      // Build a composite filter across core fields and nested advanced metadata (supported string attributes)
-      params.FilterExpression = [
-        'contains(#desc, :q)',
-        'contains(#title, :q)',
-        'contains(#author, :q)',
-        'contains(#publisher, :q)',
-        'contains(#isbn10, :q)',
-        'contains(#isbn13, :q)',
-        'contains(#am.#md.#mdTitle, :q)',
-        'contains(#am.#md.#mdAuthor, :q)',
-        'contains(#am.#md.#mdPublisher, :q)',
-        'contains(#am.#md.#mdSubtitle, :q)',
-        'contains(#am.#md.#mdSeries, :q)',
-        'contains(#am.#md.#mdEdition, :q)',
-        'contains(#am.#md.#mdLanguage, :q)'
-      ].join(' OR ');
-      params.ExpressionAttributeNames = {
-        '#desc': 'description',
-        '#title': 'title',
-        '#author': 'author',
-        '#publisher': 'publisher',
-        '#isbn10': 'isbn10',
-        '#isbn13': 'isbn13',
-        // Nested advancedMetadata paths
-        '#am': 'advancedMetadata',
-        '#md': 'metadata',
-        '#mdTitle': 'title',
-        '#mdAuthor': 'author',
-        '#mdPublisher': 'publisher',
-        '#mdSubtitle': 'subtitle',
-        '#mdSeries': 'series',
-        '#mdEdition': 'edition',
-        '#mdLanguage': 'language',
-      };
-      params.ExpressionAttributeValues = {
-        ':q': searchQuery,
-      };
-    }
-
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
     const result = await dynamoDb.scan(params);
-    
+
+    // Apply in-memory filtering for case-insensitive search against multiple fields
+    let items = result.Items || [];
+    if (searchQuery) {
+      const q = String(searchQuery).toLowerCase();
+      items = items.filter((book) => {
+        const md = book && book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
+        const fields = [
+          book && book.description,
+          book && book.title,
+          book && book.author,
+          book && book.publisher,
+          book && book.isbn10,
+          book && book.isbn13,
+          md && md.title,
+          md && md.author,
+          md && md.publisher,
+          md && md.subtitle,
+          md && md.series,
+          md && md.edition,
+          md && md.language,
+        ];
+        const categories = []
+          .concat(Array.isArray(book && book.categories) ? book.categories : [])
+          .concat(Array.isArray(md && md.categories) ? md.categories : []);
+        return (
+          fields.some(v => typeof v === 'string' && v.toLowerCase().includes(q)) ||
+          categories.some(v => typeof v === 'string' && v.toLowerCase().includes(q))
+        );
+      });
+    }
+
     // Enrich books with user names
-    let enrichedBooks = await this.enrichBooksWithUserNames(result.Items || []);
+    let enrichedBooks = await this.enrichBooksWithUserNames(items);
     // Enrich with club info when available
     enrichedBooks = await this.enrichBooksWithClubInfo(enrichedBooks);
     
