@@ -22,10 +22,18 @@ function getBedrockClient() {
 async function withRetry(fn, { maxAttempts, baseMs } = {}) {
   const envMax = parseInt(process.env.BEDROCK_MAX_ATTEMPTS || '8', 10);
   const envBase = parseInt(process.env.BEDROCK_BACKOFF_BASE_MS || '500', 10);
+  const baseJitter = parseInt(process.env.BEDROCK_BACKOFF_BASE_JITTER_MS || '0', 10);
+  const initialDelay = parseInt(process.env.BEDROCK_INITIAL_DELAY_MS || '0', 10);
   const maxCap = parseInt(process.env.BEDROCK_BACKOFF_MAX_MS || '15000', 10);
   maxAttempts = maxAttempts || envMax;
   baseMs = baseMs || envBase;
+  // Randomize base to spread callers (e.g., 2000-3000ms when base=2000 and jitter=1000)
+  const baseEffective = baseMs + (baseJitter > 0 ? Math.floor(Math.random() * baseJitter) : 0);
   let attempt = 0;
+  // Optional fixed delay before the first attempt
+  if (initialDelay > 0) {
+    await new Promise(r => setTimeout(r, initialDelay));
+  }
   while (true) {
     try {
       return await fn();
@@ -34,7 +42,7 @@ async function withRetry(fn, { maxAttempts, baseMs } = {}) {
       const retryable = code === 'ThrottlingException' || code === 'TooManyRequestsException' || err?.$metadata?.httpStatusCode === 429;
       attempt += 1;
       if (!retryable || attempt >= maxAttempts) throw err;
-      const backoff = baseMs * Math.pow(2, attempt - 1);
+      const backoff = baseEffective * Math.pow(2, attempt - 1);
       const jitter = Math.floor(Math.random() * 0.4 * backoff);
       const delay = Math.min(maxCap, Math.floor(0.8 * backoff) + jitter);
       // eslint-disable-next-line no-console
