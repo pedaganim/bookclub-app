@@ -37,15 +37,34 @@ const BookLibrary: React.FC = () => {
         ageGroupFine: age && age.length ? age : undefined,
         bare: true,
       });
-      const items = Array.isArray(response.items) ? response.items : [];
-      // If logged in, hide own books from the public library view
-      const filtered = (isAuthenticated && user?.userId)
+      const desired = currentPageSize || pageSize;
+      let items = Array.isArray(response.items) ? response.items : [];
+      let filtered = (isAuthenticated && user?.userId)
         ? items.filter((b) => b.userId !== user.userId)
         : items;
-      setBooks(filtered);
-      const hasMore = !!response.nextToken;
+      // Top up the page to the desired count if client-side filters removed items
+      let tokenLocal: string | undefined = response.nextToken || undefined;
+      while (filtered.length < desired && tokenLocal) {
+        const resp = await apiService.listBooksPublic({
+          search,
+          limit: desired,
+          nextToken: tokenLocal,
+          ageGroupFine: age && age.length ? age : undefined,
+          bare: true,
+        });
+        const batch = Array.isArray(resp.items) ? resp.items : [];
+        const batchFiltered = (isAuthenticated && user?.userId)
+          ? batch.filter((b) => b.userId !== user.userId)
+          : batch;
+        filtered = filtered.concat(batchFiltered);
+        tokenLocal = resp.nextToken || undefined;
+      }
+      // Trim to desired page size for display
+      const pageItems = filtered.slice(0, desired);
+      setBooks(pageItems);
+      const hasMore = !!tokenLocal;
       setHasNextPage(hasMore);
-      setNextToken(response.nextToken || null);
+      setNextToken(tokenLocal || null);
 
       // Skip computing total count for performance
     } catch (err: any) {
@@ -111,6 +130,19 @@ const BookLibrary: React.FC = () => {
   useEffect(() => {
     fetchBooks(undefined, pageSize, null, ageGroupFine);
   }, [fetchBooks]);
+
+  // SEO for Library page
+  useEffect(() => {
+    document.title = 'Library — BookClub';
+    const desc = 'Discover books shared by our community. Filter by audience and search to find your next read.';
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', desc);
+  }, []);
 
   // Load user's clubs to determine membership for Join vs Borrow action
   useEffect(() => {

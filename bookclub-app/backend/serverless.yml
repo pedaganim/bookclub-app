@@ -34,6 +34,8 @@ provider:
     BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
     # SQS queue for Bedrock analyzer worker
     BEDROCK_ANALYZE_QUEUE_URL: !Ref BedrockAnalyzeQueue
+    # Base URL for generating absolute links in sitemap
+    SITE_BASE_URL: ${env:SITE_BASE_URL, 'https://booklub.shop'}
   iam:
     role:
       statements:
@@ -996,6 +998,15 @@ functions:
       - http:
           method: POST
           path: /interest/swap-toys
+          cors: true
+
+  # Public sitemap.xml
+  sitemap:
+    handler: src/handlers/sitemap/get.handler
+    events:
+      - http:
+          method: GET
+          path: /sitemap.xml
           cors: true
 
 resources:
