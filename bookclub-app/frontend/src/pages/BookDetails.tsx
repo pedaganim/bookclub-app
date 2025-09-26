@@ -333,7 +333,7 @@ const BookDetails: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to="/library" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to Library</Link>
+          <Link to="/my-books" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My Books</Link>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
