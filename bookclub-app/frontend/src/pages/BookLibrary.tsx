@@ -47,8 +47,7 @@ const BookLibrary: React.FC = () => {
       setHasNextPage(hasMore);
       setNextToken(response.nextToken || null);
 
-      // Kick off background total count computation on first page load/search
-      if (currentPageToken === null) {
+      // Skip computing total count for performance
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {
