@@ -232,6 +232,11 @@ async function buildAdvancedMetadata(extractionData, bucket, key) {
     advancedMetadata.metadata.edition = visionMetadata.edition || null;
     advancedMetadata.metadata.categories = visionMetadata.categories || [];
     advancedMetadata.metadata.language = visionMetadata.language || null;
+    // Fine-grained audience/age group (if provided by prompt)
+    if (visionMetadata.ageGroupFine) {
+      advancedMetadata.metadata.ageGroupFine = visionMetadata.ageGroupFine;
+      advancedMetadata.confidence.ageGroupFine = Math.max(visionConfidence?.overall || 0.7, 0.6);
+    }
     
     advancedMetadata.provenance.vision = {
       provider: vision.provider,
@@ -340,6 +345,8 @@ async function updateBookWithMetadata(bookId, userId, advancedMetadata) {
     isbn13: advancedMetadata.metadata.isbn13 || undefined,
     publisher: advancedMetadata.metadata.publisher || undefined,
     publishedDate: advancedMetadata.metadata.publishedDate || undefined,
+    // Promote fine-grained age group to top-level for easier filtering
+    ageGroupFine: advancedMetadata.metadata.ageGroupFine || undefined,
     
     // Add new advanced metadata column
     advancedMetadata: advancedMetadata,

@@ -368,6 +368,7 @@ Analyze this book cover image and extract the following information in JSON form
   "badges": ["Any promotional badges, awards, or endorsements"],
   "description": "Brief description based on visible text and cover elements",
   "language": "Detected language of the text",
+  "audience_age_group_fine": "One of: preschool (3-5), early_reader (6-8), middle_grade (8-12), young_adult (13-17), adult (18+), unknown",
   "textElements": {
     "title_position": "Position of title on cover",
     "author_position": "Position of author name",
@@ -389,6 +390,7 @@ Analyze this book cover image and extract the following information in JSON form
 Focus on accuracy over completeness. If an element is unclear or not visible, omit it or mark as null.
 Pay special attention to distinguishing between title and subtitle.
 Consider the overall design to infer genre/category if not explicitly stated.
+For audience_age_group_fine, infer from visual cues and any textual hints (e.g., "Picture Book", "YA", leveled readers). If unsure, answer "unknown".
 `;
   }
 
@@ -410,6 +412,7 @@ Please analyze this book cover image and extract metadata in the following JSON 
   "badges": ["Awards, endorsements, or promotional text"],
   "description": "Brief description based on cover content",
   "language": "Language of the text",
+  "audience_age_group_fine": "One of: preschool (3-5), early_reader (6-8), middle_grade (8-12), young_adult (13-17), adult (18+), unknown",
   "layout_analysis": {
     "title_prominence": "Prominence level of title",
     "author_visibility": "Visibility of author name",
@@ -418,6 +421,7 @@ Please analyze this book cover image and extract metadata in the following JSON 
 }
 
 Be precise and only include information that is clearly visible. Use null for unclear elements.
+For audience_age_group_fine, infer from clear cues; if insufficient signal, use "unknown".
 `;
   }
 
@@ -438,6 +442,7 @@ Be precise and only include information that is clearly visible. Use null for un
         badges: analysis.badges || [],
         description: analysis.description || null,
         language: analysis.language || 'English',
+        ageGroupFine: analysis.audience_age_group_fine || null,
         visualAnalysis: {
           colors: analysis.visual_elements?.primary_colors || [],
           style: analysis.visual_elements?.cover_style || null,
