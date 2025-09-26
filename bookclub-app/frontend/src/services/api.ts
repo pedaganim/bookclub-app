@@ -184,12 +184,14 @@ class ApiService {
     nextToken?: string;
     search?: string;
     ageGroupFine?: string;
+    bare?: boolean;
   }): Promise<BookListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
     if (params?.search) queryParams.append('search', params.search);
     if (params?.ageGroupFine) queryParams.append('ageGroupFine', params.ageGroupFine);
+    if (params?.bare) queryParams.append('bare', '1');
 
     // Create a request without authorization header for public access
     const response: AxiosResponse<ApiResponse<BookListResponse>> = await axios.get(

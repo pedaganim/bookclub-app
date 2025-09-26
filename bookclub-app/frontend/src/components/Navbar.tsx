@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+// (No heroicons needed here)
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -15,11 +15,50 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
+// Mobile bottom tab bar for small screens
+const MobileTabBar: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
+      <div className="max-w-7xl mx-auto grid grid-cols-5 text-sm">
+        <Link to="/library" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
+          <span role="img" aria-label="library">📚</span>
+          <span>Library</span>
+        </Link>
+        <Link to="/swap-toys" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
+          <span role="img" aria-label="swap-toys">🧸</span>
+          <span>Swap Toys</span>
+        </Link>
+        <Link to={{ pathname: '/my-books' }} state={{ openAddBooks: true }} className="flex flex-col items-center justify-center py-2 text-indigo-600 hover:text-indigo-800 font-medium">
+          <span role="img" aria-label="add">➕</span>
+          <span>Add</span>
+        </Link>
+        <Link to="/messages" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
+          <span role="img" aria-label="messages">💬</span>
+          <span>Messages</span>
+        </Link>
+        {isAuthenticated ? (
+          <Link to="/profile" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
+            <span role="img" aria-label="profile">👤</span>
+            <span>Profile</span>
+          </Link>
+        ) : (
+          <Link to="/login" className="flex flex-col items-center justify-center py-2 text-indigo-600 hover:text-indigo-800">
+            <span role="img" aria-label="login">🔑</span>
+            <span>Sign In</span>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+};
+
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
 
   return (
+    <>
     <nav className="bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
@@ -69,9 +108,9 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   to="/swap-toys"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  🧸 Swap Toys (Coming soon)
+                  🧸 Swap Toys
                 </Link>
                 <MessagesLinkWithUnread />
               </>
@@ -92,9 +131,9 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   to="/swap-toys"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  🧸 Swap Toys (Coming soon)
+                  🧸 Swap Toys
                 </Link>
               </>
             )}
@@ -146,6 +185,9 @@ const Navbar: React.FC = () => {
         {/* Mobile collapsible menu removed; MobileTabBar provides nav on small screens */}
       </div>
     </nav>
+    {/* Mobile bottom tab bar */}
+    <MobileTabBar />
+    </>
   );
 };
 

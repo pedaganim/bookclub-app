@@ -127,7 +127,8 @@ describe('BookLibrary', () => {
       expect(apiService.listBooksPublic).toHaveBeenCalledWith({ 
         search: undefined, 
         limit: 25, 
-        nextToken: undefined 
+        nextToken: undefined,
+        bare: true,
       });
     });
   });
