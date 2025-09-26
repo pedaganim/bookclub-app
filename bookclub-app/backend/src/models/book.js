@@ -101,7 +101,7 @@ class Book {
     };
   }
 
-  static async listAll(limit = 10, nextToken = null, searchQuery = null) {
+  static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null) {
     if (isOffline()) {
       let result = await LocalStorage().listBooks();
       
@@ -132,6 +132,16 @@ class Book {
             fields.some(v => typeof v === 'string' && v.toLowerCase().includes(q)) ||
             categories.some(v => typeof v === 'string' && v.toLowerCase().includes(q))
           );
+        });
+      }
+
+      // Apply ageGroupFine filter if provided (check top-level and advanced metadata)
+      if (ageGroupFine) {
+        const target = String(ageGroupFine).toLowerCase();
+        result = result.filter(book => {
+          const md = book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
+          const v = (book.ageGroupFine || md.ageGroupFine || '').toLowerCase();
+          return v === target;
         });
       }
       
@@ -182,6 +192,16 @@ class Book {
           fields.some(v => typeof v === 'string' && v.toLowerCase().includes(q)) ||
           categories.some(v => typeof v === 'string' && v.toLowerCase().includes(q))
         );
+      });
+    }
+
+    // Apply ageGroupFine filter if provided
+    if (ageGroupFine) {
+      const target = String(ageGroupFine).toLowerCase();
+      items = items.filter((book) => {
+        const md = book && book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
+        const v = ((book && book.ageGroupFine) || (md && md.ageGroupFine) || '').toLowerCase();
+        return v === target;
       });
     }
 
