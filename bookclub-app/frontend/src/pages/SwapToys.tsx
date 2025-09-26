@@ -35,7 +35,7 @@ const SwapToys: React.FC = () => {
   };
 
   const shareUrl = (typeof window !== 'undefined' ? window.location.origin : '') + '/swap-toys';
-  const shareText = 'Help unlock Swap Toys on BookClub! If we reach 100 interested users, we\'ll launch it.';
+  const shareText = "Help unlock Swap Toys on BookClub! If we reach 100 interested users, we'll launch it.";
 
   const handleShare = async () => {
     try {
@@ -50,16 +50,27 @@ const SwapToys: React.FC = () => {
     }
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      setMessage('Link copied to clipboard!');
+      setStatus('success');
+    } catch (e) {
+      setStatus('error');
+      setMessage('Could not copy link.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-gray-900">Swap Toys (Coming soon)</h1>
         <p className="mt-3 text-gray-700">
-          Register your interest in Swap Toys. If we reach 100 users, we\'ll make it live!
+          Register your interest in Swap Toys. If we reach 100 users, we'll make it live!
         </p>
 
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
-          <div className="sm:col-span-2">
+        <div className="mt-6 flex items-end gap-3">
+          <div className="flex-1 min-w-0">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
             <input
               id="email"
@@ -75,18 +86,24 @@ const SwapToys: React.FC = () => {
           <button
             onClick={handleRegisterInterest}
             disabled={status === 'loading'}
-            className="h-11 sm:h-auto inline-flex items-center justify-center px-5 py-3 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="h-11 inline-flex items-center justify-center px-5 py-3 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 whitespace-nowrap"
           >
             {status === 'loading' ? 'Registering…' : 'Register Interest'}
           </button>
-          <div className="sm:col-span-3">
-            <button
-              onClick={handleShare}
-              className="mt-1 inline-flex items-center justify-center px-5 py-3 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
-            >
-              Share this link
-            </button>
-          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+          >
+            Share this link
+          </button>
+          <button
+            onClick={handleCopy}
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+          >
+            Copy link
+          </button>
         </div>
 
         {message && (

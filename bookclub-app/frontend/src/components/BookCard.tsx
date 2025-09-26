@@ -23,6 +23,8 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
         return 'bg-yellow-100 text-yellow-800';
       case 'reading':
         return 'bg-blue-100 text-blue-800';
+      case 'giving_away':
+        return 'bg-pink-100 text-pink-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -256,6 +258,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
                 <option value="available">Available</option>
                 <option value="borrowed">Borrowed</option>
                 <option value="reading">Reading</option>
+                <option value="giving_away">Giving away</option>
               </select>
             </div>
             <div className="flex justify-end space-x-3 pt-4">

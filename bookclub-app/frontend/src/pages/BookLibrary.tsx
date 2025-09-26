@@ -206,8 +206,9 @@ const BookLibrary: React.FC = () => {
         <div className="mb-6">
           <SearchBar 
             onSearch={handleSearch}
-            placeholder="Search books by description..."
+            placeholder="Search books..."
             className="max-w-md mx-auto"
+            value={searchQuery}
           />
         </div>
 
