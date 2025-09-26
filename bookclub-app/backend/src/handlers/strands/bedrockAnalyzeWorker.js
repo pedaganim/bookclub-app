@@ -11,6 +11,11 @@ exports.handler = async (event) => {
     if (!Array.isArray(event.Records)) {
       console.warn('[BedrockAnalyzeWorker] No SQS records');
       return { ok: true };
+      // Optional fixed pacing between records to reduce steady-state call rate
+      const perRecordSleep = parseInt(process.env.BEDROCK_WORKER_SLEEP_MS || '0', 10);
+      if (perRecordSleep > 0) {
+        await new Promise(r => setTimeout(r, perRecordSleep));
+      }
     }
 
     for (const record of event.Records) {
