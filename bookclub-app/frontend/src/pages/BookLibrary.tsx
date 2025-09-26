@@ -23,9 +23,9 @@ const BookLibrary: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const [userClubs, setUserClubs] = useState<BookClub[]>([]);
   const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
-  const [ageGroupFine, setAgeGroupFine] = useState<string>('');
+  
 
-  const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null, age?: string) => {
+  const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
       setLoading(true);
       setError('');
@@ -34,7 +34,6 @@ const BookLibrary: React.FC = () => {
         search, 
         limit: currentPageSize || pageSize,
         nextToken: token || undefined,
-        ageGroupFine: age && age.length ? age : undefined,
         bare: true,
       });
       const desired = currentPageSize || pageSize;
@@ -49,7 +48,6 @@ const BookLibrary: React.FC = () => {
           search,
           limit: desired,
           nextToken: tokenLocal,
-          ageGroupFine: age && age.length ? age : undefined,
           bare: true,
         });
         const batch = Array.isArray(resp.items) ? resp.items : [];
@@ -83,7 +81,7 @@ const BookLibrary: React.FC = () => {
     setPreviousPageCounts([]);
     setShownBeforeCurrent(0);
     setTotalCount(undefined);
-    fetchBooks(query || undefined, pageSize, null, ageGroupFine);
+    fetchBooks(query || undefined, pageSize, null);
   };
 
   const handlePageSizeChange = (newPageSize: number) => {
@@ -95,7 +93,7 @@ const BookLibrary: React.FC = () => {
     setPreviousPageCounts([]);
     setShownBeforeCurrent(0);
     setTotalCount(undefined);
-    fetchBooks(searchQuery || undefined, newPageSize, null, ageGroupFine);
+    fetchBooks(searchQuery || undefined, newPageSize, null);
   };
 
   const handleNextPage = () => {
@@ -105,7 +103,7 @@ const BookLibrary: React.FC = () => {
       setPreviousPageCounts(prev => [...prev, books.length]);
       setShownBeforeCurrent(prev => prev + books.length);
       setCurrentPageToken(nextToken);
-      fetchBooks(searchQuery || undefined, pageSize, nextToken, ageGroupFine);
+      fetchBooks(searchQuery || undefined, pageSize, nextToken);
     }
   };
 
@@ -123,12 +121,12 @@ const BookLibrary: React.FC = () => {
       setShownBeforeCurrent(prev => Math.max(0, prev - lastCount));
       setCurrentPageToken(previousPageToken);
       
-      fetchBooks(searchQuery || undefined, pageSize, previousPageToken, ageGroupFine);
+      fetchBooks(searchQuery || undefined, pageSize, previousPageToken);
     }
   };
 
   useEffect(() => {
-    fetchBooks(undefined, pageSize, null, ageGroupFine);
+    fetchBooks(undefined, pageSize, null);
   }, [fetchBooks]);
 
   // SEO for Library page
@@ -201,38 +199,11 @@ const BookLibrary: React.FC = () => {
           />
         </div>
 
-        {/* Filters + Search */}
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Audience</label>
-            <select
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-              value={ageGroupFine}
-              onChange={(e) => {
-                const val = e.target.value;
-                setAgeGroupFine(val);
-                // Reset pagination when changing audience filter
-                setPreviousTokens([]);
-                setNextToken(null);
-                setCurrentPageToken(null);
-                setPreviousPageCounts([]);
-                setShownBeforeCurrent(0);
-                setTotalCount(undefined);
-                fetchBooks(searchQuery || undefined, pageSize, null, val);
-              }}
-            >
-              <option value="">All</option>
-              <option value="preschool">Preschool (3–5)</option>
-              <option value="early_reader">Early Reader (6–8)</option>
-              <option value="middle_grade">Middle Grade (8–12)</option>
-              <option value="young_adult">Young Adult (13–17)</option>
-              <option value="adult">Adult (18+)</option>
-            </select>
-          </div>
+        {/* Search */}
+        <div className="mb-6">
           <SearchBar 
             onSearch={handleSearch}
             placeholder="Search books..."
-            className="sm:col-span-2"
             value={searchQuery}
           />
         </div>
