@@ -10,7 +10,11 @@ module.exports.handler = async (event) => {
 
     const result = userId
       ? await Book.listByUser(userId, limit, nextToken)
-      : await Book.listAll(limit, nextToken, search, ageGroupFine);
+      : (
+          ageGroupFine
+            ? await Book.listAll(limit, nextToken, search, ageGroupFine)
+            : await Book.listAll(limit, nextToken, search)
+        );
 
     return response.success({
       items: result.items,
