@@ -35,6 +35,7 @@ const BookLibrary: React.FC = () => {
         limit: currentPageSize || pageSize,
         nextToken: token || undefined,
         ageGroupFine: age && age.length ? age : undefined,
+        bare: true,
       });
       const items = Array.isArray(response.items) ? response.items : [];
       // If logged in, hide own books from the public library view
@@ -48,42 +49,6 @@ const BookLibrary: React.FC = () => {
 
       // Kick off background total count computation on first page load/search
       if (currentPageToken === null) {
-        // If no more pages, total is just current items length
-        if (!hasMore) {
-          const initial = Array.isArray(response.items) ? response.items.length : 0;
-          // apply same filter for own books if logged in
-          const initialFiltered = (isAuthenticated && user?.userId) ? filtered.length : initial;
-          setTotalCount(initialFiltered);
-        } else {
-          // Compute total by walking the remaining pages in the background
-          const initial = Array.isArray(response.items) ? response.items.length : 0;
-          const initialFiltered = (isAuthenticated && user?.userId) ? filtered.length : initial;
-          void (async () => {
-            try {
-              let count = initialFiltered;
-              let tokenLocal: string | undefined = response.nextToken || undefined;
-              const perPage = Math.max(pageSize, 50); // speed up counting a bit
-              while (tokenLocal) {
-                const resp = await apiService.listBooksPublic({
-                  search,
-                  limit: perPage,
-                  nextToken: tokenLocal,
-                  ageGroupFine: age && age.length ? age : undefined,
-                });
-                const batch = Array.isArray(resp.items) ? resp.items : [];
-                const batchFiltered = (isAuthenticated && user?.userId)
-                  ? batch.filter((b) => b.userId !== user.userId)
-                  : batch;
-                count += batchFiltered.length;
-                tokenLocal = resp.nextToken || undefined;
-              }
-              setTotalCount(count);
-            } catch (e) {
-              // Ignore count errors; leave totalCount undefined
-            }
-          })();
-        }
-      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch books');
     } finally {

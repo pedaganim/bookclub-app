@@ -101,7 +101,7 @@ class Book {
     };
   }
 
-  static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null) {
+  static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null, options = undefined) {
     if (isOffline()) {
       let result = await LocalStorage().listBooks();
       
@@ -203,6 +203,16 @@ class Book {
         const v = ((book && book.ageGroupFine) || (md && md.ageGroupFine) || '').toLowerCase();
         return v === target;
       });
+    }
+
+    // Optionally skip enrichment for performance (bare listing for public browse)
+    if (options && options.bare) {
+      return {
+        items,
+        nextToken: result.LastEvaluatedKey 
+          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+          : null,
+      };
     }
 
     // Enrich books with user names

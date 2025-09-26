@@ -4,16 +4,16 @@ const Book = require('../../models/book');
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
   try {
-    const { qs, limit, nextToken, search, ageGroupFine } = parseQuery(event);
+    const { qs, limit, nextToken, search, ageGroupFine, bare } = parseQuery(event);
     const userId = deriveUserId(event, qs);
-    logListContext(event, userId, limit, nextToken, search, ageGroupFine);
+    logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare);
 
     const result = userId
       ? await Book.listByUser(userId, limit, nextToken)
       : (
           ageGroupFine
-            ? await Book.listAll(limit, nextToken, search, ageGroupFine)
-            : await Book.listAll(limit, nextToken, search)
+            ? await Book.listAll(limit, nextToken, search, ageGroupFine, bare ? { bare: true } : undefined)
+            : (bare ? await Book.listAll(limit, nextToken, search, null, { bare: true }) : await Book.listAll(limit, nextToken, search))
         );
 
     return response.success({
@@ -32,7 +32,8 @@ const parseQuery = (event) => {
   const nextToken = qs && typeof qs.nextToken === 'string' ? qs.nextToken : null;
   const search = qs && typeof qs.search === 'string' ? qs.search : null;
   const ageGroupFine = qs && typeof qs.ageGroupFine === 'string' ? qs.ageGroupFine : null;
-  return { qs, limit, nextToken, search, ageGroupFine };
+  const bare = qs && typeof qs.bare === 'string' ? (qs.bare === '1' || qs.bare.toLowerCase() === 'true') : false;
+  return { qs, limit, nextToken, search, ageGroupFine, bare };
 };
 
 const deriveUserId = (event, qs) => {
@@ -43,7 +44,7 @@ const deriveUserId = (event, qs) => {
   return userId;
 };
 
-const logListContext = (event, userId, limit, nextToken, search, ageGroupFine) => {
+const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, bare) => {
   console.log('listBooks handler', {
     stage: process.env.STAGE,
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION,
@@ -53,5 +54,6 @@ const logListContext = (event, userId, limit, nextToken, search, ageGroupFine) =
     hasNextToken: !!nextToken,
     hasSearch: !!search,
     ageGroupFine: ageGroupFine || null,
+    bare: !!bare,
   });
 };
