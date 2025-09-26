@@ -217,11 +217,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
               <button
                 type="button"
                 className={`w-full text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                title={`Borrow from ${getDisplayUsername(book)}`}
+                title={'Borrow from User'}
                 onClick={handleBorrowClick}
                 disabled={sending}
               >
-                {sending ? 'Sending…' : `Borrow from ${getDisplayUsername(book)}`}
+                {sending ? 'Sending…' : 'Borrow from User'}
               </button>
               {book.userId && (
                 <a 
