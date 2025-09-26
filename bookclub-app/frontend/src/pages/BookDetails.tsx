@@ -324,6 +324,11 @@ const BookDetails: React.FC = () => {
                 {hasText(book.pageCount) && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {asText(book.pageCount)}</p>)}
                 {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
                 {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
+                {(() => {
+                  const age = (book as any).ageGroupFine || (book as any).advancedMetadata?.metadata?.ageGroupFine;
+                  const text = asText(age);
+                  return text ? (<p className="text-gray-600"><span className="font-medium">Audience:</span> {text}</p>) : null;
+                })()}
               </div>
               {book.status === 'borrowed' && (book as any).lentToUserId && (
                 <div className="mt-2">
