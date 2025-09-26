@@ -25,6 +25,14 @@ exports.handler = async (event) => {
     const fromPage = body?.from || event?.headers?.Referer || event?.headers?.referer || '';
     const providedEmail = (body?.email && String(body.email).trim()) || '';
 
+    // Validate email (optional but if provided, must be valid)
+    if (providedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(providedEmail)) {
+        return error('Invalid email address', 400);
+      }
+    }
+
     const subject = 'Swap Toys interest — BookClub';
     const lines = [
       `When: ${new Date().toISOString()}`,
@@ -38,9 +46,15 @@ exports.handler = async (event) => {
     const text = `A user registered interest in Swap Toys.\n\n${lines}`;
     const html = `<p>A user registered interest in <strong>Swap Toys</strong>.</p><pre>${lines}</pre>`;
 
-    // Send email
+    // Send email (do not fail the whole request if SES fails)
     const to = process.env.ADMIN_NOTIFY_EMAIL || 'madhukar.pedagani@gmail.com';
-    await sendEmail(to, subject, text, html);
+    try {
+      await sendEmail(to, subject, text, html);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[Interest][SwapToys] Failed to send admin email', { error: e?.message || String(e), to, subject });
+      // continue without failing
+    }
 
     return success({ registered: true });
   } catch (e) {
