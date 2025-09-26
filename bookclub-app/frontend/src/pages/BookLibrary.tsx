@@ -131,6 +131,19 @@ const BookLibrary: React.FC = () => {
     fetchBooks(undefined, pageSize, null, ageGroupFine);
   }, [fetchBooks]);
 
+  // SEO for Library page
+  useEffect(() => {
+    document.title = 'Library — BookClub';
+    const desc = 'Discover books shared by our community. Filter by audience and search to find your next read.';
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', desc);
+  }, []);
+
   // Load user's clubs to determine membership for Join vs Borrow action
   useEffect(() => {
     (async () => {

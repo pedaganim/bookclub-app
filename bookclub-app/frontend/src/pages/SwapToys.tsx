@@ -37,6 +37,39 @@ const SwapToys: React.FC = () => {
   const shareUrl = (typeof window !== 'undefined' ? window.location.origin : '') + '/swap-toys';
   const shareText = "Help unlock Swap Toys on BookClub! If we reach 100 interested users, we'll launch it.";
 
+  // SEO: title/description + JSON-LD Event
+  React.useEffect(() => {
+    document.title = 'Swap Toys — BookClub';
+    const desc = "Register your interest in Swap Toys. If we reach 100 users, we'll make it live!";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', desc);
+
+    const ld: any = {
+      '@context': 'https://schema.org',
+      '@type': 'Event',
+      name: 'Swap Toys Interest Drive',
+      description: desc,
+      startDate: new Date().toISOString(),
+      url: shareUrl,
+      eventStatus: 'https://schema.org/EventScheduled',
+      organizer: { '@type': 'Organization', name: 'BookClub' },
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-seo', 'event-jsonld');
+    script.text = JSON.stringify(ld);
+    document.querySelectorAll('script[data-seo="event-jsonld"]').forEach(n => n.remove());
+    document.head.appendChild(script);
+    return () => {
+      document.querySelectorAll('script[data-seo="event-jsonld"]').forEach(n => n.remove());
+    };
+  }, [shareUrl]);
+
   const handleShare = async () => {
     try {
       if (navigator.share) {

@@ -216,6 +216,48 @@ const BookDetails: React.FC = () => {
     })();
   }, [bookId]);
 
+  // SEO: update title/description and add JSON-LD for Book
+  useEffect(() => {
+    if (!book) return;
+    const title = book.title ? `${book.title} — BookClub` : 'Book — BookClub';
+    document.title = title;
+
+    const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || 'Discover this book on BookClub.';
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', String(desc).slice(0, 300));
+
+    // JSON-LD Book
+    const ld: any = {
+      '@context': 'https://schema.org',
+      '@type': 'Book',
+      name: book.title || 'Untitled',
+      author: book.author ? { '@type': 'Person', name: book.author } : undefined,
+      isbn: (book as any).isbn13 || (book as any).isbn10 || undefined,
+      image: typeof (book.coverImage as any) === 'string' ? (book.coverImage as any) : undefined,
+      description: desc,
+    };
+    // Clean undefineds
+    Object.keys(ld).forEach((k) => { if (ld[k] === undefined) delete ld[k]; });
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-seo', 'book-jsonld');
+    script.text = JSON.stringify(ld);
+    // Remove any existing
+    document.querySelectorAll('script[data-seo="book-jsonld"]').forEach(n => n.remove());
+    document.head.appendChild(script);
+
+    return () => {
+      // Optionally remove JSON-LD when unmounting
+      document.querySelectorAll('script[data-seo="book-jsonld"]').forEach(n => n.remove());
+    };
+  }, [book]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
