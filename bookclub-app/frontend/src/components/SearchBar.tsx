@@ -1,22 +1,32 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { MagnifyingGlassIcon, MicrophoneIcon } from '@heroicons/react/24/outline';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { voiceSearchService } from '../services/voiceSearchService';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
+  value?: string; // optional externally-controlled value to show current search
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
   onSearch, 
   placeholder = "Search books...", 
-  className = "" 
+  className = "",
+  value,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(value || '');
   const [isRecording, setIsRecording] = useState(false);
   const [voiceSearchError, setVoiceSearchError] = useState('');
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync internal state when parent-provided value changes
+  useEffect(() => {
+    if (typeof value === 'string' && value !== searchQuery) {
+      setSearchQuery(value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   // Debounce search to avoid too many API calls
   const debouncedSearch = useCallback((query: string) => {
@@ -42,6 +52,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
     
     // Perform debounced search for better performance
     debouncedSearch(query);
+  };
+
+  const handleClear = () => {
+    setSearchQuery('');
+    // Cancel any pending debounce and immediately clear results
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    onSearch('');
   };
 
   // Handle voice search button click
@@ -89,7 +109,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
             placeholder={placeholder}
             className="block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
           />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1">
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleVoiceSearch}
