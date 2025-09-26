@@ -130,6 +130,12 @@ const MobileTabBar: React.FC = () => {
                   About Us
                 </Link>
                 <Link
+                  to="/about/blogs"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Blogs
+                </Link>
+                <Link
                   to="/swap-toys"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >

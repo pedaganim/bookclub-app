@@ -9,6 +9,11 @@ const About: React.FC = () => {
           <p className="text-gray-700">
             Book Club is a serverless web application that helps readers discover and manage books with a simple, modern interface.
           </p>
+          <p>
+            <a href="/about/blogs" className="inline-block mt-2 text-indigo-600 hover:text-indigo-800 underline">
+              Read our Blogs →
+            </a>
+          </p>
         </header>
 
         <section className="space-y-4">
