@@ -181,7 +181,7 @@ const BookLibrary: React.FC = () => {
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Library</h1>
           <p className="text-base sm:text-lg text-gray-600">
-            Discover books shared by our community
+            Swap the books you’ve loved. Discover the ones you’ll love next.
           </p>
         </div>
 
