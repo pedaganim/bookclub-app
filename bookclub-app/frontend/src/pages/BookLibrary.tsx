@@ -37,15 +37,34 @@ const BookLibrary: React.FC = () => {
         ageGroupFine: age && age.length ? age : undefined,
         bare: true,
       });
-      const items = Array.isArray(response.items) ? response.items : [];
-      // If logged in, hide own books from the public library view
-      const filtered = (isAuthenticated && user?.userId)
+      const desired = currentPageSize || pageSize;
+      let items = Array.isArray(response.items) ? response.items : [];
+      let filtered = (isAuthenticated && user?.userId)
         ? items.filter((b) => b.userId !== user.userId)
         : items;
-      setBooks(filtered);
-      const hasMore = !!response.nextToken;
+      // Top up the page to the desired count if client-side filters removed items
+      let tokenLocal: string | undefined = response.nextToken || undefined;
+      while (filtered.length < desired && tokenLocal) {
+        const resp = await apiService.listBooksPublic({
+          search,
+          limit: desired,
+          nextToken: tokenLocal,
+          ageGroupFine: age && age.length ? age : undefined,
+          bare: true,
+        });
+        const batch = Array.isArray(resp.items) ? resp.items : [];
+        const batchFiltered = (isAuthenticated && user?.userId)
+          ? batch.filter((b) => b.userId !== user.userId)
+          : batch;
+        filtered = filtered.concat(batchFiltered);
+        tokenLocal = resp.nextToken || undefined;
+      }
+      // Trim to desired page size for display
+      const pageItems = filtered.slice(0, desired);
+      setBooks(pageItems);
+      const hasMore = !!tokenLocal;
       setHasNextPage(hasMore);
-      setNextToken(response.nextToken || null);
+      setNextToken(tokenLocal || null);
 
       // Skip computing total count for performance
     } catch (err: any) {
