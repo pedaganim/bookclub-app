@@ -13,7 +13,7 @@ const EditBook: React.FC = () => {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<'available' | 'reading' | 'borrowed'>('available');
+  const [status, setStatus] = useState<'available' | 'reading' | 'borrowed' | 'giving_away'>('available');
   const [lentEmail, setLentEmail] = useState('');
   const [lentLookupLoading, setLentLookupLoading] = useState(false);
   const [lentUser, setLentUser] = useState<{ userId: string; name?: string; email?: string } | null>(null);
@@ -128,7 +128,7 @@ const EditBook: React.FC = () => {
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
                 value={status}
                 onChange={(e) => {
-                  const val = e.target.value as 'available' | 'reading' | 'borrowed';
+                  const val = e.target.value as 'available' | 'reading' | 'borrowed' | 'giving_away';
                   setStatus(val);
                   if (val !== 'borrowed') {
                     setLentUser(null);
@@ -139,6 +139,7 @@ const EditBook: React.FC = () => {
                 <option value="available">Available</option>
                 <option value="reading">Reading</option>
                 <option value="borrowed">Lent</option>
+                <option value="giving_away">Giving away</option>
               </select>
               {status === 'borrowed' && (
                 <div className="mt-3 space-y-2">
