@@ -42,7 +42,12 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     if (oversize.length > 0) {
       onError(`Some files exceed 10MB and were skipped: ${oversize.map(f => f.name).join(', ')}`);
     }
-    const accepted = fileArray.filter(f => f.size <= MAX_PER_FILE);
+    // Skip unsupported HEIC/HEIF which often fails on web upload
+    const unsupported = fileArray.filter(f => /heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name));
+    if (unsupported.length > 0) {
+      onError(`Some files are in HEIC/HEIF format and were skipped: ${unsupported.map(f => f.name).join(', ')}`);
+    }
+    const accepted = fileArray.filter(f => f.size <= MAX_PER_FILE && !unsupported.includes(f));
     const totalSize = accepted.reduce((s, f) => s + f.size, 0) + processedImages.reduce((s, img) => s + (img.file?.size || 0), 0);
     if (totalSize > MAX_TOTAL) {
       onError(`Total selected size exceeds 50MB. Please add fewer or smaller images.`);
@@ -53,7 +58,63 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     setProcessingProgress({ current: 0, total: accepted.length });
 
     try {
-      const results: SelectedImage[] = accepted.map((file) => ({
+      const compressImage = async (file: File): Promise<File> => {
+        // Keep GIFs as-is; compress others to JPEG
+        if (/gif$/i.test(file.type)) return file;
+        const maxDim = 1600;
+        const drawToCanvasAndMakeFile = (width: number, height: number, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void): Promise<File> => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return Promise.resolve(file);
+          const scale = Math.min(1, maxDim / Math.max(width, height));
+          const w = Math.max(1, Math.round(width * scale));
+          const h = Math.max(1, Math.round(height * scale));
+          canvas.width = w;
+          canvas.height = h;
+          draw(ctx, w, h);
+          return new Promise<File>((resolve) => {
+            canvas.toBlob((blob) => {
+              if (!blob) return resolve(file);
+              const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+              resolve(new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() }));
+            }, 'image/jpeg', 0.8);
+          });
+        };
+
+        try {
+          const bitmap = await createImageBitmap(file);
+          return await drawToCanvasAndMakeFile(bitmap.width, bitmap.height, (ctx, w, h) => {
+            ctx.drawImage(bitmap, 0, 0, w, h);
+          });
+        } catch {
+          // Fallback to HTMLImageElement path
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = URL.createObjectURL(file);
+          });
+          const result = await drawToCanvasAndMakeFile(img.naturalWidth || img.width, img.naturalHeight || img.height, (ctx, w, h) => {
+            ctx.drawImage(img, 0, 0, w, h);
+          });
+          URL.revokeObjectURL(img.src);
+          return result;
+        }
+      };
+
+      const compressedFiles: File[] = [];
+      for (let i = 0; i < accepted.length; i++) {
+        const f = accepted[i];
+        try {
+          const cf = await compressImage(f);
+          compressedFiles.push(cf);
+        } catch {
+          compressedFiles.push(f);
+        }
+        setProcessingProgress({ current: i + 1, total: accepted.length });
+      }
+
+      const results: SelectedImage[] = compressedFiles.map((file) => ({
         file,
         preview: URL.createObjectURL(file),
       }));

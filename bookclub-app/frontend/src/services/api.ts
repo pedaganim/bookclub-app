@@ -240,6 +240,10 @@ class ApiService {
       headers: {
         'Content-Type': file.type,
       },
+      // Mobile networks can be slow; extend timeout for PUT to S3
+      timeout: 120000, // 120s
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
     });
   }
 
