@@ -38,8 +38,8 @@ provider:
     SITE_BASE_URL: ${env:SITE_BASE_URL, 'https://booklub.shop'}
     # Bedrock throttle tuning
     BEDROCK_MAX_ATTEMPTS: ${env:BEDROCK_MAX_ATTEMPTS, '8'}
-    BEDROCK_BACKOFF_BASE_MS: ${env:BEDROCK_BACKOFF_BASE_MS, '1000'} # start at 1s (was 500ms)
-    BEDROCK_BACKOFF_MAX_MS: ${env:BEDROCK_BACKOFF_MAX_MS, '30000'}  # cap at 30s (was 15s)
+    BEDROCK_BACKOFF_BASE_MS: ${env:BEDROCK_BACKOFF_BASE_MS, '2000'} # start at 2s
+    BEDROCK_BACKOFF_MAX_MS: ${env:BEDROCK_BACKOFF_MAX_MS, '60000'}  # cap at 60s
   iam:
     role:
       statements:
