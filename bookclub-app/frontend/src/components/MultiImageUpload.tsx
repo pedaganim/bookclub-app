@@ -21,7 +21,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 }) => {
   const [processedImages, setProcessedImages] = useState<SelectedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputDeviceRef = useRef<HTMLInputElement>(null);
   const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0 });
 
   const handleFileSelection = useCallback(async (files: FileList | null) => {
@@ -134,9 +134,9 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       setProcessedImages(newImages);
       onImagesProcessed(newImages);
 
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      // Reset file inputs
+      if (fileInputDeviceRef.current) {
+        fileInputDeviceRef.current.value = '';
       }
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Failed to process images');
@@ -178,12 +178,26 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       <div className="flex flex-wrap gap-2 mb-3">
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => fileInputDeviceRef.current?.click()}
           className="px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
           disabled={disabled || isProcessing || processedImages.length >= maxImages}
-          aria-label="Upload multiple book images"
+          aria-label="Upload images from device"
         >
-          📁 Add Book Cover Image ({processedImages.length}/{maxImages})
+          Upload from Device ({processedImages.length}/{maxImages})
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              window.open('https://photos.google.com/', '_blank', 'noopener');
+            } catch (_) {}
+          }}
+          className="px-3 py-2 text-sm bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50"
+          disabled={disabled || isProcessing}
+          aria-label="Import from Google Photos"
+          title="Opens Google Photos in a new tab (direct import coming soon)."
+        >
+          Import from Google Photos
         </button>
 
         {processedImages.length > 0 && (
@@ -204,15 +218,15 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         )}
       </div>
 
-      {/* Hidden file input */}
+      {/* Hidden file input for device picker */}
       <input
-        ref={fileInputRef}
+        ref={fileInputDeviceRef}
         type="file"
         accept="image/*"
         multiple
         onChange={handleFileChange}
         className="hidden"
-        aria-label="Select multiple image files"
+        aria-label="Select multiple image files from device"
       />
 
       {/* Processing Progress */}
