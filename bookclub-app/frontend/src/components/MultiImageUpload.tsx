@@ -183,21 +183,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
           disabled={disabled || isProcessing || processedImages.length >= maxImages}
           aria-label="Upload images from device"
         >
-          Upload from Device ({processedImages.length}/{maxImages})
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              window.open('https://photos.google.com/', '_blank', 'noopener');
-            } catch (_) {}
-          }}
-          className="px-3 py-2 text-sm bg-white text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-50"
-          disabled={disabled || isProcessing}
-          aria-label="Import from Google Photos"
-          title="Opens Google Photos in a new tab (direct import coming soon)."
-        >
-          Import from Google Photos
+          📁 Add Book Cover Image ({processedImages.length}/{maxImages})
         </button>
 
         {processedImages.length > 0 && (
@@ -226,7 +212,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         multiple
         onChange={handleFileChange}
         className="hidden"
-        aria-label="Select multiple image files from device"
+        aria-label="Select multiple image files"
       />
 
       {/* Processing Progress */}
