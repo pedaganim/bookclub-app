@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
@@ -238,7 +238,7 @@ const MessagesLinkWithUnread: React.FC = () => {
   const [unread, setUnread] = useState(0);
   const pollRef = useRef<number | undefined>(undefined);
 
-  const loadUnread = async () => {
+  const loadUnread = useCallback(async () => {
     if (!user?.userId) return;
     try {
       const res = await apiService.dmListConversations(50);
@@ -250,7 +250,7 @@ const MessagesLinkWithUnread: React.FC = () => {
     } catch {
       // ignore
     }
-  };
+  }, [user?.userId]);
 
   useEffect(() => {
     loadUnread();
@@ -269,7 +269,7 @@ const MessagesLinkWithUnread: React.FC = () => {
       window.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('dm:updated', onDmUpdated as EventListener);
     };
-  }, [user?.userId]);
+  }, [user?.userId, loadUnread]);
 
   return (
     <Link

@@ -85,7 +85,7 @@ const BrowseClubs: React.FC = () => {
   const hasPrevious = tokenStack.length > 0;
   const hasNext = Boolean(nextToken);
 
-  const handleRequestJoin = async (club: BookClub) => {
+  const handleRequestJoin = useCallback(async (club: BookClub) => {
     try {
       setRequestingId(club.clubId);
       await apiService.requestClubJoin(club.clubId);
@@ -96,7 +96,7 @@ const BrowseClubs: React.FC = () => {
     } finally {
       setRequestingId(null);
     }
-  };
+  }, [addNotification]);
 
   const content = useMemo(() => {
     if (loading) {
@@ -150,7 +150,7 @@ const BrowseClubs: React.FC = () => {
         ))}
       </div>
     );
-  }, [loading, error, clubs, requestingId]);
+  }, [loading, error, clubs, requestingId, handleRequestJoin, userClubIds]);
 
   return (
     <div className="min-h-screen bg-gray-50">

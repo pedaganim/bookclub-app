@@ -70,7 +70,7 @@ const BookLibrary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pageSize, currentPageToken, isAuthenticated, user?.userId]);
+  }, [pageSize, isAuthenticated, user?.userId]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -127,7 +127,7 @@ const BookLibrary: React.FC = () => {
 
   useEffect(() => {
     fetchBooks(undefined, pageSize, null);
-  }, [fetchBooks]);
+  }, [fetchBooks, pageSize]);
 
   // SEO for Library page
   useEffect(() => {
