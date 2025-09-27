@@ -21,7 +21,7 @@ const BookLibrary: React.FC = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const { isAuthenticated, user } = useAuth();
-  const [userClubs, setUserClubs] = useState<BookClub[]>([]);
+  const [, setUserClubs] = useState<BookClub[]>([]);
   const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
   
 
@@ -37,7 +37,7 @@ const BookLibrary: React.FC = () => {
         bare: true,
       });
       const desired = currentPageSize || pageSize;
-      let items = Array.isArray(response.items) ? response.items : [];
+      const items = Array.isArray(response.items) ? response.items : [];
       let filtered = (isAuthenticated && user?.userId)
         ? items.filter((b) => b.userId !== user.userId)
         : items;
@@ -70,7 +70,7 @@ const BookLibrary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pageSize, currentPageToken, isAuthenticated, user?.userId]);
+  }, [pageSize, isAuthenticated, user?.userId]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -127,7 +127,7 @@ const BookLibrary: React.FC = () => {
 
   useEffect(() => {
     fetchBooks(undefined, pageSize, null);
-  }, [fetchBooks]);
+  }, [fetchBooks, pageSize]);
 
   // SEO for Library page
   useEffect(() => {

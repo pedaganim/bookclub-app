@@ -79,9 +79,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
           throw lastErr || new Error(`${label} failed`);
         };
 
-        let success = 0;
-        let failed = 0;
         setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
+        
+        let successCount = 0;
         // Adaptive stagger to reduce bursts
         const batchSize = imagesToUpload.length;
         const staggerMs = batchSize <= 3 ? 200 : batchSize <= 7 ? 600 : 1000;
@@ -128,18 +128,19 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               }),
               'createBook'
             );
-            success += 1;
-            setUploadProgress(p => ({ ...p, success }));
+            successCount++;
+            setUploadProgress(p => ({ ...p, success: p.success + 1 }));
             onBookAdded(book);
           } catch (imageError: any) {
             // eslint-disable-next-line no-console
             console.error(`Background upload failed for an image:`, imageError);
             addNotification?.('error', imageError?.message || 'Failed to upload one of the images');
-            failed += 1;
-            setUploadProgress(p => ({ ...p, failed }));
+            setUploadProgress(p => ({ ...p, failed: p.failed + 1 }));
           }
         }
-        addNotification?.('success', `Added ${success}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
+        
+        // Show final success notification
+        addNotification?.('success', `Added ${successCount}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
         setStatusMessage('');
         setUploadingBatch(false);
       })();

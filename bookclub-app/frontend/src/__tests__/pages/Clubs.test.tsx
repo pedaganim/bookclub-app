@@ -81,9 +81,7 @@ describe('Clubs page', () => {
     // And check that there isn't an edit next to Other Club by scoping queries
     const otherClubContainer = screen.getByText('Other Club').closest('div');
     if (otherClubContainer) {
-      const scopedEdit = otherClubContainer.querySelector('button');
-      // first button may not always be edit; a robust check would inspect text
-      // Keep simple: ensure no button with text 'Edit' inside this container
+      // Ensure no button with text 'Edit' inside this container
       expect(screen.queryByText('Edit', { selector: 'div:has(> div) button' })).toBeTruthy();
     }
   });

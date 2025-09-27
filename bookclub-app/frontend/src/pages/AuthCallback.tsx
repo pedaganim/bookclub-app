@@ -87,7 +87,7 @@ const AuthCallback: React.FC = () => {
       setStatus('error');
       setMessage(e?.message || 'Authentication failed.');
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     const code = params.get('code');

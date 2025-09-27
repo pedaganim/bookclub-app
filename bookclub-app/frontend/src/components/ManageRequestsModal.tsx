@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 
@@ -20,7 +20,7 @@ const ManageRequestsModal: React.FC<ManageRequestsModalProps> = ({ clubId, onClo
   const [items, setItems] = useState<PendingRequest[]>([]);
   const [actioning, setActioning] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -31,9 +31,9 @@ const ManageRequestsModal: React.FC<ManageRequestsModalProps> = ({ clubId, onClo
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId]);
 
-  useEffect(() => { load(); }, [clubId]);
+  useEffect(() => { load(); }, [load]);
 
   const handleApprove = async (userId: string) => {
     try {
