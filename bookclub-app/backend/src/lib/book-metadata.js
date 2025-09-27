@@ -373,7 +373,7 @@ class BookMetadataService {
   }
 
   /**
-   * Simple HTTP request helper (using Node.js built-in modules)
+   * Simple HTTP request helper with retries (using Node.js built-in modules)
    */
   async makeHttpRequest(url) {
     // Quick check for sandboxed environment to avoid DNS errors
@@ -384,11 +384,15 @@ class BookMetadataService {
 
     const https = require('https');
     const http = require('http');
-    
-    return new Promise((resolve, reject) => {
+
+    const maxAttempts = parseInt(process.env.GOOGLE_HTTP_MAX_ATTEMPTS || '6', 10);
+    const baseMs = parseInt(process.env.GOOGLE_HTTP_BACKOFF_BASE_MS || '400', 10);
+    const maxCap = parseInt(process.env.GOOGLE_HTTP_BACKOFF_MAX_MS || '10000', 10);
+
+    const attemptOnce = () => new Promise((resolve, reject) => {
       const urlObj = new URL(url);
       const client = urlObj.protocol === 'https:' ? https : http;
-      
+
       const options = {
         hostname: urlObj.hostname,
         port: urlObj.port,
@@ -398,25 +402,26 @@ class BookMetadataService {
           'User-Agent': 'BookClub-App/1.0'
         }
       };
-      
+
       const req = client.request(options, (res) => {
         let data = '';
-        
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-        
+
+        res.on('data', (chunk) => { data += chunk; });
+
         res.on('end', () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
+          const sc = res.statusCode || 0;
+          if (sc >= 200 && sc < 300) {
             resolve(data);
           } else {
-            reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+            const err = new Error(`HTTP ${sc}: ${res.statusMessage}`);
+            // Attach statusCode so caller can decide retry
+            err.statusCode = sc;
+            reject(err);
           }
         });
       });
-      
+
       req.on('error', (error) => {
-        // Enhanced error handling for DNS and network issues
         if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
           console.log('[BookMetadata] DNS/Network error, likely in sandboxed environment:', error.code);
           reject(new Error(`Network access blocked: ${error.code}`));
@@ -424,14 +429,38 @@ class BookMetadataService {
           reject(error);
         }
       });
-      
+
       req.setTimeout(10000, () => {
         req.destroy();
-        reject(new Error('Request timeout'));
+        const e = new Error('Request timeout');
+        e.statusCode = 408;
+        reject(e);
       });
-      
+
       req.end();
     });
+
+    let attempt = 0;
+    // Initial small delay to avoid thundering herd on cold start bursts
+    const initialDelay = parseInt(process.env.GOOGLE_HTTP_INITIAL_DELAY_MS || '0', 10);
+    if (initialDelay > 0) {
+      await new Promise(r => setTimeout(r, initialDelay));
+    }
+    while (true) {
+      try {
+        return await attemptOnce();
+      } catch (err) {
+        attempt += 1;
+        const sc = err && (err.statusCode || 0);
+        const retryable = sc === 429 || (sc >= 500 && sc < 600) || sc === 408;
+        if (!retryable || attempt >= maxAttempts) throw err;
+        const backoff = baseMs * Math.pow(2, attempt - 1);
+        const jitter = Math.floor(Math.random() * 0.4 * backoff);
+        const delay = Math.min(maxCap, Math.floor(0.8 * backoff) + jitter);
+        try { console.warn(`[BookMetadata] HTTP ${sc}, retrying in ${delay}ms (attempt ${attempt}/${maxAttempts}) for ${url}`); } catch {}
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
   }
 }
 
