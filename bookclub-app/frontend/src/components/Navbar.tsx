@@ -7,7 +7,7 @@ import { apiService } from '../services/api';
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [, setIsMobileMenuOpen] = useState(false);
 
   const handleAddBooksClick = () => {
     // Navigate to /my-books so the Home page opens the AddBookModal without being affected by any root redirects
@@ -286,56 +286,4 @@ const MessagesLinkWithUnread: React.FC = () => {
   );
 };
 
-// Mobile version of MessagesLinkWithUnread
-const MobileMessagesLinkWithUnread: React.FC<{ closeMobileMenu: () => void }> = ({ closeMobileMenu }) => {
-  const { user } = useAuth();
-  const [unread, setUnread] = useState(0);
-  const pollRef = useRef<number | undefined>(undefined);
 
-  const loadUnread = async () => {
-    if (!user?.userId) return;
-    try {
-      const res = await apiService.dmListConversations(50);
-      const total = (res.items || []).reduce((sum: number, c: any) => {
-        const forMe = c.userAId === user.userId ? Number(c.unreadCountForUserA || 0) : Number(c.unreadCountForUserB || 0);
-        return sum + forMe;
-      }, 0);
-      setUnread(total);
-    } catch {
-      // ignore
-    }
-  };
-
-  useEffect(() => {
-    loadUnread();
-    if (pollRef.current) window.clearInterval(pollRef.current);
-    pollRef.current = window.setInterval(() => {
-      loadUnread();
-    }, 60000) as unknown as number;
-
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadUnread(); };
-    window.addEventListener('visibilitychange', onVisibility);
-
-    return () => {
-      if (pollRef.current) window.clearInterval(pollRef.current);
-      window.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [user?.userId]);
-
-  return (
-    <Link
-      to="/messages"
-      className="block px-3 py-3 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md relative"
-      onClick={closeMobileMenu}
-    >
-      <div className="flex items-center justify-between">
-        <span>Messages</span>
-        {unread > 0 && (
-          <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-semibold leading-none text-white bg-red-600 rounded-full">
-            {unread}
-          </span>
-        )}
-      </div>
-    </Link>
-  );
-};

@@ -88,7 +88,7 @@ const BrowseClubs: React.FC = () => {
   const handleRequestJoin = async (club: BookClub) => {
     try {
       setRequestingId(club.clubId);
-      const res = await apiService.requestClubJoin(club.clubId);
+      await apiService.requestClubJoin(club.clubId);
       // Always show request sent to keep messaging consistent
       addNotification('success', 'Request sent');
     } catch (e: any) {

@@ -39,30 +39,6 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       setRequestingJoin(false);
     }
   };
-  // Function to format description text properly
-  const formatDescription = (text?: string) => {
-    if (!text) return '';
-    
-    // Convert to proper sentence case if it's all caps
-    if (text === text.toUpperCase()) {
-      return text.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-    }
-    
-    return text;
-  };
-
-  // Get username from userName field or fallback to simplified userId
-  const getDisplayUsername = (book: Book) => {
-    if (book.userName) {
-      return book.userName;
-    }
-    // Fallback to simplified version of the userId
-    if (book.userId && typeof book.userId === 'string') {
-      const suffixLen = Math.min(8, book.userId.length);
-      return `User ${book.userId.slice(-suffixLen)}`;
-    }
-    return 'User';
-  };
 
   // Default placeholder image when no cover image is provided
   const defaultBookImage = "data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
