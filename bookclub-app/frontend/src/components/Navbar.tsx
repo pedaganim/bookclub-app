@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
-// (No heroicons needed here)
+// (No external icon libraries; use neutral inline SVGs)
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -15,6 +15,39 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
+// Simple neutral inline SVG icons
+const Icon = {
+  Book: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <path d="M4 6.75A2.25 2.25 0 0 1 6.25 4.5h11.5A2.25 2.25 0 0 1 20 6.75v11.25a.75.75 0 0 1-1.2.6c-.8-.6-1.79-.9-2.8-.9H6.25A2.25 2.25 0 0 1 4 15.45V6.75z" />
+      <path d="M7.5 7.5h7.5M7.5 10.5h7.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Toy: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <circle cx="8" cy="8" r="2.5" />
+      <circle cx="16" cy="8" r="2.5" />
+      <path d="M5 16c2-2 12-2 14 0M9 13.5c.5.3 1.5.5 3 .5s2.5-.2 3-.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+    </svg>
+  ),
+  Chat: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <path d="M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5A2.25 2.25 0 0 1 19.5 6.75v6A2.25 2.25 0 0 1 17.25 15H9l-3.75 3V6.75z" />
+    </svg>
+  ),
+  User: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+      <path d="M4 19.25C4 16.9 7.58 15 12 15s8 1.9 8 4.25V20H4v-.75z" />
+    </svg>
+  ),
+};
+
 // Mobile bottom tab bar for small screens
 const MobileTabBar: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -22,29 +55,29 @@ const MobileTabBar: React.FC = () => {
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
       <div className="max-w-7xl mx-auto grid grid-cols-5 text-sm">
         <Link to="/library" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
-          <span role="img" aria-label="library">📚</span>
+          <Icon.Book />
           <span>Library</span>
         </Link>
         <Link to="/swap-toys" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
-          <span role="img" aria-label="swap-toys">🧸</span>
+          <Icon.Toy />
           <span>Swap Toys</span>
         </Link>
-        <Link to={{ pathname: '/my-books' }} state={{ openAddBooks: true }} className="flex flex-col items-center justify-center py-2 text-indigo-600 hover:text-indigo-800 font-medium">
-          <span role="img" aria-label="add">➕</span>
+        <Link to={{ pathname: '/my-books' }} state={{ openAddBooks: true }} className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900 font-medium">
+          <Icon.Plus />
           <span>Add</span>
         </Link>
         <Link to="/messages" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
-          <span role="img" aria-label="messages">💬</span>
+          <Icon.Chat />
           <span>Messages</span>
         </Link>
         {isAuthenticated ? (
           <Link to="/profile" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
-            <span role="img" aria-label="profile">👤</span>
+            <Icon.User />
             <span>Profile</span>
           </Link>
         ) : (
-          <Link to="/login" className="flex flex-col items-center justify-center py-2 text-indigo-600 hover:text-indigo-800">
-            <span role="img" aria-label="login">🔑</span>
+          <Link to="/login" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
+            <Icon.User />
             <span>Sign In</span>
           </Link>
         )}
@@ -86,7 +119,7 @@ const MobileTabBar: React.FC = () => {
                   to="/library"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  📚 Browse Library
+                  Browse Library
                 </Link>
                 <Link
                   to="/my-books"
@@ -110,7 +143,7 @@ const MobileTabBar: React.FC = () => {
                   to="/swap-toys"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  🧸 Swap Toys
+                  Swap Toys
                 </Link>
                 <MessagesLinkWithUnread />
               </>
