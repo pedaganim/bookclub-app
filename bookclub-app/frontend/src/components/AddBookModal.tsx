@@ -80,6 +80,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         };
 
         setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
+        
+        let successCount = 0;
         // Adaptive stagger to reduce bursts
         const batchSize = imagesToUpload.length;
         const staggerMs = batchSize <= 3 ? 200 : batchSize <= 7 ? 600 : 1000;
@@ -126,6 +128,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               }),
               'createBook'
             );
+            successCount++;
             setUploadProgress(p => ({ ...p, success: p.success + 1 }));
             onBookAdded(book);
           } catch (imageError: any) {
@@ -135,13 +138,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             setUploadProgress(p => ({ ...p, failed: p.failed + 1 }));
           }
         }
-        // Get final count from state to display in notification
-        setUploadProgress(p => {
-          const finalSuccess = p.success;
-          const totalBooks = imagesToUpload.length;
-          addNotification?.('success', `Added ${finalSuccess}/${totalBooks} book${totalBooks !== 1 ? 's' : ''}.`);
-          return p;
-        });
+        
+        // Show final success notification
+        addNotification?.('success', `Added ${successCount}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
         setStatusMessage('');
         setUploadingBatch(false);
       })();
