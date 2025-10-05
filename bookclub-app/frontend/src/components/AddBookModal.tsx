@@ -178,20 +178,19 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               )}
             </div>
           )}
-
           {/* Main Upload Interface */}
           <div className="mb-6">
             <MultiImageUpload
               onImagesProcessed={handleImagesProcessed}
               onError={handleImageError}
               disabled={loading}
+              maxImages={10}
             />
           </div>
 
           {/* Upload Summary */}
           {uploadedImages.length > 0 && (
             <div className="mb-6 p-4 bg-gray-50 rounded-md">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Upload Summary</h4>
               <div className="text-xs text-gray-600">
                 <span className="font-medium">Selected images:</span> {selectedCount}
               </div>

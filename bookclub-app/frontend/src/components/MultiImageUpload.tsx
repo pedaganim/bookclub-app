@@ -17,7 +17,7 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   onImagesProcessed,
   onError,
   disabled = false,
-  maxImages = Infinity,
+  maxImages = 25,
 }) => {
   const [processedImages, setProcessedImages] = useState<SelectedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +28,13 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
-    const accepted = fileArray; // No client-side size/type limit; backend will validate type
+    // Enforce count only when maxImages is finite
+    const totalFiles = processedImages.length + fileArray.length;
+    if (Number.isFinite(maxImages) && totalFiles > (maxImages as number)) {
+      onError(`Maximum ${maxImages} images allowed. You can add ${(maxImages as number) - processedImages.length} more.`);
+      return;
+    }
+    const accepted = fileArray; // No size/type limit; backend validates type
 
     setIsProcessing(true);
     setProcessingProgress({ current: 0, total: accepted.length });
@@ -173,7 +179,9 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
       {processedImages.length === 0 && (
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
           <p className="text-sm text-gray-500">
-            Upload any number of book images. We'll upload them as-is and process details in the background.
+            {Number.isFinite(maxImages)
+              ? `Upload up to ${maxImages} book images. We'll upload them as-is and process details in the background.`
+              : `Upload any number of book images. We'll upload them as-is and process details in the background.`}
           </p>
           <p className="text-xs text-gray-400 mt-1">
             Supported formats: JPG, PNG, GIF • Large files may take longer to upload
