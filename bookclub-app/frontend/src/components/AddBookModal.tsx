@@ -45,9 +45,10 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
 
     try {
       const validImages = uploadedImages; // no validation client-side
-      
+
       if (validImages.length === 0) {
         setError('No valid book images found. Please upload book cover images.');
+        setUploadingBatch(false);
         return;
       }
 
@@ -57,98 +58,77 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
       setUploadedImages([]);
 
       (async () => {
-        const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
-        const withRetry = async <T,>(fn: () => Promise<T>, label: string, maxAttempts = 3) => {
-          let attempt = 0;
-          let lastErr: any;
-          while (attempt < maxAttempts) {
-            try {
-              return await fn();
-            } catch (e: any) {
-              lastErr = e;
-              attempt += 1;
-              // Network-ish errors or 429/5xx
-              const status = e?.response?.status;
-              if (attempt >= maxAttempts) break;
-              const backoff = Math.min(2000, 300 * Math.pow(2, attempt - 1));
-              // eslint-disable-next-line no-console
-              console.warn(`[AddBook] ${label} failed (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms`, status || e?.message);
-              await sleep(backoff);
-            }
-          }
-          throw lastErr || new Error(`${label} failed`);
-        };
+            const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+            const withRetry = async <T,>(fn: () => Promise<T>, label: string, maxAttempts = 3) => {
+              let attempt = 0;
+              let lastErr: any;
+              while (attempt < maxAttempts) {
+                try { return await fn(); } catch (e: any) {
+                  lastErr = e; attempt += 1; if (attempt >= maxAttempts) break;
+                  const backoff = Math.min(2000, 300 * Math.pow(2, attempt - 1));
+                  // eslint-disable-next-line no-console
+                  console.warn(`[AddBook] ${label} failed (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms`, e?.response?.status || e?.message);
+                  await sleep(backoff);
+                }
+              }
+              throw lastErr || new Error(`${label} failed`);
+            };
 
-        let success = 0;
-        let failed = 0;
-        setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
-        // Adaptive stagger to reduce bursts
-        const batchSize = imagesToUpload.length;
-        const staggerMs = batchSize <= 3 ? 200 : batchSize <= 7 ? 600 : 1000;
-        for (let i = 0; i < imagesToUpload.length; i++) {
-          const image = imagesToUpload[i];
-          try {
-            // Slight stagger between images to avoid burst limits
-            if (i > 0) await sleep(staggerMs);
-            setUploadProgress(p => ({ ...p, index: i + 1, currentName: image.file.name }));
+            let success = 0;
+            let failed = 0;
+            setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
 
-            // 1) Get upload URL (retry)
-            const uploadData = await withRetry(
-              () => apiService.generateUploadUrl(image.file.type, image.file.name),
-              'generateUploadUrl'
-            );
+            // Worker pool for concurrent image uploads
+            const concurrency = Math.min(5, imagesToUpload.length);
+            let nextIndex = 0;
 
-            // 2) Upload file to S3 (retry)
-            await withRetry(
-              () => apiService.uploadFile(uploadData.uploadUrl, image.file),
-              'uploadFile'
-            );
+            const worker = async () => {
+              while (true) {
+                const i = nextIndex++;
+                if (i >= imagesToUpload.length) return;
+                const image = imagesToUpload[i];
+                try {
+                  setUploadProgress(p => ({ ...p, index: i + 1, currentName: image.file.name }));
+                  // Upload any size (multipart for large)
+                  const { fileUrl, key, bucket } = await withRetry(
+                    () => apiService.uploadAnySize(image.file, { partConcurrency: 5, partSize: 8 * 1024 * 1024 }),
+                    'uploadAnySize'
+                  );
+                  // Create the book
+                  const book = await withRetry(
+                    () => apiService.createBook({
+                      coverImage: fileUrl,
+                      status: 'available',
+                      extractFromImage: true,
+                      s3Bucket: bucket,
+                      s3Key: key,
+                    }),
+                    'createBook'
+                  );
+                  success += 1;
+                  setUploadProgress(p => ({ ...p, success }));
+                  onBookAdded(book);
+                } catch (imageError: any) {
+                  // eslint-disable-next-line no-console
+                  console.error(`Background upload failed for an image:`, imageError);
+                  addNotification?.('error', imageError?.message || 'Failed to upload one of the images');
+                  failed += 1;
+                  setUploadProgress(p => ({ ...p, failed }));
+                }
+              }
+            };
 
-            // Parse bucket and key from returned fileUrl (https://{bucket}.s3.amazonaws.com/{key})
-            let s3Bucket: string | undefined;
-            let s3Key: string | undefined;
-            try {
-              const url = new URL(uploadData.fileUrl);
-              const host = url.hostname; // e.g., my-bucket.s3.amazonaws.com
-              s3Bucket = host.split('.s3.amazonaws.com')[0];
-              s3Key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
-            } catch {
-              // Fallback to fileKey if parsing fails
-              s3Key = uploadData.fileKey;
-            }
+            await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
-            // 3) Create the book (retry)
-            const book = await withRetry(
-              () => apiService.createBook({
-                coverImage: uploadData.fileUrl,
-                status: 'available',
-                extractFromImage: true,
-                s3Bucket,
-                s3Key,
-              }),
-              'createBook'
-            );
-            success += 1;
-            setUploadProgress(p => ({ ...p, success }));
-            onBookAdded(book);
-          } catch (imageError: any) {
-            // eslint-disable-next-line no-console
-            console.error(`Background upload failed for an image:`, imageError);
-            addNotification?.('error', imageError?.message || 'Failed to upload one of the images');
-            failed += 1;
-            setUploadProgress(p => ({ ...p, failed }));
-          }
-        }
-        addNotification?.('success', `Added ${success}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
-        setStatusMessage('');
-        setUploadingBatch(false);
-      })();
-      
+            addNotification?.('success', `Added ${success}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
+            setStatusMessage('');
+            setUploadingBatch(false);
+          })();
     } catch (err: any) {
       setError(err.message || 'Failed to upload images');
+      setUploadingBatch(false);
     } finally {
       // Keep UI interactive: do not set loading while background uploads continue
-      setLoading(false);
     }
   };
 
@@ -198,7 +178,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               )}
             </div>
           )}
-
           {/* Main Upload Interface */}
           <div className="mb-6">
             <MultiImageUpload
@@ -212,7 +191,6 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
           {/* Upload Summary */}
           {uploadedImages.length > 0 && (
             <div className="mb-6 p-4 bg-gray-50 rounded-md">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Upload Summary</h4>
               <div className="text-xs text-gray-600">
                 <span className="font-medium">Selected images:</span> {selectedCount}
               </div>
