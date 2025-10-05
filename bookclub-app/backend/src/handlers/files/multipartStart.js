@@ -17,9 +17,20 @@ module.exports.handler = async (event) => {
       return response.validationError({ fileType: 'File type is required' });
     }
 
-    const validFileTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const validFileTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      'image/tiff',
+      'image/bmp',
+    ];
     if (!validFileTypes.includes(fileType)) {
-      return response.validationError({ fileType: 'Invalid file type. Only JPEG, PNG, and GIF are allowed.' });
+      // eslint-disable-next-line no-console
+      console.warn(`[multipartStart] Rejected fileType=${fileType}`);
+      return response.validationError({ fileType: 'Invalid file type. Allowed: JPEG, PNG, GIF, WEBP, HEIC/HEIF, TIFF, BMP.' });
     }
 
     const ext = fileType.split('/')[1] || 'jpg';
