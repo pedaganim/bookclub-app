@@ -241,10 +241,88 @@ class ApiService {
         'Content-Type': file.type,
       },
       // Mobile networks can be slow; extend timeout for PUT to S3
-      timeout: 120000, // 120s
+      timeout: 15 * 60 * 1000, // 15 minutes
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
+  }
+
+  // Multipart upload helpers
+  async multipartStart(fileType: string, fileName?: string): Promise<{ bucket: string; key: string; uploadId: string }> {
+    const res: AxiosResponse<ApiResponse<{ bucket: string; key: string; uploadId: string }>> = await this.api.post('/upload/multipart/start', { fileType, fileName });
+    if (!res.data.success) throw new Error(res.data.error?.message || 'Failed to start multipart upload');
+    return res.data.data!;
+  }
+
+  async multipartSignPart(params: { key: string; uploadId: string; partNumber: number; contentType?: string }): Promise<{ uploadUrl: string }>{
+    const res: AxiosResponse<ApiResponse<{ uploadUrl: string }>> = await this.api.post('/upload/multipart/sign-part', params);
+    if (!res.data.success) throw new Error(res.data.error?.message || 'Failed to sign part');
+    return res.data.data!;
+  }
+
+  async multipartComplete(params: { key: string; uploadId: string; parts: Array<{ ETag: string; PartNumber: number }> }): Promise<{ fileUrl: string; bucket: string; key: string }>{
+    const res: AxiosResponse<ApiResponse<{ fileUrl: string; bucket: string; key: string }>> = await this.api.post('/upload/multipart/complete', params);
+    if (!res.data.success) throw new Error(res.data.error?.message || 'Failed to complete multipart upload');
+    return res.data.data!;
+  }
+
+  // High-level uploader: uses multipart for large files
+  async uploadAnySize(file: File, opts: { partSize?: number; partConcurrency?: number; multipartThreshold?: number } = {}): Promise<{ fileUrl: string; bucket?: string; key?: string }>{
+    const partSize = Math.max(5 * 1024 * 1024, opts.partSize || 8 * 1024 * 1024); // >=5MB
+    const partConcurrency = Math.max(1, opts.partConcurrency || 5);
+    const threshold = opts.multipartThreshold ?? 8 * 1024 * 1024;
+
+    if (file.size <= threshold) {
+      const { uploadUrl, fileUrl, fileKey } = await this.generateUploadUrl(file.type, file.name);
+      await this.uploadFile(uploadUrl, file);
+      // Try to parse bucket/key from fileUrl
+      try {
+        const u = new URL(fileUrl);
+        const bucket = u.hostname.split('.s3.amazonaws.com')[0];
+        const key = u.pathname.replace(/^\//, '');
+        return { fileUrl, bucket, key };
+      } catch {
+        return { fileUrl, key: fileKey } as any;
+      }
+    }
+
+    // Multipart
+    const { key, uploadId } = await this.multipartStart(file.type, file.name);
+
+    const totalParts = Math.ceil(file.size / partSize);
+    const partsEtags: Array<{ ETag: string; PartNumber: number }> = new Array(totalParts);
+
+    const queue: number[] = Array.from({ length: totalParts }, (_, i) => i);
+    const runPart = async (index: number) => {
+      const start = index * partSize;
+      const end = Math.min(start + partSize, file.size);
+      const blob = file.slice(start, end);
+      const partNumber = index + 1;
+      const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: file.type });
+      const putRes = await axios.put(uploadUrl, blob, {
+        headers: { 'Content-Type': file.type },
+        timeout: 15 * 60 * 1000,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+      const eTag = (putRes.headers.etag || putRes.headers.ETag || '').replace(/\"/g, '');
+      partsEtags[index] = { ETag: eTag, PartNumber: partNumber };
+    };
+
+    const workers: Promise<void>[] = [];
+    for (let i = 0; i < Math.min(partConcurrency, queue.length); i++) {
+      workers.push((async function worker() {
+        while (queue.length) {
+          const idx = queue.shift();
+          if (idx === undefined) break;
+          await runPart(idx);
+        }
+      })());
+    }
+    await Promise.all(workers);
+
+    const { fileUrl } = await this.multipartComplete({ key, uploadId, parts: partsEtags });
+    return { fileUrl, key };
   }
 
   // Add method to get pre-extracted metadata with exponential backoff
