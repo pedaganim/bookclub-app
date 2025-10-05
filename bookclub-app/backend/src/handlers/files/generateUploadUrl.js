@@ -16,11 +16,22 @@ module.exports.handler = async (event) => {
       });
     }
 
-    // Validate file type (only allow images)
-    const validFileTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    // Validate file type (allow broader set of images for mobile compatibility)
+    const validFileTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      'image/tiff',
+      'image/bmp',
+    ];
     if (!validFileTypes.includes(fileType)) {
+      // eslint-disable-next-line no-console
+      console.warn(`[generateUploadUrl] Rejected fileType=${fileType}`);
       return response.validationError({
-        fileType: 'Invalid file type. Only JPEG, PNG, and GIF are allowed.',
+        fileType: 'Invalid file type. Allowed: JPEG, PNG, GIF, WEBP, HEIC/HEIF, TIFF, BMP.',
       });
     }
 
