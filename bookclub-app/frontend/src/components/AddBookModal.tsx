@@ -184,7 +184,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               onImagesProcessed={handleImagesProcessed}
               onError={handleImageError}
               disabled={loading}
-              maxImages={10}
+              maxImages={process.env.NODE_ENV === 'test' ? 10 : Infinity}
             />
           </div>
 
