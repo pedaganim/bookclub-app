@@ -45,6 +45,13 @@ async function setUserPrefs(userId, { emailOptIn, prefs }) {
 function renderTemplate(templateId, templateData) {
   // Simple minimal templates for Phase 1; can be migrated to files later
   switch (templateId) {
+    case 'club_join_request': {
+      const { requesterName = 'A user', requesterEmail = '', clubName = 'your club', reviewUrl = '' } = templateData || {};
+      const subject = `Join request for ${clubName}`;
+      const text = `${requesterName}${requesterEmail ? ' <' + requesterEmail + '>' : ''} requested to join ${clubName}.\n\nReview and approve/reject: ${reviewUrl}`;
+      const html = `<p><strong>${requesterName}</strong>${requesterEmail ? ' &lt;' + requesterEmail + '&gt;' : ''} requested to join <strong>${clubName}</strong>.</p>\n<p><a href="${reviewUrl}">Review and approve/reject</a></p>`;
+      return { subject, text, html };
+    }
     case 'dm_message_received': {
       const { fromName = 'A user', snippet = '', conversationUrl = '' } = templateData || {};
       const subject = `New message from ${fromName}`;
