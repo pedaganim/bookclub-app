@@ -23,6 +23,7 @@ import UserProfile from './pages/UserProfile';
 import NotificationSettings from './pages/NotificationSettings';
 import SwapToys from './pages/SwapToys';
 import MobileTabBar from './components/MobileTabBar';
+import ClubRequests from './pages/ClubRequests';
 
 function App() {
   return (
@@ -99,6 +100,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <BrowseClubs />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/clubs/:clubId/requests"
+                    element={
+                      <ProtectedRoute>
+                        <ClubRequests />
                       </ProtectedRoute>
                     }
                   />
