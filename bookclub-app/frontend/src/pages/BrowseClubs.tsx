@@ -18,6 +18,7 @@ const BrowseClubs: React.FC = () => {
   const [nextToken, setNextToken] = useState<string | undefined>(undefined);
   const [tokenStack, setTokenStack] = useState<string[]>([]); // to support Previous
   const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [requestedClubIds, setRequestedClubIds] = useState<Set<string>>(new Set());
   const { isAuthenticated } = useAuth();
   const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
   const { addNotification } = useNotification();
@@ -89,7 +90,12 @@ const BrowseClubs: React.FC = () => {
     try {
       setRequestingId(club.clubId);
       const res = await apiService.requestClubJoin(club.clubId);
-      // Always show request sent to keep messaging consistent
+      // Optimistically mark as requested
+      setRequestedClubIds((prev) => {
+        const next = new Set(prev);
+        next.add(club.clubId);
+        return next;
+      });
       addNotification('success', 'Request sent');
     } catch (e: any) {
       addNotification('error', e.message || 'Failed to request join');
@@ -137,13 +143,19 @@ const BrowseClubs: React.FC = () => {
             </div>
             <div className="mt-4">
               {!userClubIds.has(club.clubId) && (
-                <button
-                  onClick={() => handleRequestJoin(club)}
-                  disabled={requestingId === club.clubId}
-                  className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                >
-                  {club.isPrivate ? 'Request to Join' : 'Request to Join'}
-                </button>
+                requestedClubIds.has(club.clubId) ? (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                    Request Sent
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleRequestJoin(club)}
+                    disabled={requestingId === club.clubId}
+                    className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                  >
+                    {club.isPrivate ? 'Request to Join' : 'Request to Join'}
+                  </button>
+                )
               )}
             </div>
           </div>

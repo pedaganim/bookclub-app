@@ -18,21 +18,23 @@ const response = {
     };
   },
 
-  error(error, statusCode = 400) {
-    console.error('Error:', error);
-    
-    const errorMessage = error.message || 'An unexpected error occurred';
-    const errorCode = error.code || 'UNKNOWN_ERROR';
-    
+  error(err, statusCode = 400) {
+    console.error('Error:', err);
+
+    const isString = typeof err === 'string';
+    const providedStatus = (err && err.statusCode) || statusCode;
+    const errorMessage = isString ? err : (err?.message || 'An unexpected error occurred');
+    const errorCode = (err && err.code) || (isString ? 'ERROR' : 'UNKNOWN_ERROR');
+
     return {
-      statusCode: error.statusCode || statusCode,
+      statusCode: providedStatus,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
         error: {
           code: errorCode,
           message: errorMessage,
-          ...(process.env.STAGE === 'dev' && { stack: error.stack }),
+          ...(process.env.STAGE === 'dev' && !isString && { stack: err.stack }),
         },
       }),
     };
