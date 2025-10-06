@@ -1,6 +1,7 @@
 const { success, error } = require('../../lib/response');
 const User = require('../../models/user');
 const BookClub = require('../../models/bookclub');
+const { sendEmailIfEnabled } = require('../../lib/notification-service');
 
 // --- Handler (top) ---
 exports.handler = async (event) => {
@@ -19,6 +20,25 @@ exports.handler = async (event) => {
     }
 
     const reqRecord = await BookClub.createJoinRequest(clubId, userId);
+
+    // Fire-and-forget email to club owner (creator) to review request
+    try {
+      const ownerId = club.createdBy;
+      if (ownerId && ownerId !== userId) {
+        const requester = await User.getById(userId).catch(() => null);
+        const baseUrl = process.env.FRONTEND_BASE_URL || process.env.APP_BASE_URL || process.env.WEBSITE_URL || 'https://booklub.shop';
+        const reviewUrl = `${baseUrl}/clubs/${clubId}/requests`;
+        await sendEmailIfEnabled(ownerId, 'new_member_in_your_club', 'club_join_request', {
+          requesterName: requester?.name || 'A user',
+          requesterEmail: requester?.email || '',
+          clubName: club?.name || 'your club',
+          reviewUrl,
+        });
+      }
+    } catch (notifyErr) {
+      console.warn('[clubs][request] Failed to notify owner of join request', notifyErr?.message || notifyErr);
+    }
+
     return success({ status: 'pending', request: reqRecord });
   } catch (e) {
     if (e && e.code === 'AlreadyMember') {
