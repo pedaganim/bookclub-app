@@ -14,10 +14,7 @@ exports.handler = async (event) => {
 
     const club = await BookClub.getById(clubId);
     if (!club) return error('Club not found', 404);
-    if (!club.isPrivate) {
-      const membership = await BookClub.addMember(clubId, userId, 'member');
-      return success({ status: 'active', membership });
-    }
+    // Always require approval: create a pending request (even for public clubs)
 
     const reqRecord = await BookClub.createJoinRequest(clubId, userId);
 

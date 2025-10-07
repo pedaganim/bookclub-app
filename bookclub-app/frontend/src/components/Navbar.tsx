@@ -221,6 +221,20 @@ const MobileTabBar: React.FC = () => {
           {/* Mobile menu button removed; use MobileTabBar for primary navigation on small screens */}
           <div className="md:hidden" />
         </div>
+        {/* Mobile top quick links */}
+        <div className="md:hidden py-2">
+          <div className="flex items-center gap-4 text-sm overflow-x-auto no-scrollbar">
+            <Link to="/clubs/browse" className="text-gray-700 hover:text-gray-900 px-2 py-1 rounded-md whitespace-nowrap" onClick={closeMobileMenu}>
+              Clubs
+            </Link>
+            <Link to="/about" className="text-gray-700 hover:text-gray-900 px-2 py-1 rounded-md whitespace-nowrap" onClick={closeMobileMenu}>
+              About Us
+            </Link>
+            <Link to="/about/blogs" className="text-gray-700 hover:text-gray-900 px-2 py-1 rounded-md whitespace-nowrap" onClick={closeMobileMenu}>
+              Blogs
+            </Link>
+          </div>
+        </div>
         {/* Mobile collapsible menu removed; MobileTabBar provides nav on small screens */}
       </div>
     </nav>

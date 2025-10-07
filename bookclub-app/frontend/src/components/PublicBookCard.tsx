@@ -68,6 +68,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const defaultBookImage = "data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
 
   const handleBorrowClick = async () => {
+    // If book belongs to a club and viewer is not a member, block borrow and prompt to join
+    if (book.clubId && !isMemberOfBookClub) {
+      notificationCtx?.addNotification('info', 'Join this club to contact the owner.');
+      return;
+    }
     // Require auth token; if missing, redirect to login
     if (!isAuthenticated) {
       window.location.assign('/login');
@@ -166,31 +171,18 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
         {(() => {
           // If the book belongs to a club and the viewer is not a member, show Join Club
           if (book.clubId && !isMemberOfBookClub) {
-            const joinLabel = book.clubName ? `Join ${book.clubName}` : 'Join Club';
-            const isPrivateClub = !!book.clubIsPrivate;
+            const joinLabel = 'Join the Club';
             return (
               <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
-                {isPrivateClub ? (
-                  <button
-                    type="button"
-                    className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${requestingJoin || joinRequested ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                    title={joinRequested ? 'Request sent' : 'Request to Join'}
-                    onClick={requestToJoin}
-                    disabled={requestingJoin || joinRequested}
-                  >
-                    {joinRequested ? 'Requested' : 'Request to Join'}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                    title={joinLabel}
-                    onClick={navigateToJoin}
-                    disabled={sending}
-                  >
-                    {joinLabel}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${requestingJoin || joinRequested ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
+                  title={joinRequested ? 'Request sent' : joinLabel}
+                  onClick={requestToJoin}
+                  disabled={requestingJoin || joinRequested}
+                >
+                  {joinRequested ? 'Requested' : joinLabel}
+                </button>
                 {book.userId && (
                   <a 
                     href={`/users/${book.userId}`} 
