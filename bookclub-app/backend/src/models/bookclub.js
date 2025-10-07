@@ -45,7 +45,7 @@ class BookClub {
     const params = {
       TableName: getTableName('bookclub-members'),
       KeyConditionExpression: 'clubId = :clubId',
-      ExpressionAttributeValues: { ':clubId': clubId },
+      ExpressionAttributeValues: { ':clubId': clubId, ':pending': 'pending' },
       FilterExpression: '#status = :pending',
       ExpressionAttributeNames: { '#status': 'status' },
     };
