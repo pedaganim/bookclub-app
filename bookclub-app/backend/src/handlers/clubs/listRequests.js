@@ -40,7 +40,16 @@ module.exports.handler = async (event) => {
       console.error('listRequests: listPendingRequests failed', { clubId, error: e?.message });
       throw e;
     });
-    return success({ items: pending });
+    // Enrich with requester profile (name/email) for better admin UX
+    const enriched = await Promise.all((pending || []).map(async (p) => {
+      try {
+        const u = await User.getById(p.userId);
+        return { ...p, name: u?.name || undefined, email: u?.email || undefined };
+      } catch {
+        return p;
+      }
+    }));
+    return success({ items: enriched });
   } catch (e) {
     console.error('listRequests: unexpected error', e);
     return error(e.message || 'Failed to list join requests', 500);
