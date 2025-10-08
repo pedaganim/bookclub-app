@@ -23,6 +23,21 @@ const Icon = {
       <path d="M7.5 7.5h7.5M7.5 10.5h7.5" strokeLinecap="round" />
     </svg>
   ),
+  Info: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 10v6" strokeLinecap="round" />
+      <path d="M12 7.5h.01" strokeLinecap="round" />
+    </svg>
+  ),
+  Users: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 18c0-2.485 2.91-4.5 6.5-4.5s6.5 2.015 6.5 4.5" />
+      <circle cx="17" cy="9" r="2" />
+      <path d="M14.5 14.5c1.6.4 2.9 1.2 3.5 2.3" />
+    </svg>
+  ),
   Toy: () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
       <circle cx="8" cy="8" r="2.5" />
@@ -218,33 +233,20 @@ const MobileTabBar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile top nav (icons), aligned with logo on the right */}
-          <div className="md:hidden flex items-center gap-4">
-            <Link to="/library" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Library" onClick={closeMobileMenu}>
+          {/* Mobile top nav (text links) aligned with logo on the right */}
+          <div className="md:hidden flex items-center gap-3">
+            <Link to="/about" className="flex items-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 px-2 py-1" onClick={closeMobileMenu}>
+              <Icon.Info />
+              <span>About Us</span>
+            </Link>
+            <Link to="/clubs/browse" className="flex items-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 px-2 py-1" onClick={closeMobileMenu}>
+              <Icon.Users />
+              <span>Clubs</span>
+            </Link>
+            <Link to="/my-books" className="flex items-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 px-2 py-1" onClick={closeMobileMenu}>
               <Icon.Book />
+              <span>My Books</span>
             </Link>
-            <Link to="/swap-toys" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Swap Toys" onClick={closeMobileMenu}>
-              <Icon.Toy />
-            </Link>
-            <button
-              onClick={handleAddBooksClick}
-              className="p-2 text-gray-700 hover:text-gray-900"
-              aria-label="Add Books"
-            >
-              <Icon.Plus />
-            </button>
-            <Link to="/messages" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Messages" onClick={closeMobileMenu}>
-              <Icon.Chat />
-            </Link>
-            {isAuthenticated ? (
-              <Link to="/profile" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Profile" onClick={closeMobileMenu}>
-                <Icon.User />
-              </Link>
-            ) : (
-              <Link to="/login" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Sign In" onClick={closeMobileMenu}>
-                <Icon.User />
-              </Link>
-            )}
           </div>
         </div>
         {/* Note: MobileTabBar remains for bottom navigation on small screens */}
