@@ -66,8 +66,15 @@ const ClubRequests: React.FC = () => {
         {items.map((r) => (
           <div key={r.userId} className="flex items-center justify-between bg-white rounded border p-3">
             <div>
-              <div className="text-sm font-medium text-gray-900">{r.name || r.userId}</div>
-              <div className="text-xs text-gray-500">{r.email || ''}</div>
+              {(() => {
+                const displayName = r.name || r.email || (r.userId ? `User ${r.userId.slice(-6)}` : 'User');
+                return (
+                  <>
+                    <div className="text-sm font-medium text-gray-900">{displayName}</div>
+                    <div className="text-xs text-gray-500">{r.email || ''}</div>
+                  </>
+                );
+              })()}
               {r.requestedAt && (
                 <div className="text-xs text-gray-400">Requested: {new Date(r.requestedAt).toLocaleString()}</div>
               )}
@@ -77,7 +84,7 @@ const ClubRequests: React.FC = () => {
                 onClick={() => handleApprove(r.userId)}
                 disabled={acting === r.userId}
                 className={`px-3 py-1 text-sm rounded-md text-white ${acting === r.userId ? 'bg-emerald-300' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-                aria-label={`Approve ${r.userId}`}
+                aria-label={`Approve ${r.name || r.email || r.userId}`}
               >
                 Approve
               </button>
@@ -85,7 +92,7 @@ const ClubRequests: React.FC = () => {
                 onClick={() => handleReject(r.userId)}
                 disabled={acting === r.userId}
                 className={`px-3 py-1 text-sm rounded-md text-white ${acting === r.userId ? 'bg-rose-300' : 'bg-rose-600 hover:bg-rose-700'}`}
-                aria-label={`Reject ${r.userId}`}
+                aria-label={`Reject ${r.name || r.email || r.userId}`}
               >
                 Reject
               </button>
