@@ -153,8 +153,9 @@ const BookLibrary: React.FC = () => {
       try {
         const res = await apiService.getUserClubs();
         const items = res.items || [];
-        setUserClubs(items);
-        setUserClubIdSet(new Set(items.map((c) => c.clubId)));
+        const active = items.filter((c: any) => (c?.userStatus || 'active') === 'active');
+        setUserClubs(active);
+        setUserClubIdSet(new Set(active.map((c) => c.clubId)));
       } catch {
         setUserClubs([]);
         setUserClubIdSet(new Set());

@@ -55,7 +55,8 @@ const BrowseClubs: React.FC = () => {
           return;
         }
         const res = await apiService.getUserClubs();
-        const ids = new Set<string>((res.items || []).map((c: BookClub) => c.clubId));
+        const active = (res.items || []).filter((c: any) => (c?.userStatus || 'active') === 'active');
+        const ids = new Set<string>(active.map((c: BookClub) => c.clubId));
         setUserClubIds(ids);
       } catch {
         setUserClubIds(new Set());
