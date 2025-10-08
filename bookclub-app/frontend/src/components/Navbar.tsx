@@ -218,24 +218,36 @@ const MobileTabBar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile menu button removed; use MobileTabBar for primary navigation on small screens */}
-          <div className="md:hidden" />
-        </div>
-        {/* Mobile top quick links */}
-        <div className="md:hidden py-2">
-          <div className="flex items-center gap-4 text-sm overflow-x-auto no-scrollbar">
-            <Link to="/clubs/browse" className="text-gray-700 hover:text-gray-900 px-2 py-1 rounded-md whitespace-nowrap" onClick={closeMobileMenu}>
-              Clubs
+          {/* Mobile top nav (icons), aligned with logo on the right */}
+          <div className="md:hidden flex items-center gap-4">
+            <Link to="/library" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Library" onClick={closeMobileMenu}>
+              <Icon.Book />
             </Link>
-            <Link to="/about" className="text-gray-700 hover:text-gray-900 px-2 py-1 rounded-md whitespace-nowrap" onClick={closeMobileMenu}>
-              About Us
+            <Link to="/swap-toys" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Swap Toys" onClick={closeMobileMenu}>
+              <Icon.Toy />
             </Link>
-            <Link to="/about/blogs" className="text-gray-700 hover:text-gray-900 px-2 py-1 rounded-md whitespace-nowrap" onClick={closeMobileMenu}>
-              Blogs
+            <button
+              onClick={handleAddBooksClick}
+              className="p-2 text-gray-700 hover:text-gray-900"
+              aria-label="Add Books"
+            >
+              <Icon.Plus />
+            </button>
+            <Link to="/messages" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Messages" onClick={closeMobileMenu}>
+              <Icon.Chat />
             </Link>
+            {isAuthenticated ? (
+              <Link to="/profile" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Profile" onClick={closeMobileMenu}>
+                <Icon.User />
+              </Link>
+            ) : (
+              <Link to="/login" className="p-2 text-gray-700 hover:text-gray-900" aria-label="Sign In" onClick={closeMobileMenu}>
+                <Icon.User />
+              </Link>
+            )}
           </div>
         </div>
-        {/* Mobile collapsible menu removed; MobileTabBar provides nav on small screens */}
+        {/* Note: MobileTabBar remains for bottom navigation on small screens */}
       </div>
     </nav>
     {/* Mobile bottom tab bar */}
