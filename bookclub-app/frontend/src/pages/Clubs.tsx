@@ -6,6 +6,7 @@ import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
 import ManageRequestsModal from '../components/ManageRequestsModal';
+import InviteModal from '../components/InviteModal';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 
 const Clubs: React.FC = () => {
@@ -17,6 +18,7 @@ const Clubs: React.FC = () => {
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [manageClubId, setManageClubId] = useState<string | null>(null);
+  const [inviteClub, setInviteClub] = useState<BookClub | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -158,6 +160,7 @@ const Clubs: React.FC = () => {
                   <div className="flex gap-2">
                     {isAdmin(club) && !isPending(club) && (
                       <>
+                        <button onClick={() => setInviteClub(club)} className="px-3 py-2 text-sm bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100">Invite</button>
                         <button onClick={() => handleEdit(club)} className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">Edit</button>
                         <button onClick={() => handleDelete(club)} className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">Delete</button>
                         <button onClick={() => setManageClubId(club.clubId)} className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100">Manage Requests</button>
@@ -201,6 +204,13 @@ const Clubs: React.FC = () => {
           <ManageRequestsModal
             clubId={manageClubId}
             onClose={() => setManageClubId(null)}
+          />
+        )}
+
+        {inviteClub && (
+          <InviteModal
+            club={inviteClub}
+            onClose={() => setInviteClub(null)}
           />
         )}
       </div>

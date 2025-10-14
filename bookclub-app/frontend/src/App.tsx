@@ -8,6 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
+import VerifyEmail from './pages/VerifyEmail';
+import Onboarding from './pages/Onboarding';
+import InviteAccept from './pages/InviteAccept';
 import ProfileEdit from './pages/ProfileEdit';
 import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
@@ -36,6 +39,13 @@ function App() {
               <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Navigate to="/login" replace />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="/onboarding" element={
+                    <ProtectedRoute>
+                      <Onboarding />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/invite/:inviteCode" element={<InviteAccept />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/about/blogs" element={<BlogsIndex />} />
                   <Route path="/about/blogs/:slug" element={<BlogPost />} />

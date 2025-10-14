@@ -113,6 +113,48 @@ class ApiService {
     return response.data.data!;
   }
 
+  // Email verification and onboarding methods
+  async sendVerificationEmail(): Promise<{ message: string }> {
+    const response: AxiosResponse<ApiResponse<{ message: string }>> = await this.api.post('/auth/send-verification');
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to send verification email');
+    }
+    return response.data.data!;
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string; user: User }> {
+    const response: AxiosResponse<ApiResponse<{ message: string; user: User }>> = await this.api.post('/auth/verify-email', { token });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to verify email');
+    }
+    return response.data.data!;
+  }
+
+  async completeOnboarding(): Promise<{ message: string; user: User }> {
+    const response: AxiosResponse<ApiResponse<{ message: string; user: User }>> = await this.api.post('/users/me/complete-onboarding');
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to complete onboarding');
+    }
+    return response.data.data!;
+  }
+
+  // Club invite methods
+  async getClubInviteLink(clubId: string): Promise<{ inviteCode: string; inviteUrl: string }> {
+    const response: AxiosResponse<ApiResponse<{ inviteCode: string; inviteUrl: string }>> = await this.api.get(`/clubs/${clubId}/invite-link`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to get invite link');
+    }
+    return response.data.data!;
+  }
+
+  async sendClubInvite(data: { clubId: string; email: string; name?: string }): Promise<{ message: string; inviteUrl: string }> {
+    const response: AxiosResponse<ApiResponse<{ message: string; inviteUrl: string }>> = await this.api.post('/clubs/invite', data);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to send invite');
+    }
+    return response.data.data!;
+  }
+
   // Book methods
   async createBook(bookData: {
     title?: string;

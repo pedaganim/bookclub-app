@@ -531,6 +531,55 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId: 
               Ref: ApiGatewayAuthorizer
+
+  # Email verification and onboarding functions
+  sendVerificationEmail:
+    handler: src/handlers/users/sendVerificationEmail.handler
+    events:
+      - http:
+          method: POST
+          path: /auth/send-verification
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  verifyEmail:
+    handler: src/handlers/users/verifyEmail.handler
+    events:
+      - http:
+          method: POST
+          path: /auth/verify-email
+          cors: true
+
+  completeOnboarding:
+    handler: src/handlers/users/completeOnboarding.handler
+    events:
+      - http:
+          method: POST
+          path: /users/me/complete-onboarding
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
   
   # Notification preference functions
   getNotificationPrefs:
@@ -969,6 +1018,47 @@ functions:
       - http:
           method: POST
           path: /clubs/{clubId}/requests/{userId}/reject
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  # Club invite functions
+  getClubInviteLink:
+    handler: src/handlers/clubs/getInviteLink.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}/invite-link
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  sendClubInvite:
+    handler: src/handlers/clubs/sendInvite.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/invite
           cors:
             origin: '*'
             headers:
