@@ -1,22 +1,22 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const InviteAccept: React.FC = () => {
   const { inviteCode } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
-  const authContext = useContext(AuthContext);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [clubName, setClubName] = useState('');
 
   useEffect(() => {
     // Store invite code for use after login if user is not authenticated
-    if (inviteCode && !authContext?.user) {
+    if (inviteCode && !user) {
       sessionStorage.setItem('pendingInviteCode', inviteCode);
     }
-  }, [inviteCode, authContext]);
+  }, [inviteCode, user]);
 
   const handleJoinClub = async () => {
     if (!inviteCode) {
@@ -24,7 +24,7 @@ const InviteAccept: React.FC = () => {
       return;
     }
 
-    if (!authContext?.user) {
+    if (!user) {
       // Redirect to login
       navigate('/login');
       return;
@@ -83,10 +83,10 @@ const InviteAccept: React.FC = () => {
                 disabled={loading}
                 className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Joining...' : authContext?.user ? 'Accept Invitation' : 'Sign in to Accept'}
+                {loading ? 'Joining...' : user ? 'Accept Invitation' : 'Sign in to Accept'}
               </button>
 
-              {!authContext?.user && (
+              {!user && (
                 <p className="mt-4 text-sm text-gray-500">
                   You'll need to sign in or create an account first
                 </p>

@@ -1,6 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 
 interface OnboardingStep {
@@ -24,7 +24,7 @@ const Onboarding: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const authContext = useContext(AuthContext);
+  const { user } = useAuth();
 
   const handleNext = async () => {
     if (currentStep === 1) {
@@ -62,7 +62,6 @@ const Onboarding: React.FC = () => {
           await apiService.createClub({
             name: clubName,
             description: clubDescription,
-            location: 'Online',
             isPrivate: false,
           });
           await completeOnboarding();
