@@ -45,6 +45,20 @@ async function setUserPrefs(userId, { emailOptIn, prefs }) {
 function renderTemplate(templateId, templateData) {
   // Simple minimal templates for Phase 1; can be migrated to files later
   switch (templateId) {
+    case 'email_verification': {
+      const { name = 'User', verificationUrl = '' } = templateData || {};
+      const subject = 'Verify your email - BookClub';
+      const text = `Hi ${name},\n\nWelcome to BookClub! Please verify your email address by clicking the link below:\n\n${verificationUrl}\n\nThis link will expire in 24 hours.\n\nIf you didn't create this account, you can safely ignore this email.`;
+      const html = `<p>Hi <strong>${name}</strong>,</p><p>Welcome to BookClub! Please verify your email address by clicking the button below:</p><p><a href="${verificationUrl}" style="display:inline-block;padding:12px 24px;background-color:#4F46E5;color:white;text-decoration:none;border-radius:6px;">Verify Email</a></p><p style="color:#666;">This link will expire in 24 hours.</p><p style="color:#666;font-size:12px;">If you didn't create this account, you can safely ignore this email.</p>`;
+      return { subject, text, html };
+    }
+    case 'club_invite': {
+      const { inviterName = 'A user', clubName = 'a book club', inviteUrl = '' } = templateData || {};
+      const subject = `${inviterName} invited you to join ${clubName}`;
+      const text = `${inviterName} has invited you to join ${clubName} on BookClub.\n\nClick the link below to accept the invitation:\n\n${inviteUrl}\n\nJoin us to share and discover great books!`;
+      const html = `<p><strong>${inviterName}</strong> has invited you to join <strong>${clubName}</strong> on BookClub.</p><p><a href="${inviteUrl}" style="display:inline-block;padding:12px 24px;background-color:#4F46E5;color:white;text-decoration:none;border-radius:6px;">Accept Invitation</a></p><p>Join us to share and discover great books!</p>`;
+      return { subject, text, html };
+    }
     case 'club_join_request': {
       const { requesterName = 'A user', requesterEmail = '', clubName = 'your club', reviewUrl = '' } = templateData || {};
       const subject = `Join request for ${clubName}`;
