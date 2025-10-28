@@ -227,3 +227,94 @@ resource "aws_ssm_parameter" "bookclub_members_table_name" {
   type  = "String"
   value = aws_dynamodb_table.bookclub_members.name
 }
+
+# DynamoDB table for direct message conversations
+resource "aws_dynamodb_table" "dm_conversations" {
+  name         = "${var.service_name}-dm-conversations-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "conversationId"
+
+  attribute {
+    name = "conversationId"
+    type = "S"
+  }
+
+  attribute {
+    name = "userAId"
+    type = "S"
+  }
+
+  attribute {
+    name = "userBId"
+    type = "S"
+  }
+
+  attribute {
+    name = "lastMessageAt"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "UserAIndex"
+    hash_key        = "userAId"
+    range_key       = "lastMessageAt"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "UserBIndex"
+    hash_key        = "userBId"
+    range_key       = "lastMessageAt"
+    projection_type = "ALL"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# DynamoDB table for direct messages
+resource "aws_dynamodb_table" "dm_messages" {
+  name         = "${var.service_name}-dm-messages-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "conversationId"
+  range_key    = "messageId"
+
+  attribute {
+    name = "conversationId"
+    type = "S"
+  }
+
+  attribute {
+    name = "messageId"
+    type = "S"
+  }
+
+  attribute {
+    name = "createdAt"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "ConversationCreatedAtIndex"
+    hash_key        = "conversationId"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_ssm_parameter" "dm_conversations_table_name" {
+  name  = "/${var.service_name}/${var.stage}/dm_conversations_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.dm_conversations.name
+}
+
+resource "aws_ssm_parameter" "dm_messages_table_name" {
+  name  = "/${var.service_name}/${var.stage}/dm_messages_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.dm_messages.name
+}
