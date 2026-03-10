@@ -75,7 +75,7 @@ const MobileTabBar: React.FC = () => {
         </Link>
         <Link to="/swap-toys" className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900">
           <Icon.Toy />
-          <span>Swap Toys</span>
+          <span>Toy Library</span>
         </Link>
         <Link to={{ pathname: '/my-books' }} state={{ openAddBooks: true }} className="flex flex-col items-center justify-center py-2 text-gray-700 hover:text-gray-900 font-medium">
           <Icon.Plus />
@@ -158,7 +158,7 @@ const MobileTabBar: React.FC = () => {
                   to="/swap-toys"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Swap Toys
+                  Toy Library
                 </Link>
                 <MessagesLinkWithUnread />
               </>
@@ -187,7 +187,7 @@ const MobileTabBar: React.FC = () => {
                   to="/swap-toys"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  🧸 Swap Toys
+                  📚 Toy Library
                 </Link>
               </>
             )}
