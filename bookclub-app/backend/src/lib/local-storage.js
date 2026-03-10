@@ -13,6 +13,7 @@ const USERS_FILE = path.join(STORAGE_DIR, 'users.json');
 const BOOKS_FILE = path.join(STORAGE_DIR, 'books.json');
 const CLUBS_FILE = path.join(STORAGE_DIR, 'clubs.json');
 const CLUB_MEMBERS_FILE = path.join(STORAGE_DIR, 'club-members.json');
+const TOY_LISTINGS_FILE = path.join(STORAGE_DIR, 'toy-listings.json');
 
 if (OFFLINE) {
   // Ensure storage directory exists (local only)
@@ -337,6 +338,76 @@ class LocalStorage {
       }
     }
     this.saveClubMembers(filtered);
+  }
+
+  // Toy listing operations
+  static loadToyListings() {
+    if (!OFFLINE) return {};
+    try {
+      if (fs.existsSync(TOY_LISTINGS_FILE)) {
+        return JSON.parse(fs.readFileSync(TOY_LISTINGS_FILE, 'utf8'));
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading toy listings:', error);
+    }
+    return {};
+  }
+
+  static saveToyListings(listings) {
+    if (!OFFLINE) return;
+    try {
+      fs.writeFileSync(TOY_LISTINGS_FILE, JSON.stringify(listings, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving toy listings:', error);
+    }
+  }
+
+  static async createToyListing(listing) {
+    if (!OFFLINE) return listing;
+    const listings = this.loadToyListings();
+    listings[listing.listingId] = listing;
+    this.saveToyListings(listings);
+    return listing;
+  }
+
+  static async getToyListing(listingId) {
+    if (!OFFLINE) return null;
+    const listings = this.loadToyListings();
+    return listings[listingId] || null;
+  }
+
+  static async listToyListings(userId = null) {
+    if (!OFFLINE) return [];
+    const listings = this.loadToyListings();
+    const all = Object.values(listings);
+    if (userId) {
+      return all.filter((l) => l.userId === userId);
+    }
+    return all;
+  }
+
+  static async updateToyListing(listingId, updates) {
+    if (!OFFLINE) return null;
+    const listings = this.loadToyListings();
+    const listing = listings[listingId];
+    if (listing) {
+      const updated = { ...listing, ...updates, updatedAt: new Date().toISOString() };
+      listings[listingId] = updated;
+      this.saveToyListings(listings);
+      return updated;
+    }
+    return null;
+  }
+
+  static async deleteToyListing(listingId) {
+    if (!OFFLINE) return false;
+    const listings = this.loadToyListings();
+    if (listings[listingId]) {
+      delete listings[listingId];
+      this.saveToyListings(listings);
+      return true;
+    }
+    return false;
   }
 }
 

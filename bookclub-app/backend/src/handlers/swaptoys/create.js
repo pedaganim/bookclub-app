@@ -1,0 +1,64 @@
+const { success, error } = require('../../lib/response');
+const ToyListing = require('../../models/toyListing');
+
+const ALLOWED_CONDITIONS = ['new', 'like_new', 'good', 'fair'];
+const ALLOWED_CATEGORIES = ['books', 'outdoor', 'educational', 'dolls', 'vehicles', 'other'];
+
+exports.handler = async (event) => {
+  try {
+    const userId =
+      event.requestContext?.authorizer?.claims?.sub ||
+      event.requestContext?.authorizer?.claims?.['cognito:username'];
+
+    if (!userId) {
+      return error('Unauthorized', 401);
+    }
+
+    let body = {};
+    try {
+      if (event.body) body = JSON.parse(event.body);
+    } catch (_) {
+      return error('Invalid JSON body', 400);
+    }
+
+    // Validate required fields
+    const validationErrors = {};
+    if (!body.title || !String(body.title).trim()) {
+      validationErrors.title = 'Title is required';
+    }
+    if (!body.condition || !ALLOWED_CONDITIONS.includes(body.condition)) {
+      validationErrors.condition = `Condition must be one of: ${ALLOWED_CONDITIONS.join(', ')}`;
+    }
+    if (body.category && !ALLOWED_CATEGORIES.includes(body.category)) {
+      validationErrors.category = `Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}`;
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'Validation failed', errors: validationErrors },
+        }),
+      };
+    }
+
+    const data = {
+      title: String(body.title).trim(),
+      description: body.description ? String(body.description).trim() : '',
+      condition: body.condition,
+      category: body.category || null,
+      location: body.location ? String(body.location).trim() : null,
+      wantInReturn: body.wantInReturn ? String(body.wantInReturn).trim() : null,
+      images: Array.isArray(body.images) ? body.images : null,
+    };
+
+    const listing = await ToyListing.create(data, userId);
+    return { ...success(listing), statusCode: 201 };
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[SwapToys][create] Error:', e);
+    return error('Failed to create toy listing', 500);
+  }
+};

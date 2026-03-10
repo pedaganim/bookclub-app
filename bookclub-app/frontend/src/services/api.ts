@@ -570,6 +570,57 @@ class ApiService {
     
     return response.data as T;
   }
+
+  // Swap Toys methods
+  async listToyListings(params?: {
+    limit?: number;
+    nextToken?: string;
+    userId?: string;
+  }): Promise<import('../types').ToyListingListResponse> {
+    const query = new URLSearchParams();
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.nextToken) query.append('nextToken', params.nextToken);
+    if (params?.userId) query.append('userId', params.userId);
+    const response = await this.api.get(`/swap-toys?${query.toString()}`);
+    if (response.data?.success !== undefined) {
+      if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to list toy listings');
+      return response.data.data as import('../types').ToyListingListResponse;
+    }
+    return response.data as import('../types').ToyListingListResponse;
+  }
+
+  async createToyListing(data: {
+    title: string;
+    description?: string;
+    condition: string;
+    category?: string;
+    location?: string;
+    wantInReturn?: string;
+  }): Promise<import('../types').ToyListing> {
+    const response = await this.api.post('/swap-toys', data);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to create toy listing');
+    return response.data.data as import('../types').ToyListing;
+  }
+
+  async getToyListing(listingId: string): Promise<import('../types').ToyListing> {
+    const response = await this.api.get(`/swap-toys/${listingId}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to get toy listing');
+    return response.data.data as import('../types').ToyListing;
+  }
+
+  async updateToyListing(
+    listingId: string,
+    updates: Partial<import('../types').ToyListing>
+  ): Promise<import('../types').ToyListing> {
+    const response = await this.api.put(`/swap-toys/${listingId}`, updates);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to update toy listing');
+    return response.data.data as import('../types').ToyListing;
+  }
+
+  async deleteToyListing(listingId: string): Promise<void> {
+    const response = await this.api.delete(`/swap-toys/${listingId}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to delete toy listing');
+  }
 }
 
 export const apiService = new ApiService();

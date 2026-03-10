@@ -66,6 +66,8 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-conversations-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-messages-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -1061,6 +1063,83 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  # Swap Toys marketplace functions
+  listToyListings:
+    handler: src/handlers/swaptoys/list.handler
+    events:
+      - http:
+          method: GET
+          path: /swap-toys
+          cors: true
+
+  createToyListing:
+    handler: src/handlers/swaptoys/create.handler
+    events:
+      - http:
+          method: POST
+          path: /swap-toys
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  getToyListing:
+    handler: src/handlers/swaptoys/get.handler
+    events:
+      - http:
+          method: GET
+          path: /swap-toys/{listingId}
+          cors: true
+
+  updateToyListing:
+    handler: src/handlers/swaptoys/update.handler
+    events:
+      - http:
+          method: PUT
+          path: /swap-toys/{listingId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  deleteToyListing:
+    handler: src/handlers/swaptoys/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /swap-toys/{listingId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   # Interest registration (public, no auth) for upcoming features
   interestRegisterSwapToys:
     handler: src/handlers/interest/registerSwapToys.handler
@@ -1496,6 +1575,39 @@ resources:
           - IndexName: ConversationCreatedAtIndex
             KeySchema:
               - AttributeName: conversationId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    ToyListingsTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-toy-listings-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: listingId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: listingId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
                 KeyType: HASH
               - AttributeName: createdAt
                 KeyType: RANGE

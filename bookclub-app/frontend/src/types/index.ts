@@ -176,3 +176,27 @@ export interface DMMessageList {
   items: DMMessage[];
   nextToken?: string;
 }
+
+// Swap Toys types
+export interface ToyListing {
+  listingId: string;
+  userId: string;
+  title: string;
+  description?: string;
+  condition: 'new' | 'like_new' | 'good' | 'fair';
+  category?: string;
+  images?: string[];
+  status: 'available' | 'swapped';
+  location?: string;
+  wantInReturn?: string;
+  createdAt: string;
+  updatedAt: string;
+  // enriched
+  userName?: string;
+}
+
+export interface ToyListingListResponse {
+  items: ToyListing[];
+  nextToken?: string;
+}
+
