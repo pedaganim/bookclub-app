@@ -1,164 +1,242 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { ToyListing } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import ToyListingCard from '../components/ToyListingCard';
+import CreateToyListingModal from '../components/CreateToyListingModal';
+
+type TabId = 'browse' | 'mine';
+
+const EMPTY_BROWSE = (
+  <div className="col-span-full flex flex-col items-center justify-center py-20 text-center text-gray-500">
+    <span className="text-5xl mb-4">🧸</span>
+    <p className="text-lg font-medium text-gray-700">No toys listed yet</p>
+    <p className="text-sm mt-1">Be the first to post a toy and start swapping!</p>
+  </div>
+);
+
+const EMPTY_MINE = (
+  <div className="col-span-full flex flex-col items-center justify-center py-20 text-center text-gray-500">
+    <span className="text-5xl mb-4">🎁</span>
+    <p className="text-lg font-medium text-gray-700">You haven't posted any toys yet</p>
+    <p className="text-sm mt-1">Click <strong>"Post a Toy"</strong> to list a toy you'd like to swap.</p>
+  </div>
+);
 
 const SwapToys: React.FC = () => {
-  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
-  const [message, setMessage] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [emailError, setEmailError] = useState<string>('');
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleRegisterInterest = async () => {
-    try {
-      setStatus('loading');
-      setMessage('');
-      const trimmed = email.trim();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!trimmed || !emailRegex.test(trimmed)) {
-        setStatus('error');
-        setEmailError('Please enter a valid email address');
-        setMessage('');
-        return;
-      }
+  const [tab, setTab] = useState<TabId>('browse');
+  const [listings, setListings] = useState<ToyListing[]>([]);
+  const [myListings, setMyListings] = useState<ToyListing[]>([]);
+  const [nextToken, setNextToken] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-      await apiService.request<any>('/interest/swap-toys', {
-        method: 'POST',
-        body: JSON.stringify({ from: window.location.href, email: trimmed }),
-      });
-      setStatus('success');
-      setMessage('Thanks! Your interest is registered. We\'ll notify you when it\'s ready.');
-      setEmail('');
-      setEmailError('');
-    } catch (e: any) {
-      setStatus('error');
-      setMessage(e?.message || 'Failed to register your interest. Please try again.');
-    }
-  };
-
-  const shareUrl = (typeof window !== 'undefined' ? window.location.origin : '') + '/swap-toys';
-  const shareText = "Help unlock Swap Toys on BookClub! If we reach 100 interested users, we'll launch it.";
-
-  // SEO: title/description + JSON-LD Event
-  React.useEffect(() => {
+  // SEO
+  useEffect(() => {
     document.title = 'Swap Toys — BookClub';
-    const desc = "Register your interest in Swap Toys. If we reach 100 users, we'll make it live!";
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
       metaDesc.setAttribute('name', 'description');
       document.head.appendChild(metaDesc);
     }
-    metaDesc.setAttribute('content', desc);
+    metaDesc.setAttribute('content', 'Browse and swap toys with families in your local community. Post a toy you no longer need and find a new favourite.');
+  }, []);
 
-    const ld: any = {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: 'Swap Toys Interest Drive',
-      description: desc,
-      startDate: new Date().toISOString(),
-      url: shareUrl,
-      eventStatus: 'https://schema.org/EventScheduled',
-      organizer: { '@type': 'Organization', name: 'BookClub' },
-    };
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.setAttribute('data-seo', 'event-jsonld');
-    script.text = JSON.stringify(ld);
-    document.querySelectorAll('script[data-seo="event-jsonld"]').forEach(n => n.remove());
-    document.head.appendChild(script);
-    return () => {
-      document.querySelectorAll('script[data-seo="event-jsonld"]').forEach(n => n.remove());
-    };
-  }, [shareUrl]);
-
-  const handleShare = async () => {
+  // Load all listings
+  const loadListings = useCallback(async (token?: string) => {
     try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Swap Toys — BookClub', text: shareText, url: shareUrl });
-      } else {
-        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-        setMessage('Share text copied to clipboard!');
-      }
-    } catch (_) {
-      // ignore user cancel
+      if (!token) setIsLoading(true); else setIsLoadingMore(true);
+      setError('');
+      const res = await apiService.listToyListings({ limit: 24, nextToken: token });
+      setListings((prev) => token ? [...prev, ...res.items] : res.items);
+      setNextToken(res.nextToken);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load listings. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  // Load user's own listings
+  const loadMyListings = useCallback(async () => {
+    if (!user?.userId) return;
+    try {
+      setIsLoading(true);
+      setError('');
+      const res = await apiService.listToyListings({ userId: user.userId, limit: 50 });
+      setMyListings(res.items);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load your listings.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.userId]);
+
+  useEffect(() => {
+    if (tab === 'browse') {
+      loadListings();
+    } else if (tab === 'mine') {
+      loadMyListings();
+    }
+  }, [tab, loadListings, loadMyListings]);
+
+  const handleCreated = (listing: ToyListing) => {
+    setShowModal(false);
+    setListings((prev) => [listing, ...prev]);
+    setMyListings((prev) => [listing, ...prev]);
+  };
+
+  const handleDelete = async (listingId: string) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    setDeletingId(listingId);
+    try {
+      await apiService.deleteToyListing(listingId);
+      setMyListings((prev) => prev.filter((l) => l.listingId !== listingId));
+      setListings((prev) => prev.filter((l) => l.listingId !== listingId));
+    } catch (e: any) {
+      setError(e?.message || 'Failed to delete listing.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-      setMessage('Link copied to clipboard!');
-      setStatus('success');
-    } catch (e) {
-      setStatus('error');
-      setMessage('Could not copy link.');
-    }
-  };
+  const activeListings = tab === 'browse' ? listings : myListings;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold text-gray-900">Swap Toys (Coming soon)</h1>
-        <p className="mt-3 text-gray-700">
-          Register your interest in Swap Toys. If we reach 100 users, we'll make it live!
-        </p>
-
-        <div className="mt-6 flex items-end gap-3">
-          <div className="flex-1 min-w-0">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setEmailError(''); }}
-              placeholder="you@example.com"
-              className={`mt-1 block w-full rounded-md border ${emailError ? 'border-red-300' : 'border-gray-300'} px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
-            />
-            {emailError && <p className="mt-1 text-sm text-red-600">{emailError}</p>}
-            <p className="mt-1 text-xs text-gray-500">We\'ll only use this to notify you when Swap Toys is ready.</p>
+      {/* Hero */}
+      <div className="bg-white border-b border-gray-100 py-8 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">🧸 Swap Toys</h1>
+            <p className="mt-1 text-gray-600 text-sm">
+              Give toys a second life — swap with families in your community.
+            </p>
           </div>
-          <button
-            onClick={handleRegisterInterest}
-            disabled={status === 'loading'}
-            className="h-11 inline-flex items-center justify-center px-5 py-3 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 whitespace-nowrap"
-          >
-            {status === 'loading' ? 'Registering…' : 'Register Interest'}
-          </button>
+          {isAuthenticated ? (
+            <button
+              id="post-toy-btn"
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Post a Toy
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-indigo-300 text-indigo-700 text-sm font-semibold hover:bg-indigo-50 transition-colors"
+            >
+              Sign in to post
+            </button>
+          )}
         </div>
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
-          >
-            Share this link
-          </button>
-          <button
-            onClick={handleCopy}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
-          >
-            Copy link
-          </button>
-        </div>
+      </div>
 
-        {message && (
-          <div className={`mt-4 rounded-md p-4 ${status === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-800'}`}>
-            {message}
+      {/* Tabs */}
+      <div className="max-w-5xl mx-auto px-4 pt-6">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+          <button
+            id="tab-browse"
+            onClick={() => setTab('browse')}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+              tab === 'browse'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Browse All
+          </button>
+          {isAuthenticated && (
+            <button
+              id="tab-mine"
+              onClick={() => setTab('mine')}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                tab === 'mine'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              My Listings
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* Error */}
+        {error && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
           </div>
         )}
 
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900">Why Swap Toys?</h2>
-          <ul className="mt-3 list-disc list-inside text-gray-700 space-y-1">
-            <li>Give toys a second life and reduce waste</li>
-            <li>Save money and discover new favourites</li>
-            <li>Swap safely within your local community</li>
-          </ul>
-        </div>
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+                <div className="h-5 bg-gray-200 rounded w-4/5 mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-full mb-1" />
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+              </div>
+            ))}
+          </div>
+        )}
 
-        <div className="mt-8">
-          <p className="text-gray-700">Share this with your friends:</p>
-          <code className="block mt-2 bg-gray-100 border border-gray-200 rounded px-3 py-2 text-sm text-gray-800 break-all">{shareUrl}</code>
-        </div>
+        {/* Listings grid */}
+        {!isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {activeListings.length === 0
+              ? (tab === 'browse' ? EMPTY_BROWSE : EMPTY_MINE)
+              : activeListings.map((listing) => (
+                  <ToyListingCard
+                    key={listing.listingId}
+                    listing={listing}
+                    onDelete={tab === 'mine' ? handleDelete : undefined}
+                    isDeleting={deletingId === listing.listingId}
+                  />
+                ))}
+          </div>
+        )}
+
+        {/* Load more */}
+        {!isLoading && tab === 'browse' && nextToken && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => loadListings(nextToken)}
+              disabled={isLoadingMore}
+              className="px-6 py-2.5 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+            >
+              {isLoadingMore ? 'Loading…' : 'Load more'}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Create modal */}
+      {showModal && (
+        <CreateToyListingModal
+          onClose={() => setShowModal(false)}
+          onCreated={handleCreated}
+        />
+      )}
     </div>
   );
 };
