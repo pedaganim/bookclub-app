@@ -571,19 +571,21 @@ class ApiService {
     return response.data as T;
   }
 
-  // Swap Toys methods
+  // Community Library methods (toys, tools, events, games — all stored in swap-toys table)
   async listToyListings(params?: {
     limit?: number;
     nextToken?: string;
     userId?: string;
+    libraryType?: string;
   }): Promise<import('../types').ToyListingListResponse> {
     const query = new URLSearchParams();
     if (params?.limit) query.append('limit', String(params.limit));
     if (params?.nextToken) query.append('nextToken', params.nextToken);
     if (params?.userId) query.append('userId', params.userId);
+    if (params?.libraryType) query.append('libraryType', params.libraryType);
     const response = await this.api.get(`/swap-toys?${query.toString()}`);
     if (response.data?.success !== undefined) {
-      if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to list toy listings');
+      if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to list listings');
       return response.data.data as import('../types').ToyListingListResponse;
     }
     return response.data as import('../types').ToyListingListResponse;
@@ -596,9 +598,11 @@ class ApiService {
     category?: string;
     location?: string;
     wantInReturn?: string;
+    libraryType?: string;
+    userName?: string;
   }): Promise<import('../types').ToyListing> {
     const response = await this.api.post('/swap-toys', data);
-    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to create toy listing');
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to create listing');
     return response.data.data as import('../types').ToyListing;
   }
 

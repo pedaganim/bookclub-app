@@ -21,9 +21,10 @@ import BrowseClubs from './pages/BrowseClubs';
 import Messages from './pages/Messages';
 import UserProfile from './pages/UserProfile';
 import NotificationSettings from './pages/NotificationSettings';
-import SwapToys from './pages/SwapToys';
-import MobileTabBar from './components/MobileTabBar';
+import LibraryHub from './pages/LibraryHub';
+import LibraryPage from './pages/LibraryPage';
 import ClubRequests from './pages/ClubRequests';
+import { LIBRARY_CONFIGS } from './config/libraryConfig';
 
 function App() {
   return (
@@ -39,7 +40,16 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/about/blogs" element={<BlogsIndex />} />
                   <Route path="/about/blogs/:slug" element={<BlogPost />} />
-                  <Route path="/swap-toys" element={<SwapToys />} />
+                  <Route path="/libraries" element={<LibraryHub />} />
+                  {LIBRARY_CONFIGS.map((cfg) => (
+                    <Route
+                      key={cfg.slug}
+                      path={`/libraries/${cfg.slug}`}
+                      element={<LibraryPage config={cfg} />}
+                    />
+                  ))}
+                  {/* Legacy redirect */}
+                  <Route path="/swap-toys" element={<Navigate to="/libraries/toys" replace />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/library" element={<BookLibrary />} />
                   <Route
@@ -94,7 +104,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="/" element={<Navigate to="/library" replace />} />
+                  <Route path="/" element={<Navigate to="/libraries" replace />} />
                   <Route
                     path="/clubs/browse"
                     element={
@@ -138,7 +148,6 @@ function App() {
                   <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </main>
-            <MobileTabBar />
           </div>
         </AuthProvider>
       </NotificationProvider>
