@@ -2,7 +2,22 @@ const { success, error } = require('../../lib/response');
 const ToyListing = require('../../models/toyListing');
 
 const ALLOWED_CONDITIONS = ['new', 'like_new', 'good', 'fair'];
-const ALLOWED_CATEGORIES = ['books', 'outdoor', 'educational', 'dolls', 'vehicles', 'other'];
+
+// All valid categories across every library type
+const ALLOWED_CATEGORIES = [
+  // Toys
+  'books', 'outdoor', 'educational', 'dolls', 'vehicles',
+  // Tools
+  'power_tools', 'hand_tools', 'garden', 'plumbing', 'electrical', 'ladders',
+  // Events
+  'furniture', 'decorations', 'audio_visual', 'kitchen',
+  // Games
+  'board_games', 'card_games', 'puzzles', 'video_games', 'outdoor_games',
+  // Generic
+  'other',
+];
+
+const ALLOWED_LIBRARY_TYPES = ['toy', 'tool', 'event', 'game'];
 
 exports.handler = async (event) => {
   try {
@@ -32,6 +47,9 @@ exports.handler = async (event) => {
     if (body.category && !ALLOWED_CATEGORIES.includes(body.category)) {
       validationErrors.category = `Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}`;
     }
+    if (body.libraryType && !ALLOWED_LIBRARY_TYPES.includes(body.libraryType)) {
+      validationErrors.libraryType = `Library type must be one of: ${ALLOWED_LIBRARY_TYPES.join(', ')}`;
+    }
 
     if (Object.keys(validationErrors).length > 0) {
       return {
@@ -52,6 +70,8 @@ exports.handler = async (event) => {
       location: body.location ? String(body.location).trim() : null,
       wantInReturn: body.wantInReturn ? String(body.wantInReturn).trim() : null,
       images: Array.isArray(body.images) ? body.images : null,
+      libraryType: body.libraryType || 'toy',
+      userName: body.userName ? String(body.userName).trim() : null,
     };
 
     const listing = await ToyListing.create(data, userId);
@@ -59,6 +79,6 @@ exports.handler = async (event) => {
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[SwapToys][create] Error:', e);
-    return error('Failed to create toy listing', 500);
+    return error('Failed to create listing', 500);
   }
 };

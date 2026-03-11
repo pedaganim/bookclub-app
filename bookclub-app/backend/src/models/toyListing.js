@@ -28,6 +28,8 @@ class ToyListing {
     const listing = {
       listingId,
       userId,
+      // libraryType distinguishes toy / tool / event / game listings in the shared table
+      libraryType: data.libraryType || 'toy',
       title: data.title,
       description: data.description || '',
       condition: data.condition || 'good', // new | like_new | good | fair
@@ -36,6 +38,8 @@ class ToyListing {
       status: 'available',
       location: data.location || null,
       wantInReturn: data.wantInReturn || null,
+      // Denormalised owner name so cards can display it without a join
+      userName: data.userName || null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -60,11 +64,15 @@ class ToyListing {
   }
 
   /**
-   * List all listings (public browse), with optional search and pagination.
+   * List all listings (public browse), with optional libraryType filter and pagination.
+   * @param {number} limit
+   * @param {string|null} nextToken
+   * @param {string|null} libraryType - filter to a specific library type
    */
-  static async listAll(limit = 20, nextToken = null) {
+  static async listAll(limit = 20, nextToken = null, libraryType = null) {
     if (isOffline()) {
-      const all = await LocalStorage().listToyListings();
+      let all = await LocalStorage().listToyListings();
+      if (libraryType) all = all.filter((l) => l.libraryType === libraryType);
       return {
         items: all.slice(0, limit),
         nextToken: all.length > limit ? 'has-more' : null,
@@ -75,6 +83,11 @@ class ToyListing {
       TableName: getTableName('toy-listings'),
       Limit: limit,
     };
+
+    if (libraryType) {
+      params.FilterExpression = 'libraryType = :libraryType';
+      params.ExpressionAttributeValues = { ':libraryType': libraryType };
+    }
 
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(
@@ -93,10 +106,15 @@ class ToyListing {
 
   /**
    * List listings for a specific user (via GSI UserIdIndex).
+   * @param {string} userId
+   * @param {number} limit
+   * @param {string|null} nextToken
+   * @param {string|null} libraryType - optional filter
    */
-  static async listByUser(userId, limit = 50, nextToken = null) {
+  static async listByUser(userId, limit = 50, nextToken = null, libraryType = null) {
     if (isOffline()) {
-      const all = await LocalStorage().listToyListings(userId);
+      let all = await LocalStorage().listToyListings(userId);
+      if (libraryType) all = all.filter((l) => l.libraryType === libraryType);
       return {
         items: all.slice(0, limit),
         nextToken: all.length > limit ? 'has-more' : null,
@@ -113,6 +131,11 @@ class ToyListing {
       Limit: limit,
       ScanIndexForward: false,
     };
+
+    if (libraryType) {
+      params.FilterExpression = 'libraryType = :libraryType';
+      params.ExpressionAttributeValues[':libraryType'] = libraryType;
+    }
 
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(

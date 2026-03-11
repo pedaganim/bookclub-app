@@ -40,14 +40,14 @@ const SwapToys: React.FC = () => {
 
   // SEO
   useEffect(() => {
-    document.title = 'Swap Toys — BookClub';
+    document.title = 'Toy Library — BookClub';
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
       metaDesc.setAttribute('name', 'description');
       document.head.appendChild(metaDesc);
     }
-    metaDesc.setAttribute('content', 'Browse and swap toys with families in your local community. Post a toy you no longer need and find a new favourite.');
+    metaDesc.setAttribute('content', 'Browse the Toy Library and swap toys with families in your local community. Post a toy you no longer need and find a new favourite.');
   }, []);
 
   // Load all listings
@@ -117,7 +117,7 @@ const SwapToys: React.FC = () => {
       <div className="bg-white border-b border-gray-100 py-8 px-4">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">🧸 Swap Toys</h1>
+            <h1 className="text-2xl font-bold text-gray-900">📚 Toy Library</h1>
             <p className="mt-1 text-gray-600 text-sm">
               Give toys a second life — swap with families in your community.
             </p>
