@@ -10,23 +10,15 @@ exports.handler = async (event) => {
 
     let result;
     if (userId) {
-      result = await ToyListing.listByUser(userId, limit, nextToken);
-      // Client-side filter by libraryType if provided
-      if (libraryType && result.items) {
-        result.items = result.items.filter((item) => item.libraryType === libraryType);
-      }
+      result = await ToyListing.listByUser(userId, limit, nextToken, libraryType);
     } else {
-      result = await ToyListing.listAll(limit, nextToken);
-      // Client-side filter by libraryType if provided
-      if (libraryType && result.items) {
-        result.items = result.items.filter((item) => item.libraryType === libraryType);
-      }
+      result = await ToyListing.listAll(limit, nextToken, libraryType);
     }
 
     return success(result);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('[SwapToys][list] Error:', e);
-    return error('Failed to list toy listings', 500);
+    return error('Failed to list listings', 500);
   }
 };

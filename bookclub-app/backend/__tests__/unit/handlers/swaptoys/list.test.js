@@ -39,7 +39,7 @@ describe('List Toy Listings Handler', () => {
     expect(result.statusCode).toBe(200);
     const body = JSON.parse(result.body);
     expect(body.data.items).toHaveLength(1);
-    expect(mockToyListing.listByUser).toHaveBeenCalledWith('user-123', 20, null);
+    expect(mockToyListing.listByUser).toHaveBeenCalledWith('user-123', 20, null, null);
   });
 
   it('should respect the limit param', async () => {
@@ -48,7 +48,7 @@ describe('List Toy Listings Handler', () => {
     const result = await handler({ queryStringParameters: { limit: '1' } });
 
     expect(result.statusCode).toBe(200);
-    expect(mockToyListing.listAll).toHaveBeenCalledWith(1, null);
+    expect(mockToyListing.listAll).toHaveBeenCalledWith(1, null, null);
   });
 
   it('should cap limit at 100', async () => {
@@ -56,7 +56,23 @@ describe('List Toy Listings Handler', () => {
 
     await handler({ queryStringParameters: { limit: '999' } });
 
-    expect(mockToyListing.listAll).toHaveBeenCalledWith(100, null);
+    expect(mockToyListing.listAll).toHaveBeenCalledWith(100, null, null);
+  });
+
+  it('should pass libraryType filter to model', async () => {
+    mockToyListing.listAll = jest.fn().mockResolvedValue({ items: [mockListings[0]], nextToken: null });
+
+    await handler({ queryStringParameters: { libraryType: 'tool' } });
+
+    expect(mockToyListing.listAll).toHaveBeenCalledWith(20, null, 'tool');
+  });
+
+  it('should pass libraryType filter to listByUser', async () => {
+    mockToyListing.listByUser = jest.fn().mockResolvedValue({ items: [], nextToken: null });
+
+    await handler({ queryStringParameters: { userId: 'user-123', libraryType: 'event' } });
+
+    expect(mockToyListing.listByUser).toHaveBeenCalledWith('user-123', 20, null, 'event');
   });
 
   it('should return 500 when model throws', async () => {

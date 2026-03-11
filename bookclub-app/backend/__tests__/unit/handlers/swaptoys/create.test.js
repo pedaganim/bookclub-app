@@ -40,7 +40,7 @@ describe('Create Toy Listing Handler', () => {
     expect(body.success).toBe(true);
     expect(body.data.title).toBe('Wooden Train Set');
     expect(mockToyListing.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Wooden Train Set', condition: 'good' }),
+      expect.objectContaining({ title: 'Wooden Train Set', condition: 'good', libraryType: 'toy' }),
       'user-123'
     );
   });
@@ -67,6 +67,35 @@ describe('Create Toy Listing Handler', () => {
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
     expect(body.error.errors.category).toBeDefined();
+  });
+
+  it('should return 400 when libraryType is invalid', async () => {
+    const result = await handler(mockEvent({ title: 'Train Set', condition: 'good', libraryType: 'book' }));
+
+    expect(result.statusCode).toBe(400);
+    const body = JSON.parse(result.body);
+    expect(body.error.errors.libraryType).toBeDefined();
+  });
+
+  it('should pass libraryType and userName through to the model', async () => {
+    const mockListing = { listingId: 'abc-123', userId: 'user-123', libraryType: 'tool', title: 'Drill' };
+    mockToyListing.create = jest.fn().mockResolvedValue(mockListing);
+
+    await handler(mockEvent({ title: 'Drill', condition: 'good', libraryType: 'tool', userName: 'Alice' }));
+
+    expect(mockToyListing.create).toHaveBeenCalledWith(
+      expect.objectContaining({ libraryType: 'tool', userName: 'Alice' }),
+      'user-123'
+    );
+  });
+
+  it('should accept tool categories', async () => {
+    const mockListing = { listingId: 'abc-456', title: 'Drill', condition: 'good' };
+    mockToyListing.create = jest.fn().mockResolvedValue(mockListing);
+
+    const result = await handler(mockEvent({ title: 'Drill', condition: 'good', libraryType: 'tool', category: 'power_tools' }));
+
+    expect(result.statusCode).toBe(201);
   });
 
   it('should return 401 when no userId in token', async () => {
