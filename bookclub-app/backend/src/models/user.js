@@ -14,6 +14,7 @@ class User {
   static async register(userData) {
     const userId = uuidv4();
     const timestamp = new Date().toISOString();
+    const verificationToken = uuidv4();
 
     if (isOffline()) {
       const user = {
@@ -24,6 +25,9 @@ class User {
         bio: userData.bio || '',
         profilePicture: userData.profilePicture || null,
         timezone: userData.timezone || 'UTC',
+        emailVerified: false,
+        verificationToken,
+        onboardingCompleted: false,
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -56,6 +60,9 @@ class User {
         bio: userData.bio || '',
         profilePicture: userData.profilePicture || null,
         timezone: userData.timezone || 'UTC',
+        emailVerified: false,
+        verificationToken,
+        onboardingCompleted: false,
         createdAt: timestamp,
         updatedAt: timestamp,
       };
@@ -187,6 +194,7 @@ class User {
     const email = claims.email || null;
     const name = claims.name || claims.given_name || (email ? email.split('@')[0] : 'User');
     const timestamp = new Date().toISOString();
+    const emailVerified = claims.email_verified === true || claims.email_verified === 'true';
     const user = {
       userId,
       email,
@@ -194,12 +202,62 @@ class User {
       bio: '',
       profilePicture: null,
       timezone: 'UTC',
+      emailVerified,
+      verificationToken: emailVerified ? null : uuidv4(),
+      onboardingCompleted: false,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
     await dynamoDb.put(getTableName('users'), user);
     try { await sendAdminNewUserNotification(user); } catch (e) { /* noop */ }
     return user;
+  }
+
+  static async verifyEmail(token) {
+    if (isOffline()) {
+      // In offline mode, find user by verification token
+      const users = await LocalStorage.listUsers();
+      const user = users.find(u => u.verificationToken === token);
+      if (!user) throw new Error('Invalid verification token');
+      if (user.emailVerified) return user;
+      const updated = { ...user, emailVerified: true, verificationToken: null, updatedAt: new Date().toISOString() };
+      await LocalStorage.createUser(updated);
+      return { ...updated, password: undefined };
+    }
+
+    // For DynamoDB, we need to scan since we don't have a GSI on verificationToken
+    const params = {
+      TableName: getTableName('users'),
+      FilterExpression: 'verificationToken = :token',
+      ExpressionAttributeValues: { ':token': token },
+      Limit: 1,
+    };
+    const result = await dynamoDb.scan(params);
+    const user = result.Items?.[0];
+    if (!user) throw new Error('Invalid verification token');
+    if (user.emailVerified) return user;
+
+    // Update user to mark email as verified
+    const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } = 
+      dynamoDb.generateUpdateExpression({ 
+        emailVerified: true, 
+        verificationToken: null, 
+        updatedAt: new Date().toISOString() 
+      });
+    const updateParams = {
+      TableName: getTableName('users'),
+      Key: { userId: user.userId },
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+    const updateResult = await dynamoDb.update(updateParams);
+    return updateResult.Attributes;
+  }
+
+  static async completeOnboarding(userId) {
+    return this.update(userId, { onboardingCompleted: true });
   }
 }
 
