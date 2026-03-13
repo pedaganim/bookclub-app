@@ -636,7 +636,7 @@ class ApiService {
     fileKey: string;
     listingId: string;
   }> {
-    const response = await this.api.post('/files/upload-url', { context: 'library', libraryType, fileType });
+    const response = await this.api.post('/upload-url', { context: 'library', libraryType, fileType });
     if (response.data?.success === false) {
       throw new Error(response.data.error?.message || 'Failed to get upload URL');
     }
