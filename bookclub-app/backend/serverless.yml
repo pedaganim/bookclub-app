@@ -574,7 +574,6 @@ functions:
               - X-Amz-Date
               - X-Api-Key
               - X-Amz-Security-Token
-            allowCredentials: true
           authorizer: 
             type: COGNITO_USER_POOLS
             authorizerId: 
