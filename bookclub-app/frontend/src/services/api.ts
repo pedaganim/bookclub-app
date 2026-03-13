@@ -625,6 +625,37 @@ class ApiService {
     const response = await this.api.delete(`/swap-toys/${listingId}`);
     if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to delete toy listing');
   }
+
+  /**
+   * Get a presigned S3 upload URL for a library item image.
+   * Also pre-creates a draft ToyListing and returns its listingId for polling.
+   */
+  async getLibraryUploadUrl(libraryType: string, fileType: string): Promise<{
+    uploadUrl: string;
+    fileUrl: string;
+    fileKey: string;
+    listingId: string;
+  }> {
+    const response = await this.api.post('/files/upload-url', { context: 'library', libraryType, fileType });
+    if (response.data?.success === false) {
+      throw new Error(response.data.error?.message || 'Failed to get upload URL');
+    }
+    const data = response.data?.data ?? response.data;
+    return data as { uploadUrl: string; fileUrl: string; fileKey: string; listingId: string };
+  }
+
+  /**
+   * Upload a file directly to S3 using a presigned PUT URL.
+   * Skips auth headers — the presigned URL itself handles auth.
+   */
+  async uploadToS3(uploadUrl: string, file: File): Promise<void> {
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+    if (!res.ok) throw new Error(`S3 upload failed: ${res.status} ${res.statusText}`);
+  }
 }
 
 export const apiService = new ApiService();

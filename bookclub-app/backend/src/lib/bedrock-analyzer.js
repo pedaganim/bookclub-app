@@ -205,4 +205,126 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
 
 module.exports = {
   analyzeCoverImage,
+  analyzeLibraryImage,
 };
+
+// ─── Library item analysis ────────────────────────────────────────────────────
+
+const LIBRARY_PROMPTS = {
+  toy: 'You are analysing a photo of a toy to create a community lending/swapping listing. ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"title":"short descriptive name of the toy","description":"1-2 sentences about the toy","condition":"new|like_new|good|fair","category":"outdoor|educational|dolls|vehicles|books|other","ageRange":"optional e.g. 3-8 years"}. ' +
+    'Condition must be a visual estimate based on the image.',
+
+  tool: 'You are analysing a photo of a tool or piece of equipment for a community lending library. ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"title":"short descriptive name of the tool","description":"1-2 sentences about what it is and what it is used for","condition":"new|like_new|good|fair","category":"power_tools|hand_tools|garden|plumbing|electrical|ladders|other"}. ' +
+    'Condition must be a visual estimate based on the image.',
+
+  event: 'You are analysing a photo of an item available for event hire (e.g. table, chair, decoration, AV equipment, kitchen equipment). ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"title":"short descriptive name","description":"1-2 sentences describing the item and its use at events","condition":"new|like_new|good|fair","category":"furniture|decorations|audio_visual|kitchen|other"}. ' +
+    'Condition must be a visual estimate based on the image.',
+
+  game: 'You are analysing a photo of a game (board game, card game, puzzle, or video game) for a community lending library. ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"title":"name of the game","description":"1-2 sentences about the game and how it is played","condition":"new|like_new|good|fair","category":"board_games|card_games|puzzles|video_games|outdoor_games|other","playerCount":"optional e.g. 2-4 players","ageRange":"optional e.g. 8+"}. ' +
+    'Condition must be a visual estimate based on the image.',
+
+  default: 'You are analysing a photo of an item for a community lending library. ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"title":"short descriptive name","description":"1-2 sentences about the item","condition":"new|like_new|good|fair","category":"other"}. ' +
+    'Condition must be a visual estimate based on the image.',
+};
+
+/**
+ * Analyse a library item image (toy, tool, event hire, game) with Claude Vision.
+ * Returns a flat object: { title, description, condition, category, ...extra }
+ */
+async function analyzeLibraryImage({ bucket, key, contentType = 'image/jpeg', libraryType = 'toy', modelId }) {
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20240620-v1:0';
+  const client = getBedrockClient();
+
+  let bytes = await getS3ObjectBytes(bucket, key);
+
+  // Reuse the same image size guard as analyzeCoverImage
+  const BASE64_MAX = 5 * 1024 * 1024;
+  try {
+    const overLimit = () => estimateBase64Length(bytes.length) > BASE64_MAX;
+    if (overLimit()) {
+      let width = 1600;
+      let quality = 80;
+      for (let i = 0; i < 8; i++) {
+        const out = await sharp(bytes, { failOnError: false })
+          .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
+          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true })
+          .toBuffer();
+        bytes = out;
+        contentType = 'image/jpeg';
+        if (estimateBase64Length(out.length) <= BASE64_MAX) break;
+        width = width * 0.8;
+        quality = quality * 0.85;
+      }
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[Bedrock][Library] Image compression failed, proceeding with original bytes:', e?.message);
+  }
+
+  const prompt = LIBRARY_PROMPTS[libraryType] || LIBRARY_PROMPTS.default;
+
+  const body = JSON.stringify({
+    anthropic_version: 'bedrock-2023-05-31',
+    max_tokens: 512,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          toBase64Image(bytes, contentType),
+        ],
+      },
+    ],
+  });
+
+  const cmd = new InvokeModelCommand({
+    modelId,
+    contentType: 'application/json',
+    accept: 'application/json',
+    body,
+  });
+
+  const res = await withRetry(() => client.send(cmd));
+  const json = JSON.parse(new TextDecoder().decode(res.body));
+  const text = Array.isArray(json.content) && json.content[0]?.text ? json.content[0].text : '';
+
+  // eslint-disable-next-line no-console
+  console.log('[Bedrock][Library] Raw text (truncated 500):', (text || '').slice(0, 500));
+
+  let parsed = {};
+  // Strip potential markdown code fences before parsing
+  try {
+    const clean = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    parsed = JSON.parse(clean);
+  } catch (e) {
+    // Try regex extraction as fallback
+    try {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    } catch (_) {}
+  }
+
+  // Normalise: ensure condition is in the allowed set
+  const ALLOWED_CONDITIONS = ['new', 'like_new', 'good', 'fair'];
+  const condition = ALLOWED_CONDITIONS.includes(parsed.condition) ? parsed.condition : 'good';
+
+  return {
+    title: typeof parsed.title === 'string' ? parsed.title.trim() : null,
+    description: typeof parsed.description === 'string' ? parsed.description.trim() : null,
+    condition,
+    category: typeof parsed.category === 'string' ? parsed.category : null,
+    ageRange: typeof parsed.ageRange === 'string' ? parsed.ageRange : null,
+    playerCount: typeof parsed.playerCount === 'string' ? parsed.playerCount : null,
+    raw: parsed,
+  };
+}

@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
-const { analyzeCoverImage } = require('../../lib/bedrock-analyzer');
+const { analyzeCoverImage, analyzeLibraryImage } = require('../../lib/bedrock-analyzer');
+const ToyListing = require('../../models/toyListing');
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const eventBridge = new AWS.EventBridge();
@@ -30,7 +31,9 @@ exports.handler = async (event) => {
       const bucket = payload.bucket || payload.s3Bucket;
       const key = payload.key || payload.s3Key;
       const bookId = payload.bookId;
-      const modelId = payload.modelId; // optional override
+      const listingId = payload.listingId;    // library item
+      const libraryType = payload.libraryType || 'toy';
+      const modelId = payload.modelId;
       const contentType = payload.contentType || 'image/jpeg';
 
       if (!bucket || !key) {
@@ -38,17 +41,33 @@ exports.handler = async (event) => {
         continue;
       }
 
-      // Optional small delay to smooth bursts (same as API handler)
       const baseDelayMs = parseInt(process.env.BEDROCK_PRE_DELAY_MS || '400', 10);
       const jitterMs = Math.floor(Math.random() * (parseInt(process.env.BEDROCK_PRE_DELAY_JITTER_MS || '400', 10)));
       const totalDelay = baseDelayMs + jitterMs;
-      if (totalDelay > 0) {
-        await new Promise(r => setTimeout(r, totalDelay));
-      }
+      if (totalDelay > 0) await new Promise(r => setTimeout(r, totalDelay));
 
-      const metadata = await analyzeCoverImage({ bucket, key, contentType, modelId });
-
-      if (bookId) {
+      if (listingId) {
+        // ── Library item path ──────────────────────────────────────────────────
+        console.log(`[BedrockAnalyzeWorker] Analysing library image for listingId=${listingId} (${libraryType})`);
+        try {
+          const metadata = await analyzeLibraryImage({ bucket, key, contentType, libraryType, modelId });
+          const updates = {
+            status: 'pending_review',
+          };
+          if (metadata.title) updates.title = metadata.title;
+          if (metadata.description) updates.description = metadata.description;
+          if (metadata.condition) updates.condition = metadata.condition;
+          if (metadata.category) updates.category = metadata.category;
+          await ToyListing.systemUpdate(listingId, updates);
+          console.log(`[BedrockAnalyzeWorker] Patched listing ${listingId}: title=${metadata.title}`);
+        } catch (e) {
+          console.error(`[BedrockAnalyzeWorker] Failed to analyse/patch listing ${listingId}:`, e.message);
+          // Don't rethrow — let the worker continue with other records
+          // The listing stays in 'draft' and the frontend timeout will show the manual form
+          await ToyListing.systemUpdate(listingId, { status: 'pending_review' }).catch(() => {});
+        }
+      } else {
+        // ── Existing book path (unchanged) ─────────────────────────────────────
         // Upsert mcp_metadata.bedrock and overwrite title/author as in API handler
         await dynamo.update({
           TableName: BOOKS_TABLE,
@@ -67,6 +86,8 @@ exports.handler = async (event) => {
         }).promise();
 
         try {
+          const metadata = await analyzeCoverImage({ bucket, key, contentType, modelId });
+          if (bookId) {
           const titleCands = Array.isArray(metadata?.title_candidates)
             ? metadata.title_candidates
                 .map(c => (c && c.value ? String(c.value).trim() : ''))
@@ -99,10 +120,11 @@ exports.handler = async (event) => {
               ExpressionAttributeValues: vals,
             }).promise();
           }
+          } // end if bookId
         } catch (e) {
           console.warn('[BedrockAnalyzeWorker] Failed to set top-level fields from Bedrock:', e.message);
         }
-      }
+      } // end else (book path)
 
       if (process.env.EVENT_BUS_NAME && process.env.EVENT_BUS_SOURCE) {
         await eventBridge.putEvents({
