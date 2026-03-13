@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const Book = require('../../models/book');
+const ToyListing = require('../../models/toyListing');
 const textractService = require('../../lib/textract-service');
 const { DynamoDB } = require('../../lib/aws-config');
 const { publishEvent } = require('../../lib/event-bus');
@@ -37,50 +38,40 @@ async function enqueueBedrockAnalyze({ bucket, key, bookId }) {
       console.log(`[ImageProcessor] Processing image: s3://${bucket}/${key}`);
 
       if (!shouldProcessKey(key)) {
-        console.log('[ImageProcessor] Skipping non-book-cover image');
+        console.log('[ImageProcessor] Skipping unrecognised key prefix');
         continue;
       }
 
       try {
-        const userId = extractUserIdFromKey(key);
-        if (!userId) {
-          console.warn(`[ImageProcessor] Could not extract userId from key: ${key}`);
-          continue;
-        }
-
-        // Create a minimal book entry only; do not enrich here
-        const createdBook = await createMinimalBookEntry(bucket, key, userId);
-
-        // Publish EventBridge event for downstream metadata processing
-        // This replaces the direct metadata extraction to implement EventBridge-triggered processing
-        await publishEvent('S3.ObjectCreated', {
-          bucket,
-          key,
-          userId,
-          bookId: createdBook.bookId,
-          eventType: 'book-cover-uploaded'
-        });
-        
-        console.log(`[ImageProcessor] Published S3.ObjectCreated event for book: ${createdBook.bookId}`);
-
-        // Prefer SQS: enqueue message for Bedrock analyzer worker
-        const queueUrl = process.env.BEDROCK_ANALYZE_QUEUE_URL;
-        if (queueUrl) {
-          await enqueueBedrockAnalyze({
-            bucket,
-            key,
-            bookId: createdBook.bookId,
-          }).catch(err => console.warn('[ImageProcessor] Enqueue to BedrockAnalyzeQueue failed:', err.message));
+        if (isLibraryKey(key)) {
+          // ── Library item path ──────────────────────────────────────────
+          const { libraryType, userId } = extractLibraryKeyParts(key);
+          if (!userId || !libraryType) {
+            console.warn(`[ImageProcessor] Could not extract libraryType/userId from key: ${key}`);
+            continue;
+          }
+          await processLibraryUpload({ bucket, key, userId, libraryType });
         } else {
-          // Fallback to direct lambda invoke if queue not configured
-          await invokeBedrockAnalyzer({
-            bucket,
-            key,
-            bookId: createdBook.bookId,
-          }).catch(err => console.warn('[ImageProcessor] Bedrock analyzer direct invoke failed:', err.message));
+          // ── Book path (unchanged) ──────────────────────────────────────
+          const userId = extractUserIdFromKey(key);
+          if (!userId) {
+            console.warn(`[ImageProcessor] Could not extract userId from key: ${key}`);
+            continue;
+          }
+          const createdBook = await createMinimalBookEntry(bucket, key, userId);
+          await publishEvent('S3.ObjectCreated', { bucket, key, userId, bookId: createdBook.bookId, eventType: 'book-cover-uploaded' });
+          console.log(`[ImageProcessor] Published S3.ObjectCreated event for book: ${createdBook.bookId}`);
+          const queueUrl = process.env.BEDROCK_ANALYZE_QUEUE_URL;
+          if (queueUrl) {
+            await enqueueBedrockAnalyze({ bucket, key, bookId: createdBook.bookId })
+              .catch(err => console.warn('[ImageProcessor] Enqueue to BedrockAnalyzeQueue failed:', err.message));
+          } else {
+            await invokeBedrockAnalyzer({ bucket, key, bookId: createdBook.bookId })
+              .catch(err => console.warn('[ImageProcessor] Bedrock analyzer direct invoke failed:', err.message));
+          }
         }
-      } catch (bookCreationError) {
-        console.error(`[ImageProcessor] Error creating or updating book for ${key}:`, bookCreationError);
+      } catch (itemError) {
+        console.error(`[ImageProcessor] Error processing ${key}:`, itemError);
         // Continue processing other images even if one fails
       }
     }
@@ -175,7 +166,7 @@ async function cacheExtractedMetadata(s3Bucket, s3Key, userId, extractionResult)
   }
 }
 
-// --- Helpers ---
+// isS3Event, parseS3Record stay the same
 const isS3Event = (record) => record?.eventSource === 'aws:s3';
 
 const parseS3Record = (record) => ({
@@ -183,13 +174,70 @@ const parseS3Record = (record) => ({
   key: decodeURIComponent(record.s3.object.key.replace(/\+/g, ' ')),
 });
 
-const shouldProcessKey = (key) => key && key.startsWith('book-covers/');
+const isLibraryKey = (key) => key && key.startsWith('library-images/');
+const shouldProcessKey = (key) => key && (key.startsWith('book-covers/') || isLibraryKey(key));
 
+// book-covers/{userId}/{file}
 const extractUserIdFromKey = (key) => {
   const parts = key.split('/');
   if (parts.length < 3) return null;
   return parts[1];
 };
+
+// library-images/{libraryType}/{userId}/{file}
+const extractLibraryKeyParts = (key) => {
+  const parts = key.split('/');
+  // library-images / libraryType / userId / filename
+  if (parts.length < 4) return { libraryType: null, userId: null };
+  return { libraryType: parts[1], userId: parts[2] };
+};
+
+// ── Library item helpers ───────────────────────────────────────────────────────
+
+async function getMappedListingId(bucket, key) {
+  try {
+    const dynamodb = new DynamoDB.DocumentClient();
+    const cacheKey = `listingForS3:${bucket}:${key}`;
+    const res = await dynamodb.get({ TableName: getTableName('metadata-cache'), Key: { cacheKey } }).promise();
+    return res.Item?.listingId || null;
+  } catch (e) {
+    console.warn('[ImageProcessor] getMappedListingId failed:', e.message);
+    return null;
+  }
+}
+
+async function processLibraryUpload({ bucket, key, userId, libraryType }) {
+  const fileUrl = `https://${bucket}.s3.amazonaws.com/${key}`;
+
+  // Find the draft listing pre-created by generateUploadUrl
+  let listingId = await getMappedListingId(bucket, key);
+
+  if (!listingId) {
+    // Fallback: create minimal draft listing if mapping wasn't stored
+    const draft = await ToyListing.create({
+      title: 'Processing…',
+      description: '',
+      condition: 'good',
+      status: 'draft',
+      images: [fileUrl],
+      libraryType,
+    }, userId);
+    listingId = draft.listingId;
+    console.log(`[ImageProcessor] Created fallback draft listing: ${listingId}`);
+  }
+
+  const queueUrl = process.env.BEDROCK_ANALYZE_QUEUE_URL;
+  if (queueUrl) {
+    const sqs = new AWS.SQS();
+    await sqs.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify({ bucket, key, listingId, libraryType, contentType: 'image/jpeg' }),
+    }).promise();
+    console.log(`[ImageProcessor] Enqueued library image for analysis: ${listingId} (${libraryType})`);
+  } else {
+    console.warn('[ImageProcessor] BEDROCK_ANALYZE_QUEUE_URL not set; library item will not be analysed');
+  }
+}
 
 // Use metadata-cache table as an idempotency map: s3 -> bookId
 const IS_TEST = process.env.NODE_ENV === 'test';

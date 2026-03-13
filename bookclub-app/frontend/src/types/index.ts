@@ -186,13 +186,14 @@ export interface ToyListing {
   condition: 'new' | 'like_new' | 'good' | 'fair';
   category?: string;
   images?: string[];
-  status: 'available' | 'swapped';
+  status: 'available' | 'swapped' | 'draft' | 'pending_review';
   location?: string;
   wantInReturn?: string;
   createdAt: string;
   updatedAt: string;
   // enriched
   userName?: string;
+  libraryType?: string;
 }
 
 export interface ToyListingListResponse {

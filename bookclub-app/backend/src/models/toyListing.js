@@ -223,6 +223,35 @@ class ToyListing {
       throw err;
     }
   }
+  /**
+   * System-level update — bypasses ownership check.
+   * Called only by internal workers (Bedrock analyzer) that don't hold a userId.
+   */
+  static async systemUpdate(listingId, updates) {
+    const timestamp = new Date().toISOString();
+    const updateData = { ...updates, updatedAt: timestamp };
+
+    if (isOffline()) {
+      const existing = await LocalStorage().getToyListing(listingId);
+      if (!existing) throw new Error('Listing not found');
+      return LocalStorage().updateToyListing(listingId, updateData);
+    }
+
+    const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } =
+      dynamoDb.generateUpdateExpression(updateData);
+
+    const params = {
+      TableName: getTableName('toy-listings'),
+      Key: { listingId },
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
+    const result = await dynamoDb.update(params);
+    return result.Attributes;
+  }
 }
 
 module.exports = ToyListing;
