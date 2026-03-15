@@ -9,7 +9,7 @@ const BOOK_LIBRARY = {
   tagline: 'Browse and borrow books',
   accentBg: 'bg-amber-100',
   accentText: 'text-amber-700',
-  route: '/library',
+  route: '/library/books',
 };
 
 const LibraryHub: React.FC = () => {
@@ -34,7 +34,7 @@ const LibraryHub: React.FC = () => {
       tagline: cfg.tagline,
       accentBg: cfg.accentBg,
       accentText: cfg.accentText,
-      route: `/libraries/${cfg.slug}`,
+      route: `/library/${cfg.slug}`,
       itemCount: null,
     })),
   ];

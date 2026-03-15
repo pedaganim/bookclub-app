@@ -25,8 +25,19 @@ import LibraryHub from './pages/LibraryHub';
 import LibraryPage from './pages/LibraryPage';
 import ClubRequests from './pages/ClubRequests';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
+import { useSubdomain } from './hooks/useSubdomain';
 
 function App() {
+  const { isSubdomain, isLoading } = useSubdomain();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <NotificationProvider>
@@ -40,18 +51,19 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/about/blogs" element={<BlogsIndex />} />
                   <Route path="/about/blogs/:slug" element={<BlogPost />} />
-                  <Route path="/libraries" element={<LibraryHub />} />
+                  <Route path="/library" element={<LibraryHub />} />
                   {LIBRARY_CONFIGS.map((cfg) => (
                     <Route
                       key={cfg.slug}
-                      path={`/libraries/${cfg.slug}`}
+                      path={`/library/${cfg.slug}`}
                       element={<LibraryPage config={cfg} />}
                     />
                   ))}
-                  {/* Legacy redirect */}
-                  <Route path="/swap-toys" element={<Navigate to="/libraries/toys" replace />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-                  <Route path="/library" element={<BookLibrary />} />
+                  <Route path="/library/books" element={<BookLibrary />} />
+                  {/* Legacy redirects */}
+                  <Route path="/libraries" element={<Navigate to="/library" replace />} />
+                  <Route path="/libraries/*" element={<Navigate to="/library" replace />} />
+                  <Route path="/swap-toys" element={<Navigate to="/library/toys" replace />} />
                   <Route
                     path="/books/:bookId"
                     element={<BookDetails />}
@@ -104,7 +116,10 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="/" element={<Navigate to="/libraries" replace />} />
+                  <Route 
+                    path="/" 
+                    element={<Navigate to={isSubdomain ? "/library/books" : "/library"} replace />} 
+                  />
                   <Route
                     path="/clubs/browse"
                     element={

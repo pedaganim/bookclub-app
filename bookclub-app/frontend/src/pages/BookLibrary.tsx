@@ -5,6 +5,7 @@ import PublicBookCard from '../components/PublicBookCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubdomain } from '../hooks/useSubdomain';
 
 const BookLibrary: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -21,6 +22,7 @@ const BookLibrary: React.FC = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const { isAuthenticated, user } = useAuth();
+  const { isSubdomain, club } = useSubdomain();
   const [userClubs, setUserClubs] = useState<BookClub[]>([]);
   const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
   
@@ -34,6 +36,7 @@ const BookLibrary: React.FC = () => {
         search, 
         limit: currentPageSize || pageSize,
         nextToken: token || undefined,
+        clubId: (isSubdomain && club) ? club.clubId : undefined,
         bare: true,
       });
       const desired = currentPageSize || pageSize;
@@ -48,6 +51,7 @@ const BookLibrary: React.FC = () => {
           search,
           limit: desired,
           nextToken: tokenLocal,
+          clubId: (isSubdomain && club) ? club.clubId : undefined,
           bare: true,
         });
         const batch = Array.isArray(resp.items) ? resp.items : [];
@@ -70,7 +74,7 @@ const BookLibrary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pageSize, currentPageToken, isAuthenticated, user?.userId]);
+  }, [pageSize, currentPageToken, isAuthenticated, user?.userId, isSubdomain, club?.clubId]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -131,8 +135,11 @@ const BookLibrary: React.FC = () => {
 
   // SEO for Library page
   useEffect(() => {
-    document.title = 'Library — BookClub';
-    const desc = 'Discover books shared by our community. Filter by audience and search to find your next read.';
+    const clubName = (isSubdomain && club) ? club.name : '';
+    document.title = clubName ? `${clubName} Library — BookClub` : 'Library — BookClub';
+    const desc = clubName 
+      ? `Discover books shared by the ${clubName} community. Browse our collection and find your next read.`
+      : 'Discover books shared by our community. Filter by audience and search to find your next read.';
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
@@ -140,7 +147,7 @@ const BookLibrary: React.FC = () => {
       document.head.appendChild(metaDesc);
     }
     metaDesc.setAttribute('content', desc);
-  }, []);
+  }, [isSubdomain, club]);
 
   // Load user's clubs to determine membership for Join vs Borrow action
   useEffect(() => {
@@ -178,9 +185,14 @@ const BookLibrary: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Library</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
+            {(isSubdomain && club) ? club.name : 'Library'}
+          </h1>
           <p className="text-base sm:text-lg text-gray-600">
-            Discover books shared by our community
+            {(isSubdomain && club) 
+              ? `Discover books shared by the ${club.name} community`
+              : 'Discover books shared by our community'
+            }
           </p>
         </div>
 

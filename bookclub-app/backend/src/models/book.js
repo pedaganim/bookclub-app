@@ -46,6 +46,7 @@ class Book {
       // New advanced metadata column for EventBridge-triggered extraction
       advancedMetadata: bookData.advancedMetadata || null,
       lastMetadataExtraction: bookData.lastMetadataExtraction || null,
+      clubId: bookData.clubId || null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -162,7 +163,16 @@ class Book {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
-    const result = await dynamoDb.scan(params);
+    let result;
+    if (options && options.clubId) {
+      // Use the new ClubIdIndex for efficient filtering
+      params.IndexName = 'ClubIdIndex';
+      params.KeyConditionExpression = 'clubId = :clubId';
+      params.ExpressionAttributeValues = { ':clubId': options.clubId };
+      result = await dynamoDb.query(params);
+    } else {
+      result = await dynamoDb.scan(params);
+    }
 
     // Apply in-memory filtering for case-insensitive search against multiple fields
     let items = result.Items || [];
@@ -203,6 +213,11 @@ class Book {
         const v = ((book && book.ageGroupFine) || (md && md.ageGroupFine) || '').toLowerCase();
         return v === target;
       });
+    }
+
+    // Apply clubId filter if provided
+    if (options && options.clubId) {
+      items = items.filter((book) => book.clubId === options.clubId);
     }
 
     // Optionally skip enrichment for performance (bare listing for public browse)
@@ -260,8 +275,35 @@ class Book {
   // Future enhancement: look up club details by clubId from the bookclub-groups table
   // and attach clubName/clubIsPrivate, etc.
   static async enrichBooksWithClubInfo(books) {
-    if (!Array.isArray(books) || books.length === 0) return books;
-    return books;
+    if (!books || books.length === 0) return books;
+    
+    // Get unique club IDs
+    const clubIds = [...new Set(books.filter(b => b.clubId).map(b => b.clubId))];
+    if (clubIds.length === 0) return books;
+    
+    // Fetch club information
+    const BookClub = require('./bookclub');
+    const clubMap = {};
+    
+    await Promise.all(clubIds.map(async (clubId) => {
+      try {
+        const club = await BookClub.getById(clubId);
+        clubMap[clubId] = club ? { name: club.name, isPrivate: club.isPrivate } : null;
+      } catch (error) {
+        console.warn(`Failed to fetch club ${clubId}:`, error.message);
+        clubMap[clubId] = null;
+      }
+    }));
+    
+    // Add club info to books
+    return books.map(book => {
+      const clubInfo = book.clubId ? clubMap[book.clubId] : null;
+      return {
+        ...book,
+        clubName: clubInfo ? clubInfo.name : null,
+        clubIsPrivate: clubInfo ? clubInfo.isPrivate : false
+      };
+    });
   }
 
   static async update(bookId, userId, updates) {
