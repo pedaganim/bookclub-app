@@ -103,6 +103,7 @@ export interface ProfileUpdateData {
 export interface BookClub {
   clubId: string;
   name: string;
+  slug: string;
   description?: string;
   location: string;
   createdBy: string;

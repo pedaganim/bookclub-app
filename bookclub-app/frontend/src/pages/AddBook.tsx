@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useNotification } from '../contexts/NotificationContext';
+import { useSubdomain } from '../hooks/useSubdomain';
 
 const AddBook: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -11,13 +12,20 @@ const AddBook: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { addNotification } = useNotification();
+  const { isSubdomain, club } = useSubdomain();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSaving(true);
       setError('');
-      const created = await apiService.createBook({ title, author, description, status: 'available' });
+      const created = await apiService.createBook({ 
+        title, 
+        author, 
+        description, 
+        status: 'available',
+        clubId: (isSubdomain && club) ? club.clubId : undefined,
+      });
       addNotification('success', 'Book added');
       navigate(`/books/${created.bookId}`);
     } catch (e: any) {
@@ -33,10 +41,15 @@ const AddBook: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to="/library" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to Library</Link>
+          <Link to="/" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">
+            ← Back to {(isSubdomain && club) ? club.name : 'Library'}
+          </Link>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Add Book</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Add Book</h1>
+          {(isSubdomain && club) && (
+            <p className="text-sm text-gray-500 mb-4">Adding to <span className="font-semibold text-indigo-600">{club.name}</span></p>
+          )}
           {error && (
             <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
           )}
@@ -71,7 +84,7 @@ const AddBook: React.FC = () => {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Link to="/library" className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+              <Link to="/" className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                 Cancel
               </Link>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
