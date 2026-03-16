@@ -780,10 +780,13 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-          authorizer: 
-            type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
+  resolveClubSlug:
+    handler: src/handlers/clubs/resolveSlug.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/resolve/{slug}
+          cors: true
 
   getClub:
     handler: src/handlers/clubs/get.handler
@@ -1476,6 +1479,10 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: clubId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
         KeySchema:
           - AttributeName: bookId
             KeyType: HASH
@@ -1487,6 +1494,17 @@ resources:
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: ClubIdIndex
+            KeySchema:
+              - AttributeName: clubId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
@@ -1695,17 +1713,28 @@ resources:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-groups-${self:provider.stage}
         AttributeDefinitions:
-          - AttributeName: groupId
+          - AttributeName: clubId
             AttributeType: S
           - AttributeName: createdBy
             AttributeType: S
+          - AttributeName: slug
+            AttributeType: S
         KeySchema:
-          - AttributeName: groupId
+          - AttributeName: clubId
             KeyType: HASH
         GlobalSecondaryIndexes:
           - IndexName: CreatedByIndex
             KeySchema:
               - AttributeName: createdBy
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: SlugIndex
+            KeySchema:
+              - AttributeName: slug
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
@@ -1724,12 +1753,12 @@ resources:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-members-${self:provider.stage}
         AttributeDefinitions:
-          - AttributeName: groupId
+          - AttributeName: clubId
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
         KeySchema:
-          - AttributeName: groupId
+          - AttributeName: clubId
             KeyType: HASH
           - AttributeName: userId
             KeyType: RANGE

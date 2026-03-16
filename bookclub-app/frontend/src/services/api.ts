@@ -125,6 +125,7 @@ class ApiService {
     extractFromImage?: boolean;
     s3Bucket?: string;
     s3Key?: string;
+    clubId?: string;
   }): Promise<Book> {
     const response: AxiosResponse<ApiResponse<Book>> = await this.api.post('/books', bookData);
     if (!response.data.success) {
@@ -162,11 +163,13 @@ class ApiService {
 
   async listBooks(params?: {
     userId?: string;
+    clubId?: string;
     limit?: number;
     nextToken?: string;
   }): Promise<BookListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.userId) queryParams.append('userId', params.userId);
+    if (params?.clubId) queryParams.append('clubId', params.clubId);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
 
@@ -184,6 +187,7 @@ class ApiService {
     nextToken?: string;
     search?: string;
     ageGroupFine?: string;
+    clubId?: string;
     bare?: boolean;
   }): Promise<BookListResponse> {
     const queryParams = new URLSearchParams();
@@ -191,6 +195,7 @@ class ApiService {
     if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
     if (params?.search) queryParams.append('search', params.search);
     if (params?.ageGroupFine) queryParams.append('ageGroupFine', params.ageGroupFine);
+    if (params?.clubId) queryParams.append('clubId', params.clubId);
     if (params?.bare) queryParams.append('bare', '1');
 
     // Create a request without authorization header for public access
@@ -448,6 +453,21 @@ class ApiService {
       throw new Error(response.data.error?.message || 'Failed to browse clubs');
     }
     return response.data.data!;
+  }
+
+  async resolveClubSlug(slug: string): Promise<BookClub | null> {
+    const response: AxiosResponse<ApiResponse<{ club: BookClub | null }>> = await axios.get(
+      `${this.baseURL}/clubs/resolve/${slug}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to resolve club');
+    }
+    return response.data.data?.club || null;
   }
 
   // Admin - list pending join requests for a club

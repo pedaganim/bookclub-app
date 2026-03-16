@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LibraryConfig } from '../config/libraryConfig';
 import { apiService } from '../services/api';
 import { ToyListing } from '../types';
@@ -146,7 +146,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config }) => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                <a href="/libraries" className="hover:text-indigo-600 transition-colors">All Libraries</a>
+                <Link to="/library" className="hover:text-indigo-600 transition-colors">All Libraries</Link>
                 <span>/</span>
                 <span className="text-gray-700 font-medium">{config.label}</span>
               </div>

@@ -3,11 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { LIBRARY_CONFIGS } from '../config/libraryConfig';
+import { useSubdomain } from '../hooks/useSubdomain';
+import { config } from '../config';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isSubdomain, club } = useSubdomain();
   const [librariesOpen, setLibrariesOpen] = useState(false);
   const librariesRef = useRef<HTMLDivElement>(null);
 
@@ -70,11 +73,11 @@ const Navbar: React.FC = () => {
 
   // All library entries for the dropdown (Book Library + dynamic libraries)
   const dropdownLibraries = [
-    { label: 'Book Library', emoji: '📚', route: '/library', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
+    { label: 'Book Library', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
     ...LIBRARY_CONFIGS.map((cfg) => ({
       label: cfg.label,
       emoji: cfg.emoji,
-      route: `/libraries/${cfg.slug}`,
+      route: `/library/${cfg.slug}`,
       accentBg: cfg.accentBg,
       accentText: cfg.accentText,
     })),
@@ -86,13 +89,26 @@ const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
-            <Link to="/libraries" className="flex items-center flex-shrink-0">
-              <img
-                src={`${process.env.PUBLIC_URL || ''}/logo.png`}
-                alt="Community Library"
-                className="h-8 w-auto"
-              />
-            </Link>
+            <div className="flex items-center flex-shrink-0 gap-3">
+              <Link to="/" className="flex items-center flex-shrink-0">
+                <img
+                  src={`${process.env.PUBLIC_URL || ''}/logo.png`}
+                  alt="Community Library"
+                  className="h-8 w-auto"
+                />
+              </Link>
+              {isSubdomain && club && (
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-gray-900 leading-tight">{club.name}</span>
+                  <a 
+                    href={config.apiBaseUrl.replace('api.', '')} 
+                    className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    ← Global Hub
+                  </a>
+                </div>
+              )}
+            </div>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
@@ -128,7 +144,7 @@ const Navbar: React.FC = () => {
                     </div>
                     <div className="mt-2 pt-2 border-t border-gray-100">
                       <Link
-                        to="/libraries"
+                        to="/library"
                         className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                       >
                         <span>🏛️</span> View all libraries
@@ -142,13 +158,13 @@ const Navbar: React.FC = () => {
               <span className="w-px h-5 bg-gray-200 mx-1" />
 
               {/* Individual library links */}
-              <Link to="/library" className="px-2.5 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-amber-700 hover:bg-amber-50 transition-colors">
+              <Link to="/library/books" className="px-2.5 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-amber-700 hover:bg-amber-50 transition-colors">
                 📚 Books
               </Link>
               {LIBRARY_CONFIGS.map((cfg) => (
                 <Link
                   key={cfg.slug}
-                  to={`/libraries/${cfg.slug}`}
+                  to={`/library/${cfg.slug}`}
                   className={`px-2.5 py-2 rounded-md text-sm font-medium text-gray-600 hover:${cfg.accentText} hover:${cfg.accentBg} transition-colors`}
                 >
                   {cfg.emoji} {cfg.shortLabel}
@@ -260,11 +276,11 @@ const MobileTabBar: React.FC = () => {
   };
 
   const allLibraries = [
-    { label: 'Books', emoji: '📚', route: '/library', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
+    { label: 'Books', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
     ...LIBRARY_CONFIGS.map((cfg) => ({
       label: cfg.label.replace(' Library', '').replace(' Hire', ''),
       emoji: cfg.emoji,
-      route: `/libraries/${cfg.slug}`,
+      route: `/library/${cfg.slug}`,
       accentBg: cfg.accentBg,
       accentText: cfg.accentText,
     })),
@@ -274,7 +290,7 @@ const MobileTabBar: React.FC = () => {
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
         <div className="max-w-7xl mx-auto grid grid-cols-5 text-[11px]">
-          <Link to="/libraries" className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors">
+          <Link to="/library" className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors">
             <Icon.Home />
             <span>Home</span>
           </Link>
@@ -339,7 +355,7 @@ const MobileTabBar: React.FC = () => {
             </div>
             <div className="mt-4 pt-4 border-t border-gray-100">
               <Link
-                to="/libraries"
+                to="/library"
                 onClick={() => setLibrarySheetOpen(false)}
                 className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-gray-50 text-sm font-medium text-gray-700"
               >

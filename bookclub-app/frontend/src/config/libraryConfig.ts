@@ -1,7 +1,7 @@
 export interface LibraryConfig {
   /** Discriminator stored in DB (e.g. "toy", "tool") */
   libraryType: string;
-  /** URL slug — route is /libraries/:slug */
+  /** URL slug — route is /library/:slug */
   slug: string;
   /** Display name shown in nav + headings */
   label: string;

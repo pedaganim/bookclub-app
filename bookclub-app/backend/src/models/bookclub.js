@@ -11,9 +11,18 @@ class BookClub {
     const inviteCode = uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase();
     const timestamp = new Date().toISOString();
 
+    // Generate slug from name if not provided
+    const slug = clubData.slug || clubData.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
     const club = {
       clubId,
       name: clubData.name,
+      slug,
       description: clubData.description || '',
       location: clubData.location,
       createdBy,
@@ -130,6 +139,23 @@ class BookClub {
       IndexName: 'InviteCodeIndex',
       KeyConditionExpression: 'inviteCode = :inviteCode',
       ExpressionAttributeValues: { ':inviteCode': inviteCode },
+      Limit: 1,
+    };
+    const result = await dynamoDb.query(params);
+    return (result.Items && result.Items[0]) || null;
+  }
+
+  static async getBySlug(slug) {
+    if (isOffline()) {
+      const clubs = await LocalStorage.listClubs();
+      return (clubs || []).find(c => c.slug === slug) || null;
+    }
+    const params = {
+      TableName: getTableName('bookclub-groups'),
+      IndexName: 'SlugIndex',
+      KeyConditionExpression: '#slug = :slug',
+      ExpressionAttributeNames: { '#slug': 'slug' },
+      ExpressionAttributeValues: { ':slug': slug },
       Limit: 1,
     };
     const result = await dynamoDb.query(params);

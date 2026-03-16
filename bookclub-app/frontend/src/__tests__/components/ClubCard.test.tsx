@@ -12,6 +12,7 @@ describe('ClubCard', () => {
   const mockClub: BookClub = {
     clubId: 'club123',
     name: 'Test Book Club',
+    slug: 'test-book-club',
     description: 'A test book club description',
     location: 'New York, NY',
     createdBy: 'user456',
