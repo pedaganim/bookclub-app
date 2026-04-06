@@ -239,7 +239,27 @@ class LocalStorage {
     if (!OFFLINE) return null;
     if (token.startsWith('local-token-')) {
       const userId = token.replace('local-token-', '');
-      return this.getUserById(userId);
+      const existing = await this.getUserById(userId);
+      if (existing) return existing;
+
+      // Auto-provision a minimal user for local dev tokens.
+      // This supports frontend auth bypass without requiring explicit registration.
+      const timestamp = new Date().toISOString();
+      const email = `local-${userId}@dev`;
+      const user = {
+        userId,
+        email,
+        name: 'Local Dev',
+        password: 'local',
+        bio: '',
+        profilePicture: null,
+        timezone: 'UTC',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+
+      await this.createUser(user);
+      return user;
     }
     return null;
   }

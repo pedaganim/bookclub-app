@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, ProfileUpdateData } from '../types';
 import { apiService } from '../services/api';
 import { useNotification } from './NotificationContext';
+import { config } from '../config';
 
 interface AuthContextType {
   user: User | null;
@@ -50,6 +51,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Register session expiration handler with API service (only once)
     apiService.setSessionExpiredHandler(logoutWithSessionExpired);
+
+    if (config.skipAuth) {
+      const dummyUser: User = {
+        userId: 'local-user',
+        email: 'local@dev',
+        name: 'Local Dev',
+        bio: '',
+        profilePicture: undefined,
+        timezone: 'UTC',
+        createdAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem('accessToken', 'local-token-local-user');
+      localStorage.setItem('user', JSON.stringify(dummyUser));
+      setUser(dummyUser);
+      setLoading(false);
+      return;
+    }
 
     // Check if user is already logged in
     const initializeAuth = async () => {

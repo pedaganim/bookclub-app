@@ -34,7 +34,7 @@ class ApiService {
       (response) => response,
       (error) => {
         // Redirect to login on any authentication/authorization failure
-        if ((error.response?.status === 401 || error.response?.status === 403) && this.onSessionExpired) {
+        if (!config.skipAuth && (error.response?.status === 401 || error.response?.status === 403) && this.onSessionExpired) {
           // Previously, we only redirected for specific token errors. To ensure consistent UX,
           // we now redirect on any 401/403 from protected endpoints.
           this.onSessionExpired();

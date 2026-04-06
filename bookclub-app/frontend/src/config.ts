@@ -4,6 +4,7 @@
 export const config = {
   apiBaseUrl: process.env.REACT_APP_API_URL || 'http://localhost:4000/dev',
   env: process.env.NODE_ENV || 'development',
+  skipAuth: process.env.REACT_APP_SKIP_AUTH === 'true',
   cognito: {
     domain: process.env.REACT_APP_COGNITO_DOMAIN || '',
     region: process.env.REACT_APP_COGNITO_REGION || 'us-east-1',
