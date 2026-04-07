@@ -216,6 +216,7 @@ describe('User Model', () => {
   describe('ensureExistsFromClaims', () => {
     beforeEach(() => {
       process.env.IS_OFFLINE = 'false';
+      process.env.NODE_ENV = 'production';
     });
 
     it('should return existing user if found', async () => {

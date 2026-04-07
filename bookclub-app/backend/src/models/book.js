@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 
-const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
+const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
 
 // Lazy loader to avoid requiring local-storage in AWS Lambda
 let _LocalStorage = null;

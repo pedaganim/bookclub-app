@@ -8,7 +8,7 @@ const { sendAdminNewUserNotification } = require('../lib/notification-service');
 // Initialize Cognito
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
-const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
+const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
 
 class User {
   static async register(userData) {
