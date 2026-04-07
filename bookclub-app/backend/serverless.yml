@@ -1014,7 +1014,7 @@ functions:
   # Custom resource function for DynamoDB table management
   dynamoTableManager:
     handler: src/custom-resources/dynamodb-table-manager.handler
-    timeout: 300
+    timeout: 600
     role: DynamoTableManagerRole
 
   # Custom resource to ensure Event Source Mapping is enabled post-deploy
