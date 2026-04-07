@@ -10,9 +10,14 @@ module.exports.handler = async (event) => {
       claims = event.requestContext.authorizer.claims;
       userId = claims.sub;
     } else {
-      // Fallback: parse Bearer token and validate via Cognito getUser (typical for Access tokens)
+      // Fallback: parse token from Authorization header (handles both 'Bearer ' prefix and raw tokens)
       const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
-      const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+      let token = null;
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice('Bearer '.length);
+      } else if (authHeader.length > 0) {
+        token = authHeader; // Assume raw token
+      }
       
       if (!token) {
         return response.unauthorized('Missing Authorization header');
