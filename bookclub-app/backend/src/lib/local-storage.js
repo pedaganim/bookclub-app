@@ -2,10 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Only enable local file storage when running offline (local dev / serverless-offline).
-const OFFLINE = process.env.IS_OFFLINE === 'true'
-  || process.env.NODE_ENV === 'development'
-  || process.env.NODE_ENV === 'test'
-  || process.env.SERVERLESS_OFFLINE === 'true';
+// Default to false for production safety.
+const OFFLINE = process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true';
 
 // Use a simple file-based storage for serverless offline
 const STORAGE_DIR = path.join(__dirname, '../../.local-storage');
