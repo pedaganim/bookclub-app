@@ -119,8 +119,9 @@ class TranscribeService {
    * @returns {boolean} True if in sandboxed environment
    */
   isSandboxedEnvironment() {
-    return process.env.NODE_ENV === 'development' || 
-           process.env.IS_OFFLINE === 'true' ||
+    return process.env.IS_OFFLINE === 'true' || 
+           process.env.SERVERLESS_OFFLINE === 'true' || 
+           process.env.NODE_ENV === 'test' ||
            !process.env.AWS_ACCESS_KEY_ID ||
            process.env.AWS_ACCESS_KEY_ID === 'local';
   }

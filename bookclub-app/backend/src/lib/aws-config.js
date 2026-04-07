@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Configure AWS for local development from centralized config
-if (process.env.IS_OFFLINE || process.env.NODE_ENV === 'development') {
+if (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test') {
   const configPath = path.join(__dirname, '..', '..', 'config', 'app.json');
   let cfg = {};
   try {
