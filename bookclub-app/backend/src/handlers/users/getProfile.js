@@ -5,24 +5,29 @@ module.exports.handler = async (event) => {
   try {
     let userId;
     let claims = null;
-    // Prefer Cognito claims when available
+    // Prefer Cognito claims when available (typical for ID tokens)
     if (event.requestContext && event.requestContext.authorizer && event.requestContext.authorizer.claims && event.requestContext.authorizer.claims.sub) {
       claims = event.requestContext.authorizer.claims;
       userId = claims.sub;
     } else {
-      // Fallback: parse Bearer token and validate via Cognito (or LocalStorage in offline mode)
+      // Fallback: parse Bearer token and validate via Cognito getUser (typical for Access tokens)
       const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
       const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+      
       if (!token) {
         return response.unauthorized('Missing Authorization header');
       }
+
       try {
-        const user = await User.getCurrentUser(token);
-        if (!user) {
-          return response.unauthorized('Invalid token');
+        const currentUser = await User.getCurrentUser(token);
+        if (!currentUser) {
+          return response.unauthorized('Invalid or expired token');
         }
-        userId = user.userId;
+        userId = currentUser.userId;
+        // If we got a user but they aren't in Dynamo yet (though getCurrentUser does a lookup),
+        // we handle the missing record below.
       } catch (e) {
+        console.error('Auth fallback failed:', e.message);
         return response.unauthorized('Invalid or expired token');
       }
     }
