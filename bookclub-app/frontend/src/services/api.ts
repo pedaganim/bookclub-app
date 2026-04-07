@@ -23,8 +23,11 @@ class ApiService {
       const accessToken = localStorage.getItem('accessToken');
       const idToken = localStorage.getItem('idToken');
       const token = accessToken || idToken;
+      
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        // Cognito User Pool authorizers in API Gateway typically expect the raw JWT.
+        // We send the raw token to ensure compatibility with standard Cognito authorizers.
+        config.headers.Authorization = token;
       }
       return config;
     });
