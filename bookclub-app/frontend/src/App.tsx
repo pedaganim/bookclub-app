@@ -46,6 +46,7 @@ function App() {
             <Navbar />
             <main className="min-h-screen bg-gray-50 pb-20 md:pb-0">
               <Routes>
+                  <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Navigate to="/login" replace />} />
                   <Route path="/about" element={<About />} />
