@@ -239,9 +239,16 @@ exports.handler = async (event, context) => {
     // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
     const wantStream = !!ResourceProperties.StreamSpecification?.StreamEnabled;
-    const maxAttempts = isTest ? 1 : (wantStream ? 60 : 12); // up to ~5 min for streams
     const delayMs = isTest ? 0 : 5000;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const start = Date.now();
+    const timeBudgetMs = isTest
+      ? 0
+      : (wantStream
+        ? Math.max(0, (typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0) - 20000)
+        : 60000);
+    let attempt = 0;
+    while (true) {
+      attempt += 1;
       try {
         const desc = await dynamodb.describeTable({ TableName }).promise();
         streamArn = desc?.Table?.LatestStreamArn || null;
@@ -249,10 +256,31 @@ exports.handler = async (event, context) => {
           console.log(`Obtained StreamArn on attempt ${attempt}: ${streamArn}`);
           break;
         }
-        console.log(`StreamArn not yet available (attempt ${attempt}/${maxAttempts}), waiting ${delayMs}ms...`);
+        const elapsed = Date.now() - start;
+        console.log(`StreamArn not yet available (attempt ${attempt}, elapsed ${elapsed}ms), waiting ${delayMs}ms...`);
       } catch (e) {
-        console.log(`DescribeTable failed (attempt ${attempt}/${maxAttempts}):`, e.message);
+        console.log(`DescribeTable failed (attempt ${attempt}):`, e.message);
       }
+
+      if (isTest) {
+        break;
+      }
+
+      const elapsed = Date.now() - start;
+      const remaining = typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0;
+      if (wantStream) {
+        if (elapsed >= timeBudgetMs) {
+          break;
+        }
+        if (remaining > 0 && remaining <= 20000) {
+          break;
+        }
+      } else {
+        if (elapsed >= timeBudgetMs) {
+          break;
+        }
+      }
+
       if (delayMs > 0) {
         await new Promise(r => setTimeout(r, delayMs));
       }

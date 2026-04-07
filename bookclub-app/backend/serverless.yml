@@ -145,6 +145,12 @@ custom:
 plugins:
   - serverless-offline
   - serverless-plugin-existing-s3
+  - serverless-prune-plugin
+
+custom:
+  prune:
+    automatic: true
+    number: 5
 functions:
   # Book-related functions
   createBook:
