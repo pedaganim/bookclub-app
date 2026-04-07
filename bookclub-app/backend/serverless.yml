@@ -1,15 +1,6 @@
 service: bookclub-app
 frameworkVersion: '3'
 
-package:
-  individually: true
-  patterns:
-    - '!**'
-    - 'src/**'
-    - '!src/**/*.test.js'
-    - '!tests/**'
-    - 'node_modules/**'
-
 provider:
   name: aws
   runtime: nodejs18.x
