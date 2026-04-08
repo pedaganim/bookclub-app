@@ -18,16 +18,16 @@ class ApiService {
 
     // Add request interceptor to include auth token
     this.api.interceptors.request.use((config) => {
-      // Prefer Access Token since backend fallbacks may call Cognito getUser(AccessToken).
-      // Fall back to ID token if accessToken is not present.
-      const accessToken = localStorage.getItem('accessToken');
+      // Use ID Token for API Gateway Cognito Authorizers.
+      // Fall back to Access Token if ID token is missing.
       const idToken = localStorage.getItem('idToken');
-      const token = accessToken || idToken;
+      const accessToken = localStorage.getItem('accessToken');
+      const token = idToken || accessToken;
       
       if (token) {
-        // Cognito User Pool authorizers in API Gateway typically expect the raw JWT.
-        // We send the raw token to ensure compatibility with standard Cognito authorizers.
-        config.headers.Authorization = token;
+        // Most API Gateway configurations (including custom authorizers or certain 
+        // Cognito setups) expect the 'Bearer ' prefix.
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
