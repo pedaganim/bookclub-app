@@ -1,6 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { config } from '../config';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,6 +9,20 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      // If we're on a subdomain, redirect to the main domain's login page
+      // This ensures PKCE verifiers are saved on the main domain which matches the callback URL.
+      const mainDomainLogin = `${config.apiBaseUrl.replace('api.', '')}/login`;
+      const currentUrl = window.location.origin;
+      
+      if (!mainDomainLogin.includes(currentUrl)) {
+        window.location.href = mainDomainLogin;
+      }
+    }
+  }, [loading, isAuthenticated]);
 
   if (loading) {
     return (
@@ -20,7 +35,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+  // If authenticated, show the content.
+  // If not authenticated, we either show a local redirect (if already on main domain)
+  // or wait for the useEffect above to handle the external redirect.
+  if (isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  // Only use local Navigate if we are already on the main domain
+  const mainDomainLogin = `${config.apiBaseUrl.replace('api.', '')}/login`;
+  const currentUrl = window.location.origin;
+  if (mainDomainLogin.includes(currentUrl)) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Otherwise, return null while the useEffect redirect happens
+  return null;
 };
 
 export default ProtectedRoute;

@@ -45,8 +45,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logoutWithSessionExpired = useCallback(() => {
     logout();
     addNotification('warning', 'Your session has expired. Please sign in again to continue.', 7000);
-    navigate('/login');
-  }, [addNotification, navigate]);
+    // Redirect to the main domain login page to ensure PKCE works correctly
+    window.location.href = `${config.apiBaseUrl.replace('api.', '')}/login`;
+  }, [addNotification]);
 
   useEffect(() => {
     // Register session expiration handler with API service (only once)
