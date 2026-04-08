@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { config } from '../config';
+import { setCookie, getBaseDomain } from '../utils/cookies';
 
 // Minimal stub page to handle Cognito Hosted UI redirect (Authorization Code Grant)
 // Exchanges the authorization code for tokens using PKCE, stores them, and redirects home.
@@ -70,11 +71,19 @@ const AuthCallback: React.FC = () => {
       localStorage.setItem('accessToken', accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('idToken', idToken);
-      localStorage.setItem('user', JSON.stringify({
+      const userObj = {
         email: profile.email,
         name: profile.name || profile.given_name || profile.email,
         sub: profile.sub,
-      }));
+      };
+      localStorage.setItem('user', JSON.stringify(userObj));
+
+      // Persist tokens in cookies for cross-subdomain support
+      const domain = getBaseDomain();
+      setCookie('accessToken', accessToken, { domain });
+      setCookie('idToken', idToken, { domain });
+      if (refreshToken) setCookie('refreshToken', refreshToken, { domain });
+      setCookie('user', JSON.stringify(userObj), { domain });
 
       setStatus('success');
       setMessage('Signed in successfully. Redirecting…');

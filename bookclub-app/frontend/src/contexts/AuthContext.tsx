@@ -4,6 +4,7 @@ import { User, ProfileUpdateData } from '../types';
 import { apiService } from '../services/api';
 import { useNotification } from './NotificationContext';
 import { config } from '../config';
+import { getCookie, setCookie, eraseCookie, getBaseDomain } from '../utils/cookies';
 
 interface AuthContextType {
   user: User | null;
@@ -39,6 +40,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('idToken');
     localStorage.removeItem('user');
+    
+    // Also clear cookies
+    const domain = getBaseDomain();
+    eraseCookie('accessToken', domain);
+    eraseCookie('refreshToken', domain);
+    eraseCookie('idToken', domain);
+    eraseCookie('user', domain);
+    
     setUser(null);
   };
 
@@ -74,18 +83,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user is already logged in
     const initializeAuth = async () => {
       try {
-        const idToken = localStorage.getItem('idToken');
-        const accessToken = localStorage.getItem('accessToken');
-        const token = idToken || accessToken;
-        const savedUser = localStorage.getItem('user');
+        // Try localStorage first
+        let idToken = localStorage.getItem('idToken');
+        let accessToken = localStorage.getItem('accessToken');
+        let userJson = localStorage.getItem('user');
         
-        if (token && savedUser) {
-          setUser(JSON.parse(savedUser));
+        // Fallback to cookies for subdomain support
+        if (!idToken) idToken = getCookie('idToken');
+        if (!accessToken) accessToken = getCookie('accessToken');
+        if (!userJson) userJson = getCookie('user');
+        
+        const token = idToken || accessToken;
+        
+        if (token && userJson) {
+          const parsedUser = JSON.parse(userJson);
+          setUser(parsedUser);
+          
+          // If we recovered from cookies but localStorage is empty, top it up
+          if (!localStorage.getItem('idToken') && idToken) localStorage.setItem('idToken', idToken);
+          if (!localStorage.getItem('accessToken') && accessToken) localStorage.setItem('accessToken', accessToken);
+          if (!localStorage.getItem('user') && userJson) localStorage.setItem('user', userJson);
+
           // Verify token is still valid
           try {
             const currentUser = await apiService.getCurrentUser();
             setUser(currentUser);
             localStorage.setItem('user', JSON.stringify(currentUser));
+            // Update cookie too
+            setCookie('user', JSON.stringify(currentUser), { domain: getBaseDomain() });
           } catch (error: any) {
             // If the token is definitively invalid (401/403), clear the session.
             // This prevents "caching" issues with stale tokens in the regular browser.
@@ -144,6 +169,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const updatedUser = await apiService.updateProfile(updates);
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      // Update cookie too
+      setCookie('user', JSON.stringify(updatedUser), { domain: getBaseDomain() });
     } catch (error) {
       throw error;
     }

@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList } from '../types';
 import { config } from '../config';
+import { getCookie } from '../utils/cookies';
 
 class ApiService {
   private api: AxiosInstance;
@@ -20,8 +21,13 @@ class ApiService {
     this.api.interceptors.request.use((config) => {
       // Use ID Token for API Gateway Cognito Authorizers.
       // Fall back to Access Token if ID token is missing.
-      const idToken = localStorage.getItem('idToken');
-      const accessToken = localStorage.getItem('accessToken');
+      let idToken = localStorage.getItem('idToken');
+      let accessToken = localStorage.getItem('accessToken');
+      
+      // Fallback to cookies for subdomain support
+      if (!idToken) idToken = getCookie('idToken');
+      if (!accessToken) accessToken = getCookie('accessToken');
+      
       const token = idToken || accessToken;
       
       if (token) {
