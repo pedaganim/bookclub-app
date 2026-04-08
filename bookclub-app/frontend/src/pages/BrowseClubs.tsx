@@ -176,6 +176,7 @@ const BrowseClubs: React.FC = () => {
           <nav className="-mb-px flex space-x-6" aria-label="Tabs">
             <NavLink
               to="/clubs"
+              end
               className={({ isActive }) =>
                 `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
                   isActive
