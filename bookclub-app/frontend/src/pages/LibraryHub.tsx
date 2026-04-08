@@ -26,16 +26,17 @@ const LibraryHub: React.FC = () => {
     );
   }, []);
 
-  const allCards = [
+  const activeLibraries = [
     { ...BOOK_LIBRARY, itemCount: null },
+  ];
+
+  const comingSoonLibraries = [
     ...LIBRARY_CONFIGS.map((cfg) => ({
       label: cfg.label,
       emoji: cfg.emoji,
       tagline: cfg.tagline,
-      accentBg: cfg.accentBg,
-      accentText: cfg.accentText,
-      route: `/library/${cfg.slug}`,
-      itemCount: null,
+      accentBg: 'bg-gray-100',
+      accentText: 'text-gray-500',
     })),
   ];
 
@@ -46,7 +47,7 @@ const LibraryHub: React.FC = () => {
         <div className="max-w-5xl mx-auto px-4 py-12 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">Community Library</h1>
           <p className="text-lg text-gray-600 max-w-xl mx-auto">
-            Borrow, share and discover together. One place for books, toys, tools and more.
+            Borrow, share and discover together. The best place to find books in your local community.
           </p>
         </div>
       </div>
@@ -55,7 +56,7 @@ const LibraryHub: React.FC = () => {
       <div className="max-w-5xl mx-auto px-4 py-10">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">Browse Libraries</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {allCards.map((card) => (
+          {activeLibraries.map((card) => (
             <Link
               key={card.route}
               to={card.route}
@@ -73,14 +74,29 @@ const LibraryHub: React.FC = () => {
               </span>
             </Link>
           ))}
+        </div>
 
-          {/* Suggest a Library card */}
-          <div className="rounded-2xl p-6 flex flex-col items-start gap-3 bg-gray-100 border-2 border-dashed border-gray-300 cursor-default">
-            <span className="text-4xl">➕</span>
-            <div>
-              <p className="font-semibold text-base text-gray-500">More coming soon</p>
-              <p className="text-xs text-gray-400 mt-0.5 leading-snug">New libraries are added regularly</p>
-            </div>
+        {/* Coming Soon Section */}
+        <div className="mt-16">
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-5">Coming Soon</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 opacity-75">
+            {comingSoonLibraries.map((card) => (
+              <div
+                key={card.label}
+                className={`rounded-2xl p-6 flex flex-col items-start gap-3 border border-gray-200 ${card.accentBg} grayscale-[0.5]`}
+              >
+                <span className="text-4xl filter grayscale" role="img" aria-label={card.label}>
+                  {card.emoji}
+                </span>
+                <div>
+                  <p className={`font-semibold text-base ${card.accentText}`}>{card.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 leading-snug">{card.tagline}</p>
+                </div>
+                <span className="mt-auto text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-200 px-2 py-0.5 rounded">
+                  Coming Soon
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 

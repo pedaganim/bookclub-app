@@ -74,13 +74,6 @@ const Navbar: React.FC = () => {
   // All library entries for the dropdown (Book Library + dynamic libraries)
   const dropdownLibraries = [
     { label: 'Book Library', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
-    ...LIBRARY_CONFIGS.map((cfg) => ({
-      label: cfg.label,
-      emoji: cfg.emoji,
-      route: `/library/${cfg.slug}`,
-      accentBg: cfg.accentBg,
-      accentText: cfg.accentText,
-    })),
   ];
 
   return (
@@ -161,15 +154,6 @@ const Navbar: React.FC = () => {
               <Link to="/library/books" className="px-2.5 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-amber-700 hover:bg-amber-50 transition-colors">
                 📚 Books
               </Link>
-              {LIBRARY_CONFIGS.map((cfg) => (
-                <Link
-                  key={cfg.slug}
-                  to={`/library/${cfg.slug}`}
-                  className={`px-2.5 py-2 rounded-md text-sm font-medium text-gray-600 hover:${cfg.accentText} hover:${cfg.accentBg} transition-colors`}
-                >
-                  {cfg.emoji} {cfg.shortLabel}
-                </Link>
-              ))}
 
               {/* Divider */}
               <span className="w-px h-5 bg-gray-200 mx-1" />
@@ -277,13 +261,6 @@ const MobileTabBar: React.FC = () => {
 
   const allLibraries = [
     { label: 'Books', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
-    ...LIBRARY_CONFIGS.map((cfg) => ({
-      label: cfg.label.replace(' Library', '').replace(' Hire', ''),
-      emoji: cfg.emoji,
-      route: `/library/${cfg.slug}`,
-      accentBg: cfg.accentBg,
-      accentText: cfg.accentText,
-    })),
   ];
 
   return (

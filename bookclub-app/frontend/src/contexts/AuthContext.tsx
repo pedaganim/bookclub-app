@@ -73,18 +73,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check if user is already logged in
     const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const idToken = localStorage.getItem('idToken');
+        const accessToken = localStorage.getItem('accessToken');
+        const token = idToken || accessToken;
         const savedUser = localStorage.getItem('user');
         
         if (token && savedUser) {
           setUser(JSON.parse(savedUser));
-          // Optionally verify token is still valid; do not force logout on transient failure
+          // Verify token is still valid
           try {
             const currentUser = await apiService.getCurrentUser();
             setUser(currentUser);
             localStorage.setItem('user', JSON.stringify(currentUser));
-          } catch (error) {
-            // Keep existing tokens and user to avoid bounce back to /login; user can retry actions
+          } catch (error: any) {
+            // If the token is definitively invalid (401/403), clear the session.
+            // This prevents "caching" issues with stale tokens in the regular browser.
+            if (error.response?.status === 401 || error.response?.status === 403) {
+              console.warn('Initial auth check failed, clearing session');
+              logout();
+            }
           }
         }
       } catch (error) {
