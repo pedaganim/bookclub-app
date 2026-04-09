@@ -52,14 +52,28 @@ const BrowseClubs: React.FC = () => {
       try {
         if (!isAuthenticated) {
           setUserClubIds(new Set());
+          setRequestedClubIds(new Set());
           return;
         }
         const res = await apiService.getUserClubs();
-        const active = (res.items || []).filter((c: any) => (c?.userStatus || 'active') === 'active');
-        const ids = new Set<string>(active.map((c: BookClub) => c.clubId));
-        setUserClubIds(ids);
+        const items = res.items || [];
+        
+        // Active members
+        const activeIds = new Set<string>(
+          items.filter((c: any) => (c?.userStatus || 'active') === 'active')
+               .map((c: BookClub) => c.clubId)
+        );
+        setUserClubIds(activeIds);
+
+        // Pending members (those who have already requested)
+        const pendingIds = new Set<string>(
+          items.filter((c: any) => c?.userStatus === 'pending')
+               .map((c: BookClub) => c.clubId)
+        );
+        setRequestedClubIds(pendingIds);
       } catch {
         setUserClubIds(new Set());
+        setRequestedClubIds(new Set());
       }
     })();
   }, [isAuthenticated]);
