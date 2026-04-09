@@ -1497,6 +1497,8 @@ resources:
             AttributeType: S
           - AttributeName: clubId
             AttributeType: S
+          - AttributeName: lentToUserId
+            AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
         KeySchema:
@@ -1518,6 +1520,17 @@ resources:
           - IndexName: ClubIdIndex
             KeySchema:
               - AttributeName: clubId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: LentToUserIdIndex
+            KeySchema:
+              - AttributeName: lentToUserId
                 KeyType: HASH
               - AttributeName: createdAt
                 KeyType: RANGE

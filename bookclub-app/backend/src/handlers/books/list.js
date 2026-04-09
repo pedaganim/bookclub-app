@@ -4,17 +4,20 @@ const Book = require('../../models/book');
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
   try {
-    const { qs, limit, nextToken, search, ageGroupFine, bare } = parseQuery(event);
+    const { qs, limit, nextToken, search, ageGroupFine, bare, filter } = parseQuery(event);
     const userId = deriveUserId(event, qs);
-    logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare);
+    logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter);
 
-    const result = userId
-      ? await Book.listByUser(userId, limit, nextToken)
-      : (
-          ageGroupFine
-            ? await Book.listAll(limit, nextToken, search, ageGroupFine, bare ? { bare: true } : undefined)
-            : (bare ? await Book.listAll(limit, nextToken, search, null, { bare: true }) : await Book.listAll(limit, nextToken, search))
-        );
+    let result;
+    if (filter === 'borrowed' && userId) {
+      result = await Book.listByLentToUser(userId, limit, nextToken);
+    } else if (userId) {
+      result = await Book.listByUser(userId, limit, nextToken);
+    } else {
+      result = ageGroupFine
+        ? await Book.listAll(limit, nextToken, search, ageGroupFine, bare ? { bare: true } : undefined)
+        : (bare ? await Book.listAll(limit, nextToken, search, null, { bare: true }) : await Book.listAll(limit, nextToken, search));
+    }
 
     return response.success({
       items: result.items,
@@ -33,7 +36,8 @@ const parseQuery = (event) => {
   const search = qs && typeof qs.search === 'string' ? qs.search : null;
   const ageGroupFine = qs && typeof qs.ageGroupFine === 'string' ? qs.ageGroupFine : null;
   const bare = qs && typeof qs.bare === 'string' ? (qs.bare === '1' || qs.bare.toLowerCase() === 'true') : false;
-  return { qs, limit, nextToken, search, ageGroupFine, bare };
+  const filter = qs && typeof qs.filter === 'string' ? qs.filter : null;
+  return { qs, limit, nextToken, search, ageGroupFine, bare, filter };
 };
 
 const deriveUserId = (event, qs) => {
@@ -44,7 +48,7 @@ const deriveUserId = (event, qs) => {
   return userId;
 };
 
-const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, bare) => {
+const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, bare, filter) => {
   console.log('listBooks handler', {
     stage: process.env.STAGE,
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION,
@@ -55,5 +59,6 @@ const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, b
     hasSearch: !!search,
     ageGroupFine: ageGroupFine || null,
     bare: !!bare,
+    filter: filter || null,
   });
 };

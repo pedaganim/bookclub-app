@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Book } from '../types';
 import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import ConfirmationModal from './ConfirmationModal';
 
@@ -34,7 +35,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}
     >
-      {status}
+      {status === 'borrowed' ? 'lent' : status}
     </span>
   );
 };
@@ -68,6 +69,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const { user } = useAuth();
   const { addNotification } = useNotification();
 
   const handleDelete = async () => {
@@ -118,7 +120,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                   View details
                 </Link>
               </div>
-              {showActions && (
+              {showActions && user?.userId === book.userId && (
                 <div className="mt-2">
                   <ActionButtons
                     onEdit={() => setShowEditModal(true)}
@@ -143,7 +145,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                 View details
               </Link>
             </div>
-            {showActions && (
+            {showActions && user?.userId === book.userId && (
               <ActionButtons
                 onEdit={() => setShowEditModal(true)}
                 onDelete={() => setShowDeleteModal(true)}
@@ -256,7 +258,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
               >
                 <option value="available">Available</option>
-                <option value="borrowed">Borrowed</option>
+                <option value="borrowed">Lent</option>
                 <option value="reading">Reading</option>
                 <option value="giving_away">Giving away</option>
               </select>

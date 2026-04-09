@@ -176,12 +176,14 @@ class ApiService {
     clubId?: string;
     limit?: number;
     nextToken?: string;
+    filter?: 'borrowed';
   }): Promise<BookListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.userId) queryParams.append('userId', params.userId);
     if (params?.clubId) queryParams.append('clubId', params.clubId);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
+    if (params?.filter) queryParams.append('filter', params.filter);
 
     const response: AxiosResponse<ApiResponse<BookListResponse>> = await this.api.get(
       `/books?${queryParams.toString()}`
@@ -190,6 +192,14 @@ class ApiService {
       throw new Error(response.data.error?.message || 'Failed to list books');
     }
     return response.data.data!;
+  }
+
+  async listBooksBorrowedByMe(params: {
+    userId: string;
+    limit?: number;
+    nextToken?: string;
+  }): Promise<BookListResponse> {
+    return this.listBooks({ ...params, filter: 'borrowed' });
   }
 
   async listBooksPublic(params?: {
