@@ -49,15 +49,22 @@ const Home: React.FC = () => {
         let aggregated: Book[] = [];
         let tokenLocal: string | undefined = undefined;
         
-        // Determine which API to call based on filter
-        const listMethod = filter === 'borrowed' ? apiService.listBooksBorrowedByMe : apiService.listBooks;
-        
+        // Determine and call the appropriate API based on filter
         for (let i = 0; i < Math.ceil(maxTotal / perPage); i++) {
-          const resp: BookListResponse = await listMethod({
-            userId: user.userId,
-            limit: perPage,
-            nextToken: tokenLocal,
-          });
+          let resp: BookListResponse;
+          if (filter === 'borrowed') {
+            resp = await apiService.listBooksBorrowedByMe({
+              userId: user.userId,
+              limit: perPage,
+              nextToken: tokenLocal,
+            });
+          } else {
+            resp = await apiService.listBooks({
+              userId: user.userId,
+              limit: perPage,
+              nextToken: tokenLocal,
+            });
+          }
           if (Array.isArray(resp.items)) {
             aggregated = aggregated.concat(resp.items as Book[]);
           }

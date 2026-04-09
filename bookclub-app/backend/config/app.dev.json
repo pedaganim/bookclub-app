@@ -3,12 +3,11 @@
   "apiCustomDomain": "",
   "userPoolDomainPrefix": "bookclub-app-dev",
   "oauth": {
-    "redirectSignIn": "http://localhost:3000/auth/callback",
-    "redirectSignOut": "http://localhost:3000/"
+    "redirectSignIn": "https://dev.booklub.shop/auth/callback",
+    "redirectSignOut": "https://dev.booklub.shop/"
   },
-  "local": {
-    "dynamodbEndpoint": "http://localhost:8000",
-    "awsAccessKeyId": "local",
-    "awsSecretAccessKey": "local"
+  "frontend": {
+    "domain": "dev.booklub.shop",
+    "bucketName": "bookclub-app-dev-frontend"
   }
 }
