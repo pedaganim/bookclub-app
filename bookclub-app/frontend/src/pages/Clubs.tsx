@@ -6,17 +6,21 @@ import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
 import ManageRequestsModal from '../components/ManageRequestsModal';
+import ConfirmationModal from '../components/ConfirmationModal';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
+import { useNotification } from '../contexts/NotificationContext';
 
 const Clubs: React.FC = () => {
   const [clubs, setClubs] = useState<BookClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user } = useAuth();
+  const { addNotification } = useNotification();
   const [showCreate, setShowCreate] = useState(false);
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [manageClubId, setManageClubId] = useState<string | null>(null);
+  const [clubToDelete, setClubToDelete] = useState<BookClub | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -49,15 +53,22 @@ const Clubs: React.FC = () => {
   const isAdmin = (club: BookClub) => club.userRole === 'admin' || isCreator(club);
   const isPending = (club: BookClub) => club.userStatus === 'pending';
 
-  const handleDelete = async (club: BookClub) => {
-    if (!isCreator(club)) return;
-    if (!window.confirm(`Delete club "${club.name}"? This cannot be undone.`)) return;
+  const handleDelete = async () => {
+    if (!clubToDelete) return;
     try {
-      await apiService.deleteClub(club.clubId);
-      setClubs(prev => prev.filter(c => c.clubId !== club.clubId));
+      await apiService.deleteClub(clubToDelete.clubId);
+      setClubs(prev => prev.filter(c => c.clubId !== clubToDelete.clubId));
+      addNotification('success', `Club "${clubToDelete.name}" deleted successfully`);
     } catch (e: any) {
-      alert(e.message || 'Failed to delete club');
+      addNotification('error', e.message || 'Failed to delete club');
+    } finally {
+      setClubToDelete(null);
     }
+  };
+
+  const confirmDelete = (club: BookClub) => {
+    if (!isCreator(club)) return;
+    setClubToDelete(club);
   };
 
   const handleEdit = (club: BookClub) => {
@@ -159,7 +170,7 @@ const Clubs: React.FC = () => {
                     {isAdmin(club) && !isPending(club) && (
                       <>
                         <button onClick={() => handleEdit(club)} className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">Edit</button>
-                        <button onClick={() => handleDelete(club)} className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">Delete</button>
+                        <button onClick={() => confirmDelete(club)} className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">Delete</button>
                         <button onClick={() => setManageClubId(club.clubId)} className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100">Manage Requests</button>
                       </>
                     )}
@@ -203,6 +214,17 @@ const Clubs: React.FC = () => {
             onClose={() => setManageClubId(null)}
           />
         )}
+
+        <ConfirmationModal
+          isOpen={!!clubToDelete}
+          title="Delete Club"
+          message={`Are you sure you want to delete "${clubToDelete?.name}"? This action cannot be undone and all club data will be permanently removed.`}
+          confirmText="Delete Club"
+          cancelText="Cancel"
+          onConfirm={handleDelete}
+          onCancel={() => setClubToDelete(null)}
+          isDestructive={true}
+        />
       </div>
     </div>
   );

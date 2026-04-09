@@ -9,8 +9,21 @@ import { NotificationProvider } from '../../contexts/NotificationContext';
 jest.mock('../../services/api', () => ({
   apiService: {
     deleteBook: jest.fn(),
+    updateBook: jest.fn(),
   },
 }));
+
+// Mock AuthContext
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { userId: 'user456' },
+  }),
+}));
+
+// Provide a virtual mock for react-router-dom to avoid requiring the real router in unit tests
+jest.mock('react-router-dom', () => ({
+  Link: ({ children }: any) => <a>{children}</a>,
+}), { virtual: true });
 
 // Test wrapper with NotificationProvider
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (

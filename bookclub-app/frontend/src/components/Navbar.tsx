@@ -199,9 +199,12 @@ const Navbar: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <Link to="/login" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
+                <a 
+                  href={`${config.apiBaseUrl.replace('api.', '')}/login`}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                >
                   Sign In
-                </Link>
+                </a>
               )}
             </div>
 
@@ -296,10 +299,13 @@ const MobileTabBar: React.FC = () => {
               <span>Profile</span>
             </Link>
           ) : (
-            <Link to="/login" className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors">
+            <a 
+              href={`${config.apiBaseUrl.replace('api.', '')}/login`}
+              className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors"
+            >
               <Icon.User />
               <span>Sign In</span>
-            </Link>
+            </a>
           )}
         </div>
       </div>

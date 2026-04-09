@@ -20,7 +20,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'my-books'>('all');
+  const [filter, setFilter] = useState<'all' | 'my-books' | 'lent' | 'borrowed'>('all');
   const location = useLocation();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -32,7 +32,7 @@ const Home: React.FC = () => {
   const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
-  // Client-side pagination for 'My Books'
+  // Client-side pagination for 'My Books', 'Lent', 'Borrowed'
   const [myPageIndex, setMyPageIndex] = useState(0);
   const { user } = useAuth();
   // Background total count for 'All Books'
@@ -42,14 +42,18 @@ const Home: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      if (filter === 'my-books' && user) {
-        // My Books - fetch all pages and paginate on the client
+      if (filter !== 'all' && user) {
+        // My Books, Lent, Borrowed - fetch all pages and paginate on the client
         const maxTotal = 2000;
         const perPage = 100;
         let aggregated: Book[] = [];
         let tokenLocal: string | undefined = undefined;
+        
+        // Determine which API to call based on filter
+        const listMethod = filter === 'borrowed' ? apiService.listBooksBorrowedByMe : apiService.listBooks;
+        
         for (let i = 0; i < Math.ceil(maxTotal / perPage); i++) {
-          const resp: BookListResponse = await apiService.listBooks({
+          const resp: BookListResponse = await listMethod({
             userId: user.userId,
             limit: perPage,
             nextToken: tokenLocal,
@@ -60,8 +64,14 @@ const Home: React.FC = () => {
           tokenLocal = resp.nextToken || undefined;
           if (!tokenLocal || aggregated.length >= maxTotal) break;
         }
+
+        // Apply client-side filter for 'Lent'
+        if (filter === 'lent') {
+          aggregated = aggregated.filter(b => b.status === 'borrowed');
+        }
+
         setBooks(aggregated);
-        // Reset API pagination state (unused for my-books)
+        // Reset API pagination state
         setHasNextPage(false);
         setNextToken(null);
       } else {
@@ -298,8 +308,31 @@ const Home: React.FC = () => {
 
             <div className="mb-6">
               <div className="flex justify-between items-center">
-                <div className="flex space-x-4">
-                  {/* Filter buttons removed - navigation should be through top nav */}
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => { setFilter('my-books'); setMyPageIndex(0); }}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      filter === 'my-books' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Owned
+                  </button>
+                  <button
+                    onClick={() => { setFilter('lent'); setMyPageIndex(0); }}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      filter === 'lent' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Lent
+                  </button>
+                  <button
+                    onClick={() => { setFilter('borrowed'); setMyPageIndex(0); }}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      filter === 'borrowed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Borrowed
+                  </button>
                 </div>
                 <div className="flex space-x-2">
                   <button

@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList } from '../types';
 import { config } from '../config';
+import { getCookie } from '../utils/cookies';
 
 class ApiService {
   private api: AxiosInstance;
@@ -20,8 +21,13 @@ class ApiService {
     this.api.interceptors.request.use((config) => {
       // Use ID Token for API Gateway Cognito Authorizers.
       // Fall back to Access Token if ID token is missing.
-      const idToken = localStorage.getItem('idToken');
-      const accessToken = localStorage.getItem('accessToken');
+      let idToken = localStorage.getItem('idToken');
+      let accessToken = localStorage.getItem('accessToken');
+      
+      // Fallback to cookies for subdomain support
+      if (!idToken) idToken = getCookie('idToken');
+      if (!accessToken) accessToken = getCookie('accessToken');
+      
       const token = idToken || accessToken;
       
       if (token) {
@@ -170,12 +176,14 @@ class ApiService {
     clubId?: string;
     limit?: number;
     nextToken?: string;
+    filter?: 'borrowed';
   }): Promise<BookListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.userId) queryParams.append('userId', params.userId);
     if (params?.clubId) queryParams.append('clubId', params.clubId);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
+    if (params?.filter) queryParams.append('filter', params.filter);
 
     const response: AxiosResponse<ApiResponse<BookListResponse>> = await this.api.get(
       `/books?${queryParams.toString()}`
@@ -184,6 +192,14 @@ class ApiService {
       throw new Error(response.data.error?.message || 'Failed to list books');
     }
     return response.data.data!;
+  }
+
+  async listBooksBorrowedByMe(params: {
+    userId: string;
+    limit?: number;
+    nextToken?: string;
+  }): Promise<BookListResponse> {
+    return this.listBooks({ ...params, filter: 'borrowed' });
   }
 
   async listBooksPublic(params?: {

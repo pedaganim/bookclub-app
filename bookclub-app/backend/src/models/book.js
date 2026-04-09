@@ -102,6 +102,41 @@ class Book {
     };
   }
 
+  static async listByLentToUser(lentToUserId, limit = 10, nextToken = null) {
+    if (isOffline()) {
+      const result = await LocalStorage().listBooks();
+      const filtered = result.filter(b => b.lentToUserId === lentToUserId);
+      return {
+        items: filtered.slice(0, limit),
+        nextToken: filtered.length > limit ? 'has-more' : null,
+      };
+    }
+
+    const params = {
+      TableName: getTableName('books'),
+      IndexName: 'LentToUserIdIndex',
+      KeyConditionExpression: 'lentToUserId = :lentToUserId',
+      ExpressionAttributeValues: {
+        ':lentToUserId': lentToUserId,
+      },
+      Limit: limit,
+      ScanIndexForward: false, // Sort by most recent first
+    };
+
+    if (nextToken) {
+      params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+    }
+
+    const result = await dynamoDb.query(params);
+
+    return {
+      items: result.Items || [],
+      nextToken: result.LastEvaluatedKey 
+        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+        : null,
+    };
+  }
+
   static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null, options = undefined) {
     if (isOffline()) {
       let result = await LocalStorage().listBooks();

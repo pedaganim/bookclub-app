@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Clubs from '../../pages/Clubs';
+import { NotificationProvider } from '../../contexts/NotificationContext';
 // react-router-dom is mocked below for unit tests
 
 // Mock apiService
@@ -31,6 +32,12 @@ jest.mock('../../contexts/AuthContext', () => ({
 }));
 
 const { apiService } = require('../../services/api');
+
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <NotificationProvider>
+    {children}
+  </NotificationProvider>
+);
 
 describe('Clubs page', () => {
   beforeEach(() => {
@@ -63,7 +70,11 @@ describe('Clubs page', () => {
       ],
     });
 
-    render(<Clubs />);
+    render(
+      <TestWrapper>
+        <Clubs />
+      </TestWrapper>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('My Club')).toBeInTheDocument();
@@ -91,7 +102,11 @@ describe('Clubs page', () => {
   it('opens create modal and can close it', async () => {
     (apiService.getUserClubs as jest.Mock).mockResolvedValue({ items: [] });
 
-    render(<Clubs />);
+    render(
+      <TestWrapper>
+        <Clubs />
+      </TestWrapper>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('You have no clubs yet')).toBeInTheDocument();
