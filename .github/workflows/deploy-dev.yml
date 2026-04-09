@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./backend
+        working-directory: ./bookclub-app/backend
     
     steps:
       - name: Checkout code
@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ./backend/package-lock.json
+          cache-dependency-path: ./bookclub-app/backend/package-lock.json
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -61,7 +61,7 @@ jobs:
     needs: deploy-backend
     defaults:
       run:
-        working-directory: ./frontend
+        working-directory: ./bookclub-app/frontend
     
     steps:
       - name: Checkout code
@@ -72,7 +72,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ./frontend/package-lock.json
+          cache-dependency-path: ./bookclub-app/frontend/package-lock.json
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
