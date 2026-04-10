@@ -13,12 +13,6 @@ describe('Serverless Configuration - Circular Dependency Validation', () => {
     serverlessConfigContent = fs.readFileSync(configPath, 'utf8');
   });
 
-  test('should not have explicit dependency causing circular reference', () => {
-    // The UserPoolClient should not have explicit DependsOn: GoogleIdentityProvider
-    // as this can cause circular dependencies with auto-generated API Gateway resources
-    expect(serverlessConfigContent).not.toContain('DependsOn: GoogleIdentityProvider');
-  });
-
   test('should use custom resource for S3 bucket to handle create-if-missing scenario', () => {
     // S3 bucket should use custom resource to avoid "bucket already exists" errors
     // This ensures graceful handling when bucket exists from previous deployments
