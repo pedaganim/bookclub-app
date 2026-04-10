@@ -1410,6 +1410,8 @@ resources:
 
     GoogleIdentityProvider:
       Type: AWS::Cognito::UserPoolIdentityProvider
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         UserPoolId: !Ref UserPool
         ProviderName: Google
