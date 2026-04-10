@@ -9,7 +9,7 @@
 
 const AWS = require('aws-sdk');
 
-const dynamodb = new AWS.DynamoDB();
+const dynamodb = new AWS.DynamoDB({ region: process.env.AWS_REGION || 'us-east-1' });
 const isTest = process.env.NODE_ENV === 'test';
 
 const sendResponse = async (event, context, responseStatus, responseData = {}, physicalResourceId = null) => {
@@ -72,15 +72,15 @@ const tableExists = async (tableName) => {
 
 const createTable = async (params) => {
   try {
-    console.log('Creating DynamoDB table:', params.TableName);
+    console.log('Creating DynamoDB table:', params.TableName, 'with params:', JSON.stringify(params));
     const result = await dynamodb.createTable(params).promise();
     
     // Wait for table to become active (invoke waitFor in tests, await only outside tests)
-    console.log('Waiting for table to become active...');
-    const waiterCreate = dynamodb.waitFor('tableExists', { TableName: params.TableName });
+    console.log('Waiting for table', params.TableName, 'to become active...');
     if (!isTest) {
-      await waiterCreate.promise();
+      await dynamodb.waitFor('tableExists', { TableName: params.TableName }).promise();
     }
+    console.log('Table', params.TableName, 'is now ACTIVE');
     
     return result;
   } catch (error) {
@@ -89,6 +89,7 @@ const createTable = async (params) => {
       console.log('Table already exists, adopting it:', params.TableName);
       return { TableDescription: { TableName: params.TableName } };
     }
+    console.error('Error in createTable for', params.TableName, ':', error.message);
     throw error;
   }
 };
@@ -209,11 +210,18 @@ exports.handler = async (event, context) => {
           
           // Set TTL if specified
           if (TimeToLiveSpecification) {
-            console.log('Setting TTL configuration...');
-            await dynamodb.updateTimeToLive({
-              TableName,
-              TimeToLiveSpecification
-            }).promise();
+            try {
+              console.log('Setting TTL configuration for', TableName);
+              // Small delay to ensure table metadata is fully propagated
+              if (!isTest) await new Promise(r => setTimeout(r, 2000));
+              await dynamodb.updateTimeToLive({
+                TableName,
+                TimeToLiveSpecification
+              }).promise();
+            } catch (ttlErr) {
+              console.warn(`Warning: Failed to set TTL for ${TableName}:`, ttlErr.message);
+              // Don't fail the whole creation for TTL
+            }
           }
         }
         break;

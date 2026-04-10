@@ -9,7 +9,7 @@
 
 const AWS = require('aws-sdk');
 
-const cognitoIdp = new AWS.CognitoIdentityServiceProvider();
+const cognitoIdp = new AWS.CognitoIdentityServiceProvider({ region: process.env.AWS_REGION || 'us-east-1' });
 
 const sendResponse = async (event, context, responseStatus, responseData = {}, physicalResourceId = null) => {
   const responseUrl = event.ResponseURL;

@@ -63,18 +63,18 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('dynamodb:DeleteItem');
     
     // Check table ARNs are referenced
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-metadata-cache-${self:provider.stage}');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}*');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}*');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-metadata-cache-${self:provider.stage}*');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}*');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}*');
   });
 
   test('should have S3 permissions for book covers bucket', () => {
     expect(serverlessConfigContent).toContain('s3:PutObject');
     expect(serverlessConfigContent).toContain('s3:GetObject');
     expect(serverlessConfigContent).toContain('s3:DeleteObject');
-    expect(serverlessConfigContent).toContain('arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*');
+    expect(serverlessConfigContent).toContain('arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers-v2/*');
   });
 
   test('should have Cognito resources defined', () => {
