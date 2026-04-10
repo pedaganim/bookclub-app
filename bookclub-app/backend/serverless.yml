@@ -1028,24 +1028,28 @@ functions:
     handler: src/custom-resources/dynamodb-table-manager.handler
     timeout: 600
     role: DynamoTableManagerRole
+    environment: {}
 
   # Custom resource to ensure Event Source Mapping is enabled post-deploy
   eventSourceMappingManager:
     handler: src/custom-resources/event-source-mapping-manager.handler
     timeout: 120
     role: EventSourceMappingManagerRole
+    environment: {}
 
   # Custom resource function for Cognito IdP create-or-update
   cognitoResourceManager:
     handler: src/custom-resources/cognito-resource-manager.handler
     timeout: 300
     role: CognitoResourceManagerRole
+    environment: {}
 
   # Custom resource function for S3 bucket management
   s3BucketManager:
     handler: src/custom-resources/s3-bucket-manager.handler
     timeout: 300
     role: S3BucketManagerRole
+    environment: {}
 
   # Voice search transcription function
   voiceTranscribe:
