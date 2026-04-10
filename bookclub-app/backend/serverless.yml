@@ -1542,6 +1542,9 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 5
               WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
 
     # Explicit EventSourceMapping to wire DynamoDB Stream to the stream processor Lambda
     BooksTableStreamToProcessor:
