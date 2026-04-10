@@ -43,8 +43,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Look up existing Cognito IDs
+        id: cognito-lookup
+        run: |
+          # Try CloudFormation stack outputs first
+          POOL_ID=$(aws cloudformation describe-stacks \
+            --stack-name bookclub-app-dev \
+            --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          CLIENT_ID=$(aws cloudformation describe-stacks \
+            --stack-name bookclub-app-dev \
+            --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          # Fall back to direct Cognito lookup by name
+          if [ -z "$POOL_ID" ] || [ "$POOL_ID" = "None" ]; then
+            POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 \
+              --query "UserPools[?Name=='bookclub-app-user-pool-dev-v2'].Id | [0]" \
+              --output text 2>/dev/null || echo "")
+          fi
+          if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
+            if [ -n "$POOL_ID" ] && [ "$POOL_ID" != "None" ]; then
+              CLIENT_ID=$(aws cognito-idp list-user-pool-clients \
+                --user-pool-id "$POOL_ID" \
+                --query "UserPoolClients[?ClientName=='bookclub-app-client-dev-v2'].ClientId | [0]" \
+                --output text 2>/dev/null || echo "")
+            fi
+          fi
+          echo "COGNITO_USER_POOL_ID=${POOL_ID:-}" >> $GITHUB_ENV
+          echo "COGNITO_CLIENT_ID=${CLIENT_ID:-}" >> $GITHUB_ENV
+          echo "Pool ID: ${POOL_ID:-<not found, will be created>}"
+          echo "Client ID: ${CLIENT_ID:-<not found, will be created>}"
+      
       - name: Deploy to AWS (dev stage)
         env:
+          COGNITO_USER_POOL_ID: ${{ env.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ env.COGNITO_CLIENT_ID }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

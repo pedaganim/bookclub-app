@@ -13,8 +13,8 @@ provider:
         file: Dockerfile
   environment:
     STAGE: ${self:provider.stage}
-    COGNITO_USER_POOL_ID: !Ref UserPool
-    COGNITO_CLIENT_ID: !Ref UserPoolClient
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers-v2
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
@@ -95,7 +95,7 @@ provider:
             - cognito-idp:AdminConfirmSignUp
             - cognito-idp:AdminDeleteUser
             - cognito-idp:GetUser
-          Resource: !GetAtt UserPool.Arn
+          Resource: "arn:aws:cognito-idp:${self:provider.region}:*:userpool/*"
         - Effect: Allow
           Action:
             - textract:DetectDocumentText
