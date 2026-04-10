@@ -1311,15 +1311,6 @@ resources:
                     - cognito-idp:CreateIdentityProvider
                     - cognito-idp:UpdateIdentityProvider
                     - cognito-idp:DeleteIdentityProvider
-                    - cognito-idp:ListUserPools
-                    - cognito-idp:CreateUserPool
-                    - cognito-idp:UpdateUserPool
-                    - cognito-idp:ListUserPoolClients
-                    - cognito-idp:CreateUserPoolClient
-                    - cognito-idp:UpdateUserPoolClient
-                    - cognito-idp:DescribeUserPoolDomain
-                    - cognito-idp:CreateUserPoolDomain
-                    - cognito-idp:DeleteUserPoolDomain
                   Resource: "*"
 
     # Permission for CloudFormation to invoke Cognito IdP manager
@@ -1370,12 +1361,10 @@ resources:
         Principal: cloudformation.amazonaws.com
 
     UserPool:
-      Type: AWS::CloudFormation::CustomResource
+      Type: AWS::Cognito::UserPool
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
-        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
-        Action: EnsureUserPool
         UserPoolName: ${self:service}-user-pool-${self:provider.stage}
         Schema:
           - Name: email
@@ -1392,13 +1381,11 @@ resources:
           - email
 
     UserPoolClient:
-      Type: AWS::CloudFormation::CustomResource
+      Type: AWS::Cognito::UserPoolClient
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       DependsOn: GoogleIdentityProvider
       Properties:
-        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
-        Action: EnsureUserPoolClient
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
         GenerateSecret: false
@@ -1422,12 +1409,10 @@ resources:
           - ${self:custom.appConfig.oauth.redirectSignOut}
 
     GoogleIdentityProvider:
-      Type: AWS::CloudFormation::CustomResource
+      Type: AWS::Cognito::UserPoolIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
-        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
-        Action: CreateOrUpdateIdentityProvider
         UserPoolId: !Ref UserPool
         ProviderName: Google
         ProviderType: Google
@@ -1442,12 +1427,10 @@ resources:
           name: name
 
     UserPoolDomain:
-      Type: AWS::CloudFormation::CustomResource
+      Type: AWS::Cognito::UserPoolDomain
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
-        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
-        Action: EnsureUserPoolDomain
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
 
