@@ -169,27 +169,54 @@ exports.handler = async (event, context) => {
           }
           result = { ProviderName };
         } else if (Action === 'EnsureUserPool') {
-          const { UserPoolName, Policies, Schema, AutoVerifiedAttributes } = ResourceProperties;
-          physicalResourceId = UserPoolName;
-          
-          // List user pools to find by name
-          const listRes = await cognitoIdp.listUserPools({ MaxResults: 60 }).promise();
-          const existingPool = (listRes.UserPools || []).find(p => p.Name === UserPoolName);
-          
-          if (existingPool) {
-            console.log(`User Pool ${UserPoolName} already exists, adopting it: ${existingPool.Id}`);
-            physicalResourceId = existingPool.Id;
-            result = { UserPoolId: existingPool.Id, Arn: `arn:aws:cognito-idp:${process.env.AWS_REGION}:${context.invokedFunctionArn.split(':')[4]}:userpool/${existingPool.Id}` };
-          } else {
-            console.log(`Creating new User Pool: ${UserPoolName}`);
-            const createRes = await cognitoIdp.createUserPool({
-              PoolName: UserPoolName,
-              Policies,
-              Schema,
-              AutoVerifiedAttributes
-            }).promise();
-            physicalResourceId = createRes.UserPool.Id;
-            result = { UserPoolId: createRes.UserPool.Id, Arn: createRes.UserPool.Arn };
+          const { UserPoolId: providedPoolId, UserPoolName, Policies, Schema, AutoVerifiedAttributes } = ResourceProperties;
+          const accountId = context.invokedFunctionArn.split(':')[4];
+          const region = process.env.AWS_REGION || 'us-east-1';
+          let adopted = false;
+
+          // If a known pool ID is provided, verify it exists and adopt it directly
+          if (providedPoolId && providedPoolId.trim()) {
+            console.log(`UserPoolId provided (${providedPoolId}), verifying it exists...`);
+            try {
+              const descRes = await cognitoIdp.describeUserPool({ UserPoolId: providedPoolId }).promise();
+              const pool = descRes.UserPool;
+              console.log(`Found existing User Pool by ID: ${pool.Id} (${pool.Name})`);
+              physicalResourceId = pool.Id;
+              result = { UserPoolId: pool.Id, Arn: pool.Arn || `arn:aws:cognito-idp:${region}:${accountId}:userpool/${pool.Id}` };
+              adopted = true;
+            } catch (descErr) {
+              console.warn(`Could not describe UserPool ${providedPoolId}: ${descErr.message} - falling back to name search`);
+            }
+          }
+
+          if (!adopted) {
+            // Paginated search by name
+            console.log(`Searching for User Pool by name: ${UserPoolName}`);
+            let existingPool = null;
+            let nextToken = null;
+            do {
+              const listParams = { MaxResults: 60 };
+              if (nextToken) listParams.NextToken = nextToken;
+              const listRes = await cognitoIdp.listUserPools(listParams).promise();
+              existingPool = (listRes.UserPools || []).find(p => p.Name === UserPoolName);
+              nextToken = listRes.NextToken;
+            } while (!existingPool && nextToken);
+
+            if (existingPool) {
+              console.log(`Found User Pool by name: ${existingPool.Id}`);
+              physicalResourceId = existingPool.Id;
+              result = { UserPoolId: existingPool.Id, Arn: `arn:aws:cognito-idp:${region}:${accountId}:userpool/${existingPool.Id}` };
+            } else {
+              console.log(`Creating new User Pool: ${UserPoolName}`);
+              const createRes = await cognitoIdp.createUserPool({
+                PoolName: UserPoolName,
+                Policies,
+                Schema,
+                AutoVerifiedAttributes
+              }).promise();
+              physicalResourceId = createRes.UserPool.Id;
+              result = { UserPoolId: createRes.UserPool.Id, Arn: createRes.UserPool.Arn };
+            }
           }
         } else if (Action === 'EnsureUserPoolClient') {
           const { UserPoolId, ClientName, ExplicitAuthFlows, PreventUserExistenceErrors, SupportedIdentityProviders, AllowedOAuthFlows, AllowedOAuthScopes, CallbackURLs, LogoutURLs, AllowedOAuthFlowsUserPoolClient } = ResourceProperties;

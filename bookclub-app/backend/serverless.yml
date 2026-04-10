@@ -1312,6 +1312,7 @@ resources:
                     - cognito-idp:UpdateIdentityProvider
                     - cognito-idp:DeleteIdentityProvider
                     - cognito-idp:ListUserPools
+                    - cognito-idp:DescribeUserPool
                     - cognito-idp:CreateUserPool
                     - cognito-idp:UpdateUserPool
                     - cognito-idp:ListUserPoolClients
@@ -1376,6 +1377,7 @@ resources:
       Properties:
         ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
         Action: EnsureUserPool
+        UserPoolId: ${env:COGNITO_USER_POOL_ID, ''}
         UserPoolName: ${self:service}-user-pool-${self:provider.stage}-v2
         Schema:
           - Name: email
