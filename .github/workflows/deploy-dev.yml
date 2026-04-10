@@ -45,7 +45,11 @@ jobs:
       
       - name: Deploy to AWS (dev stage)
         env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BEDROCK_MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
+          MCP_DEBUG: ${{ vars.MCP_DEBUG }}
         run: npx serverless deploy --stage dev --verbose
       
       - name: Export deployment outputs
