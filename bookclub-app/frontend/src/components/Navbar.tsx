@@ -14,10 +14,6 @@ const Navbar: React.FC = () => {
   const [librariesOpen, setLibrariesOpen] = useState(false);
   const librariesRef = useRef<HTMLDivElement>(null);
 
-  const handleAddBooksClick = () => {
-    navigate('/my-books', { state: { openAddBooks: true } });
-  };
-
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -163,9 +159,6 @@ const Navbar: React.FC = () => {
                   <Link to="/my-books" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                     My Books
                   </Link>
-                  <button onClick={handleAddBooksClick} className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                    Add Books
-                  </button>
                   <Link to="/clubs" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                     Clubs
                   </Link>

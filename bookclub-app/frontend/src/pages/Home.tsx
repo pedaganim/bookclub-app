@@ -342,6 +342,18 @@ const Home: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex space-x-2">
+                  {filter !== 'all' && (
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors mr-2"
+                      title="Add Book"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Books
+                    </button>
+                  )}
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded-md ${
