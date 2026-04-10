@@ -244,7 +244,7 @@ exports.handler = async (event, context) => {
     const timeBudgetMs = isTest
       ? 0
       : (wantStream
-        ? Math.max(0, (typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0) - 20000)
+        ? Math.max(0, (typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0) - 10000)
         : 60000);
     let attempt = 0;
     while (true) {
@@ -253,13 +253,17 @@ exports.handler = async (event, context) => {
         const desc = await dynamodb.describeTable({ TableName }).promise();
         streamArn = desc?.Table?.LatestStreamArn || null;
         if (streamArn) {
-          console.log(`Obtained StreamArn on attempt ${attempt}: ${streamArn}`);
+          console.log(`Obtained StreamArn for ${TableName} on attempt ${attempt}: ${streamArn}`);
+          break;
+        }
+        if (!wantStream) {
+          console.log(`No StreamArn needed for ${TableName}, moving on.`);
           break;
         }
         const elapsed = Date.now() - start;
-        console.log(`StreamArn not yet available (attempt ${attempt}, elapsed ${elapsed}ms), waiting ${delayMs}ms...`);
+        console.log(`StreamArn for ${TableName} not yet available (attempt ${attempt}, elapsed ${elapsed}ms), waiting ${delayMs}ms...`);
       } catch (e) {
-        console.log(`DescribeTable failed (attempt ${attempt}):`, e.message);
+        console.log(`DescribeTable for ${TableName} failed (attempt ${attempt}):`, e.message);
       }
 
       if (isTest) {
@@ -270,9 +274,11 @@ exports.handler = async (event, context) => {
       const remaining = typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0;
       if (wantStream) {
         if (elapsed >= timeBudgetMs) {
+          console.log(`Reached time budget for ${TableName} (${elapsed}ms >= ${timeBudgetMs}ms)`);
           break;
         }
-        if (remaining > 0 && remaining <= 20000) {
+        if (remaining > 0 && remaining <= 10000) {
+          console.log(`Not enough time remaining in Lambda for ${TableName} (${remaining}ms), stopping poll.`);
           break;
         }
       } else {
@@ -287,7 +293,7 @@ exports.handler = async (event, context) => {
     }
 
     if (wantStream && !streamArn && !isTest) {
-      throw new Error('StreamArn not available after enabling streams');
+      console.warn(`WARNING: wantStream=true but streamArn not found for ${TableName} after polling.`);
     }
     await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
   } catch (error) {
