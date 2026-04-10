@@ -1384,6 +1384,7 @@ resources:
       Type: AWS::Cognito::UserPoolClient
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
+      DependsOn: GoogleIdentityProvider
       Properties:
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
