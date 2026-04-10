@@ -13,8 +13,6 @@ provider:
         file: Dockerfile
   environment:
     STAGE: ${self:provider.stage}
-    COGNITO_USER_POOL_ID: !Ref UserPool
-    COGNITO_CLIENT_ID: !Ref UserPoolClient
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
@@ -1311,6 +1309,15 @@ resources:
                     - cognito-idp:CreateIdentityProvider
                     - cognito-idp:UpdateIdentityProvider
                     - cognito-idp:DeleteIdentityProvider
+                    - cognito-idp:ListUserPools
+                    - cognito-idp:CreateUserPool
+                    - cognito-idp:UpdateUserPool
+                    - cognito-idp:ListUserPoolClients
+                    - cognito-idp:CreateUserPoolClient
+                    - cognito-idp:UpdateUserPoolClient
+                    - cognito-idp:DescribeUserPoolDomain
+                    - cognito-idp:CreateUserPoolDomain
+                    - cognito-idp:DeleteUserPoolDomain
                   Resource: "*"
 
     # Permission for CloudFormation to invoke Cognito IdP manager
@@ -1361,10 +1368,12 @@ resources:
         Principal: cloudformation.amazonaws.com
 
     UserPool:
-      Type: AWS::Cognito::UserPool
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: EnsureUserPool
         UserPoolName: ${self:service}-user-pool-${self:provider.stage}
         Schema:
           - Name: email
@@ -1381,11 +1390,13 @@ resources:
           - email
 
     UserPoolClient:
-      Type: AWS::Cognito::UserPoolClient
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       DependsOn: GoogleIdentityProvider
       Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: EnsureUserPoolClient
         ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
         GenerateSecret: false
@@ -1409,10 +1420,12 @@ resources:
           - ${self:custom.appConfig.oauth.redirectSignOut}
 
     GoogleIdentityProvider:
-      Type: AWS::Cognito::UserPoolIdentityProvider
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: CreateOrUpdateIdentityProvider
         UserPoolId: !Ref UserPool
         ProviderName: Google
         ProviderType: Google
@@ -1427,10 +1440,12 @@ resources:
           name: name
 
     UserPoolDomain:
-      Type: AWS::Cognito::UserPoolDomain
+      Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: EnsureUserPoolDomain
         Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
 
