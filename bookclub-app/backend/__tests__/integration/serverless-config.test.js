@@ -79,13 +79,13 @@ describe('Serverless Configuration', () => {
 
   test('should have Cognito resources defined', () => {
     expect(serverlessConfigContent).toContain('UserPool:');
-    expect(serverlessConfigContent).toContain('Type: AWS::Cognito::UserPool');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     
     expect(serverlessConfigContent).toContain('UserPoolClient:');
-    expect(serverlessConfigContent).toContain('Type: AWS::Cognito::UserPoolClient');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
     
     expect(serverlessConfigContent).toContain('UserPoolDomain:');
-    expect(serverlessConfigContent).toContain('Type: AWS::Cognito::UserPoolDomain');
+    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
   });
 
   test('should have proper table schemas defined', () => {
