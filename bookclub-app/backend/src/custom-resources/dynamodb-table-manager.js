@@ -77,8 +77,9 @@ const createTable = async (params) => {
     
     // Wait for table to become active (invoke waitFor in tests, await only outside tests)
     console.log('Waiting for table', params.TableName, 'to become active...');
+    const waiter = dynamodb.waitFor('tableExists', { TableName: params.TableName });
     if (!isTest) {
-      await dynamodb.waitFor('tableExists', { TableName: params.TableName }).promise();
+      await waiter.promise();
     }
     console.log('Table', params.TableName, 'is now ACTIVE');
     
