@@ -129,19 +129,23 @@ jobs:
           MCP_DEBUG: ${{ vars.MCP_DEBUG }}
         run: |
           npx serverless package --stage dev
-          echo "=== .serverless directory contents ==="
-          ls -la .serverless/
-          TEMPLATE=".serverless/cloudformation-template-update-stack.json"
-          [ -f "$TEMPLATE" ] || TEMPLATE=$(ls .serverless/*.json 2>/dev/null | head -1)
-          echo "Using template: $TEMPLATE"
-          echo "=== AWS::Lambda::EventSourceMapping resources ==="
-          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::EventSourceMapping") | "\(.key): EventSourceArn=\(.value.Properties.EventSourceArn // "N/A")"' "$TEMPLATE" || echo "(none)"
-          echo "=== Container image Lambda functions ==="
-          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function" and (.value.Properties.PackageType? == "Image")) | "\(.key): \(.value.Properties.Code // .value.Properties.ImageUri // "N/A")"' "$TEMPLATE" || echo "(none)"
-          echo "=== AWS::S3::BucketNotification resources ==="
-          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::S3::BucketNotification") | "\(.key): \(.value.Properties.BucketName // "N/A")"' "$TEMPLATE" || echo "(none)"
-          echo "=== All resource types summary ==="
-          jq -r '[.Resources[].Type] | group_by(.) | map({type: .[0], count: length}) | sort_by(.count) | reverse[] | "\(.count)x \(.type)"' "$TEMPLATE"
+          echo "=== .serverless directory (all files) ==="
+          find .serverless -type f | sort
+          TEMPLATE=""
+          for f in ".serverless/cloudformation-template-update-stack.json" ".serverless/cloudformation-template-create-stack.json"; do
+            if [ -f "$f" ]; then TEMPLATE="$f"; break; fi
+          done
+          if [ -z "$TEMPLATE" ]; then
+            TEMPLATE=$(find .serverless -maxdepth 1 -name "*.json" | head -1)
+          fi
+          echo "Using template: ${TEMPLATE:-NOT FOUND}"
+          if [ -z "$TEMPLATE" ]; then echo "No template found"; exit 0; fi
+          echo "=== All resource types ==="
+          jq -r '[.Resources[].Type] | group_by(.) | map("\(length)x \(.[0])") | .[]' "$TEMPLATE" 2>&1 || true
+          echo "=== EventSourceMapping resources ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::EventSourceMapping") | "  \(.key): \(.value.Properties.EventSourceArn // "N/A")"' "$TEMPLATE" 2>&1 || echo "  (none)"
+          echo "=== Container image Lambdas ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function" and (.value.Properties.PackageType? == "Image")) | "  \(.key)"' "$TEMPLATE" 2>&1 || echo "  (none)"
 
       - name: Deploy to AWS (dev stage)
         env:
@@ -157,15 +161,27 @@ jobs:
       - name: Capture EarlyValidation failure details
         if: failure()
         run: |
-          echo "=== Recent CloudFormation stack events ==="
+          echo "=== Stack events (full JSON, last 10) ==="
           aws cloudformation describe-stack-events \
             --stack-name bookclub-app-dev --region us-east-1 \
-            --query 'StackEvents[0:20].[Timestamp,ResourceType,ResourceStatus,ResourceStatusReason]' \
-            --output table 2>/dev/null || echo "Could not retrieve stack events"
-          echo "=== Active change sets ==="
-          aws cloudformation list-change-sets \
+            --max-items 10 --output json 2>/dev/null \
+            | jq '.StackEvents[] | {Timestamp,LogicalResourceId,ResourceType,ResourceStatus,ResourceStatusReason,HookType,HookStatus,HookStatusReason}' \
+            || echo "Could not retrieve stack events"
+          echo "=== Change set hooks ==="
+          CHANGESETS=$(aws cloudformation list-change-sets \
             --stack-name bookclub-app-dev --region us-east-1 \
-            --output table 2>/dev/null || echo "No change sets found"
+            --query 'Summaries[*].ChangeSetName' --output text 2>/dev/null || echo "")
+          if [ -n "$CHANGESETS" ]; then
+            for CS in $CHANGESETS; do
+              echo "--- Change set: $CS ---"
+              aws cloudformation describe-change-set-hooks \
+                --change-set-name "$CS" --stack-name bookclub-app-dev \
+                --region us-east-1 --output json 2>/dev/null \
+                | jq '.ChangeSetHooks // empty' || echo "(no hooks data)"
+            done
+          else
+            echo "(no change sets found — likely already deleted by Serverless cleanup)"
+          fi
       
       - name: Export deployment outputs
         id: export
