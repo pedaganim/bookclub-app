@@ -118,6 +118,9 @@ provider:
         - Effect: Allow
           Action:
             - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
           Resource: !GetAtt BedrockAnalyzeQueue.Arn
         - Effect: Allow
           Action:
@@ -204,15 +207,12 @@ functions:
                 - 'book-cover-uploaded'
 
   # Bedrock analyzer SQS worker (processes messages one-by-one)
+  # SQS event source mapping managed via EnsureBedrockQueueMappingEnabled custom resource
+  # to avoid EarlyValidation::ResourceExistenceCheck failures on new deployments.
   bedrockAnalyzeWorker:
     handler: src/handlers/strands/bedrockAnalyzeWorker.handler
     timeout: 900
     memorySize: 1536
-    events:
-      - sqs:
-          arn: !GetAtt BedrockAnalyzeQueue.Arn
-          batchSize: 1
-          maximumConcurrency: 2
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
@@ -1199,6 +1199,19 @@ resources:
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt BedrockAnalyzeDLQ.Arn
           maxReceiveCount: 5
+
+    # Creates the SQS → bedrockAnalyzeWorker event source mapping via custom resource.
+    # Using a custom resource avoids EarlyValidation::ResourceExistenceCheck on new deployments.
+    EnsureBedrockQueueMappingEnabled:
+      Type: AWS::CloudFormation::CustomResource
+      Properties:
+        ServiceToken: !GetAtt EventSourceMappingManagerLambdaFunction.Arn
+        FunctionName: !GetAtt BedrockAnalyzeWorkerLambdaFunction.Arn
+        EventSourceArn: !GetAtt BedrockAnalyzeQueue.Arn
+        BatchSize: 1
+        MaximumConcurrency: 2
+      DependsOn:
+        - BedrockAnalyzeQueue
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
       Type: AWS::IAM::Role

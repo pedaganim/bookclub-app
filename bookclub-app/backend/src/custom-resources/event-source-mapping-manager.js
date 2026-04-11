@@ -90,14 +90,22 @@ exports.handler = async (event, context) => {
     // If no mapping exists and we have an EventSourceArn, create it
     if (!mappings.length && EventSourceArn) {
       console.log(`Creating EventSourceMapping: ${FunctionName} → ${EventSourceArn}`);
-      await withRetry(() => lambda.createEventSourceMapping({
+      const createParams = {
         FunctionName,
         EventSourceArn,
         BatchSize: parseInt(BatchSize, 10) || 10,
-        MaximumBatchingWindowInSeconds: parseInt(MaximumBatchingWindowInSeconds, 10) || 5,
-        StartingPosition,
         Enabled: true,
-      }).promise());
+      };
+      if (StartingPosition) createParams.StartingPosition = StartingPosition;
+      const batchWindowSecs = parseInt(MaximumBatchingWindowInSeconds, 10);
+      if (!isNaN(batchWindowSecs) && batchWindowSecs > 0) {
+        createParams.MaximumBatchingWindowInSeconds = batchWindowSecs;
+      }
+      const maxConcurrency = parseInt(ResourceProperties.MaximumConcurrency, 10);
+      if (!isNaN(maxConcurrency) && maxConcurrency > 0) {
+        createParams.ScalingConfig = { MaximumConcurrency: maxConcurrency };
+      }
+      await withRetry(() => lambda.createEventSourceMapping(createParams).promise());
       await sendResponse(event, context, 'SUCCESS', { FunctionName, Created: true }, FunctionName);
       return;
     }
