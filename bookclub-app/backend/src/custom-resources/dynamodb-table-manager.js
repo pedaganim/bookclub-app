@@ -9,24 +9,8 @@
 
 const AWS = require('aws-sdk');
 
-const dynamodb = new AWS.DynamoDB({ region: process.env.AWS_REGION || 'us-east-1' });
+const dynamodb = new AWS.DynamoDB();
 const isTest = process.env.NODE_ENV === 'test';
-
-// CloudFormation passes ALL scalar property values as strings.
-// These helpers normalise them back to the expected JS types.
-const toInt = (val, fallback = 1) => { const n = parseInt(val, 10); return isNaN(n) ? fallback : n; };
-const toBool = (val) => val === true || val === 'true';
-
-const normaliseThroughput = (t) => t ? { ReadCapacityUnits: toInt(t.ReadCapacityUnits, 1), WriteCapacityUnits: toInt(t.WriteCapacityUnits, 1) } : undefined;
-
-const normaliseStreamSpec = (ss) => ss ? { StreamEnabled: toBool(ss.StreamEnabled), ...(ss.StreamViewType ? { StreamViewType: ss.StreamViewType } : {}) } : undefined;
-
-const normaliseGSIs = (gsis) => (gsis || []).map(g => ({
-  IndexName: g.IndexName,
-  KeySchema: g.KeySchema,
-  Projection: g.Projection,
-  ProvisionedThroughput: normaliseThroughput(g.ProvisionedThroughput)
-}));
 
 const sendResponse = async (event, context, responseStatus, responseData = {}, physicalResourceId = null) => {
   const responseUrl = event.ResponseURL;
@@ -88,16 +72,15 @@ const tableExists = async (tableName) => {
 
 const createTable = async (params) => {
   try {
-    console.log('Creating DynamoDB table:', params.TableName, 'with params:', JSON.stringify(params));
+    console.log('Creating DynamoDB table:', params.TableName);
     const result = await dynamodb.createTable(params).promise();
     
     // Wait for table to become active (invoke waitFor in tests, await only outside tests)
-    console.log('Waiting for table', params.TableName, 'to become active...');
-    const waiter = dynamodb.waitFor('tableExists', { TableName: params.TableName });
+    console.log('Waiting for table to become active...');
+    const waiterCreate = dynamodb.waitFor('tableExists', { TableName: params.TableName });
     if (!isTest) {
-      await waiter.promise();
+      await waiterCreate.promise();
     }
-    console.log('Table', params.TableName, 'is now ACTIVE');
     
     return result;
   } catch (error) {
@@ -106,7 +89,6 @@ const createTable = async (params) => {
       console.log('Table already exists, adopting it:', params.TableName);
       return { TableDescription: { TableName: params.TableName } };
     }
-    console.error('Error in createTable for', params.TableName, ':', error.message);
     throw error;
   }
 };
@@ -212,33 +194,26 @@ exports.handler = async (event, context) => {
             TableName,
             AttributeDefinitions,
             KeySchema,
-            ProvisionedThroughput: normaliseThroughput(ProvisionedThroughput)
+            ProvisionedThroughput
           };
 
           if (GlobalSecondaryIndexes && GlobalSecondaryIndexes.length > 0) {
-            createParams.GlobalSecondaryIndexes = normaliseGSIs(GlobalSecondaryIndexes);
+            createParams.GlobalSecondaryIndexes = GlobalSecondaryIndexes;
           }
 
           if (ResourceProperties.StreamSpecification) {
-            createParams.StreamSpecification = normaliseStreamSpec(ResourceProperties.StreamSpecification);
+            createParams.StreamSpecification = ResourceProperties.StreamSpecification;
           }
 
           result = await createTable(createParams);
           
           // Set TTL if specified
           if (TimeToLiveSpecification) {
-            try {
-              console.log('Setting TTL configuration for', TableName);
-              // Small delay to ensure table metadata is fully propagated
-              if (!isTest) await new Promise(r => setTimeout(r, 2000));
-              await dynamodb.updateTimeToLive({
-                TableName,
-                TimeToLiveSpecification
-              }).promise();
-            } catch (ttlErr) {
-              console.warn(`Warning: Failed to set TTL for ${TableName}:`, ttlErr.message);
-              // Don't fail the whole creation for TTL
-            }
+            console.log('Setting TTL configuration...');
+            await dynamodb.updateTimeToLive({
+              TableName,
+              TimeToLiveSpecification
+            }).promise();
           }
         }
         break;
@@ -263,62 +238,28 @@ exports.handler = async (event, context) => {
 
     // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
-    const wantStream = toBool(ResourceProperties.StreamSpecification?.StreamEnabled);
+    const wantStream = !!ResourceProperties.StreamSpecification?.StreamEnabled;
+    const maxAttempts = isTest ? 1 : (wantStream ? 60 : 12); // up to ~5 min for streams
     const delayMs = isTest ? 0 : 5000;
-    const start = Date.now();
-    const timeBudgetMs = isTest
-      ? 0
-      : (wantStream
-        ? Math.max(0, (typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0) - 10000)
-        : 60000);
-    let attempt = 0;
-    while (true) {
-      attempt += 1;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const desc = await dynamodb.describeTable({ TableName }).promise();
         streamArn = desc?.Table?.LatestStreamArn || null;
         if (streamArn) {
-          console.log(`Obtained StreamArn for ${TableName} on attempt ${attempt}: ${streamArn}`);
+          console.log(`Obtained StreamArn on attempt ${attempt}: ${streamArn}`);
           break;
         }
-        if (!wantStream) {
-          console.log(`No StreamArn needed for ${TableName}, moving on.`);
-          break;
-        }
-        const elapsed = Date.now() - start;
-        console.log(`StreamArn for ${TableName} not yet available (attempt ${attempt}, elapsed ${elapsed}ms), waiting ${delayMs}ms...`);
+        console.log(`StreamArn not yet available (attempt ${attempt}/${maxAttempts}), waiting ${delayMs}ms...`);
       } catch (e) {
-        console.log(`DescribeTable for ${TableName} failed (attempt ${attempt}):`, e.message);
+        console.log(`DescribeTable failed (attempt ${attempt}/${maxAttempts}):`, e.message);
       }
-
-      if (isTest) {
-        break;
-      }
-
-      const elapsed = Date.now() - start;
-      const remaining = typeof context.getRemainingTimeInMillis === 'function' ? context.getRemainingTimeInMillis() : 0;
-      if (wantStream) {
-        if (elapsed >= timeBudgetMs) {
-          console.log(`Reached time budget for ${TableName} (${elapsed}ms >= ${timeBudgetMs}ms)`);
-          break;
-        }
-        if (remaining > 0 && remaining <= 10000) {
-          console.log(`Not enough time remaining in Lambda for ${TableName} (${remaining}ms), stopping poll.`);
-          break;
-        }
-      } else {
-        if (elapsed >= timeBudgetMs) {
-          break;
-        }
-      }
-
       if (delayMs > 0) {
         await new Promise(r => setTimeout(r, delayMs));
       }
     }
 
     if (wantStream && !streamArn && !isTest) {
-      console.warn(`WARNING: wantStream=true but streamArn not found for ${TableName} after polling.`);
+      throw new Error('StreamArn not available after enabling streams');
     }
     await sendResponse(event, context, 'SUCCESS', { TableName, StreamArn: streamArn }, TableName);
   } catch (error) {

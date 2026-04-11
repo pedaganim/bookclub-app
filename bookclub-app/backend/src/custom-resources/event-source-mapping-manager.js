@@ -40,37 +40,12 @@ async function sendResponse(event, context, status, data = {}, physicalResourceI
   });
 }
 
-// Simple retry with exponential backoff and jitter for throttled Lambda API calls
-async function withRetry(fn, { maxAttempts = 8, baseMs = 300 } = {}) {
-  let attempt = 0;
-  /* eslint-disable no-constant-condition */
-  while (true) {
-    try {
-      return await fn();
-    } catch (err) {
-      const code = err && (err.code || err.name || '');
-      const retryable = err && (err.retryable === true || code === 'TooManyRequestsException' || code === 'ThrottlingException' || code === 'Throttling');
-      attempt += 1;
-      if (!retryable || attempt >= maxAttempts) throw err;
-      const backoff = baseMs * Math.pow(2, attempt - 1);
-      const jitter = Math.floor(Math.random() * 0.4 * backoff);
-      const delay = Math.min(5000, Math.floor(0.8 * backoff) + jitter);
-      // eslint-disable-next-line no-console
-      console.warn(`Retrying after ${delay}ms due to ${code} (attempt ${attempt}/${maxAttempts})`);
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-}
-
 exports.handler = async (event, context) => {
   // eslint-disable-next-line no-console
   console.log('Event:', JSON.stringify(event, null, 2));
   const { RequestType, ResourceProperties } = event;
   const FunctionName = ResourceProperties.FunctionName;
   const EventSourceArn = ResourceProperties.EventSourceArn;
-  const BatchSize = ResourceProperties.BatchSize || 10;
-  const MaximumBatchingWindowInSeconds = ResourceProperties.MaximumBatchingWindowInSeconds || 5;
-  const StartingPosition = ResourceProperties.StartingPosition || 'LATEST';
 
   if (!FunctionName) {
     await sendResponse(event, context, 'FAILED', { Error: 'Missing FunctionName' });
@@ -84,43 +59,15 @@ exports.handler = async (event, context) => {
     }
 
     // Look up mappings for this function (and filter by EventSourceArn if provided)
-    const res = await withRetry(() => lambda.listEventSourceMappings({ FunctionName }).promise());
+    const res = await lambda.listEventSourceMappings({ FunctionName }).promise();
     const mappings = (res.EventSourceMappings || []).filter(m => !EventSourceArn || m.EventSourceArn === EventSourceArn);
-
-    // If no mapping exists and we have an EventSourceArn, create it
-    if (!mappings.length && EventSourceArn) {
-      console.log(`Creating EventSourceMapping: ${FunctionName} → ${EventSourceArn}`);
-      const createParams = {
-        FunctionName,
-        EventSourceArn,
-        BatchSize: parseInt(BatchSize, 10) || 10,
-        Enabled: true,
-      };
-      if (StartingPosition) createParams.StartingPosition = StartingPosition;
-      const batchWindowSecs = parseInt(MaximumBatchingWindowInSeconds, 10);
-      if (!isNaN(batchWindowSecs) && batchWindowSecs > 0) {
-        createParams.MaximumBatchingWindowInSeconds = batchWindowSecs;
-      }
-      const maxConcurrency = parseInt(ResourceProperties.MaximumConcurrency, 10);
-      if (!isNaN(maxConcurrency) && maxConcurrency > 0) {
-        createParams.ScalingConfig = { MaximumConcurrency: maxConcurrency };
-      }
-      await withRetry(() => lambda.createEventSourceMapping(createParams).promise());
-      await sendResponse(event, context, 'SUCCESS', { FunctionName, Created: true }, FunctionName);
-      return;
-    }
-
-    if (!mappings.length) {
-      await sendResponse(event, context, 'SUCCESS', { FunctionName, MappingsFound: 0, Note: 'No EventSourceArn provided, skipping.' }, FunctionName);
-      return;
-    }
 
     // Enable any disabled mappings
     let updated = 0;
     for (const m of mappings) {
       const state = (m.State || '').toLowerCase();
       if (state !== 'enabled') {
-        await withRetry(() => lambda.updateEventSourceMapping({ UUID: m.UUID, Enabled: true }).promise());
+        await lambda.updateEventSourceMapping({ UUID: m.UUID, Enabled: true }).promise();
         updated += 1;
       }
     }

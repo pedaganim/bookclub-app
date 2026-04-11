@@ -102,112 +102,60 @@ const createBucket = async (params) => {
   }
 };
 
-const deepEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-const fetchCurrentBucketState = async (bucketName) => {
-  const state = { cors: null, pab: null, policy: null };
-  // CORS
-  try {
-    const cors = await s3.getBucketCors({ Bucket: bucketName }).promise();
-    state.cors = cors?.CORSConfiguration || cors || null;
-  } catch (e) {
-    if (e.code !== 'NoSuchCORSConfiguration' && e.code !== 'NotFound') {
-      console.log('getBucketCors error (ignored):', e.code || e.message);
-    }
-  }
-  // Public Access Block
-  try {
-    const pab = await s3.getPublicAccessBlock({ Bucket: bucketName }).promise();
-    state.pab = pab?.PublicAccessBlockConfiguration || null;
-  } catch (e) {
-    if (e.code !== 'NoSuchPublicAccessBlockConfiguration' && e.code !== 'NoSuchBucket' && e.code !== 'NotFound') {
-      console.log('getPublicAccessBlock error (ignored):', e.code || e.message);
-    }
-  }
-  // Policy
-  try {
-    const pol = await s3.getBucketPolicy({ Bucket: bucketName }).promise();
-    state.policy = JSON.parse(pol?.Policy || '{}');
-  } catch (e) {
-    if (e.code !== 'NoSuchBucketPolicy' && e.code !== 'NoSuchBucket' && e.code !== 'NotFound') {
-      console.log('getBucketPolicy error (ignored):', e.code || e.message);
-    }
-  }
-  return state;
-};
-
-const desiredPublicReadPolicy = (bucketName) => ({
-  Version: '2012-10-17',
-  Statement: [
-    {
-      Sid: 'PublicReadGetObject',
-      Effect: 'Allow',
-      Principal: '*',
-      Action: 's3:GetObject',
-      Resource: `arn:aws:s3:::${bucketName}/*`
-    }
-  ]
-});
-
 const configureBucket = async (bucketName, config) => {
-  const current = await fetchCurrentBucketState(bucketName);
-  let changed = false;
-
-  // CORS (compare and only update if needed)
+  // Set CORS configuration if provided
   if (config.CorsConfiguration) {
-    const desiredCors = { CORSRules: config.CorsConfiguration.CorsRules || config.CorsConfiguration.CORSRules || config.CorsConfiguration };
-    const currentCors = current.cors ? (current.cors.CORSRules ? current.cors : { CORSRules: current.cors }) : null;
-    if (!currentCors || !deepEqual(desiredCors, currentCors)) {
-      try {
-        console.log('Updating CORS configuration for bucket:', bucketName);
-        await s3.putBucketCors({ Bucket: bucketName, CORSConfiguration: desiredCors }).promise();
-        changed = true;
-      } catch (error) {
-        console.log('Error configuring CORS, but continuing:', error.message);
-      }
-    } else {
-      console.log('CORS configuration already up-to-date');
+    try {
+      console.log('Setting CORS configuration for bucket:', bucketName);
+      await s3.putBucketCors({
+        Bucket: bucketName,
+        CORSConfiguration: config.CorsConfiguration
+      }).promise();
+    } catch (error) {
+      console.log('Error configuring CORS, but continuing:', error.message);
     }
   }
 
-  // Public Access Block (compare and only update if needed)
+  // Set public access block configuration if provided
   if (config.PublicAccessBlockConfiguration) {
-    const desiredPab = config.PublicAccessBlockConfiguration;
-    if (!current.pab || !deepEqual(desiredPab, current.pab)) {
-      try {
-        console.log('Updating public access block configuration for bucket:', bucketName);
-        await s3.putPublicAccessBlock({ Bucket: bucketName, PublicAccessBlockConfiguration: desiredPab }).promise();
-        changed = true;
-      } catch (error) {
-        console.log('Error configuring public access block, but continuing:', error.message);
-      }
-    } else {
-      console.log('Public access block configuration already up-to-date');
+    try {
+      console.log('Setting public access block configuration for bucket:', bucketName);
+      await s3.putPublicAccessBlock({
+        Bucket: bucketName,
+        PublicAccessBlockConfiguration: config.PublicAccessBlockConfiguration
+      }).promise();
+    } catch (error) {
+      console.log('Error configuring public access block, but continuing:', error.message);
     }
   }
 
-  // Bucket policy for public read (compare and only update if needed)
+  // Set bucket policy if needed for public read access
   if (config.EnablePublicRead) {
-    const desired = desiredPublicReadPolicy(bucketName);
-    const isSame = current.policy && deepEqual(current.policy, desired);
-    if (!isSame) {
-      try {
-        console.log('Updating bucket policy for public read access:', bucketName);
-        await s3.putBucketPolicy({ Bucket: bucketName, Policy: JSON.stringify(desired) }).promise();
-        changed = true;
-      } catch (error) {
-        console.log('Error configuring bucket policy, but continuing:', error.message);
-      }
-    } else {
-      console.log('Bucket policy already up-to-date');
+    try {
+      console.log('Setting bucket policy for public read access:', bucketName);
+      const bucketPolicy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Sid: 'PublicReadGetObject',
+            Effect: 'Allow',
+            Principal: '*',
+            Action: 's3:GetObject',
+            Resource: `arn:aws:s3:::${bucketName}/*`
+          }
+        ]
+      };
+      
+      await s3.putBucketPolicy({
+        Bucket: bucketName,
+        Policy: JSON.stringify(bucketPolicy)
+      }).promise();
+    } catch (error) {
+      console.log('Error configuring bucket policy, but continuing:', error.message);
     }
   }
 
-  if (!changed) {
-    console.log('No bucket configuration changes detected. Skipping updates.');
-  } else {
-    console.log('Bucket configuration completed for:', bucketName);
-  }
+  console.log('Bucket configuration completed for:', bucketName);
 };
 
 const deleteBucket = async (bucketName) => {
