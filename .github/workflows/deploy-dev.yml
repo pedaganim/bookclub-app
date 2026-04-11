@@ -129,7 +129,11 @@ jobs:
           MCP_DEBUG: ${{ vars.MCP_DEBUG }}
         run: |
           npx serverless package --stage dev
-          TEMPLATE=".serverless/bookclub-app-dev.json"
+          echo "=== .serverless directory contents ==="
+          ls -la .serverless/
+          TEMPLATE=".serverless/cloudformation-template-update-stack.json"
+          [ -f "$TEMPLATE" ] || TEMPLATE=$(ls .serverless/*.json 2>/dev/null | head -1)
+          echo "Using template: $TEMPLATE"
           echo "=== AWS::Lambda::EventSourceMapping resources ==="
           jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::EventSourceMapping") | "\(.key): EventSourceArn=\(.value.Properties.EventSourceArn // "N/A")"' "$TEMPLATE" || echo "(none)"
           echo "=== Container image Lambda functions ==="
