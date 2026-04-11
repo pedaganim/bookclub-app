@@ -1,5 +1,6 @@
 const response = require('../../lib/response');
 const Book = require('../../models/book');
+const { getAuthenticatedUserId } = require('../../lib/get-user-id');
 const bookMetadataService = require('../../lib/book-metadata');
 const textractService = require('../../lib/textract-service');
 const imageMetadataService = require('../../lib/image-metadata-service');
@@ -37,7 +38,7 @@ function assignIsbnFromMetadata(existingIsbn10, existingIsbn13, extractedIsbn) {
 // --- Handler (moved to top for readability) ---
 module.exports.handler = async (event) => {
   try {
-    const userId = getUserIdFromEvent(event);
+    const userId = await getAuthenticatedUserId(event);
     if (!userId) return response.unauthorized('Missing or invalid authentication');
 
     const data = parseBody(event);
@@ -80,11 +81,6 @@ module.exports.handler = async (event) => {
 };
 
 // --- Helpers ---
-const getUserIdFromEvent = (event) => {
-  const claims = event?.requestContext?.authorizer?.claims;
-  return claims?.sub || null;
-};
-
 const parseBody = (event) => {
   try {
     return JSON.parse(event.body || '{}');

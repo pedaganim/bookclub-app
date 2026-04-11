@@ -1,0 +1,24 @@
+{
+  "5548f4b0-ceb5-4bb5-b2a8-53119911bf10": {
+    "bookId": "5548f4b0-ceb5-4bb5-b2a8-53119911bf10",
+    "userId": "local-user",
+    "title": "The Pragmatic Programmer",
+    "author": "David Thomas, Andrew Hunt",
+    "description": "A classic book on software craftsmanship.",
+    "coverImage": null,
+    "status": "available",
+    "createdAt": "2025-08-31T05:40:11.470Z",
+    "updatedAt": "2025-08-31T05:40:11.470Z"
+  },
+  "476aabcf-3f2d-4848-959a-c36d5a32606d": {
+    "bookId": "476aabcf-3f2d-4848-959a-c36d5a32606d",
+    "userId": "local-user",
+    "title": "Clean Code",
+    "author": "Robert C. Martin",
+    "description": "A handbook of agile software craftsmanship.",
+    "coverImage": null,
+    "status": "available",
+    "createdAt": "2025-08-31T05:40:29.470Z",
+    "updatedAt": "2025-08-31T05:40:29.470Z"
+  }
+}

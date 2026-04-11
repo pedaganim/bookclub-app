@@ -1,11 +1,13 @@
 const Book = require('../../models/book');
 const response = require('../../lib/response');
+const { getAuthenticatedUserId } = require('../../lib/get-user-id');
 
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
   try {
     const { bookId } = event.pathParameters || {};
-    const userId = event?.requestContext?.authorizer?.claims?.sub;
+    const userId = await getAuthenticatedUserId(event);
+    if (!userId) return response.unauthorized('Unauthorized');
     const data = parseBody(event);
 
     if (!bookId) {

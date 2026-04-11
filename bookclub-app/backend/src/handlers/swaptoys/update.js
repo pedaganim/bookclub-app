@@ -1,5 +1,6 @@
 const { success, error } = require('../../lib/response');
 const ToyListing = require('../../models/toyListing');
+const { getAuthenticatedUserId } = require('../../lib/get-user-id');
 
 const ALLOWED_CONDITIONS = ['new', 'like_new', 'good', 'fair'];
 const ALLOWED_CATEGORIES = ['books', 'outdoor', 'educational', 'dolls', 'vehicles', 'other'];
@@ -8,13 +9,8 @@ const ALLOWED_FIELDS = ['title', 'description', 'condition', 'category', 'images
 
 exports.handler = async (event) => {
   try {
-    const userId =
-      event.requestContext?.authorizer?.claims?.sub ||
-      event.requestContext?.authorizer?.claims?.['cognito:username'];
-
-    if (!userId) {
-      return error('Unauthorized', 401);
-    }
+    const userId = await getAuthenticatedUserId(event);
+    if (!userId) return error('Unauthorized', 401);
 
     const listingId = event.pathParameters?.listingId;
     if (!listingId) {

@@ -1,15 +1,11 @@
 const { success, error } = require('../../lib/response');
 const ToyListing = require('../../models/toyListing');
+const { getAuthenticatedUserId } = require('../../lib/get-user-id');
 
 exports.handler = async (event) => {
   try {
-    const userId =
-      event.requestContext?.authorizer?.claims?.sub ||
-      event.requestContext?.authorizer?.claims?.['cognito:username'];
-
-    if (!userId) {
-      return error('Unauthorized', 401);
-    }
+    const userId = await getAuthenticatedUserId(event);
+    if (!userId) return error('Unauthorized', 401);
 
     const listingId = event.pathParameters?.listingId;
     if (!listingId) {

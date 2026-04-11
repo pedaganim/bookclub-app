@@ -1,0 +1,13 @@
+{
+  "local-local-user@dev": {
+    "userId": "local-user",
+    "email": "local-local-user@dev",
+    "name": "Local Dev",
+    "password": "local",
+    "bio": "",
+    "profilePicture": null,
+    "timezone": "UTC",
+    "createdAt": "2026-04-03T11:02:46.178Z",
+    "updatedAt": "2026-04-03T11:02:46.178Z"
+  }
+}

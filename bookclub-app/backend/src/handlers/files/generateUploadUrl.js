@@ -2,6 +2,7 @@ const AWS = require('../../lib/aws-config');
 const { v4: uuidv4 } = require('uuid');
 const response = require('../../lib/response');
 const ToyListing = require('../../models/toyListing');
+const User = require('../../models/user');
 const { getTableName } = require('../../lib/table-names');
 
 const s3 = new AWS.S3();
@@ -26,7 +27,18 @@ async function storeListingMapping(bucket, key, listingId, userId) {
 
 module.exports.handler = async (event) => {
   try {
-    const userId = event.requestContext.authorizer.claims.sub;
+    let userId = event?.requestContext?.authorizer?.claims?.sub
+      || event?.requestContext?.authorizer?.claims?.['cognito:username'];
+
+    if (!userId) {
+      const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader || null;
+      if (!token) return response.unauthorized('Missing Authorization header');
+      const currentUser = await User.getCurrentUser(token);
+      if (!currentUser) return response.unauthorized('Invalid or expired token');
+      userId = currentUser.userId;
+    }
+
     const { fileType, fileName, context = 'book', libraryType = 'toy' } = JSON.parse(event.body || '{}');
 
     if (!fileType) {

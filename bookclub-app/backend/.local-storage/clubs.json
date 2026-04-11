@@ -1,0 +1,14 @@
+{
+  "9a925612-39f3-4d15-baa5-ad53428137bc": {
+    "clubId": "9a925612-39f3-4d15-baa5-ad53428137bc",
+    "name": "Test Book Club",
+    "slug": "test-book-club",
+    "description": "A test club",
+    "createdBy": "local-user",
+    "inviteCode": "7EB248F2",
+    "isPrivate": false,
+    "memberLimit": null,
+    "createdAt": "2026-04-11T06:31:03.051Z",
+    "updatedAt": "2026-04-11T06:31:03.051Z"
+  }
+}
