@@ -15,7 +15,7 @@ provider:
     STAGE: ${self:provider.stage}
     COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
-    BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers-v2
+    BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
     EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'default'}
@@ -84,7 +84,7 @@ provider:
             - s3:UploadPart
             - s3:CompleteMultipartUpload
             - s3:AbortMultipartUpload
-          Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers-v2/*"
+          Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
         - Effect: Allow
           Action:
             - ses:SendEmail
@@ -693,13 +693,13 @@ functions:
     timeout: 900
     events:
       - s3:
-          bucket: ${self:service}-${self:provider.stage}-book-covers-v2
+          bucket: ${self:service}-${self:provider.stage}-book-covers
           event: s3:ObjectCreated:*
           rules:
             - prefix: book-covers/
           existing: true
       - s3:
-          bucket: ${self:service}-${self:provider.stage}-book-covers-v2
+          bucket: ${self:service}-${self:provider.stage}-book-covers
           event: s3:ObjectCreated:*
           rules:
             - prefix: library-images/
@@ -1378,7 +1378,7 @@ resources:
         ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
         Action: EnsureUserPool
         UserPoolId: ${env:COGNITO_USER_POOL_ID, ''}
-        UserPoolName: ${self:service}-user-pool-${self:provider.stage}-v2
+        UserPoolName: ${self:service}-user-pool-${self:provider.stage}
         Schema:
           - Name: email
             Required: true
@@ -1402,7 +1402,7 @@ resources:
         ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
         Action: EnsureUserPoolClient
         ClientId: ${env:COGNITO_CLIENT_ID, ''}
-        ClientName: ${self:service}-client-${self:provider.stage}-v2
+        ClientName: ${self:service}-client-${self:provider.stage}
         UserPoolId: !Ref UserPool
         GenerateSecret: false
         ExplicitAuthFlows:
@@ -1451,7 +1451,7 @@ resources:
       Properties:
         ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
         Action: EnsureUserPoolDomain
-        Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}-v2
+        Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
 
     ApiGatewayAuthorizer:
@@ -1512,7 +1512,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-books-${self:provider.stage}-v2
+        TableName: ${self:service}-books-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: bookId
             AttributeType: S
@@ -1603,7 +1603,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-dm-conversations-${self:provider.stage}-v2
+        TableName: ${self:service}-dm-conversations-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: conversationId
             AttributeType: S
@@ -1649,7 +1649,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-dm-messages-${self:provider.stage}-v2
+        TableName: ${self:service}-dm-messages-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: conversationId
             AttributeType: S
@@ -1684,7 +1684,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-toy-listings-${self:provider.stage}-v2
+        TableName: ${self:service}-toy-listings-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: listingId
             AttributeType: S
@@ -1717,7 +1717,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-users-${self:provider.stage}-v2
+        TableName: ${self:service}-users-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
@@ -1746,7 +1746,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-metadata-cache-${self:provider.stage}-v2
+        TableName: ${self:service}-metadata-cache-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: cacheKey
             AttributeType: S
@@ -1766,7 +1766,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-bookclub-groups-${self:provider.stage}-v2
+        TableName: ${self:service}-bookclub-groups-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: clubId
             AttributeType: S
@@ -1806,7 +1806,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-bookclub-members-${self:provider.stage}-v2
+        TableName: ${self:service}-bookclub-members-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: clubId
             AttributeType: S
@@ -1838,7 +1838,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
-        BucketName: ${self:service}-${self:provider.stage}-book-covers-v2
+        BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
@@ -1875,4 +1875,4 @@ resources:
     ApiUrl:
       Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
     BookCoversBucketName:
-      Value: ${self:service}-${self:provider.stage}-book-covers-v2
+      Value: ${self:service}-${self:provider.stage}-book-covers

@@ -88,14 +88,14 @@ jobs:
           # Fall back to direct Cognito lookup by name
           if [ -z "$POOL_ID" ] || [ "$POOL_ID" = "None" ]; then
             POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 \
-              --query "UserPools[?Name=='bookclub-app-user-pool-dev-v2'].Id | [0]" \
+              --query "UserPools[?Name=='bookclub-app-user-pool-dev'].Id | [0]" \
               --output text 2>/dev/null || echo "")
           fi
           if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
             if [ -n "$POOL_ID" ] && [ "$POOL_ID" != "None" ]; then
               CLIENT_ID=$(aws cognito-idp list-user-pool-clients \
                 --user-pool-id "$POOL_ID" \
-                --query "UserPoolClients[?ClientName=='bookclub-app-client-dev-v2'].ClientId | [0]" \
+                --query "UserPoolClients[?ClientName=='bookclub-app-client-dev'].ClientId | [0]" \
                 --output text 2>/dev/null || echo "")
             fi
           fi
@@ -106,7 +106,7 @@ jobs:
       
       - name: Ensure book-covers bucket exists (required for EarlyValidation)
         run: |
-          BUCKET="bookclub-app-dev-book-covers-v2"
+          BUCKET="bookclub-app-dev-book-covers"
           if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
             echo "Bucket $BUCKET already exists."
           else
