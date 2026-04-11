@@ -12,6 +12,22 @@ const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB({ region: process.env.AWS_REGION || 'us-east-1' });
 const isTest = process.env.NODE_ENV === 'test';
 
+// CloudFormation passes ALL scalar property values as strings.
+// These helpers normalise them back to the expected JS types.
+const toInt = (val, fallback = 1) => { const n = parseInt(val, 10); return isNaN(n) ? fallback : n; };
+const toBool = (val) => val === true || val === 'true';
+
+const normaliseThroughput = (t) => t ? { ReadCapacityUnits: toInt(t.ReadCapacityUnits, 1), WriteCapacityUnits: toInt(t.WriteCapacityUnits, 1) } : undefined;
+
+const normaliseStreamSpec = (ss) => ss ? { StreamEnabled: toBool(ss.StreamEnabled), ...(ss.StreamViewType ? { StreamViewType: ss.StreamViewType } : {}) } : undefined;
+
+const normaliseGSIs = (gsis) => (gsis || []).map(g => ({
+  IndexName: g.IndexName,
+  KeySchema: g.KeySchema,
+  Projection: g.Projection,
+  ProvisionedThroughput: normaliseThroughput(g.ProvisionedThroughput)
+}));
+
 const sendResponse = async (event, context, responseStatus, responseData = {}, physicalResourceId = null) => {
   const responseUrl = event.ResponseURL;
   const responseBody = JSON.stringify({
@@ -196,15 +212,15 @@ exports.handler = async (event, context) => {
             TableName,
             AttributeDefinitions,
             KeySchema,
-            ProvisionedThroughput
+            ProvisionedThroughput: normaliseThroughput(ProvisionedThroughput)
           };
 
           if (GlobalSecondaryIndexes && GlobalSecondaryIndexes.length > 0) {
-            createParams.GlobalSecondaryIndexes = GlobalSecondaryIndexes;
+            createParams.GlobalSecondaryIndexes = normaliseGSIs(GlobalSecondaryIndexes);
           }
 
           if (ResourceProperties.StreamSpecification) {
-            createParams.StreamSpecification = ResourceProperties.StreamSpecification;
+            createParams.StreamSpecification = normaliseStreamSpec(ResourceProperties.StreamSpecification);
           }
 
           result = await createTable(createParams);
@@ -247,7 +263,7 @@ exports.handler = async (event, context) => {
 
     // Describe table to fetch StreamArn if available (poll until present)
     let streamArn = null;
-    const wantStream = !!ResourceProperties.StreamSpecification?.StreamEnabled;
+    const wantStream = toBool(ResourceProperties.StreamSpecification?.StreamEnabled);
     const delayMs = isTest ? 0 : 5000;
     const start = Date.now();
     const timeBudgetMs = isTest
