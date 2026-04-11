@@ -1551,28 +1551,19 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
-    # Explicit EventSourceMapping to wire DynamoDB Stream to the stream processor Lambda
-    BooksTableStreamToProcessor:
-      Type: AWS::Lambda::EventSourceMapping
-      Properties:
-        EventSourceArn: !GetAtt BooksTable.StreamArn
-        FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
-        BatchSize: 10
-        MaximumBatchingWindowInSeconds: 5
-        StartingPosition: LATEST
-        Enabled: true
-
-    # FINAL safeguard: re-enable the Event Source Mapping at the end of the stack update.
-    # This addresses cases where later resources (e.g., table updates or other custom resources)
-    # might toggle/replace streams after the initial Ensure step.
+    # Creates and ensures the DynamoDB stream → booksStreamProcessor event source mapping.
+    # Using a custom resource avoids EarlyValidation::ResourceExistenceCheck failures
+    # that occur when AWS::Lambda::EventSourceMapping references a !GetAtt on a custom resource.
     EnsureBooksStreamMappingEnabledFinal:
       Type: AWS::CloudFormation::CustomResource
       Properties:
         ServiceToken: !GetAtt EventSourceMappingManagerLambdaFunction.Arn
         FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
         EventSourceArn: !GetAtt BooksTable.StreamArn
+        BatchSize: 10
+        MaximumBatchingWindowInSeconds: 5
+        StartingPosition: LATEST
       DependsOn:
-        - BooksTableStreamToProcessor
         - BooksTable
         - UsersTable
         - MetadataCacheTable

@@ -87,10 +87,23 @@ exports.handler = async (event, context) => {
     const res = await withRetry(() => lambda.listEventSourceMappings({ FunctionName }).promise());
     const mappings = (res.EventSourceMappings || []).filter(m => !EventSourceArn || m.EventSourceArn === EventSourceArn);
 
-    // If no mapping exists, do not create here. CFN owns the EventSourceMapping resource.
-    // Return success and rely on the CFN EventSourceMapping to be present.
+    // If no mapping exists and we have an EventSourceArn, create it
+    if (!mappings.length && EventSourceArn) {
+      console.log(`Creating EventSourceMapping: ${FunctionName} → ${EventSourceArn}`);
+      await withRetry(() => lambda.createEventSourceMapping({
+        FunctionName,
+        EventSourceArn,
+        BatchSize: parseInt(BatchSize, 10) || 10,
+        MaximumBatchingWindowInSeconds: parseInt(MaximumBatchingWindowInSeconds, 10) || 5,
+        StartingPosition,
+        Enabled: true,
+      }).promise());
+      await sendResponse(event, context, 'SUCCESS', { FunctionName, Created: true }, FunctionName);
+      return;
+    }
+
     if (!mappings.length) {
-      await sendResponse(event, context, 'SUCCESS', { FunctionName, MappingsFound: 0, Note: 'No mappings found; skipping create.' }, FunctionName);
+      await sendResponse(event, context, 'SUCCESS', { FunctionName, MappingsFound: 0, Note: 'No EventSourceArn provided, skipping.' }, FunctionName);
       return;
     }
 
