@@ -139,14 +139,61 @@ flowchart TD
 
 ## Local Development
 
-To run the backend locally:
+### Prerequisites
+
+- Node.js 18+
+- npm
+
+No AWS credentials or deployed infrastructure are needed to run locally. Auth is bypassed and data is stored on disk.
+
+### 1 — Install dependencies
+
+```bash
+cd bookclub-app/backend && npm install
+cd ../frontend && npm install
+```
+
+### 2 — Start the backend (port 4000)
 
 ```bash
 cd bookclub-app/backend
-serverless offline start
+npm run dev
 ```
 
-This will start the API at `http://localhost:4000`.
+This uses `serverless-offline.yml` — a stripped-down Serverless config that:
+- Serves the API at `http://localhost:4000/dev`
+- **Bypasses Cognito auth** (`noAuth: true`) so any request is accepted locally
+- Stores all data in `.local-storage/` (JSON files on disk, no DynamoDB needed)
+- Uses mock AWS credentials — no real AWS access required
+
+### 3 — Start the frontend (port 3000)
+
+In a separate terminal:
+
+```bash
+cd bookclub-app/frontend
+npm start
+```
+
+The `.env.development` file already points the frontend at the local backend:
+
+```
+REACT_APP_API_URL=http://localhost:4000/dev
+REACT_APP_SKIP_AUTH=true
+```
+
+Open `http://localhost:3000` in your browser.
+
+### Local data
+
+Book and user data is persisted in `bookclub-app/backend/.local-storage/`. Delete this directory to reset to a clean state.
+
+To seed initial data:
+
+```bash
+cd bookclub-app/backend
+npm run dev:seed   # seeds data then starts the server
+```
 
 ## Deployment
 
