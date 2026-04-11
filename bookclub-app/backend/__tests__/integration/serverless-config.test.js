@@ -63,11 +63,11 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('dynamodb:DeleteItem');
     
     // Check table ARNs are referenced
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}*');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}*');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-metadata-cache-${self:provider.stage}*');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}*');
-    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}*');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-books-${self:provider.stage}');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-users-${self:provider.stage}');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-metadata-cache-${self:provider.stage}');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-groups-${self:provider.stage}');
+    expect(serverlessConfigContent).toContain('arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}');
   });
 
   test('should have S3 permissions for book covers bucket', () => {
@@ -79,13 +79,13 @@ describe('Serverless Configuration', () => {
 
   test('should have Cognito resources defined', () => {
     expect(serverlessConfigContent).toContain('UserPool:');
-    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
+    expect(serverlessConfigContent).toContain('Type: AWS::Cognito::UserPool');
     
     expect(serverlessConfigContent).toContain('UserPoolClient:');
-    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
+    expect(serverlessConfigContent).toContain('Type: AWS::Cognito::UserPoolClient');
     
     expect(serverlessConfigContent).toContain('UserPoolDomain:');
-    expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
+    expect(serverlessConfigContent).toContain('Type: AWS::Cognito::UserPoolDomain');
   });
 
   test('should have proper table schemas defined', () => {

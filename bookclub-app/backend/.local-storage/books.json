@@ -1,0 +1,50 @@
+{
+  "5548f4b0-ceb5-4bb5-b2a8-53119911bf10": {
+    "bookId": "5548f4b0-ceb5-4bb5-b2a8-53119911bf10",
+    "userId": "local-user",
+    "title": "The Pragmatic Programmer",
+    "author": "David Thomas, Andrew Hunt",
+    "description": "A classic book on software craftsmanship.",
+    "coverImage": null,
+    "status": "available",
+    "createdAt": "2025-08-31T05:40:11.470Z",
+    "updatedAt": "2026-04-11T09:33:53.558Z"
+  },
+  "476aabcf-3f2d-4848-959a-c36d5a32606d": {
+    "bookId": "476aabcf-3f2d-4848-959a-c36d5a32606d",
+    "userId": "local-user",
+    "title": "Clean Code",
+    "author": "Robert C. Martin",
+    "description": "A handbook of agile software craftsmanship.",
+    "coverImage": null,
+    "status": "available",
+    "createdAt": "2025-08-31T05:40:29.470Z",
+    "updatedAt": "2026-04-11T09:33:46.104Z"
+  },
+  "a1b2c3d4-0001-0001-0001-000000000001": {
+    "bookId": "a1b2c3d4-0001-0001-0001-000000000001",
+    "userId": "local-user",
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "description": "An easy and proven way to build good habits and break bad ones.",
+    "coverImage": null,
+    "status": "borrowed",
+    "lentToUserId": "local-user-2",
+    "lentAt": "2026-04-01T09:00:00.000Z",
+    "createdAt": "2026-03-01T09:00:00.000Z",
+    "updatedAt": "2026-04-01T09:00:00.000Z"
+  },
+  "a1b2c3d4-0002-0002-0002-000000000002": {
+    "bookId": "a1b2c3d4-0002-0002-0002-000000000002",
+    "userId": "local-user-2",
+    "title": "Thinking, Fast and Slow",
+    "author": "Daniel Kahneman",
+    "description": "A groundbreaking tour of the mind explaining the two systems that drive the way we think.",
+    "coverImage": null,
+    "status": "borrowed",
+    "lentToUserId": "local-user",
+    "lentAt": "2026-04-05T09:00:00.000Z",
+    "createdAt": "2026-03-10T09:00:00.000Z",
+    "updatedAt": "2026-04-05T09:00:00.000Z"
+  }
+}
