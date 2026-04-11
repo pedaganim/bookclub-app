@@ -166,7 +166,13 @@ const Clubs: React.FC = () => {
                     )}
                     <div className="text-sm text-gray-500 mt-1">{club.location}</div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+                      className="px-3 py-2 text-sm bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100"
+                    >
+                      Explore
+                    </button>
                     {isAdmin(club) && !isPending(club) && (
                       <>
                         <button onClick={() => handleEdit(club)} className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">Edit</button>

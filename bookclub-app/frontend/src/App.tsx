@@ -27,6 +27,7 @@ import NotificationSettings from './pages/NotificationSettings';
 import LibraryHub from './pages/LibraryHub';
 import LibraryPage from './pages/LibraryPage';
 import ClubRequests from './pages/ClubRequests';
+import ClubBooks from './pages/ClubBooks';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
 import { useSubdomain } from './hooks/useSubdomain';
 
@@ -137,6 +138,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <ClubRequests />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/clubs/:clubId/explore"
+                    element={
+                      <ProtectedRoute>
+                        <ClubBooks />
                       </ProtectedRoute>
                     }
                   />

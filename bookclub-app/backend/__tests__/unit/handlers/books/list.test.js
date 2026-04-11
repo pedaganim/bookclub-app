@@ -86,7 +86,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, null);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, undefined);
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: null
@@ -139,7 +139,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, null);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, undefined);
   });
 
   it('should list all books with search filter when search query provided', async () => {
@@ -159,7 +159,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, 'fiction');
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, 'fiction', null, undefined);
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: null
