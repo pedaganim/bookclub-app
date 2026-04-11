@@ -28,9 +28,28 @@ provider:
     VISION_LLM_PROVIDER: ${env:VISION_LLM_PROVIDER, 'openai'}
     # MCP analyzer debug logging (set to 'true' to enable verbose logs)
     MCP_DEBUG: ${env:MCP_DEBUG, ''}
+    # Function name for direct invoke from processImageUpload
+    BEDROCK_ANALYZE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-bedrockAnalyzeCover
+    # Bedrock vision model (Claude 3 family recommended)
+    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-sonnet-20240620-v1:0'}
+    # SQS queue for Bedrock analyzer worker
+    BEDROCK_ANALYZE_QUEUE_URL: !Ref BedrockAnalyzeQueue
+    # Base URL for generating absolute links in sitemap
+    SITE_BASE_URL: ${env:SITE_BASE_URL, 'https://booklub.shop'}
+    # Bedrock throttle tuning
+    BEDROCK_MAX_ATTEMPTS: ${env:BEDROCK_MAX_ATTEMPTS, '8'}
+    BEDROCK_BACKOFF_BASE_MS: ${env:BEDROCK_BACKOFF_BASE_MS, '2000'} # start at 2s
+    BEDROCK_BACKOFF_MAX_MS: ${env:BEDROCK_BACKOFF_MAX_MS, '60000'}  # cap at 60s
   iam:
     role:
       statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource:
+            - arn:aws:logs:${self:provider.region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-*:*
         - Effect: Allow
           Action:
             - dynamodb:Query
@@ -54,11 +73,17 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-conversations-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-messages-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
             - s3:GetObject
             - s3:DeleteObject
+            - s3:CreateMultipartUpload
+            - s3:UploadPart
+            - s3:CompleteMultipartUpload
+            - s3:AbortMultipartUpload
           Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
         - Effect: Allow
           Action:
@@ -88,6 +113,19 @@ provider:
           Resource: "*"
         - Effect: Allow
           Action:
+            - lambda:InvokeFunction
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+            - bedrock:InvokeModelWithResponseStream
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: !GetAtt BedrockAnalyzeQueue.Arn
+        - Effect: Allow
+          Action:
             - dynamodb:DescribeStream
             - dynamodb:ListStreams
             - dynamodb:GetShardIterator
@@ -111,9 +149,14 @@ custom:
       inMemory: true
       migrate: true
 
+  prune:
+    automatic: true
+    number: 5
+
 plugins:
   - serverless-offline
   - serverless-plugin-existing-s3
+  - serverless-prune-plugin
 functions:
   # Book-related functions
   createBook:
@@ -131,10 +174,50 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
+            authorizerId:
               Ref: ApiGatewayAuthorizer
+
+  # Strands + Bedrock analyzer endpoint (HTTP + can be invoked by S3)
+  bedrockAnalyzeCover:
+    handler: src/handlers/strands/bedrockAnalyzeCover.handler
+    timeout: 900
+    memorySize: 1536
+    events:
+      - http:
+          method: POST
+          path: /strands/analyze-cover
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'S3.ObjectCreated'
+            detail:
+              eventType:
+                - 'book-cover-uploaded'
+
+  # Bedrock analyzer SQS worker (processes messages one-by-one)
+  bedrockAnalyzeWorker:
+    handler: src/handlers/strands/bedrockAnalyzeWorker.handler
+    timeout: 900
+    memorySize: 1536
+    events:
+      - sqs:
+          arn: !GetAtt BedrockAnalyzeQueue.Arn
+          batchSize: 1
+          maximumConcurrency: 2
 
   getUserPublic:
     handler: src/handlers/users/getById.handler
@@ -495,6 +578,19 @@ functions:
       - http:
           method: POST
           path: /upload-url
+          cors: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  # Multipart upload APIs
+  multipartStart:
+    handler: src/handlers/files/multipartStart.handler
+    events:
+      - http:
+          method: POST
+          path: /upload/multipart/start
           cors:
             origin: '*'
             headers:
@@ -504,9 +600,49 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-          authorizer: 
+          authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: 
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  multipartSignPart:
+    handler: src/handlers/files/multipartSignPart.handler
+    events:
+      - http:
+          method: POST
+          path: /upload/multipart/sign-part
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  multipartComplete:
+    handler: src/handlers/files/multipartComplete.handler
+    events:
+      - http:
+          method: POST
+          path: /upload/multipart/complete
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
               Ref: ApiGatewayAuthorizer
 
   # Image metadata extraction
@@ -554,12 +690,19 @@ functions:
   # Automatic image processing on upload
   processImageUpload:
     handler: src/handlers/images/processUpload.handler
+    timeout: 900
     events:
       - s3:
           bucket: ${self:service}-${self:provider.stage}-book-covers
           event: s3:ObjectCreated:*
           rules:
             - prefix: book-covers/
+          existing: true
+      - s3:
+          bucket: ${self:service}-${self:provider.stage}-book-covers
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: library-images/
           existing: true
 
   # Advanced metadata extraction triggered by EventBridge
@@ -579,10 +722,13 @@ functions:
             maximumRetryAttempts: 2
 
   # Event-driven processors
+  # Keep cleanDescription rule but disabled to allow safe stack updates (prevents CFN delete failure when external targets exist)
   cleanDescription:
     handler: src/handlers/books/cleanDescription.handler
     events:
       - eventBridge:
+          enabled: false
+          ruleName: ${self:service}-${self:provider.stage}-cleanDescription-rule-migrated
           eventBus: ${self:provider.environment.EVENT_BUS_NAME}
           pattern:
             source:
@@ -603,7 +749,7 @@ functions:
             source:
               - ${self:provider.environment.EVENT_BUS_SOURCE}
             detail-type:
-              - 'Book.MCPAnalyzedCompleted'
+              - 'Book.StrandsAnalyzedCompleted'
           deadLetterQueueArn: !GetAtt EnrichGoogleMetadataDLQ.Arn
           retryPolicy:
             maximumRetryAttempts: 3
@@ -618,14 +764,7 @@ functions:
     environment:
       ENABLE_MCP_ANALYZER: ${env:ENABLE_MCP_ANALYZER, 'true'}
       MCP_OCR_WORKER_NAME: !Ref McpOcrWorkerLambdaFunction
-    events:
-      - eventBridge:
-          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
-          pattern:
-            source:
-              - ${self:provider.environment.EVENT_BUS_SOURCE}
-            detail-type:
-              - 'Book.CleanDescriptionCompleted'
+    # Event trigger removed (no longer depends on CleanDescriptionCompleted)
 
   # Optional OCR worker (scaffold). In production, convert this to a container image function.
   # For now, it is defined for reference and can be deployed separately with proper dependencies.
@@ -657,6 +796,13 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId: 
               Ref: ApiGatewayAuthorizer
+  resolveClubSlug:
+    handler: src/handlers/clubs/resolveSlug.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/resolve/{slug}
+          cors: true
 
   getClub:
     handler: src/handlers/clubs/get.handler
@@ -880,7 +1026,7 @@ functions:
   # Custom resource function for DynamoDB table management
   dynamoTableManager:
     handler: src/custom-resources/dynamodb-table-manager.handler
-    timeout: 300
+    timeout: 600
     role: DynamoTableManagerRole
 
   # Custom resource to ensure Event Source Mapping is enabled post-deploy
@@ -934,6 +1080,101 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  # Swap Toys marketplace functions
+  listToyListings:
+    handler: src/handlers/swaptoys/list.handler
+    events:
+      - http:
+          method: GET
+          path: /swap-toys
+          cors: true
+
+  createToyListing:
+    handler: src/handlers/swaptoys/create.handler
+    events:
+      - http:
+          method: POST
+          path: /swap-toys
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  getToyListing:
+    handler: src/handlers/swaptoys/get.handler
+    events:
+      - http:
+          method: GET
+          path: /swap-toys/{listingId}
+          cors: true
+
+  updateToyListing:
+    handler: src/handlers/swaptoys/update.handler
+    events:
+      - http:
+          method: PUT
+          path: /swap-toys/{listingId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  deleteToyListing:
+    handler: src/handlers/swaptoys/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /swap-toys/{listingId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  # Interest registration (public, no auth) for upcoming features
+  interestRegisterSwapToys:
+    handler: src/handlers/interest/registerSwapToys.handler
+    events:
+      - http:
+          method: POST
+          path: /interest/swap-toys
+          cors: true
+
+  # Public sitemap.xml
+  sitemap:
+    handler: src/handlers/sitemap/get.handler
+    events:
+      - http:
+          method: GET
+          path: /sitemap.xml
+          cors: true
+
 resources:
   Resources:
     CleanDescriptionDLQ:
@@ -953,6 +1194,22 @@ resources:
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-extract-book-metadata-dlq
         MessageRetentionPeriod: 1209600 # 14 days
+
+    # Bedrock analyzer worker queues
+    BedrockAnalyzeDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-bedrock-analyze-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    BedrockAnalyzeQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-bedrock-analyze-queue
+        VisibilityTimeout: 120
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt BedrockAnalyzeDLQ.Arn
+          maxReceiveCount: 5
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
       Type: AWS::IAM::Role
@@ -1014,6 +1271,7 @@ resources:
                   Action:
                     - lambda:ListEventSourceMappings
                     - lambda:UpdateEventSourceMapping
+                    - lambda:CreateEventSourceMapping
                   Resource: '*'
 
     # Permission for CloudFormation to invoke the event source mapping manager
@@ -1193,6 +1451,26 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
           gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
 
+    GatewayResponseUnauthorized:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ResponseType: UNAUTHORIZED
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
+    GatewayResponseAccessDenied:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ResponseType: ACCESS_DENIED
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
     GatewayResponseDefault5XX:
       Type: 'AWS::ApiGateway::GatewayResponse'
       Properties:
@@ -1217,6 +1495,12 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: clubId
+            AttributeType: S
+          - AttributeName: lentToUserId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
         KeySchema:
           - AttributeName: bookId
             KeyType: HASH
@@ -1228,6 +1512,28 @@ resources:
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: ClubIdIndex
+            KeySchema:
+              - AttributeName: clubId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: LentToUserIdIndex
+            KeySchema:
+              - AttributeName: lentToUserId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
@@ -1245,8 +1551,10 @@ resources:
         StartingPosition: LATEST
         Enabled: true
 
-    # Ensure mapping is enabled (reassert after any stream ARN rotation)
-    EnsureBooksStreamMappingEnabled:
+    # FINAL safeguard: re-enable the Event Source Mapping at the end of the stack update.
+    # This addresses cases where later resources (e.g., table updates or other custom resources)
+    # might toggle/replace streams after the initial Ensure step.
+    EnsureBooksStreamMappingEnabledFinal:
       Type: AWS::CloudFormation::CustomResource
       Properties:
         ServiceToken: !GetAtt EventSourceMappingManagerLambdaFunction.Arn
@@ -1254,6 +1562,14 @@ resources:
         EventSourceArn: !GetAtt BooksTable.StreamArn
       DependsOn:
         - BooksTableStreamToProcessor
+        - BooksTable
+        - UsersTable
+        - MetadataCacheTable
+        - DmConversationsTable
+        - DmMessagesTable
+        - BookclubGroupsTable
+        - BookclubMembersTable
+        - BookCoversBucket
 
     DmConversationsTable:
       Type: AWS::CloudFormation::CustomResource
@@ -1336,6 +1652,39 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
+    ToyListingsTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-toy-listings-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: listingId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: listingId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
     UsersTable:
       Type: AWS::CloudFormation::CustomResource
       DeletionPolicy: Retain
@@ -1393,17 +1742,28 @@ resources:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-groups-${self:provider.stage}
         AttributeDefinitions:
-          - AttributeName: groupId
+          - AttributeName: clubId
             AttributeType: S
           - AttributeName: createdBy
             AttributeType: S
+          - AttributeName: slug
+            AttributeType: S
         KeySchema:
-          - AttributeName: groupId
+          - AttributeName: clubId
             KeyType: HASH
         GlobalSecondaryIndexes:
           - IndexName: CreatedByIndex
             KeySchema:
               - AttributeName: createdBy
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: SlugIndex
+            KeySchema:
+              - AttributeName: slug
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
@@ -1422,12 +1782,12 @@ resources:
         ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
         TableName: ${self:service}-bookclub-members-${self:provider.stage}
         AttributeDefinitions:
-          - AttributeName: groupId
+          - AttributeName: clubId
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
         KeySchema:
-          - AttributeName: groupId
+          - AttributeName: clubId
             KeyType: HASH
           - AttributeName: userId
             KeyType: RANGE
