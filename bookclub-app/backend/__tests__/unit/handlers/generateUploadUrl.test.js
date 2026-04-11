@@ -1,4 +1,4 @@
-// Mock AWS SDK — must include DynamoDB.DocumentClient for toyListing.js
+// Mock AWS SDK — must include DynamoDB.DocumentClient for toyListing.js and SES for notification-service.js
 jest.mock('../../../src/lib/aws-config', () => ({
   S3: jest.fn().mockImplementation(() => ({
     getSignedUrlPromise: jest.fn().mockResolvedValue('https://test-bucket.s3.amazonaws.com/presigned-upload-url'),
@@ -9,6 +9,12 @@ jest.mock('../../../src/lib/aws-config', () => ({
       get: jest.fn().mockReturnValue({ promise: jest.fn().mockResolvedValue({}) }),
     })),
   },
+  SES: jest.fn().mockImplementation(() => ({})),
+}));
+
+// Mock User model to avoid pulling in notification-service at load time
+jest.mock('../../../src/models/user', () => ({
+  getCurrentUser: jest.fn(),
 }));
 
 // Mock ToyListing so we control what create() returns
