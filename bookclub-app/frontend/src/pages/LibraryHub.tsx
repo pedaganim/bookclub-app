@@ -74,30 +74,25 @@ const LibraryHub: React.FC = () => {
               </span>
             </Link>
           ))}
-        </div>
-
-        {/* Coming Soon Section */}
-        <div className="mt-16">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-5">Coming Soon</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 opacity-75">
-            {comingSoonLibraries.map((card) => (
-              <div
-                key={card.label}
-                className={`rounded-2xl p-6 flex flex-col items-start gap-3 border border-gray-200 ${card.accentBg} grayscale-[0.5]`}
-              >
-                <span className="text-4xl filter grayscale" role="img" aria-label={card.label}>
-                  {card.emoji}
-                </span>
-                <div>
+          {comingSoonLibraries.map((card) => (
+            <div
+              key={card.label}
+              className={`rounded-2xl p-6 flex flex-col items-start gap-3 border border-gray-200 ${card.accentBg} opacity-75 grayscale-[0.5]`}
+            >
+              <span className="text-4xl filter grayscale" role="img" aria-label={card.label}>
+                {card.emoji}
+              </span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className={`font-semibold text-base ${card.accentText}`}>{card.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 leading-snug">{card.tagline}</p>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-200 px-2 py-0.5 rounded">
+                    Coming Soon
+                  </span>
                 </div>
-                <span className="mt-auto text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-200 px-2 py-0.5 rounded">
-                  Coming Soon
-                </span>
+                <p className="text-xs text-gray-400 mt-0.5 leading-snug">{card.tagline}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Quick tip */}
