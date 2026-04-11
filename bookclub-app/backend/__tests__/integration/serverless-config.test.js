@@ -74,7 +74,7 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('s3:PutObject');
     expect(serverlessConfigContent).toContain('s3:GetObject');
     expect(serverlessConfigContent).toContain('s3:DeleteObject');
-    expect(serverlessConfigContent).toContain('arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers-v2/*');
+    expect(serverlessConfigContent).toContain('arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*');
   });
 
   test('should have Cognito resources defined', () => {
