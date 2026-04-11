@@ -118,6 +118,27 @@ jobs:
             echo "Bucket created."
           fi
 
+      - name: Inspect compiled CloudFormation template (EarlyValidation audit)
+        env:
+          COGNITO_USER_POOL_ID: ${{ env.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ env.COGNITO_CLIENT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BEDROCK_MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
+          MCP_DEBUG: ${{ vars.MCP_DEBUG }}
+        run: |
+          npx serverless package --stage dev
+          TEMPLATE=".serverless/bookclub-app-dev.json"
+          echo "=== AWS::Lambda::EventSourceMapping resources ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::EventSourceMapping") | "\(.key): EventSourceArn=\(.value.Properties.EventSourceArn // "N/A")"' "$TEMPLATE" || echo "(none)"
+          echo "=== Container image Lambda functions ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function" and (.value.Properties.PackageType? == "Image")) | "\(.key): \(.value.Properties.Code // .value.Properties.ImageUri // "N/A")"' "$TEMPLATE" || echo "(none)"
+          echo "=== AWS::S3::BucketNotification resources ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::S3::BucketNotification") | "\(.key): \(.value.Properties.BucketName // "N/A")"' "$TEMPLATE" || echo "(none)"
+          echo "=== All resource types summary ==="
+          jq -r '[.Resources[].Type] | group_by(.) | map({type: .[0], count: length}) | sort_by(.count) | reverse[] | "\(.count)x \(.type)"' "$TEMPLATE"
+
       - name: Deploy to AWS (dev stage)
         env:
           COGNITO_USER_POOL_ID: ${{ env.COGNITO_USER_POOL_ID }}
@@ -128,6 +149,19 @@ jobs:
           BEDROCK_MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
           MCP_DEBUG: ${{ vars.MCP_DEBUG }}
         run: npx serverless deploy --stage dev --verbose
+
+      - name: Capture EarlyValidation failure details
+        if: failure()
+        run: |
+          echo "=== Recent CloudFormation stack events ==="
+          aws cloudformation describe-stack-events \
+            --stack-name bookclub-app-dev --region us-east-1 \
+            --query 'StackEvents[0:20].[Timestamp,ResourceType,ResourceStatus,ResourceStatusReason]' \
+            --output table 2>/dev/null || echo "Could not retrieve stack events"
+          echo "=== Active change sets ==="
+          aws cloudformation list-change-sets \
+            --stack-name bookclub-app-dev --region us-east-1 \
+            --output table 2>/dev/null || echo "No change sets found"
       
       - name: Export deployment outputs
         id: export
