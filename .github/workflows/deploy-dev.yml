@@ -42,7 +42,10 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
-      
+
+      - name: Run tests
+        run: npm test
+
       - name: Clear stuck CloudFormation stack
         run: |
           STACK_STATUS=$(aws cloudformation describe-stacks \
