@@ -23,6 +23,8 @@ pnpm-debug.log*
 **/.serverless/
 **/.webpack/
 
+# Local dev storage
+bookclub-app/backend/.local-storage/
 
 # Env files
 *.env
