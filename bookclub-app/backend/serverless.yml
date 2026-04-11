@@ -1401,6 +1401,7 @@ resources:
       Properties:
         ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
         Action: EnsureUserPoolClient
+        ClientId: ${env:COGNITO_CLIENT_ID, ''}
         ClientName: ${self:service}-client-${self:provider.stage}-v2
         UserPoolId: !Ref UserPool
         GenerateSecret: false

@@ -172,25 +172,17 @@ exports.handler = async (event, context) => {
           const { UserPoolId: providedPoolId, UserPoolName, Policies, Schema, AutoVerifiedAttributes } = ResourceProperties;
           const accountId = context.invokedFunctionArn.split(':')[4];
           const region = process.env.AWS_REGION || 'us-east-1';
-          let adopted = false;
 
-          // If a known pool ID is provided, verify it exists and adopt it directly
           if (providedPoolId && providedPoolId.trim()) {
-            console.log(`UserPoolId provided (${providedPoolId}), verifying it exists...`);
-            try {
-              const descRes = await cognitoIdp.describeUserPool({ UserPoolId: providedPoolId }).promise();
-              const pool = descRes.UserPool;
-              console.log(`Found existing User Pool by ID: ${pool.Id} (${pool.Name})`);
-              physicalResourceId = pool.Id;
-              result = { UserPoolId: pool.Id, Arn: pool.Arn || `arn:aws:cognito-idp:${region}:${accountId}:userpool/${pool.Id}` };
-              adopted = true;
-            } catch (descErr) {
-              console.warn(`Could not describe UserPool ${providedPoolId}: ${descErr.message} - falling back to name search`);
-            }
-          }
-
-          if (!adopted) {
-            // Paginated search by name
+            // Pool ID already known — return it directly, zero API calls
+            console.log(`UserPoolId provided (${providedPoolId.trim()}), adopting it directly.`);
+            physicalResourceId = providedPoolId.trim();
+            result = {
+              UserPoolId: providedPoolId.trim(),
+              Arn: `arn:aws:cognito-idp:${region}:${accountId}:userpool/${providedPoolId.trim()}`
+            };
+          } else {
+            // No ID provided — paginated search by name, then create if missing
             console.log(`Searching for User Pool by name: ${UserPoolName}`);
             let existingPool = null;
             let nextToken = null;
@@ -219,38 +211,45 @@ exports.handler = async (event, context) => {
             }
           }
         } else if (Action === 'EnsureUserPoolClient') {
-          const { UserPoolId, ClientName, ExplicitAuthFlows, PreventUserExistenceErrors, SupportedIdentityProviders, AllowedOAuthFlows, AllowedOAuthScopes, CallbackURLs, LogoutURLs, AllowedOAuthFlowsUserPoolClient } = ResourceProperties;
-          
-          // List clients for the pool
-          const listRes = await cognitoIdp.listUserPoolClients({ UserPoolId, MaxResults: 60 }).promise();
-          const existingClient = (listRes.UserPoolClients || []).find(c => c.ClientName === ClientName);
-          
-          const clientParams = {
-            UserPoolId,
-            ClientName,
-            ExplicitAuthFlows,
-            PreventUserExistenceErrors,
-            SupportedIdentityProviders,
-            AllowedOAuthFlows,
-            AllowedOAuthScopes,
-            CallbackURLs,
-            LogoutURLs,
-            AllowedOAuthFlowsUserPoolClient
-          };
+          const { UserPoolId, ClientId: providedClientId, ClientName, ExplicitAuthFlows, PreventUserExistenceErrors, SupportedIdentityProviders, AllowedOAuthFlows, AllowedOAuthScopes, CallbackURLs, LogoutURLs, AllowedOAuthFlowsUserPoolClient } = ResourceProperties;
 
-          if (existingClient) {
-            console.log(`User Pool Client ${ClientName} already exists, adopting and updating it: ${existingClient.ClientId}`);
-            physicalResourceId = existingClient.ClientId;
-            await cognitoIdp.updateUserPoolClient({
-              ...clientParams,
-              ClientId: existingClient.ClientId
-            }).promise();
-            result = { ClientId: existingClient.ClientId };
+          if (providedClientId && providedClientId.trim()) {
+            // Client ID already known — return it directly, zero API calls
+            console.log(`ClientId provided (${providedClientId.trim()}), adopting it directly.`);
+            physicalResourceId = providedClientId.trim();
+            result = { ClientId: providedClientId.trim() };
           } else {
-            console.log(`Creating new User Pool Client: ${ClientName}`);
-            const createRes = await cognitoIdp.createUserPoolClient(clientParams).promise();
-            physicalResourceId = createRes.UserPoolClient.ClientId;
-            result = { ClientId: createRes.UserPoolClient.ClientId };
+            // Search for existing client by name
+            const listRes = await cognitoIdp.listUserPoolClients({ UserPoolId, MaxResults: 60 }).promise();
+            const existingClient = (listRes.UserPoolClients || []).find(c => c.ClientName === ClientName);
+
+            const clientParams = {
+              UserPoolId,
+              ClientName,
+              ExplicitAuthFlows,
+              PreventUserExistenceErrors,
+              SupportedIdentityProviders,
+              AllowedOAuthFlows,
+              AllowedOAuthScopes,
+              CallbackURLs,
+              LogoutURLs,
+              AllowedOAuthFlowsUserPoolClient
+            };
+
+            if (existingClient) {
+              console.log(`User Pool Client ${ClientName} already exists, adopting and updating it: ${existingClient.ClientId}`);
+              physicalResourceId = existingClient.ClientId;
+              await cognitoIdp.updateUserPoolClient({
+                ...clientParams,
+                ClientId: existingClient.ClientId
+              }).promise();
+              result = { ClientId: existingClient.ClientId };
+            } else {
+              console.log(`Creating new User Pool Client: ${ClientName}`);
+              const createRes = await cognitoIdp.createUserPoolClient(clientParams).promise();
+              physicalResourceId = createRes.UserPoolClient.ClientId;
+              result = { ClientId: createRes.UserPoolClient.ClientId };
+            }
           }
         } else if (Action === 'EnsureUserPoolDomain') {
           const { UserPoolId, Domain } = ResourceProperties;
