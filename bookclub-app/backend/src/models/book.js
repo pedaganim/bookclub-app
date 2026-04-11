@@ -127,14 +127,21 @@ class Book {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
-    const result = await dynamoDb.query(params);
-
-    return {
-      items: result.Items || [],
-      nextToken: result.LastEvaluatedKey 
-        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
-        : null,
-    };
+    try {
+      const result = await dynamoDb.query(params);
+      return {
+        items: result.Items || [],
+        nextToken: result.LastEvaluatedKey
+          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+          : null,
+      };
+    } catch (err) {
+      if (err.code === 'ValidationException' && err.message && err.message.includes('index')) {
+        console.warn('[listByLentToUser] LentToUserIdIndex not available yet, returning empty:', err.message);
+        return { items: [], nextToken: null };
+      }
+      throw err;
+    }
   }
 
   static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null, options = undefined) {
