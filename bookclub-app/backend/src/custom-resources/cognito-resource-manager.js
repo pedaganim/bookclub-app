@@ -255,22 +255,20 @@ exports.handler = async (event, context) => {
           const { UserPoolId, Domain } = ResourceProperties;
           physicalResourceId = Domain;
 
-          try {
-            const descRes = await cognitoIdp.describeUserPoolDomain({ Domain }).promise();
-            if (descRes.DomainDescription && descRes.DomainDescription.UserPoolId === UserPoolId) {
-              console.log(`Domain ${Domain} already exists for this User Pool, adopting it.`);
-            } else if (descRes.DomainDescription) {
-              console.log(`Domain ${Domain} exists but for a DIFFERENT User Pool (${descRes.DomainDescription.UserPoolId}). Deleting and recreating...`);
-              await cognitoIdp.deleteUserPoolDomain({ Domain, UserPoolId: descRes.DomainDescription.UserPoolId }).promise();
-              await cognitoIdp.createUserPoolDomain({ Domain, UserPoolId }).promise();
-            }
-          } catch (e) {
-            if (e.code === 'ResourceNotFoundException') {
-              console.log(`Creating new User Pool Domain: ${Domain}`);
-              await cognitoIdp.createUserPoolDomain({ Domain, UserPoolId }).promise();
-            } else {
-              throw e;
-            }
+          // describeUserPoolDomain never throws 404 — it returns { DomainDescription: {} }
+          // when the domain doesn't exist. Must check UserPoolId to know if it truly exists.
+          const descRes = await cognitoIdp.describeUserPoolDomain({ Domain }).promise();
+          const existingPoolId = descRes.DomainDescription && descRes.DomainDescription.UserPoolId;
+
+          if (existingPoolId === UserPoolId) {
+            console.log(`Domain ${Domain} already exists for this User Pool, adopting it.`);
+          } else if (existingPoolId) {
+            console.log(`Domain ${Domain} belongs to a different User Pool (${existingPoolId}). Deleting and recreating...`);
+            await cognitoIdp.deleteUserPoolDomain({ Domain, UserPoolId: existingPoolId }).promise();
+            await cognitoIdp.createUserPoolDomain({ Domain, UserPoolId }).promise();
+          } else {
+            console.log(`Domain ${Domain} does not exist, creating it...`);
+            await cognitoIdp.createUserPoolDomain({ Domain, UserPoolId }).promise();
           }
           result = { Domain };
         } else {
