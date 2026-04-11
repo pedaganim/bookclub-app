@@ -43,6 +43,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Clear stuck CloudFormation stack
+        run: |
+          STACK_STATUS=$(aws cloudformation describe-stacks \
+            --stack-name bookclub-app-dev \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+          echo "Current stack status: $STACK_STATUS"
+          case "$STACK_STATUS" in
+            CREATE_FAILED|ROLLBACK_COMPLETE|ROLLBACK_FAILED|UPDATE_ROLLBACK_FAILED|DELETE_FAILED)
+              echo "Stack is stuck in $STACK_STATUS — deleting before redeploy."
+              echo "DeletionPolicy:Retain on all data resources; Cognito/DynamoDB will be preserved."
+              if [ "$STACK_STATUS" = "ROLLBACK_FAILED" ] || [ "$STACK_STATUS" = "UPDATE_ROLLBACK_FAILED" ]; then
+                echo "Attempting continue-update-rollback first..."
+                aws cloudformation continue-update-rollback \
+                  --stack-name bookclub-app-dev 2>/dev/null || echo "Skipping continue-rollback, proceeding with delete."
+                sleep 20
+              fi
+              aws cloudformation delete-stack --stack-name bookclub-app-dev
+              echo "Waiting for stack deletion to complete..."
+              aws cloudformation wait stack-delete-complete --stack-name bookclub-app-dev
+              echo "Stack deleted. Next deploy will be a fresh CREATE."
+              ;;
+            DOES_NOT_EXIST)
+              echo "Stack does not exist — fresh CREATE deployment."
+              ;;
+            *)
+              echo "Stack is in $STACK_STATUS — proceeding with update."
+              ;;
+          esac
+
       - name: Look up existing Cognito IDs
         id: cognito-lookup
         run: |
