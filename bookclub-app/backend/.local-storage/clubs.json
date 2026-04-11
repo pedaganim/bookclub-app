@@ -1,0 +1,14 @@
+{
+  "e5f155d6-f86a-405b-9ef9-09dd00c237a2": {
+    "clubId": "e5f155d6-f86a-405b-9ef9-09dd00c237a2",
+    "name": "Test Book Club",
+    "slug": "test-book-club",
+    "description": "A test club",
+    "createdBy": "test-user-123",
+    "inviteCode": "1EF82139",
+    "isPrivate": false,
+    "memberLimit": null,
+    "createdAt": "2026-04-11T12:49:56.960Z",
+    "updatedAt": "2026-04-11T12:49:56.961Z"
+  }
+}

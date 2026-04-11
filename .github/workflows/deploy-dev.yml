@@ -1,0 +1,261 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - develop
+      - dev
+  workflow_dispatch:  # Allows manual triggering
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend (Dev)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bookclub-app/backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./bookclub-app/backend/package-lock.json
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Clear stuck CloudFormation stack
+        run: |
+          STACK_STATUS=$(aws cloudformation describe-stacks \
+            --stack-name bookclub-app-dev \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+          echo "Current stack status: $STACK_STATUS"
+          case "$STACK_STATUS" in
+            CREATE_FAILED|ROLLBACK_COMPLETE|ROLLBACK_FAILED|UPDATE_ROLLBACK_FAILED|DELETE_FAILED)
+              echo "Stack is stuck in $STACK_STATUS — deleting before redeploy."
+              echo "DeletionPolicy:Retain on all data resources; Cognito/DynamoDB will be preserved."
+              if [ "$STACK_STATUS" = "ROLLBACK_FAILED" ] || [ "$STACK_STATUS" = "UPDATE_ROLLBACK_FAILED" ]; then
+                echo "Attempting continue-update-rollback first..."
+                aws cloudformation continue-update-rollback \
+                  --stack-name bookclub-app-dev 2>/dev/null || echo "Skipping continue-rollback, proceeding with delete."
+                sleep 20
+              fi
+              aws cloudformation delete-stack --stack-name bookclub-app-dev
+              echo "Waiting for stack deletion to complete..."
+              aws cloudformation wait stack-delete-complete --stack-name bookclub-app-dev
+              echo "Stack deleted. Next deploy will be a fresh CREATE."
+              ;;
+            DOES_NOT_EXIST)
+              echo "Stack does not exist — fresh CREATE deployment."
+              ;;
+            *)
+              echo "Stack is in $STACK_STATUS — proceeding with update."
+              ;;
+          esac
+
+      - name: Look up existing Cognito IDs
+        id: cognito-lookup
+        run: |
+          # Try CloudFormation stack outputs first
+          POOL_ID=$(aws cloudformation describe-stacks \
+            --stack-name bookclub-app-dev \
+            --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          CLIENT_ID=$(aws cloudformation describe-stacks \
+            --stack-name bookclub-app-dev \
+            --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          # Fall back to direct Cognito lookup by name
+          if [ -z "$POOL_ID" ] || [ "$POOL_ID" = "None" ]; then
+            POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 \
+              --query "UserPools[?Name=='bookclub-app-user-pool-dev'].Id | [0]" \
+              --output text 2>/dev/null || echo "")
+          fi
+          if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
+            if [ -n "$POOL_ID" ] && [ "$POOL_ID" != "None" ]; then
+              CLIENT_ID=$(aws cognito-idp list-user-pool-clients \
+                --user-pool-id "$POOL_ID" \
+                --query "UserPoolClients[?ClientName=='bookclub-app-client-dev'].ClientId | [0]" \
+                --output text 2>/dev/null || echo "")
+            fi
+          fi
+          echo "COGNITO_USER_POOL_ID=${POOL_ID:-}" >> $GITHUB_ENV
+          echo "COGNITO_CLIENT_ID=${CLIENT_ID:-}" >> $GITHUB_ENV
+          echo "Pool ID: ${POOL_ID:-<not found, will be created>}"
+          echo "Client ID: ${CLIENT_ID:-<not found, will be created>}"
+      
+      - name: Ensure book-covers bucket exists (required for EarlyValidation)
+        run: |
+          BUCKET="bookclub-app-dev-book-covers"
+          if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            echo "Bucket $BUCKET already exists."
+          else
+            echo "Creating bucket $BUCKET..."
+            aws s3api create-bucket --bucket "$BUCKET" --region us-east-1
+            echo "Bucket created."
+          fi
+
+      - name: Inspect compiled CloudFormation template (EarlyValidation audit)
+        env:
+          COGNITO_USER_POOL_ID: ${{ env.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ env.COGNITO_CLIENT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BEDROCK_MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
+          MCP_DEBUG: ${{ vars.MCP_DEBUG }}
+        run: |
+          npx serverless package --stage dev
+          echo "=== .serverless directory (all files) ==="
+          find .serverless -type f | sort
+          TEMPLATE=""
+          for f in ".serverless/cloudformation-template-update-stack.json" ".serverless/cloudformation-template-create-stack.json"; do
+            if [ -f "$f" ]; then TEMPLATE="$f"; break; fi
+          done
+          if [ -z "$TEMPLATE" ]; then
+            TEMPLATE=$(find .serverless -maxdepth 1 -name "*.json" | head -1)
+          fi
+          echo "Using template: ${TEMPLATE:-NOT FOUND}"
+          if [ -z "$TEMPLATE" ]; then echo "No template found"; exit 0; fi
+          echo "=== All resource types ==="
+          jq -r '[.Resources[].Type] | group_by(.) | map("\(length)x \(.[0])") | .[]' "$TEMPLATE" 2>&1 || true
+          echo "=== EventSourceMapping resources ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::EventSourceMapping") | "  \(.key): \(.value.Properties.EventSourceArn // "N/A")"' "$TEMPLATE" 2>&1 || echo "  (none)"
+          echo "=== Container image Lambdas ==="
+          jq -r '.Resources | to_entries[] | select(.value.Type == "AWS::Lambda::Function" and (.value.Properties.PackageType? == "Image")) | "  \(.key)"' "$TEMPLATE" 2>&1 || echo "  (none)"
+
+      - name: Deploy to AWS (dev stage)
+        env:
+          COGNITO_USER_POOL_ID: ${{ env.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ env.COGNITO_CLIENT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BEDROCK_MODEL_ID: ${{ vars.BEDROCK_MODEL_ID }}
+          MCP_DEBUG: ${{ vars.MCP_DEBUG }}
+        run: npx serverless deploy --stage dev --verbose
+
+      - name: Capture EarlyValidation failure details
+        if: failure()
+        run: |
+          echo "=== Stack events (full JSON, last 10) ==="
+          aws cloudformation describe-stack-events \
+            --stack-name bookclub-app-dev --region us-east-1 \
+            --max-items 10 --output json 2>/dev/null \
+            | jq '.StackEvents[] | {Timestamp,LogicalResourceId,ResourceType,ResourceStatus,ResourceStatusReason,HookType,HookStatus,HookStatusReason}' \
+            || echo "Could not retrieve stack events"
+          echo "=== Change set hooks ==="
+          CHANGESETS=$(aws cloudformation list-change-sets \
+            --stack-name bookclub-app-dev --region us-east-1 \
+            --query 'Summaries[*].ChangeSetName' --output text 2>/dev/null || echo "")
+          if [ -n "$CHANGESETS" ]; then
+            for CS in $CHANGESETS; do
+              echo "--- Change set: $CS ---"
+              aws cloudformation describe-change-set-hooks \
+                --change-set-name "$CS" --stack-name bookclub-app-dev \
+                --region us-east-1 --output json 2>/dev/null \
+                | jq '.ChangeSetHooks // empty' || echo "(no hooks data)"
+            done
+          else
+            echo "(no change sets found — likely already deleted by Serverless cleanup)"
+          fi
+      
+      - name: Export deployment outputs
+        id: export
+        run: |
+          echo "api_url=$(npx serverless info --stage dev --verbose | grep 'ServiceEndpoint:' | awk '{print $2}')" >> $GITHUB_OUTPUT
+          echo "user_pool_id=$(npx serverless info --stage dev --verbose | grep 'UserPoolId:' | awk '{print $2}')" >> $GITHUB_OUTPUT
+          echo "user_pool_client_id=$(npx serverless info --stage dev --verbose | grep 'UserPoolClientId:' | awk '{print $2}')" >> $GITHUB_OUTPUT
+    
+    outputs:
+      api_url: ${{ steps.export.outputs.api_url }}
+      user_pool_id: ${{ steps.export.outputs.user_pool_id }}
+      user_pool_client_id: ${{ steps.export.outputs.user_pool_client_id }}
+
+  deploy-frontend:
+    name: Deploy Frontend (Dev)
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    defaults:
+      run:
+        working-directory: ./bookclub-app/frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./bookclub-app/frontend/package-lock.json
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Create production env file
+        run: |
+          cat > .env.production << EOF
+          REACT_APP_API_URL=${{ needs.deploy-backend.outputs.api_url }}
+          REACT_APP_COGNITO_REGION=${{ env.AWS_REGION }}
+          REACT_APP_COGNITO_USER_POOL_ID=${{ needs.deploy-backend.outputs.user_pool_id }}
+          REACT_APP_COGNITO_CLIENT_ID=${{ needs.deploy-backend.outputs.user_pool_client_id }}
+          REACT_APP_COGNITO_DOMAIN=bookclub-app-dev-dev.auth.${{ env.AWS_REGION }}.amazoncognito.com
+          REACT_APP_OAUTH_REDIRECT_SIGNIN=https://dev.booklub.shop/auth/callback
+          REACT_APP_OAUTH_REDIRECT_SIGNOUT=https://dev.booklub.shop/
+          REACT_APP_OAUTH_SCOPES=openid email profile
+          REACT_APP_OAUTH_RESPONSE_TYPE=code
+          REACT_APP_ENV=dev
+          EOF
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Deploy to S3
+        run: |
+          aws s3 sync build/ s3://bookclub-app-dev-frontend/ --delete
+      
+      - name: Invalidate CloudFront cache
+        run: |
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items!=null && contains(Aliases.Items, 'dev.booklub.shop')].Id | [0]" --output text)
+          if [ -n "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "None" ]; then
+            aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+          fi
+      
+      - name: Deployment summary
+        run: |
+          echo "✅ Development deployment completed!"
+          echo ""
+          echo "🔗 URLs:"
+          echo "   Frontend: https://dev.booklub.shop"
+          echo "   API: ${{ needs.deploy-backend.outputs.api_url }}"

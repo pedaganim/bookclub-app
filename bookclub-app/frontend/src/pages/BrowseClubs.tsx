@@ -177,7 +177,7 @@ const BrowseClubs: React.FC = () => {
         ))}
       </div>
     );
-  }, [loading, error, clubs, requestingId]);
+  }, [loading, error, clubs, requestingId, userClubIds, requestedClubIds]);
 
   return (
     <div className="min-h-screen bg-gray-50">

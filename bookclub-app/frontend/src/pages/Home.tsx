@@ -49,15 +49,22 @@ const Home: React.FC = () => {
         let aggregated: Book[] = [];
         let tokenLocal: string | undefined = undefined;
         
-        // Determine which API to call based on filter
-        const listMethod = filter === 'borrowed' ? apiService.listBooksBorrowedByMe : apiService.listBooks;
-        
+        // Determine and call the appropriate API based on filter
         for (let i = 0; i < Math.ceil(maxTotal / perPage); i++) {
-          const resp: BookListResponse = await listMethod({
-            userId: user.userId,
-            limit: perPage,
-            nextToken: tokenLocal,
-          });
+          let resp: BookListResponse;
+          if (filter === 'borrowed') {
+            resp = await apiService.listBooksBorrowedByMe({
+              userId: user.userId,
+              limit: perPage,
+              nextToken: tokenLocal,
+            });
+          } else {
+            resp = await apiService.listBooks({
+              userId: user.userId,
+              limit: perPage,
+              nextToken: tokenLocal,
+            });
+          }
           if (Array.isArray(resp.items)) {
             aggregated = aggregated.concat(resp.items as Book[]);
           }
@@ -335,6 +342,18 @@ const Home: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex space-x-2">
+                  {filter !== 'all' && (
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors mr-2"
+                      title="Add Book"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Books
+                    </button>
+                  )}
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded-md ${
