@@ -5,6 +5,14 @@ import { apiService } from '../services/api';
 
 // No image processing service in simplified workflow
 
+// Mock config
+jest.mock('../config', () => ({
+  config: {
+    apiBaseUrl: 'https://api.example.com',
+    env: 'test'
+  }
+}));
+
 // Mock API service
 jest.mock('../services/api', () => ({
   apiService: {

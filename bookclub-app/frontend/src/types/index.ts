@@ -35,6 +35,9 @@ export interface Book {
   updatedAt: string;
   // User name from users table
   userName?: string;
+  // lending fields
+  lentToUserId?: string;
+  lentToUserName?: string;
   // Optional club context for the book (if applicable)
   clubId?: string;
   clubName?: string;
@@ -91,6 +94,7 @@ export interface UploadUrlResponse {
   uploadUrl: string;
   fileUrl: string;
   fileKey: string;
+  userId?: string;
 }
 
 export interface ProfileUpdateData {

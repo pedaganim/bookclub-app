@@ -17,7 +17,7 @@ module.exports.handler = async (event) => {
       return response.validationError({ message: 'Request body is required' });
     }
 
-    const updates = pickAllowed(data, ['title', 'author', 'description', 'coverImage', 'status']);
+    const updates = pickAllowed(data, ['title', 'author', 'description', 'coverImage', 'status', 'lentToUserId', 'lentToUserName']);
     const validationErr = validateUpdates(updates);
     if (validationErr) return validationErr;
 

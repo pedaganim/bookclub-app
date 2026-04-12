@@ -190,7 +190,11 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
     author: book.author,
     description: book.description || '',
     status: book.status,
+    lentToUserId: book.lentToUserId || '',
+    lentToUserName: book.lentToUserName || '',
   });
+  const [lentToEmail, setLentToEmail] = useState('');
+  const [searchingUser, setSearchingUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -255,7 +259,16 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
               <select
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                onChange={(e) => {
+                  const newStatus = e.target.value as any;
+                  const updates: any = { status: newStatus };
+                  // Clear lending info if changing away from borrowed
+                  if (newStatus !== 'borrowed') {
+                    updates.lentToUserId = '';
+                    updates.lentToUserName = '';
+                  }
+                  setFormData({ ...formData, ...updates });
+                }}
               >
                 <option value="available">Available</option>
                 <option value="borrowed">Lent</option>
@@ -263,6 +276,70 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
                 <option value="giving_away">Giving away</option>
               </select>
             </div>
+
+            {formData.status === 'borrowed' && (
+              <div className="bg-amber-50 p-3 rounded-md border border-amber-200 space-y-3">
+                <label className="block text-sm font-medium text-amber-800">Lent to (Selection)</label>
+                
+                {formData.lentToUserName ? (
+                  <div className="flex items-center justify-between bg-white p-2 rounded border border-amber-300 shadow-sm">
+                    <span className="text-sm text-gray-900 font-medium">
+                      {formData.lentToUserName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, lentToUserId: '', lentToUserName: '' })}
+                      className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <input
+                        type="email"
+                        placeholder="recipient@email.com"
+                        className="flex-1 text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                        value={lentToEmail}
+                        onChange={(e) => setLentToEmail(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        disabled={searchingUser || !lentToEmail}
+                        onClick={async () => {
+                          if (!lentToEmail) return;
+                          setSearchingUser(true);
+                          try {
+                            const found = await apiService.findUserByEmail(lentToEmail);
+                            if (found) {
+                              setFormData({
+                                ...formData,
+                                lentToUserId: found.userId,
+                                lentToUserName: found.name
+                              });
+                              setLentToEmail('');
+                            } else {
+                              setError('No user found with that email. Ensure they have signed up.');
+                            }
+                          } catch (err: any) {
+                            setError(err.message || 'Error searching for user');
+                          } finally {
+                            setSearchingUser(false);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-amber-600 text-white text-xs rounded-md hover:bg-amber-700 disabled:opacity-50"
+                      >
+                        {searchingUser ? '...' : 'Find'}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-amber-700 italic">
+                      Lending field is optional; you can search by the recipient's registered email.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"

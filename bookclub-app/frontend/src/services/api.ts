@@ -265,11 +265,19 @@ class ApiService {
     return response.data.data!;
   }
 
-  async uploadFile(uploadUrl: string, file: File): Promise<void> {
+  async uploadFile(uploadUrl: string, file: File, userId?: string | null): Promise<void> {
+    const headers: Record<string, string> = {
+      'Content-Type': file.type,
+    };
+    
+    // If the URL was signed with metadata, we MUST send the corresponding header
+    // to avoid a 403 Signature Mismatch/CORS error.
+    if (userId) {
+      headers['x-amz-meta-uploaded-by'] = userId;
+    }
+
     await axios.put(uploadUrl, file, {
-      headers: {
-        'Content-Type': file.type,
-      },
+      headers,
       // Mobile networks can be slow; extend timeout for PUT to S3
       timeout: 15 * 60 * 1000, // 15 minutes
       maxBodyLength: Infinity,
@@ -303,8 +311,8 @@ class ApiService {
     const threshold = opts.multipartThreshold ?? 8 * 1024 * 1024;
 
     if (file.size <= threshold) {
-      const { uploadUrl, fileUrl, fileKey } = await this.generateUploadUrl(file.type, file.name);
-      await this.uploadFile(uploadUrl, file);
+      const { uploadUrl, fileUrl, fileKey, userId } = await this.generateUploadUrl(file.type, file.name);
+      await this.uploadFile(uploadUrl, file, userId);
       // Try to parse bucket/key from fileUrl
       try {
         const u = new URL(fileUrl);

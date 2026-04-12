@@ -71,6 +71,7 @@ module.exports.handler = async (event) => {
       Key: fileKey,
       Expires: 300,
       ContentType: fileType,
+      Metadata: { 'uploaded-by': userId },
     };
 
     const uploadUrl = await s3.getSignedUrlPromise('putObject', params);
@@ -92,7 +93,7 @@ module.exports.handler = async (event) => {
       await storeListingMapping(BUCKET_NAME, fileKey, listingId, userId);
     }
 
-    return response.success({ uploadUrl, fileUrl, fileKey, listingId });
+    return response.success({ uploadUrl, fileUrl, fileKey, listingId, userId });
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error generating upload URL:', error);
