@@ -8,8 +8,15 @@ jest.mock('../../services/api', () => ({
 }));
 
 describe('VoiceSearchService', () => {
+  let errorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   describe('isSupported', () => {

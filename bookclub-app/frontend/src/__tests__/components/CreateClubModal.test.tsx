@@ -23,11 +23,16 @@ describe('CreateClubModal', () => {
   const mockOnClose = jest.fn();
   const mockOnClubCreated = jest.fn();
 
+  let errorSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnClose.mockClear();
     mockOnClubCreated.mockClear();
     
+    // Silence expected console errors
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     // Reset geolocation mock
     Object.defineProperty(global.navigator, 'geolocation', {
       value: mockGeolocation,
@@ -36,6 +41,10 @@ describe('CreateClubModal', () => {
     
     // Reset fetch mock
     (global.fetch as jest.Mock).mockClear();
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   it('should render modal with form fields', () => {

@@ -271,8 +271,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Title <span className="text-red-500">*</span></label>
+                  <label htmlFor="manual-title" className="block text-sm font-medium text-gray-700">Title <span className="text-red-500">*</span></label>
                   <input
+                    id="manual-title"
                     type="text"
                     value={manualTitle}
                     onChange={e => setManualTitle(e.target.value)}
@@ -281,8 +282,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Author <span className="text-red-500">*</span></label>
+                  <label htmlFor="manual-author" className="block text-sm font-medium text-gray-700">Author <span className="text-red-500">*</span></label>
                   <input
+                    id="manual-author"
                     type="text"
                     value={manualAuthor}
                     onChange={e => setManualAuthor(e.target.value)}
@@ -291,8 +293,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">ISBN</label>
+                  <label htmlFor="manual-isbn" className="block text-sm font-medium text-gray-700">ISBN</label>
                   <input
+                    id="manual-isbn"
                     type="text"
                     value={manualIsbn}
                     onChange={e => setManualIsbn(e.target.value)}
@@ -302,8 +305,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   {manualIsbn && <p className="mt-1 text-xs text-gray-500">Metadata will be fetched automatically.</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Publisher</label>
+                  <label htmlFor="manual-publisher" className="block text-sm font-medium text-gray-700">Publisher</label>
                   <input
+                    id="manual-publisher"
                     type="text"
                     value={manualPublisher}
                     onChange={e => setManualPublisher(e.target.value)}
@@ -311,8 +315,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label htmlFor="manual-status" className="block text-sm font-medium text-gray-700">Status</label>
                   <select
+                    id="manual-status"
                     value={manualStatus}
                     onChange={e => setManualStatus(e.target.value as any)}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -324,8 +329,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label htmlFor="manual-description" className="block text-sm font-medium text-gray-700">Description</label>
                 <textarea
+                  id="manual-description"
                   rows={3}
                   value={manualDescription}
                   onChange={e => setManualDescription(e.target.value)}
