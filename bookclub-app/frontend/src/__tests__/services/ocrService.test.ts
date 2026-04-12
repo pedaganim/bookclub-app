@@ -10,6 +10,7 @@ const mockCreateWorker = jest.mocked(require('tesseract.js').createWorker);
 describe('OCRService', () => {
   let mockWorker: any;
   let warnSpy: jest.SpyInstance;
+  let errorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockWorker = {
@@ -29,13 +30,15 @@ describe('OCRService', () => {
       configurable: true,
       writable: true,
     });
-    // Silence console.warn messages about preprocessing in test env
+    // Silence console messages about preprocessing and expected failures in test env
     warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(async () => {
     await ocrService.cleanup();
     if (warnSpy) warnSpy.mockRestore();
+    if (errorSpy) errorSpy.mockRestore();
   });
 
   describe('extractText', () => {

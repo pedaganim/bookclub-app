@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AddBookModal from '../components/AddBookModal';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { apiService } from '../services/api';
@@ -10,12 +10,21 @@ jest.mock('../services/api', () => ({
   apiService: {
     generateUploadUrl: jest.fn(),
     uploadFile: jest.fn(),
+    uploadAnySize: jest.fn(),
     createBook: jest.fn(),
     extractImageMetadata: jest.fn(),
     getPreExtractedMetadata: jest.fn(),
     listBooks: jest.fn()
   }
 }));
+
+// Mock URL methods
+if (typeof URL.createObjectURL === 'undefined') {
+  Object.defineProperty(URL, 'createObjectURL', { value: jest.fn(() => 'mock-url') });
+}
+if (typeof URL.revokeObjectURL === 'undefined') {
+  Object.defineProperty(URL, 'revokeObjectURL', { value: jest.fn() });
+}
 
 describe('Add Books Modal (Bulk Upload)', () => {
   const mockOnClose = jest.fn();
@@ -35,6 +44,7 @@ describe('Add Books Modal (Bulk Upload)', () => {
   test('renders bulk upload UI with correct title', () => {
     renderWithProviders();
     expect(screen.getByText('Add Books')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Upload Images'));
     expect(
       screen.getByText(
         'Upload multiple book cover images to create entries quickly. We skip image processing; you can edit details later.'
@@ -44,6 +54,7 @@ describe('Add Books Modal (Bulk Upload)', () => {
 
   test('shows multi-image upload component', () => {
     renderWithProviders();
+    fireEvent.click(screen.getByText('Upload Images'));
     expect(
       screen.getByText("Upload up to 10 book images. We'll upload them as-is and process details in the background.")
     ).toBeInTheDocument();
@@ -52,71 +63,86 @@ describe('Add Books Modal (Bulk Upload)', () => {
 
   test('shows Cancel and Upload Images buttons', () => {
     renderWithProviders();
+    fireEvent.click(screen.getByText('Upload Images'));
     expect(screen.getByText('Cancel')).toBeInTheDocument();
     expect(screen.getByText('Upload 0 Images')).toBeInTheDocument();
   });
 
   test('Upload Images button is disabled when no images selected', () => {
     renderWithProviders();
+    fireEvent.click(screen.getByText('Upload Images'));
     const uploadButton = screen.getByText('Upload 0 Images');
     expect(uploadButton).toBeDisabled();
   });
 
   test('uploads images when metadata extraction is not available', async () => {
     // Mock successful upload but no metadata available
-    (apiService.generateUploadUrl as jest.Mock).mockResolvedValue({
-      uploadUrl: 'https://mock-upload-url',
-      fileUrl: 'https://s3.amazonaws.com/mock-bucket/mock-key.jpg'
+    const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    
+    (apiService.uploadAnySize as jest.Mock).mockResolvedValue({
+      fileUrl: 'https://s3.amazonaws.com/mock-bucket/mock-key.jpg',
+      key: 'mock-key.jpg',
+      bucket: 'mock-bucket'
     });
     
-    (apiService.uploadFile as jest.Mock).mockResolvedValue(undefined);
-    
-    // Mock no metadata available (which is expected in the simplified workflow)
-    (apiService.getPreExtractedMetadata as jest.Mock).mockRejectedValue(new Error('No metadata'));
-    (apiService.extractImageMetadata as jest.Mock).mockRejectedValue(new Error('Extraction failed'));
-    
-    // Mock listBooks to return empty initially (as books are created asynchronously)
-    (apiService.listBooks as jest.Mock).mockResolvedValue({
-      items: [],
-      nextToken: null
+    (apiService.createBook as jest.Mock).mockResolvedValue({
+      bookId: 'test-book-1',
+      title: 'Test Book',
+      author: 'Unknown'
     });
     
     // Render the component
     renderWithProviders();
 
-    // This test verifies that images are uploaded successfully even when 
-    // metadata extraction is not available, since books are now created by background processes
-    expect(true).toBe(true); // Placeholder assertion - the real test is in the implementation
+    // Go to upload tab
+    fireEvent.click(screen.getByText('Upload Images'));
+
+    // Mock file selection
+    const input = screen.getByLabelText('Select multiple image files');
+    fireEvent.change(input, { target: { files: [mockFile] } });
+
+    // Click upload
+    const uploadButton = screen.getByText('Upload 1 Image');
+    fireEvent.click(uploadButton);
+
+    // Verify background upload steps
+    await waitFor(() => {
+      expect(apiService.uploadAnySize).toHaveBeenCalledWith(mockFile, expect.any(Object));
+      expect(apiService.createBook).toHaveBeenCalledWith(expect.objectContaining({
+        coverImage: 'https://s3.amazonaws.com/mock-bucket/mock-key.jpg',
+        extractFromImage: true
+      }));
+    });
+
+    // Success notification should be shown eventually
+    await waitFor(() => {
+       expect(screen.getByText(/Added 1\/1 book/)).toBeInTheDocument();
+    });
   });
 
-  test('shows background upload scaffolding (no polling)', async () => {
-    // Mock successful upload
-    (apiService.generateUploadUrl as jest.Mock).mockResolvedValue({
-      uploadUrl: 'https://mock-upload-url',
-      fileUrl: 'https://s3.amazonaws.com/mock-bucket/mock-key.jpg'
-    });
-    (apiService.uploadFile as jest.Mock).mockResolvedValue(undefined);
-
-    // Mock listBooks to simulate book creation and processing flow
-    const mockBooks = [
-      {
-        bookId: 'test-book-1',
-        title: 'Test Book',
-        author: 'Unknown Author',
-        metadataSource: 'image-upload-pending',
-        createdAt: new Date().toISOString(),
-        coverImage: 'https://s3.amazonaws.com/mock-bucket/mock-key.jpg'
-      }
-    ];
-
-    (apiService.listBooks as jest.Mock).mockResolvedValue({
-      items: mockBooks,
-      nextToken: null
+  test('handles manual book entry', async () => {
+    (apiService.createBook as jest.Mock).mockResolvedValue({
+      bookId: 'manual-book',
+      title: 'Manual Title',
+      author: 'Manual Author'
     });
 
     renderWithProviders();
 
-    // In the simplified flow, uploads run in background; ensure API is mocked
-    expect(apiService.generateUploadUrl).toBeDefined();
+    // Default tab is 'manual'
+    fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
+    fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
+    
+    const submitButton = screen.getByRole('button', { name: /Add Book/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(apiService.createBook).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Manual Title',
+        author: 'Manual Author'
+      }));
+      expect(mockOnBookAdded).toHaveBeenCalled();
+      expect(mockOnClose).toHaveBeenCalled();
+    });
   });
 });

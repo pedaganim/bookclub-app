@@ -131,6 +131,7 @@ class ApiService {
     coverImage?: string;
     status?: string;
     isbn?: string;
+    publisher?: string;
     enrichWithMetadata?: boolean;
     extractFromImage?: boolean;
     s3Bucket?: string;
