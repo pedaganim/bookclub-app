@@ -1,5 +1,6 @@
 const response = require('../../lib/response');
 const Book = require('../../models/book');
+const BookClub = require('../../models/bookclub');
 
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
@@ -11,12 +12,13 @@ module.exports.handler = async (event) => {
     let result;
     if (filter === 'borrowed' && userId) {
       result = await Book.listByLentToUser(userId, limit, nextToken);
-    } else if (userId && !clubId) {
+    } else if (clubId) {
+      result = await listBooksByClubMembers(clubId, limit);
+    } else if (userId) {
       result = await Book.listByUser(userId, limit, nextToken);
     } else {
       const options = {};
       if (bare) options.bare = true;
-      if (clubId) options.clubId = clubId;
       result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, Object.keys(options).length ? options : undefined);
     }
 
@@ -48,6 +50,21 @@ const deriveUserId = (event, qs) => {
     userId = event.requestContext.authorizer.claims.sub;
   }
   return userId;
+};
+
+const listBooksByClubMembers = async (clubId, limit) => {
+  const members = await BookClub.getMembers(clubId);
+  const activeMembers = (members || []).filter(m => m.status === 'active');
+  if (activeMembers.length === 0) return { items: [], nextToken: null };
+
+  // Fetch books for each active member in parallel, capped per-member to avoid huge payloads
+  const perMember = Math.max(10, Math.ceil(limit / activeMembers.length));
+  const results = await Promise.all(
+    activeMembers.map(m => Book.listByUser(m.userId, perMember, null).catch(() => ({ items: [] })))
+  );
+
+  const items = results.flatMap(r => r.items || []);
+  return { items: items.slice(0, limit), nextToken: null };
 };
 
 const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, bare, filter) => {
