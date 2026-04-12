@@ -137,7 +137,9 @@ describe('Add Books Modal (Bulk Upload)', () => {
 
     renderWithProviders();
 
-    // Default tab is 'manual'
+    // Switch to manual tab (as 'upload' is now default)
+    fireEvent.click(screen.getByText('Enter Manually'));
+
     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
     fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
     
@@ -170,6 +172,9 @@ describe('Add Books Modal (Bulk Upload)', () => {
     });
 
     renderWithProviders();
+
+    // Switch to manual tab (as 'upload' is now default)
+    fireEvent.click(screen.getByText('Enter Manually'));
 
     // Fill required fields
     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });

@@ -8,9 +8,10 @@ jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: false, user: null }),
 }));
 
-// Mock Link to avoid needing Router context
+// Mock Link and useNavigate to avoid needing Router context
 jest.mock('react-router-dom', () => ({
   Link: ({ children, to }: any) => <a href={typeof to === 'string' ? to : '#'}>{children}</a>,
+  useNavigate: () => jest.fn(),
 }), { virtual: true });
 
 

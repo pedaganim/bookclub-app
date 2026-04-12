@@ -3,6 +3,8 @@ import { BookClub } from '../types';
 import { apiService } from '../services/api';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
+import ClubCard from '../components/ClubCard';
+import CreateClubModal from '../components/CreateClubModal';
 import { useAuth } from '../contexts/AuthContext';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -19,8 +21,9 @@ const BrowseClubs: React.FC = () => {
   const [tokenStack, setTokenStack] = useState<string[]>([]); // to support Previous
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestedClubIds, setRequestedClubIds] = useState<Set<string>>(new Set());
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
+  const [showCreate, setShowCreate] = useState(false);
   const { addNotification } = useNotification();
   const navigate = useNavigate();
 
@@ -105,7 +108,7 @@ const BrowseClubs: React.FC = () => {
   const handleRequestJoin = async (club: BookClub) => {
     try {
       setRequestingId(club.clubId);
-      const res = await apiService.requestClubJoin(club.clubId);
+      await apiService.requestClubJoin(club.clubId);
       // Optimistically mark as requested
       setRequestedClubIds((prev) => {
         const next = new Set(prev);
@@ -120,90 +123,73 @@ const BrowseClubs: React.FC = () => {
     }
   };
 
+  const isCreatorOf = (club: BookClub) => !!(user?.userId && club.createdBy === user.userId);
+
   const content = useMemo(() => {
     if (loading) {
       return (
-        <div className="flex justify-center py-12 text-gray-600">Loading…</div>
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+        </div>
       );
     }
     if (error) {
       return (
-        <div className="rounded bg-red-50 text-red-700 p-3">{error}</div>
+        <div className="rounded-lg bg-red-50 text-red-700 p-4 border border-red-100">{error}</div>
       );
     }
     if (!clubs || clubs.length === 0) {
       return (
-        <div className="py-8 text-gray-600">No clubs found.</div>
+        <div className="py-12 text-center bg-white border border-gray-200 rounded-xl shadow-sm">
+          <p className="text-gray-500">No clubs found matching your search.</p>
+        </div>
       );
     }
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {clubs.map((club) => (
-          <div 
-            key={club.clubId} 
-            className="bg-white rounded-lg shadow p-4 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{club.name}</h3>
-                  {club.isPrivate && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">Private</span>
-                  )}
-                  {userClubIds.has(club.clubId) && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Member</span>
-                  )}
-                </div>
-                {club.description && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-3">{club.description}</p>
-                )}
-                <div className="text-xs text-gray-500 mt-1">{club.location}</div>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2 flex-wrap">
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/clubs/${club.clubId}/explore`); }}
-                className="px-3 py-2 text-sm bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100"
-              >
-                Explore
-              </button>
-              {!userClubIds.has(club.clubId) && (
-                requestedClubIds.has(club.clubId) ? (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                    Request Sent
-                  </span>
-                ) : (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleRequestJoin(club); }}
-                    disabled={requestingId === club.clubId}
-                    className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                  >
-                    {club.isPrivate ? 'Request to Join' : 'Request to Join'}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
+          <ClubCard
+            key={club.clubId}
+            club={club}
+            isCreator={isCreatorOf(club)}
+            isMember={userClubIds.has(club.clubId)}
+            isRequested={requestedClubIds.has(club.clubId)}
+            onJoin={() => handleRequestJoin(club)}
+            isJoining={requestingId === club.clubId}
+          />
         ))}
       </div>
     );
-  }, [loading, error, clubs, requestingId, userClubIds, requestedClubIds, navigate]);
+  }, [loading, error, clubs, requestingId, userClubIds, requestedClubIds, user?.userId]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
+            <p className="mt-1 text-sm text-gray-500">Manage your communities or discover new ones.</p>
+          </div>
+          {isAuthenticated && (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowCreate(true)} 
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                Create Club
+              </button>
+            </div>
+          )}
         </div>
+
         {/* Secondary tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+        <div className="mb-8 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <NavLink
               to="/clubs"
               end
               className={({ isActive }) =>
-                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? 'border-indigo-600 text-indigo-700'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -214,9 +200,8 @@ const BrowseClubs: React.FC = () => {
             </NavLink>
             <NavLink
               to="/clubs/browse"
-              end
               className={({ isActive }) =>
-                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? 'border-indigo-600 text-indigo-700'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -228,11 +213,15 @@ const BrowseClubs: React.FC = () => {
           </nav>
         </div>
 
-        <SearchBar onSearch={onSearch} placeholder="Search clubs by name, description, location…" className="mb-4" />
+        <SearchBar 
+          onSearch={onSearch} 
+          placeholder="Search clubs by name, description, location…" 
+          className="mb-8 shadow-sm" 
+        />
 
         {content}
 
-        <div className="mt-6">
+        <div className="mt-8">
           <Pagination
             pageSize={pageSize}
             onPageSizeChange={(size) => setPageSize(size)}
@@ -246,6 +235,17 @@ const BrowseClubs: React.FC = () => {
             itemLabelPlural="clubs"
           />
         </div>
+
+        {showCreate && (
+          <CreateClubModal
+            onClose={() => setShowCreate(false)}
+            onClubCreated={(newClub) => {
+              setShowCreate(false);
+              addNotification('success', 'Club created successfully');
+              load();
+            }}
+          />
+        )}
       </div>
     </div>
   );

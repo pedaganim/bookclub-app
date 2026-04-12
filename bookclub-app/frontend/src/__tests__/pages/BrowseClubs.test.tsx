@@ -119,7 +119,7 @@ describe('BrowseClubs page', () => {
       expect(screen.getByText('Alpha Club')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/request to join/i));
+    fireEvent.click(screen.getByText(/join club/i));
 
     await waitFor(() => {
       expect(apiService.requestClubJoin).toHaveBeenCalledWith('c1');
