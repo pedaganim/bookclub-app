@@ -208,9 +208,21 @@ const Navbar: React.FC = () => {
 
             {/* Mobile top bar */}
             <div className="md:hidden flex items-center gap-2">
-              <Link to="/about" className="text-sm font-medium text-gray-700 hover:text-gray-900 px-2 py-1">About</Link>
+              <Link to="/about" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">About</Link>
               {isAuthenticated && (
-                <Link to="/my-books" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 px-2 py-1 bg-indigo-50 rounded-md">My Books</Link>
+                <>
+                  <Link to="/my-books" className="text-xs font-medium text-indigo-600 hover:text-indigo-800 px-2 py-1 bg-indigo-50 rounded-md">My Books</Link>
+                  <Link to="/profile" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1 flex items-center gap-1">
+                    {user?.profilePicture ? (
+                      <img src={user.profilePicture} alt="Avatar" className="h-5 w-5 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <span className="text-[10px] font-semibold text-indigo-700">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                      </div>
+                    )}
+                    <span>Profile</span>
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -274,7 +286,7 @@ const MobileTabBar: React.FC = () => {
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
-        <div className="max-w-7xl mx-auto grid grid-cols-5 text-[11px]">
+        <div className="max-w-7xl mx-auto grid grid-cols-5 text-[10px]">
           <Link to="/library" className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors">
             <Icon.Home />
             <span>Home</span>
@@ -286,6 +298,18 @@ const MobileTabBar: React.FC = () => {
             <Icon.Grid />
             <span>Libraries</span>
           </button>
+          {isAuthenticated && (
+            <Link 
+              to="/" 
+              state={{ openAddBooks: true }}
+              className="flex flex-col items-center justify-center py-2 gap-0.5 text-indigo-600 font-semibold"
+            >
+              <div className="bg-indigo-600 text-white rounded-full p-1.5 shadow-sm -mt-1">
+                <Icon.Plus />
+              </div>
+              <span className="mt-0.5">Add</span>
+            </Link>
+          )}
           <Link
             to="/clubs"
             className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors"
@@ -295,22 +319,8 @@ const MobileTabBar: React.FC = () => {
           </Link>
           <Link to="/messages" className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors">
             <Icon.Chat />
-            <span>Messages</span>
+            <span>Chat</span>
           </Link>
-          {isAuthenticated ? (
-            <Link to="/profile" className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors">
-              <Icon.User />
-              <span>Profile</span>
-            </Link>
-          ) : (
-            <a 
-              href={`${config.apiBaseUrl.replace('api.', '')}/login`}
-              className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors"
-            >
-              <Icon.User />
-              <span>Sign In</span>
-            </a>
-          )}
         </div>
       </div>
 

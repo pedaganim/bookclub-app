@@ -139,7 +139,11 @@ const BrowseClubs: React.FC = () => {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {clubs.map((club) => (
-          <div key={club.clubId} className="bg-white rounded-lg shadow p-4 border border-gray-200">
+          <div 
+            key={club.clubId} 
+            className="bg-white rounded-lg shadow p-4 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -159,7 +163,7 @@ const BrowseClubs: React.FC = () => {
             </div>
             <div className="mt-4 flex items-center gap-2 flex-wrap">
               <button
-                onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+                onClick={(e) => { e.stopPropagation(); navigate(`/clubs/${club.clubId}/explore`); }}
                 className="px-3 py-2 text-sm bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100"
               >
                 Explore
@@ -171,7 +175,7 @@ const BrowseClubs: React.FC = () => {
                   </span>
                 ) : (
                   <button
-                    onClick={() => handleRequestJoin(club)}
+                    onClick={(e) => { e.stopPropagation(); handleRequestJoin(club); }}
                     disabled={requestingId === club.clubId}
                     className={`px-3 py-2 text-sm rounded-md text-white ${requestingId === club.clubId ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'}`}
                   >

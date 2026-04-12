@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BookClub } from '../types';
 import { 
   UserGroupIcon, 
@@ -15,20 +16,27 @@ interface ClubCardProps {
 }
 
 const ClubCard: React.FC<ClubCardProps> = ({ club, onLeave, onCopyInvite }) => {
-  const handleLeave = () => {
+  const navigate = useNavigate();
+
+  const handleLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (window.confirm(`Are you sure you want to leave "${club.name}"?`)) {
       onLeave(club.clubId);
     }
   };
 
-  const handleCopyInvite = () => {
+  const handleCopyInvite = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onCopyInvite(club.inviteCode);
   };
 
   const isAdmin = club.userRole === 'admin';
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+    <div 
+      className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">

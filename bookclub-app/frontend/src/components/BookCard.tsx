@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Book } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,8 +42,8 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 // Reusable Action Buttons Component
 const ActionButtons: React.FC<{
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
   loading: boolean;
 }> = ({ onEdit, onDelete, loading }) => {
   return (
@@ -71,6 +71,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const navigate = useNavigate();
 
   const handleDelete = async () => {
     try {
@@ -86,10 +87,27 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
     }
   };
 
+  const handleCardClick = () => {
+    navigate(`/books/${book.bookId}`);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowEditModal(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteModal(true);
+  };
+
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${
-      listView ? 'flex' : ''
-    }`}>
+    <div 
+      className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer ${
+        listView ? 'flex' : ''
+      }`}
+      onClick={handleCardClick}
+    >
       {book.coverImage && (
         <img
           src={book.coverImage}
@@ -116,15 +134,19 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                     Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
                   </span>
                 )}
-                <Link to={`/books/${book.bookId}`} className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
+                <Link 
+                  to={`/books/${book.bookId}`} 
+                  className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   View details
                 </Link>
               </div>
               {showActions && user?.userId === book.userId && (
                 <div className="mt-2">
                   <ActionButtons
-                    onEdit={() => setShowEditModal(true)}
-                    onDelete={() => setShowDeleteModal(true)}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
                     loading={loading}
                   />
                 </div>
@@ -141,14 +163,18 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                   Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
                 </span>
               )}
-              <Link to={`/books/${book.bookId}`} className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
+              <Link 
+                to={`/books/${book.bookId}`} 
+                className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
                 View details
               </Link>
             </div>
             {showActions && user?.userId === book.userId && (
               <ActionButtons
-                onEdit={() => setShowEditModal(true)}
-                onDelete={() => setShowDeleteModal(true)}
+                onEdit={handleEditClick}
+                onDelete={handleDeleteClick}
                 loading={loading}
               />
             )}

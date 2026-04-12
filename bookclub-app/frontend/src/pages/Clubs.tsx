@@ -146,7 +146,11 @@ const Clubs: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {clubs.map((club) => (
-              <div key={club.clubId} className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <div 
+                key={club.clubId} 
+                className="bg-white rounded-lg shadow p-4 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2">
@@ -168,16 +172,31 @@ const Clubs: React.FC = () => {
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <button
-                      onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/clubs/${club.clubId}/explore`); }}
                       className="px-3 py-2 text-sm bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100"
                     >
                       Explore
                     </button>
                     {isAdmin(club) && !isPending(club) && (
                       <>
-                        <button onClick={() => handleEdit(club)} className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">Edit</button>
-                        <button onClick={() => confirmDelete(club)} className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">Delete</button>
-                        <button onClick={() => setManageClubId(club.clubId)} className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100">Manage Requests</button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEdit(club); }} 
+                          className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); confirmDelete(club); }} 
+                          className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100"
+                        >
+                          Delete
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setManageClubId(club.clubId); }} 
+                          className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100"
+                        >
+                          Manage Requests
+                        </button>
                       </>
                     )}
                   </div>

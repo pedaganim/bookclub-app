@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Book } from '../types';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,11 +15,16 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const { isAuthenticated, user } = useAuth();
   const [requestingJoin, setRequestingJoin] = React.useState(false);
   const [joinRequested, setJoinRequested] = React.useState(false);
-  const navigateToJoin = () => {
+  const navigate = useNavigate();
+
+  const navigateToJoin = (e: React.MouseEvent) => {
+    e.stopPropagation();
     window.location.assign('/clubs');
     try { window.history.replaceState({ openJoin: true }, ''); } catch {}
   };
-  const requestToJoin = async () => {
+
+  const requestToJoin = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!isAuthenticated) {
       window.location.assign('/login');
       return;
@@ -39,6 +44,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       setRequestingJoin(false);
     }
   };
+
+  const handleCardClick = () => {
+    navigate(`/books/${book.bookId}`);
+  };
+
   // Function to format description text properly
   const formatDescription = (text?: string) => {
     if (!text) return '';
@@ -67,7 +77,8 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   // Default placeholder image when no cover image is provided
   const defaultBookImage = "data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
 
-  const handleBorrowClick = async () => {
+  const handleBorrowClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     // If book belongs to a club and viewer is not a member, block borrow and prompt to join
     if (book.clubId && !isMemberOfBookClub) {
       notificationCtx?.addNotification('info', 'Join this club to contact the owner.');
@@ -110,9 +121,16 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+    <div 
+      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Image - Consistent portrait aspect ratio and crop */}
-      <Link to={`/books/${book.bookId}`} aria-label={book.title ? `View details for ${book.title}` : 'View book details'}>
+      <Link 
+        to={`/books/${book.bookId}`} 
+        aria-label={book.title ? `View details for ${book.title}` : 'View book details'}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
           <img
             src={book.coverImage || defaultBookImage}
@@ -187,6 +205,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                   <a 
                     href={`/users/${book.userId}`} 
                     className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     View owner profile
                   </a>
@@ -219,6 +238,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                 <a 
                   href={`/users/${book.userId}`} 
                   className="block text-center text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   View profile
                 </a>
