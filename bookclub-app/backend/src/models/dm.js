@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const dynamoDb = require('../lib/dynamodb');
 const { getTableName } = require('../lib/table-names');
 
+const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
+
 function makeConversationId(userAId, userBId) {
   const [a, b] = [userAId, userBId].sort();
   const base = `${a}#${b}`;
@@ -11,6 +13,9 @@ function makeConversationId(userAId, userBId) {
 
 async function ensureConversation(userAId, userBId) {
   const conversationId = makeConversationId(userAId, userBId);
+  if (isOffline()) {
+    return { conversationId, userAId, userBId, lastMessageAt: null, lastMessageSnippet: '', unreadCountForUserA: 0, unreadCountForUserB: 0 };
+  }
   const table = getTableName('dm-conversations');
   const existing = await dynamoDb.get(table, { conversationId });
   const now = new Date().toISOString();
@@ -31,6 +36,7 @@ async function ensureConversation(userAId, userBId) {
 }
 
 async function updateConversationSummary(conversationId, lastMessageAt, snippet, recipientId) {
+  if (isOffline()) return;
   const table = getTableName('dm-conversations');
   // Fetch to know whether recipient is A or B
   const conv = await dynamoDb.get(table, { conversationId });
@@ -55,6 +61,7 @@ async function updateConversationSummary(conversationId, lastMessageAt, snippet,
 }
 
 async function markRead(conversationId, userId) {
+  if (isOffline()) return;
   const table = getTableName('dm-conversations');
   const conv = await dynamoDb.get(table, { conversationId });
   if (!conv) return;
@@ -72,6 +79,7 @@ async function markRead(conversationId, userId) {
 }
 
 async function listConversationsForUser(userId, limit = 20, lastKey) {
+  if (isOffline()) return { items: [] };
   const table = getTableName('dm-conversations');
   const indexA = 'UserAIndex';
   const indexB = 'UserBIndex';
@@ -103,6 +111,10 @@ async function listConversationsForUser(userId, limit = 20, lastKey) {
 }
 
 async function sendMessage({ conversationId, fromUserId, toUserId, content }) {
+  if (isOffline()) {
+    const now = new Date().toISOString();
+    return { conversationId, messageId: `${now}#offline`, createdAt: now, fromUserId, toUserId, content };
+  }
   const table = getTableName('dm-messages');
   const now = new Date().toISOString();
   const messageId = `${now}#${uuidv4()}`;
@@ -120,6 +132,7 @@ async function sendMessage({ conversationId, fromUserId, toUserId, content }) {
 }
 
 async function listMessages(conversationId, limit = 20, nextToken) {
+  if (isOffline()) return { items: [], nextToken: null };
   const table = getTableName('dm-messages');
   const params = {
     TableName: table,
