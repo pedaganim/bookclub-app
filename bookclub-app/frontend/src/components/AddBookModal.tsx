@@ -13,7 +13,7 @@ interface AddBookModalProps {
 type SelectedImage = { file: File; preview?: string };
 
 const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => {
-  const [tab, setTab] = useState<'upload' | 'manual'>('upload');
+  const [tab, setTab] = useState<'upload' | 'manual'>('manual');
   const [uploadedImages, setUploadedImages] = useState<SelectedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
