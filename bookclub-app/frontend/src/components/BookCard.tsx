@@ -308,10 +308,11 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
                         type="button"
                         disabled={searchingUser || !lentToEmail}
                         onClick={async () => {
-                          if (!lentToEmail) return;
+                          const normalizedEmail = lentToEmail.trim().toLowerCase();
+                          if (!normalizedEmail) return;
                           setSearchingUser(true);
                           try {
-                            const found = await apiService.findUserByEmail(lentToEmail);
+                            const found = await apiService.findUserByEmail(normalizedEmail);
                             if (found) {
                               setFormData({
                                 ...formData,

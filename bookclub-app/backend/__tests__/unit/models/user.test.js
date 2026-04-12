@@ -183,16 +183,16 @@ describe('User Model', () => {
     });
 
     describe('getByEmail', () => {
-      it('should use DynamoDB query when online', async () => {
+      it('should use DynamoDB query when online and normalize email', async () => {
         const mockUser = {
           userId: 'user-123',
           email: 'test@example.com',
           name: 'Test User'
         };
 
-        dynamoDb.query.mockResolvedValue([mockUser]);
+        dynamoDb.query.mockResolvedValue({ Items: [mockUser] });
 
-        const result = await User.getByEmail('test@example.com');
+        const result = await User.getByEmail('Test@Example.Com');
 
         expect(dynamoDb.query).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -204,7 +204,7 @@ describe('User Model', () => {
       });
 
       it('should return null when no user found in DynamoDB', async () => {
-        dynamoDb.query.mockResolvedValue([]);
+        dynamoDb.query.mockResolvedValue({ Items: [] });
 
         const result = await User.getByEmail('nonexistent@example.com');
 
