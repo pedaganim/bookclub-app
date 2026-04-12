@@ -1,8 +1,13 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const PrivacyPolicy: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <SEO 
+        title="Privacy Policy"
+        description="Read our privacy policy to understand how the Community Library handles your personal data and our commitment to protecting your privacy."
+      />
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 underline decoration-indigo-500 decoration-4 underline-offset-8">Privacy Policy</h1>
         

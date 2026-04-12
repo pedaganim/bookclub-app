@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SEO from '../../components/SEO';
 
 const posts = [
   {
@@ -18,22 +19,13 @@ const posts = [
     description: 'A gentle framework for letting books go, choosing what to share, and finding your next great read.',
   },
 ];
-
 const BlogsIndex: React.FC = () => {
-  React.useEffect(() => {
-    document.title = 'Blogs — BookClub';
-    const desc = 'Evergreen guides on book swapping, club rules, and decluttering for readers.';
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', desc);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+      <SEO 
+        title="Blogs"
+        description="Read evergreen guides and templates on book swapping, club rules, and decluttering for readers."
+      />
       <div className="max-w-4xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Blogs</h1>
