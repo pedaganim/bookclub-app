@@ -1,8 +1,13 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const About: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+      <SEO 
+        title="About Us"
+        description="Learn about the Community Library project, our mission to simplify book discovery, and the serverless architecture powering our sharing platform."
+      />
       <div className="max-w-5xl mx-auto space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">About Us</h1>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LIBRARY_CONFIGS } from '../config/libraryConfig';
+import SEO from '../components/SEO';
 
 // Book Library card (special — uses existing backend, separate route)
 const BOOK_LIBRARY = {
@@ -13,19 +14,6 @@ const BOOK_LIBRARY = {
 };
 
 const LibraryHub: React.FC = () => {
-  React.useEffect(() => {
-    document.title = 'Community Library — All Libraries';
-    const metaDesc = document.querySelector('meta[name="description"]') || (() => {
-      const m = document.createElement('meta');
-      m.setAttribute('name', 'description');
-      document.head.appendChild(m);
-      return m;
-    })();
-    (metaDesc as HTMLMetaElement).setAttribute('content',
-      'One place to borrow books, toys, tools, event gear and more from your local community.'
-    );
-  }, []);
-
   const activeLibraries = [
     { ...BOOK_LIBRARY, itemCount: null },
   ];
@@ -42,6 +30,10 @@ const LibraryHub: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO 
+        title="Community Library — All Libraries"
+        description="One place to borrow books, toys, tools, event gear and more from your local community. Discover, share and borrow together."
+      />
       {/* Hero */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 py-12 text-center">

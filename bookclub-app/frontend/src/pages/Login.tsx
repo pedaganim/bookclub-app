@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SEO from '../components/SEO';
 import { config } from '../config';
 import { createPkcePair } from '../utils/pkce';
 
@@ -7,6 +8,10 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
+      <SEO 
+        title="Login"
+        description="Sign in to your Community Library account to discover books, join clubs, and connect with other readers in your neighborhood."
+      />
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
         <div>
           <div className="flex justify-center mb-4 sm:mb-6">

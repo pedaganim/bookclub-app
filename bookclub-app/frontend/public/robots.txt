@@ -1,5 +1,16 @@
-# https://www.robotstxt.org/robotstxt.html
+# robots.txt for https://booklub.shop/
 User-agent: *
-Disallow:
 
+# Public pages are allowed by default, 
+# but we explicitly disallow authenticated or private areas.
+Disallow: /messages/
+Disallow: /clubs/
+Disallow: /my-books/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /auth/
+Disallow: /register
+Disallow: /books/*/edit
+
+# Sitemaps
 Sitemap: https://booklub.shop/sitemap.xml

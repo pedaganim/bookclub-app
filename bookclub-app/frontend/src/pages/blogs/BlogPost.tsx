@@ -1,4 +1,5 @@
 import React from 'react';
+import SEO from '../../components/SEO';
 
 type Post = {
   slug: string;
@@ -101,40 +102,7 @@ const BlogPost: React.FC = () => {
 
   const post = slug ? POSTS[slug] : undefined;
 
-  React.useEffect(() => {
-    if (!post) return;
-    document.title = `${post.title} — BookClub`;
-    const desc = post.description;
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', desc);
-
-    // JSON-LD Article
-    const ld: any = {
-      '@context': 'https://schema.org',
-      '@type': 'Article',
-      headline: post.title,
-      description: desc,
-      author: { '@type': 'Organization', name: 'BookClub' },
-      publisher: { '@type': 'Organization', name: 'BookClub' },
-      mainEntityOfPage: typeof window !== 'undefined' ? window.location.href : undefined,
-      image: (typeof window !== 'undefined' ? window.location.origin : '') + '/logo512.png',
-      datePublished: new Date().toISOString(),
-    };
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.setAttribute('data-seo', 'article-jsonld');
-    script.text = JSON.stringify(ld);
-    document.querySelectorAll('script[data-seo="article-jsonld"]').forEach(n => n.remove());
-    document.head.appendChild(script);
-    return () => {
-      document.querySelectorAll('script[data-seo="article-jsonld"]').forEach(n => n.remove());
-    };
-  }, [post]);
+  // SEO logic moved to SEO component in render
 
   if (!post) {
     return (
@@ -147,8 +115,28 @@ const BlogPost: React.FC = () => {
     );
   }
 
+  const ld = post ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    author: { '@type': 'Organization', name: 'BookClub' },
+    publisher: { '@type': 'Organization', name: 'BookClub' },
+    mainEntityOfPage: typeof window !== 'undefined' ? window.location.href : undefined,
+    image: (typeof window !== 'undefined' ? window.location.origin : '') + '/logo512.png',
+    datePublished: new Date().toISOString(),
+  } : undefined;
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+      {post && (
+        <SEO 
+          title={post.title}
+          description={post.description}
+          type="article"
+          jsonLd={ld}
+        />
+      )}
       <div className="max-w-3xl mx-auto">
         <header className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>

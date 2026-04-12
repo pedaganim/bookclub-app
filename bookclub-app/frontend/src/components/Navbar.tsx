@@ -159,6 +159,7 @@ const Navbar: React.FC = () => {
               {/* Divider */}
               <span className="w-px h-5 bg-gray-200 mx-1" />
 
+
               {isAuthenticated && (
                 <>
                   <Link to="/my-books" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
@@ -170,15 +171,8 @@ const Navbar: React.FC = () => {
                   <MessagesLinkWithUnread />
                 </>
               )}
-              {!isAuthenticated && (
-                <>
-                  <Link to="/about" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">About</Link>
-                  <Link to="/about/blogs" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">Blogs</Link>
-                </>
-              )}
             </div>
 
-            {/* Right: User actions */}
             <div className="hidden md:flex items-center gap-3">
               {isAuthenticated ? (
                 <>
@@ -192,23 +186,37 @@ const Navbar: React.FC = () => {
                     )}
                     <span>Profile</span>
                   </Link>
+                  
+                  {/* Moved here */}
+                  <Link to="/about" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                    About
+                  </Link>
+                  <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                    Blogs
+                  </Link>
+
                   <button onClick={logout} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
                     Logout
                   </button>
                 </>
               ) : (
-                <a 
-                  href={`${config.apiBaseUrl.replace('api.', '')}/login`}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
-                >
-                  Sign In
-                </a>
+                <>
+                  <Link to="/about" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">About</Link>
+                  <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors mr-2">Blogs</Link>
+                  <a 
+                    href={`${config.apiBaseUrl.replace('api.', '')}/login`}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    Sign In
+                  </a>
+                </>
               )}
             </div>
 
             {/* Mobile top bar */}
             <div className="md:hidden flex items-center gap-2">
               <Link to="/about" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">About</Link>
+              <Link to="/about/blogs" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">Blogs</Link>
               {isAuthenticated && (
                 <>
                   <Link to="/my-books" className="text-xs font-medium text-indigo-600 hover:text-indigo-800 px-2 py-1 bg-indigo-50 rounded-md">My Books</Link>

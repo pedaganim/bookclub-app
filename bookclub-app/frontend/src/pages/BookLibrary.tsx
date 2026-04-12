@@ -6,6 +6,7 @@ import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubdomain } from '../hooks/useSubdomain';
+import SEO from '../components/SEO';
 
 const BookLibrary: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -133,21 +134,7 @@ const BookLibrary: React.FC = () => {
     fetchBooks(undefined, pageSize, null);
   }, [fetchBooks]);
 
-  // SEO for Library page
-  useEffect(() => {
-    const clubName = (isSubdomain && club) ? club.name : '';
-    document.title = clubName ? `${clubName} Library — BookClub` : 'Library — BookClub';
-    const desc = clubName 
-      ? `Discover books shared by the ${clubName} community. Browse our collection and find your next read.`
-      : 'Discover books shared by our community. Filter by audience and search to find your next read.';
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', desc);
-  }, [isSubdomain, club]);
+  // SEO logic moved to SEO component in render
 
   // Load user's clubs to determine membership for Join vs Borrow action
   useEffect(() => {
@@ -183,6 +170,13 @@ const BookLibrary: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO 
+        title={(isSubdomain && club) ? `${club.name} Library` : 'Library'}
+        description={(isSubdomain && club) 
+          ? `Discover books shared by the ${club.name} community. Browse our collection and find your next read.`
+          : 'Discover books shared by our community. Filter by audience and search to find your next read.'
+        }
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">

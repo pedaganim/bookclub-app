@@ -8,6 +8,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import LibraryItemCard from '../components/LibraryItemCard';
 import CreateListingModal from '../components/CreateListingModal';
 import SearchBar from '../components/SearchBar';
+import SEO from '../components/SEO';
 
 interface LibraryPageProps {
   config: LibraryConfig;
@@ -34,17 +35,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config }) => {
   const [contactingId, setContactingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // SEO
-  useEffect(() => {
-    document.title = config.pageTitle;
-    const metaDesc = document.querySelector('meta[name="description"]') || (() => {
-      const m = document.createElement('meta');
-      m.setAttribute('name', 'description');
-      document.head.appendChild(m);
-      return m;
-    })();
-    (metaDesc as HTMLMetaElement).setAttribute('content', config.metaDescription);
-  }, [config]);
+  // SEO logic moved to SEO component in render
 
   const loadListings = useCallback(async (token?: string, search?: string) => {
     try {
@@ -140,6 +131,10 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO 
+        title={config.pageTitle}
+        description={config.metaDescription}
+      />
       {/* Hero */}
       <div className="bg-white border-b border-gray-100 py-8 px-4">
         <div className="max-w-5xl mx-auto">
