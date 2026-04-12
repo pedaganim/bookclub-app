@@ -308,7 +308,7 @@ const MobileTabBar: React.FC = () => {
           </button>
           {isAuthenticated && (
             <Link 
-              to="/" 
+              to="/my-books" 
               state={{ openAddBooks: true }}
               className="flex flex-col items-center justify-center py-2 gap-0.5 text-indigo-600 font-semibold"
             >
