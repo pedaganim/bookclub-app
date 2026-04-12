@@ -93,7 +93,7 @@ module.exports.handler = async (event) => {
       await storeListingMapping(BUCKET_NAME, fileKey, listingId, userId);
     }
 
-    return response.success({ uploadUrl, fileUrl, fileKey, listingId });
+    return response.success({ uploadUrl, fileUrl, fileKey, listingId, userId });
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error generating upload URL:', error);

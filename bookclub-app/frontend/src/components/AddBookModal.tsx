@@ -3,6 +3,7 @@ import { Book } from '../types';
 import { apiService } from '../services/api';
 import { useNotification } from '../contexts/NotificationContext';
 import MultiImageUpload from './MultiImageUpload';
+import { config } from '../config';
 
 interface AddBookModalProps {
   onClose: () => void;
@@ -27,8 +28,36 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   const [manualIsbn, setManualIsbn] = useState('');
   const [manualPublisher, setManualPublisher] = useState('');
   const [manualStatus, setManualStatus] = useState<'available' | 'reading' | 'borrowed'>('available');
+  const [manualImage, setManualImage] = useState<SelectedImage | null>(null);
   const [manualSaving, setManualSaving] = useState(false);
   const { addNotification } = useNotification();
+  const isLocal = config.apiBaseUrl.includes('localhost');
+
+  const deriveTitle = (filename: string) => {
+    return filename
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[_\-\.]/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase())
+      .trim();
+  };
+
+  const handleManualImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (manualImage?.preview) URL.revokeObjectURL(manualImage.preview);
+      setManualImage({
+        file,
+        preview: URL.createObjectURL(file)
+      });
+    }
+    // Reset file input so same file can be selected again if removed
+    e.target.value = '';
+  };
+
+  const removeManualImage = () => {
+    if (manualImage?.preview) URL.revokeObjectURL(manualImage.preview);
+    setManualImage(null);
+  };
 
   const handleImagesProcessed = (images: SelectedImage[]) => {
     setUploadedImages(images);
@@ -98,19 +127,26 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 const image = imagesToUpload[i];
                 try {
                   setUploadProgress(p => ({ ...p, index: i + 1, currentName: image.file.name }));
-                  // Upload any size (multipart for large)
-                  const { fileUrl, key, bucket } = await withRetry(
-                    () => apiService.uploadAnySize(image.file, { partConcurrency: 5, partSize: 8 * 1024 * 1024 }),
-                    'uploadAnySize'
-                  );
+                  
+                  let uploadResult: { fileUrl?: string; key?: string; bucket?: string } = {};
+                  
+                  if (!isLocal) {
+                    // Upload any size (multipart for large)
+                    uploadResult = await withRetry(
+                      () => apiService.uploadAnySize(image.file, { partConcurrency: 5, partSize: 8 * 1024 * 1024 }),
+                      'uploadAnySize'
+                    );
+                  }
+
                   // Create the book
                   const book = await withRetry(
                     () => apiService.createBook({
-                      coverImage: fileUrl,
+                      coverImage: uploadResult.fileUrl,
                       status: 'available',
-                      extractFromImage: true,
-                      s3Bucket: bucket,
-                      s3Key: key,
+                      extractFromImage: !isLocal,
+                      s3Bucket: uploadResult.bucket,
+                      s3Key: uploadResult.key,
+                      title: isLocal ? deriveTitle(image.file.name) : undefined,
                     }),
                     'createBook'
                   );
@@ -151,6 +187,18 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
     try {
       setManualSaving(true);
       setError('');
+      
+      let coverImage: string | undefined;
+      let s3Bucket: string | undefined;
+      let s3Key: string | undefined;
+
+      if (manualImage && !isLocal) {
+        const uploadResult = await apiService.uploadAnySize(manualImage.file);
+        coverImage = uploadResult.fileUrl;
+        s3Bucket = uploadResult.bucket;
+        s3Key = uploadResult.key;
+      }
+
       const book = await apiService.createBook({
         title: manualTitle.trim(),
         author: manualAuthor.trim(),
@@ -159,6 +207,9 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
         publisher: manualPublisher.trim() || undefined,
         status: manualStatus,
         enrichWithMetadata: !!manualIsbn.trim(),
+        coverImage,
+        s3Bucket,
+        s3Key,
       });
       addNotification('success', 'Book added');
       onBookAdded(book);
@@ -328,6 +379,53 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   </select>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Cover Image</label>
+                <div className="flex items-start space-x-4">
+                  <div className="flex-1">
+                    {!manualImage ? (
+                      <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-indigo-400 transition-colors">
+                        <div className="space-y-1 text-center">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <div className="flex text-sm text-gray-600">
+                            <label htmlFor="manual-image-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                              <span>Upload a cover image</span>
+                              <input id="manual-image-upload" name="manual-image-upload" type="file" accept="image/*" className="sr-only" onChange={handleManualImageChange} />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative border rounded-md p-2 bg-gray-50 flex items-center">
+                        <img
+                          src={manualImage.preview}
+                          alt="Manual cover preview"
+                          className="h-20 w-16 object-cover rounded shadow-sm"
+                        />
+                        <div className="ml-4 flex-1 overflow-hidden">
+                          <p className="text-sm font-medium text-gray-900 truncate">{manualImage.file.name}</p>
+                          <p className="text-xs text-gray-500">{(manualImage.file.size / 1024).toFixed(0)} KB</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeManualImage}
+                          className="ml-2 p-1 text-gray-400 hover:text-red-500"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label htmlFor="manual-description" className="block text-sm font-medium text-gray-700">Description</label>
                 <textarea

@@ -49,6 +49,7 @@ module.exports.handler = async (event) => {
       bucket: BUCKET_NAME,
       key,
       uploadId: UploadId,
+      userId,
     });
   } catch (err) {
     console.error('[multipartStart] error', err);

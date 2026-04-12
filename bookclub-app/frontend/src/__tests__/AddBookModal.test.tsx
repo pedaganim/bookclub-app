@@ -5,6 +5,14 @@ import { apiService } from '../services/api';
 
 // No image processing service in simplified workflow
 
+// Mock config
+jest.mock('../config', () => ({
+  config: {
+    apiBaseUrl: 'https://api.example.com',
+    env: 'test'
+  }
+}));
+
 // Mock API service
 jest.mock('../services/api', () => ({
   apiService: {
@@ -143,6 +151,51 @@ describe('Add Books Modal (Bulk Upload)', () => {
       }));
       expect(mockOnBookAdded).toHaveBeenCalled();
       expect(mockOnClose).toHaveBeenCalled();
+    });
+  });
+
+  test('handles manual book entry with optional image', async () => {
+    const mockFile = new File(['test'], 'manual-cover.jpg', { type: 'image/jpeg' });
+    
+    (apiService.uploadAnySize as jest.Mock).mockResolvedValue({
+      fileUrl: 'https://s3.amazonaws.com/mock-bucket/manual-key.jpg',
+      key: 'manual-key.jpg',
+      bucket: 'mock-bucket'
+    });
+    
+    (apiService.createBook as jest.Mock).mockResolvedValue({
+      bookId: 'manual-book-with-image',
+      title: 'Manual Title',
+      author: 'Manual Author'
+    });
+
+    renderWithProviders();
+
+    // Fill required fields
+    fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
+    fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
+    
+    // Mock image selection
+    const input = screen.getByLabelText(/Upload a cover image/i);
+    fireEvent.change(input, { target: { files: [mockFile] } });
+
+    // Verify preview
+    expect(screen.getByAltText('Manual cover preview')).toBeInTheDocument();
+    expect(screen.getByText('manual-cover.jpg')).toBeInTheDocument();
+
+    // Submit
+    const submitButton = screen.getByRole('button', { name: /Add Book/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(apiService.uploadAnySize).toHaveBeenCalledWith(mockFile);
+      expect(apiService.createBook).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Manual Title',
+        author: 'Manual Author',
+        coverImage: 'https://s3.amazonaws.com/mock-bucket/manual-key.jpg',
+        s3Bucket: 'mock-bucket',
+        s3Key: 'manual-key.jpg'
+      }));
     });
   });
 });
