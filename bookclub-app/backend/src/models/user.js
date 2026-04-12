@@ -119,18 +119,19 @@ class User {
   }
 
   static async getByEmail(email) {
+    const normalizedEmail = email?.toLowerCase();
     if (isOffline()) {
-      return LocalStorage.getUserByEmail(email);
+      return LocalStorage.getUserByEmail(normalizedEmail);
     }
     const params = {
       TableName: getTableName('users'),
       IndexName: 'EmailIndex',
       KeyConditionExpression: 'email = :email',
-      ExpressionAttributeValues: { ':email': email },
+      ExpressionAttributeValues: { ':email': normalizedEmail },
       Limit: 1,
     };
     const result = await dynamoDb.query(params);
-    return result[0] || null;
+    return (result.Items && result.Items[0]) || null;
   }
 
   static async update(userId, updates) {

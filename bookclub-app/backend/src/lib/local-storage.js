@@ -140,10 +140,11 @@ class LocalStorage {
 
   static async getUserByEmail(email) {
     if (!OFFLINE) return null;
-    console.log('Looking for user:', email);
+    const normalizedEmail = email?.toLowerCase();
+    console.log('Looking for user:', normalizedEmail);
     const users = this.loadUsers();
     console.log('Available users:', Object.keys(users));
-    const user = users[email];
+    const user = users[normalizedEmail];
     console.log('User found:', user ? 'Yes' : 'No');
     return user || null;
   }
