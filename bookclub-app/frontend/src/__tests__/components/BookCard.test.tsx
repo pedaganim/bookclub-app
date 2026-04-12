@@ -23,6 +23,7 @@ jest.mock('../../contexts/AuthContext', () => ({
 // Provide a virtual mock for react-router-dom to avoid requiring the real router in unit tests
 jest.mock('react-router-dom', () => ({
   Link: ({ children }: any) => <a>{children}</a>,
+  useNavigate: () => jest.fn(),
 }), { virtual: true });
 
 // Test wrapper with NotificationProvider

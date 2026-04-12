@@ -1,12 +1,35 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ClubCard from '../../components/ClubCard';
 import { BookClub } from '../../types';
+import { BrowserRouter } from 'react-router-dom';
 
-// Mock window.confirm
-const mockConfirm = jest.fn();
-Object.defineProperty(window, 'confirm', { value: mockConfirm });
+// Mock react-router-dom to avoid requiring Router context in unit tests
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+  Link: ({ children }: any) => <a data-testid="link">{children}</a>,
+  NavLink: ({ children }: any) => <a data-testid="nav-link">{children}</a>,
+}), { virtual: true });
+
+// Wrapper for routing context - now just renders UI directly since RRD is mocked
+const renderWithRouter = (ui: React.ReactElement) => {
+  return render(ui);
+};
+
+// Mock Heroicons to avoid "undefined" component error in test environment
+jest.mock('@heroicons/react/24/outline', () => ({
+  UserGroupIcon: () => <div data-testid="icon-user-group" />,
+  MapPinIcon: () => <div data-testid="icon-map-pin" />,
+  Cog6ToothIcon: () => <div data-testid="icon-cog" />,
+  TrashIcon: () => <div data-testid="icon-trash" />,
+  UserPlusIcon: () => <div data-testid="icon-user-plus" />,
+  InboxArrowDownIcon: () => <div data-testid="icon-inbox" />,
+  ClipboardDocumentIcon: () => <div data-testid="icon-clipboard" />,
+  ArrowRightOnRectangleIcon: () => <div data-testid="icon-logout" />,
+  MagnifyingGlassIcon: () => <div data-testid="icon-search" />,
+}));
 
 describe('ClubCard', () => {
   const mockClub: BookClub = {
@@ -22,190 +45,167 @@ describe('ClubCard', () => {
     updatedAt: '2023-01-01T00:00:00Z',
     userRole: 'member',
     joinedAt: '2023-01-02T00:00:00Z',
+    memberCount: 15,
   };
 
+  const mockOnJoin = jest.fn();
   const mockOnLeave = jest.fn();
+  const mockOnEdit = jest.fn();
+  const mockOnDelete = jest.fn();
+  const mockOnManageRequests = jest.fn();
   const mockOnCopyInvite = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockConfirm.mockReturnValue(true);
   });
 
   it('should render club information correctly', () => {
-    render(
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
       />
     );
 
     expect(screen.getByText('Test Book Club')).toBeInTheDocument();
     expect(screen.getByText('A test book club description')).toBeInTheDocument();
     expect(screen.getByText('New York, NY')).toBeInTheDocument();
-    expect(screen.getByText(/Joined 1\/2\/2023/)).toBeInTheDocument();
+    expect(screen.getByText('15 Members')).toBeInTheDocument();
   });
 
-  it('should show admin star icon for admin users', () => {
-    const adminClub = { ...mockClub, userRole: 'admin' as const };
-    render(
-      <ClubCard 
-        club={adminClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
-      />
-    );
-
-    const adminIcon = screen.getByTitle('Admin');
-    expect(adminIcon).toBeInTheDocument();
-  });
-
-  it('should not show admin star icon for regular members', () => {
-    render(
+  it('should show Creator badge when isCreator is true', () => {
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
+        isCreator={true}
       />
     );
 
-    const adminIcon = screen.queryByTitle('Admin');
-    expect(adminIcon).not.toBeInTheDocument();
+    expect(screen.getByText('Creator')).toBeInTheDocument();
+  });
+
+  it('should show Admin badge when isAdmin is true and not creator', () => {
+    renderWithRouter(
+      <ClubCard 
+        club={mockClub} 
+        isAdmin={true}
+        isCreator={false}
+      />
+    );
+
+    expect(screen.getByText('Admin')).toBeInTheDocument();
+  });
+
+  it('should show Member badge when isMember is true and not admin/creator', () => {
+    renderWithRouter(
+      <ClubCard 
+        club={mockClub} 
+        isMember={true}
+        isAdmin={false}
+      />
+    );
+
+    expect(screen.getByText('Member')).toBeInTheDocument();
+  });
+
+  it('should show Request Sent badge when isRequested is true', () => {
+    renderWithRouter(
+      <ClubCard 
+        club={mockClub} 
+        isRequested={true}
+      />
+    );
+
+    expect(screen.getByText('Request Sent')).toBeInTheDocument();
   });
 
   it('should show private badge for private clubs', () => {
     const privateClub = { ...mockClub, isPrivate: true };
-    render(
+    renderWithRouter(
       <ClubCard 
         club={privateClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
       />
     );
 
     expect(screen.getByText('Private')).toBeInTheDocument();
   });
 
-  it('should not show private badge for public clubs', () => {
-    render(
+  it('should show Join button when not a member and not requested', () => {
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
+        isMember={false}
+        isRequested={false}
+        onJoin={mockOnJoin}
       />
     );
 
-    expect(screen.queryByText('Private')).not.toBeInTheDocument();
+    expect(screen.getByText('Join Club')).toBeInTheDocument();
   });
 
-  it('should show copy invite button for admin users', () => {
-    const adminClub = { ...mockClub, userRole: 'admin' as const };
-    render(
-      <ClubCard 
-        club={adminClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
-      />
-    );
-
-    expect(screen.getByRole('button', { name: /copy invite/i })).toBeInTheDocument();
-  });
-
-  it('should not show copy invite button for regular members', () => {
-    render(
+  it('should show edit and delete buttons for creator', () => {
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
+        isCreator={true}
+        onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
       />
     );
 
-    expect(screen.queryByRole('button', { name: /copy invite/i })).not.toBeInTheDocument();
+    expect(screen.getByTitle('Edit Club')).toBeInTheDocument();
+    expect(screen.getByTitle('Delete Club')).toBeInTheDocument();
   });
 
-  it('should always show leave button', () => {
-    render(
+  it('should show leave button for admin who is not creator', () => {
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
+        isAdmin={true}
+        isCreator={false}
+        onLeave={mockOnLeave}
       />
     );
 
-    expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    expect(screen.getByTitle('Leave Club')).toBeInTheDocument();
   });
 
-  it('should handle copy invite button click', () => {
-    const adminClub = { ...mockClub, userRole: 'admin' as const };
-    render(
-      <ClubCard 
-        club={adminClub} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
-      />
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /copy invite/i }));
-    expect(mockOnCopyInvite).toHaveBeenCalledWith('ABC12345');
-  });
-
-  it('should handle leave when user confirms', () => {
-    mockConfirm.mockReturnValue(true);
-    render(
+  it('should show manage requests and invite buttons for admin', () => {
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
+        isAdmin={true}
+        onManageRequests={mockOnManageRequests}
         onCopyInvite={mockOnCopyInvite}
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
-
-    expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to leave "Test Book Club"?');
-    expect(mockOnLeave).toHaveBeenCalledWith('club123');
+    expect(screen.getByTitle('Manage Requests')).toBeInTheDocument();
+    expect(screen.getByTitle('Copy Invite Code')).toBeInTheDocument();
   });
 
-  it('should not handle leave when user cancels confirmation', () => {
-    mockConfirm.mockReturnValue(false);
-    render(
+  it('should handle button clicks correctly', () => {
+    renderWithRouter(
       <ClubCard 
         club={mockClub} 
-        onLeave={mockOnLeave} 
+        isCreator={true}
+        isAdmin={true}
+        onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
+        onManageRequests={mockOnManageRequests}
         onCopyInvite={mockOnCopyInvite}
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+    fireEvent.click(screen.getByTitle('Edit Club'));
+    expect(mockOnEdit).toHaveBeenCalled();
 
-    expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to leave "Test Book Club"?');
-    expect(mockOnLeave).not.toHaveBeenCalled();
-  });
+    fireEvent.click(screen.getByTitle('Delete Club'));
+    expect(mockOnDelete).toHaveBeenCalled();
 
-  it('should render without description when not provided', () => {
-    const clubWithoutDescription = { ...mockClub, description: undefined };
-    render(
-      <ClubCard 
-        club={clubWithoutDescription} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
-      />
-    );
+    fireEvent.click(screen.getByTitle('Manage Requests'));
+    expect(mockOnManageRequests).toHaveBeenCalled();
 
-    expect(screen.getByText('Test Book Club')).toBeInTheDocument();
-    expect(screen.queryByText('A test book club description')).not.toBeInTheDocument();
-  });
-
-  it('should use createdAt when joinedAt is not available', () => {
-    const clubWithoutJoinedAt = { ...mockClub, joinedAt: undefined };
-    render(
-      <ClubCard 
-        club={clubWithoutJoinedAt} 
-        onLeave={mockOnLeave} 
-        onCopyInvite={mockOnCopyInvite}
-      />
-    );
-
-    expect(screen.getByText(/Joined 1\/1\/2023/)).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('Copy Invite Code'));
+    expect(mockOnCopyInvite).toHaveBeenCalled();
   });
 });

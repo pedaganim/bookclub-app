@@ -81,9 +81,9 @@ describe('Clubs page', () => {
       expect(screen.getByText('Other Club')).toBeInTheDocument();
     });
 
-    // Creator club has Edit/Delete
-    const editButtons = screen.getAllByText('Edit');
-    const deleteButtons = screen.getAllByText('Delete');
+    // Creator club has Edit/Delete (now titles on buttons)
+    const editButtons = screen.getAllByTitle('Edit Club');
+    const deleteButtons = screen.getAllByTitle('Delete Club');
     expect(editButtons.length).toBeGreaterThanOrEqual(1);
     expect(deleteButtons.length).toBeGreaterThanOrEqual(1);
 
@@ -92,10 +92,9 @@ describe('Clubs page', () => {
     // And check that there isn't an edit next to Other Club by scoping queries
     const otherClubContainer = screen.getByText('Other Club').closest('div');
     if (otherClubContainer) {
-      const scopedEdit = otherClubContainer.querySelector('button');
-      // first button may not always be edit; a robust check would inspect text
-      // Keep simple: ensure no button with text 'Edit' inside this container
-      expect(screen.queryByText('Edit', { selector: 'div:has(> div) button' })).toBeTruthy();
+      // should not have an edit button with the title "Edit Club"
+      const scopedEdit = otherClubContainer.querySelector('[title="Edit Club"]');
+      expect(scopedEdit).toBeNull();
     }
   });
 

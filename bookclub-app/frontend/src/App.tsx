@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
@@ -44,6 +45,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <NotificationProvider>
         <AuthProvider>
           <div className="App">

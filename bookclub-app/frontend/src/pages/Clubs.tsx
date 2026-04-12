@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { BookClub } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
 import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
 import ManageRequestsModal from '../components/ManageRequestsModal';
 import ConfirmationModal from '../components/ConfirmationModal';
+import ClubCard from '../components/ClubCard';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -49,7 +51,7 @@ const Clubs: React.FC = () => {
     }
   }, [location.state, location.pathname, navigate]);
 
-  const isCreator = (club: BookClub) => user?.userId && club.createdBy === user.userId;
+  const isCreator = (club: BookClub) => !!(user?.userId && club.createdBy === user.userId);
   const isAdmin = (club: BookClub) => club.userRole === 'admin' || isCreator(club);
   const isPending = (club: BookClub) => club.userStatus === 'pending';
 
@@ -66,14 +68,9 @@ const Clubs: React.FC = () => {
     }
   };
 
-  const confirmDelete = (club: BookClub) => {
-    if (!isCreator(club)) return;
-    setClubToDelete(club);
-  };
-
-  const handleEdit = (club: BookClub) => {
-    if (!isCreator(club)) return;
-    setEditingClub(club);
+  const handleCopyInvite = (inviteCode: string) => {
+    navigator.clipboard.writeText(inviteCode);
+    addNotification('success', 'Invite code copied to clipboard');
   };
 
   if (loading) {
@@ -89,22 +86,36 @@ const Clubs: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-4 gap-2">
-          <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowJoin(true)} className="px-3 py-2 text-sm bg-white border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-50">Join Club</button>
-            <button onClick={() => setShowCreate(true)} className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Create Club</button>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
+            <p className="mt-1 text-sm text-gray-500">Manage your communities or discover new ones.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowJoin(true)} 
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              Join with Code
+            </button>
+            <button 
+              onClick={() => setShowCreate(true)} 
+              className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              Create Club
+            </button>
           </div>
         </div>
+
         {/* Secondary tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+        <div className="mb-8 border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <NavLink
               to="/clubs"
               end
               className={({ isActive }) =>
-                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? 'border-indigo-600 text-indigo-700'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -116,7 +127,7 @@ const Clubs: React.FC = () => {
             <NavLink
               to="/clubs/browse"
               className={({ isActive }) =>
-                `whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium ${
+                `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? 'border-indigo-600 text-indigo-700'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -127,62 +138,48 @@ const Clubs: React.FC = () => {
             </NavLink>
           </nav>
         </div>
+
         {error && (
-          <div className="mb-6 rounded-md bg-red-50 p-4">
+          <div className="mb-6 rounded-lg bg-red-50 p-4 border border-red-100">
             <div className="text-sm text-red-700">{error}</div>
           </div>
         )}
+
         {(!Array.isArray(clubs) || clubs.length === 0) ? (
-          <div className="text-gray-700 bg-white border border-gray-200 rounded-lg p-6">
-            <div className="text-lg font-medium mb-2">You have no clubs yet</div>
-            <p className="text-sm mb-4">Browse public clubs to discover communities and request to join.</p>
+          <div className="text-center py-16 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+              <UserGroupIcon className="h-8 w-8 text-indigo-600" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">You have no clubs yet</h3>
+            <p className="text-gray-500 max-w-sm mx-auto mb-6">Browse public clubs to discover communities and request to join.</p>
             <button
               onClick={() => navigate('/clubs/browse')}
-              className="px-4 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+              className="px-6 py-2.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
             >
               Browse Clubs
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clubs.map((club) => (
-              <div key={club.clubId} className="bg-white rounded-lg shadow p-4 border border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-semibold text-gray-900">{club.name}</h2>
-                      {isCreator(club) && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">Creator</span>
-                      )}
-                      {club.isPrivate && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">Private</span>
-                      )}
-                      {isPending(club) && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Pending</span>
-                      )}
-                    </div>
-                    {club.description && (
-                      <p className="text-sm text-gray-600 mt-1">{club.description}</p>
-                    )}
-                    <div className="text-sm text-gray-500 mt-1">{club.location}</div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
-                      className="px-3 py-2 text-sm bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100"
-                    >
-                      Explore
-                    </button>
-                    {isAdmin(club) && !isPending(club) && (
-                      <>
-                        <button onClick={() => handleEdit(club)} className="px-3 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">Edit</button>
-                        <button onClick={() => confirmDelete(club)} className="px-3 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">Delete</button>
-                        <button onClick={() => setManageClubId(club.clubId)} className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100">Manage Requests</button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <ClubCard
+                key={club.clubId}
+                club={club}
+                isCreator={isCreator(club)}
+                isAdmin={isAdmin(club)}
+                isMember={!isPending(club)}
+                isRequested={isPending(club)}
+                onEdit={() => setEditingClub(club)}
+                onDelete={() => setClubToDelete(club)}
+                onManageRequests={() => setManageClubId(club.clubId)}
+                onCopyInvite={() => handleCopyInvite(club.inviteCode)}
+                onLeave={() => {
+                  if (window.confirm(`Are you sure you want to leave "${club.name}"?`)) {
+                    // Actual leave logic would go here, for now it's a placeholder
+                    addNotification('info', 'Leave functionality coming soon');
+                  }
+                }}
+              />
             ))}
           </div>
         )}
