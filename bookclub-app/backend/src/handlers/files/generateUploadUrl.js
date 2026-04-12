@@ -71,7 +71,6 @@ module.exports.handler = async (event) => {
       Key: fileKey,
       Expires: 300,
       ContentType: fileType,
-      Metadata: { 'uploaded-by': userId },
     };
 
     const uploadUrl = await s3.getSignedUrlPromise('putObject', params);

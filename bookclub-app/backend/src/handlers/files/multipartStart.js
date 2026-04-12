@@ -40,7 +40,6 @@ module.exports.handler = async (event) => {
       Bucket: BUCKET_NAME,
       Key: key,
       ContentType: fileType,
-      Metadata: { 'uploaded-by': userId },
     };
 
     const { UploadId } = await s3.createMultipartUpload(params).promise();
