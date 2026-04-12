@@ -26,16 +26,16 @@ For local development and detailed setup instructions, refer to the [main README
 
 ### Quick Commands
 
-Backend:
+Backend (port 4000, auth bypassed, local file storage):
 ```bash
 cd backend
 npm install
-serverless offline start
+npm run dev
 ```
 
-Frontend:
+Frontend (port 3000, points to local backend):
 ```bash
-cd frontend  
+cd frontend
 npm install
 npm start
 ```

@@ -202,6 +202,10 @@ class ApiService {
     return this.listBooks({ ...params, filter: 'borrowed' });
   }
 
+  async listBooksByClub(clubId: string, params?: { limit?: number; nextToken?: string }): Promise<BookListResponse> {
+    return this.listBooks({ clubId, ...params });
+  }
+
   async listBooksPublic(params?: {
     limit?: number;
     nextToken?: string;

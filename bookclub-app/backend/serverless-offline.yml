@@ -182,29 +182,13 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
-  # Club-related functions
+  # Club-related functions — static paths MUST come before {clubId} wildcard
   createClub:
     handler: src/handlers/clubs/create.handler
     events:
       - http:
           method: POST
           path: /clubs
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-
-  getClub:
-    handler: src/handlers/clubs/get.handler
-    events:
-      - http:
-          method: GET
-          path: /clubs/{clubId}
           cors:
             origin: '*'
             headers:
@@ -231,12 +215,60 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  browseClubs:
+    handler: src/handlers/clubs/browse.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/browse
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
   joinClub:
     handler: src/handlers/clubs/join.handler
     events:
       - http:
           method: POST
           path: /clubs/join
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  resolveClubSlug:
+    handler: src/handlers/clubs/resolveSlug.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/resolve/{slug}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  getClub:
+    handler: src/handlers/clubs/get.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}
           cors:
             origin: '*'
             headers:
@@ -260,6 +292,54 @@ functions:
               - Authorization
               - X-Amz-Date
               - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  requestClubJoin:
+    handler: src/handlers/clubs/request.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/request
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Amz-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  updateClub:
+    handler: src/handlers/clubs/update.handler
+    events:
+      - http:
+          method: PATCH
+          path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Amz-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  deleteClub:
+    handler: src/handlers/clubs/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /clubs/{clubId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Amz-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
 

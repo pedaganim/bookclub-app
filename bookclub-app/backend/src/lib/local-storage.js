@@ -263,6 +263,12 @@ class LocalStorage {
   }
 
   // Club operations
+  static async listClubs() {
+    if (!OFFLINE) return [];
+    const clubs = this.loadClubs();
+    return Object.values(clubs);
+  }
+
   static async createClub(club) {
     if (!OFFLINE) return club;
     const clubs = this.loadClubs();

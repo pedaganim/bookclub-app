@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import { useAuth } from '../contexts/AuthContext';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 
 const PAGE_SIZE_DEFAULT = 12;
@@ -22,6 +22,7 @@ const BrowseClubs: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
   const { addNotification } = useNotification();
+  const navigate = useNavigate();
 
   const load = useCallback(async (opts?: { search?: string; limit?: number; nextToken?: string }) => {
     try {
@@ -156,7 +157,13 @@ const BrowseClubs: React.FC = () => {
                 <div className="text-xs text-gray-500 mt-1">{club.location}</div>
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
+                className="px-3 py-2 text-sm bg-amber-50 text-amber-700 rounded-md hover:bg-amber-100"
+              >
+                Explore
+              </button>
               {!userClubIds.has(club.clubId) && (
                 requestedClubIds.has(club.clubId) ? (
                   <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
@@ -177,7 +184,7 @@ const BrowseClubs: React.FC = () => {
         ))}
       </div>
     );
-  }, [loading, error, clubs, requestingId, userClubIds, requestedClubIds]);
+  }, [loading, error, clubs, requestingId, userClubIds, requestedClubIds, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50">

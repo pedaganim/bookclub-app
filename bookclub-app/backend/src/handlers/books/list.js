@@ -4,19 +4,20 @@ const Book = require('../../models/book');
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
   try {
-    const { qs, limit, nextToken, search, ageGroupFine, bare, filter } = parseQuery(event);
+    const { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId } = parseQuery(event);
     const userId = deriveUserId(event, qs);
     logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter);
 
     let result;
     if (filter === 'borrowed' && userId) {
       result = await Book.listByLentToUser(userId, limit, nextToken);
-    } else if (userId) {
+    } else if (userId && !clubId) {
       result = await Book.listByUser(userId, limit, nextToken);
     } else {
-      result = ageGroupFine
-        ? await Book.listAll(limit, nextToken, search, ageGroupFine, bare ? { bare: true } : undefined)
-        : (bare ? await Book.listAll(limit, nextToken, search, null, { bare: true }) : await Book.listAll(limit, nextToken, search));
+      const options = {};
+      if (bare) options.bare = true;
+      if (clubId) options.clubId = clubId;
+      result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, Object.keys(options).length ? options : undefined);
     }
 
     return response.success({
@@ -37,7 +38,8 @@ const parseQuery = (event) => {
   const ageGroupFine = qs && typeof qs.ageGroupFine === 'string' ? qs.ageGroupFine : null;
   const bare = qs && typeof qs.bare === 'string' ? (qs.bare === '1' || qs.bare.toLowerCase() === 'true') : false;
   const filter = qs && typeof qs.filter === 'string' ? qs.filter : null;
-  return { qs, limit, nextToken, search, ageGroupFine, bare, filter };
+  const clubId = qs && typeof qs.clubId === 'string' ? qs.clubId : null;
+  return { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId };
 };
 
 const deriveUserId = (event, qs) => {

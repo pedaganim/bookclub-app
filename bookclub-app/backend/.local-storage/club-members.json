@@ -1,9 +1,9 @@
 {
-  "e5f155d6-f86a-405b-9ef9-09dd00c237a2:test-user-123": {
-    "clubId": "e5f155d6-f86a-405b-9ef9-09dd00c237a2",
+  "824c9f3b-42b7-4581-985a-65017cee32fe:test-user-123": {
+    "clubId": "824c9f3b-42b7-4581-985a-65017cee32fe",
     "userId": "test-user-123",
     "role": "admin",
-    "joinedAt": "2026-04-11T12:49:56.960Z",
+    "joinedAt": "2026-04-11T13:20:45.918Z",
     "status": "active"
   }
 }

@@ -127,14 +127,21 @@ class Book {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
-    const result = await dynamoDb.query(params);
-
-    return {
-      items: result.Items || [],
-      nextToken: result.LastEvaluatedKey 
-        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
-        : null,
-    };
+    try {
+      const result = await dynamoDb.query(params);
+      return {
+        items: result.Items || [],
+        nextToken: result.LastEvaluatedKey
+          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+          : null,
+      };
+    } catch (err) {
+      if (err.code === 'ValidationException' && err.message && err.message.includes('index')) {
+        console.warn('[listByLentToUser] LentToUserIdIndex not available yet, returning empty:', err.message);
+        return { items: [], nextToken: null };
+      }
+      throw err;
+    }
   }
 
   static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null, options = undefined) {
@@ -180,6 +187,11 @@ class Book {
           return v === target;
         });
       }
+
+      // Apply clubId filter if provided
+      if (options && options.clubId) {
+        result = result.filter(book => book.clubId === options.clubId);
+      }
       
       // For offline mode, we'll implement simple pagination later if needed
       return {
@@ -200,11 +212,22 @@ class Book {
 
     let result;
     if (options && options.clubId) {
-      // Use the new ClubIdIndex for efficient filtering
-      params.IndexName = 'ClubIdIndex';
-      params.KeyConditionExpression = 'clubId = :clubId';
-      params.ExpressionAttributeValues = { ':clubId': options.clubId };
-      result = await dynamoDb.query(params);
+      try {
+        params.IndexName = 'ClubIdIndex';
+        params.KeyConditionExpression = 'clubId = :clubId';
+        params.ExpressionAttributeValues = { ':clubId': options.clubId };
+        result = await dynamoDb.query(params);
+      } catch (err) {
+        if (err.code === 'ValidationException' && err.message && err.message.includes('index')) {
+          console.warn('[listAll] ClubIdIndex not available yet, falling back to scan:', err.message);
+          delete params.IndexName;
+          delete params.KeyConditionExpression;
+          delete params.ExpressionAttributeValues;
+          result = await dynamoDb.scan(params);
+        } else {
+          throw err;
+        }
+      }
     } else {
       result = await dynamoDb.scan(params);
     }
