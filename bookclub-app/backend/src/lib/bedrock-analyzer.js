@@ -1,15 +1,13 @@
 const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
 const AWS = require('aws-sdk');
 const sharp = require('sharp');
-const { getSetting } = require('./config');
 
 // Simple helper to fetch an image from S3 and analyze it with a Bedrock vision LLM (Claude 3 family).
 // Returns a normalized metadata object.
-// Configuration order:
-// 1. DynamoDB (MetadataCacheTable with key 'system_config')
-// 2. Env: BEDROCK_MODEL_ID
-// 3. Fallback default
-const DEFAULT_MODEL = 'anthropic.claude-3-haiku-20240307-v1:0';
+// Env:
+// - BEDROCK_MODEL_ID (e.g., 'anthropic.claude-3-5-sonnet-20240620-v1:0' or 'anthropic.claude-3-haiku-20240307-v1:0')
+// - AWS_REGION (fallback to us-east-1)
+// - BOOK_COVERS_BUCKET (default bucket if not provided)
 
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
@@ -106,7 +104,7 @@ function normalizeMetadata(obj = {}) {
 }
 
 async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
-  modelId = modelId || await getSetting('BEDROCK_MODEL_ID', DEFAULT_MODEL);
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
   const client = getBedrockClient();
   let bytes = await getS3ObjectBytes(bucket, key);
   // Bedrock image limit is 5MB on the BASE64 payload. So raw bytes must be ~<= 3.75MB.
@@ -244,7 +242,7 @@ const LIBRARY_PROMPTS = {
  * Returns a flat object: { title, description, condition, category, ...extra }
  */
 async function analyzeLibraryImage({ bucket, key, contentType = 'image/jpeg', libraryType = 'toy', modelId }) {
-  modelId = modelId || await getSetting('BEDROCK_MODEL_ID', DEFAULT_MODEL);
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-haiku-20240307-v1:0';
   const client = getBedrockClient();
 
   let bytes = await getS3ObjectBytes(bucket, key);
