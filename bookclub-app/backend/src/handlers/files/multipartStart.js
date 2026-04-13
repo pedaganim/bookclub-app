@@ -19,6 +19,7 @@ module.exports.handler = async (event) => {
 
     const validFileTypes = [
       'image/jpeg',
+      'image/jpg',
       'image/png',
       'image/gif',
       'image/webp',
@@ -30,7 +31,7 @@ module.exports.handler = async (event) => {
     if (!validFileTypes.includes(fileType)) {
       // eslint-disable-next-line no-console
       console.warn(`[multipartStart] Rejected fileType=${fileType}`);
-      return response.validationError({ fileType: 'Invalid file type. Allowed: JPEG, PNG, GIF, WEBP, HEIC/HEIF, TIFF, BMP.' });
+      return response.validationError({ fileType: 'Invalid file type. Allowed: JPEG, JPG, PNG, GIF, WEBP, HEIC/HEIF, TIFF, BMP.' });
     }
 
     const ext = fileType.split('/')[1] || 'jpg';

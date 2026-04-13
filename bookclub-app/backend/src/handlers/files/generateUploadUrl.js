@@ -46,7 +46,7 @@ module.exports.handler = async (event) => {
     }
 
     const validFileTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
       'image/heic', 'image/heif', 'image/tiff', 'image/bmp',
     ];
     if (!validFileTypes.includes(fileType)) {

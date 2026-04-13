@@ -265,9 +265,9 @@ class ApiService {
     return response.data.data!;
   }
 
-  async uploadFile(uploadUrl: string, file: File, userId?: string | null): Promise<void> {
+  async uploadFile(uploadUrl: string, file: File, userId?: string | null, contentType?: string): Promise<void> {
     const headers: Record<string, string> = {
-      'Content-Type': file.type,
+      'Content-Type': contentType || file.type,
     };
     
     // If the URL was signed with metadata, we MUST send the corresponding header
@@ -306,13 +306,25 @@ class ApiService {
 
   // High-level uploader: uses multipart for large files
   async uploadAnySize(file: File, opts: { partSize?: number; partConcurrency?: number; multipartThreshold?: number } = {}): Promise<{ fileUrl: string; bucket?: string; key?: string }>{
-    const partSize = Math.max(5 * 1024 * 1024, opts.partSize || 8 * 1024 * 1024); // >=5MB
-    const partConcurrency = Math.max(1, opts.partConcurrency || 5);
-    const threshold = opts.multipartThreshold ?? 8 * 1024 * 1024;
+    let fileType = file.type;
+    if (!fileType) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext === 'jpg' || ext === 'jpeg') fileType = 'image/jpeg';
+      else if (ext === 'png') fileType = 'image/png';
+      else if (ext === 'gif') fileType = 'image/gif';
+      else if (ext === 'webp') fileType = 'image/webp';
+      else if (ext === 'heic') fileType = 'image/heic';
+      else if (ext === 'heif') fileType = 'image/heif';
+      else fileType = 'image/jpeg'; // Default fallback
+    }
+
+    const partSize = Math.max(5 * 1024 * 1024, opts.partSize || 5 * 1024 * 1024); // >=5MB
+    const partConcurrency = Math.max(1, opts.partConcurrency || 3); // Reduced concurrency for mobile stability
+    const threshold = opts.multipartThreshold ?? 5 * 1024 * 1024;
 
     if (file.size <= threshold) {
-      const { uploadUrl, fileUrl, fileKey, userId } = await this.generateUploadUrl(file.type, file.name);
-      await this.uploadFile(uploadUrl, file, userId);
+      const { uploadUrl, fileUrl, fileKey, userId } = await this.generateUploadUrl(fileType, file.name);
+      await this.uploadFile(uploadUrl, file, userId, fileType);
       // Try to parse bucket/key from fileUrl
       try {
         const u = new URL(fileUrl);
@@ -325,7 +337,7 @@ class ApiService {
     }
 
     // Multipart
-    const { key, uploadId } = await this.multipartStart(file.type, file.name);
+    const { key, uploadId } = await this.multipartStart(fileType, file.name);
 
     const totalParts = Math.ceil(file.size / partSize);
     const partsEtags: Array<{ ETag: string; PartNumber: number }> = new Array(totalParts);
@@ -336,9 +348,9 @@ class ApiService {
       const end = Math.min(start + partSize, file.size);
       const blob = file.slice(start, end);
       const partNumber = index + 1;
-      const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: file.type });
+      const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: fileType });
       const putRes = await axios.put(uploadUrl, blob, {
-        headers: { 'Content-Type': file.type },
+        headers: { 'Content-Type': fileType },
         timeout: 15 * 60 * 1000,
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
