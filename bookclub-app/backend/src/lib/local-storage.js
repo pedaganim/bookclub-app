@@ -311,8 +311,17 @@ class LocalStorage {
     if (!OFFLINE) return membership;
     const members = this.loadClubMembers();
     const key = `${membership.clubId}:${membership.userId}`;
+    const oldMembership = members[key];
     members[key] = membership;
     this.saveClubMembers(members);
+
+    // Update club memberCount by counting actual members
+    const clubs = this.loadClubs();
+    if (clubs[membership.clubId]) {
+      const allMembers = Object.values(members).filter(m => m.clubId === membership.clubId && m.status === 'active');
+      clubs[membership.clubId].memberCount = allMembers.length;
+      this.saveClubs(clubs);
+    }
     return membership;
   }
 
@@ -328,8 +337,17 @@ class LocalStorage {
     const members = this.loadClubMembers();
     const key = `${clubId}:${userId}`;
     if (members[key]) {
+      const membership = members[key];
       delete members[key];
       this.saveClubMembers(members);
+
+      // Update club memberCount by counting actual members
+      const clubs = this.loadClubs();
+      if (clubs[clubId]) {
+        const allMembers = Object.values(members).filter(m => m.clubId === clubId && m.status === 'active');
+        clubs[clubId].memberCount = allMembers.length;
+        this.saveClubs(clubs);
+      }
       return true;
     }
     return false;

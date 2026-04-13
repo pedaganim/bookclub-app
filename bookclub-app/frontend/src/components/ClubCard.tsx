@@ -62,7 +62,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
               <div className="flex flex-wrap gap-1.5">
                 {isCreator && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">
-                    Creator
+                    Admin
                   </span>
                 )}
                 {isAdmin && !isCreator && (
