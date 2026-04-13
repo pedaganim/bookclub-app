@@ -412,10 +412,7 @@ const BookDetails: React.FC = () => {
 
             {/* Google Metadata */}
             {(book as any).google_metadata && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Metadata</h3>
-                {renderGoogleMetadata((book as any).google_metadata)}
-              </div>
+              renderGoogleMetadata((book as any).google_metadata)
             )}
 
             {/* Bedrock Analysis */}
