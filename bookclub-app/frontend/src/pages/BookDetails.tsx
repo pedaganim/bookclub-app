@@ -260,7 +260,7 @@ const BookDetails: React.FC = () => {
       setDeleting(true);
       await apiService.deleteBook(bookId);
       notificationCtx?.addNotification('success', 'Book deleted');
-      window.location.assign('/library');
+      window.location.assign('/my-books');
     } catch (e: any) {
       notificationCtx?.addNotification('error', e?.message || 'Failed to delete book');
     } finally {
