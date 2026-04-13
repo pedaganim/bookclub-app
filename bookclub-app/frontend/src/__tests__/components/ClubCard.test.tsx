@@ -72,7 +72,7 @@ describe('ClubCard', () => {
     expect(screen.getByText('15 Members')).toBeInTheDocument();
   });
 
-  it('should show Creator badge when isCreator is true', () => {
+  it('should show Admin badge for creator (role rename)', () => {
     renderWithRouter(
       <ClubCard 
         club={mockClub} 
@@ -80,7 +80,7 @@ describe('ClubCard', () => {
       />
     );
 
-    expect(screen.getByText('Creator')).toBeInTheDocument();
+    expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 
   it('should show Admin badge when isAdmin is true and not creator', () => {
@@ -101,6 +101,7 @@ describe('ClubCard', () => {
         club={mockClub} 
         isMember={true}
         isAdmin={false}
+        isCreator={false}
       />
     );
 
