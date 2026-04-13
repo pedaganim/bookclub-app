@@ -29,21 +29,23 @@ class BookClub {
       inviteCode,
       isPrivate: clubData.isPrivate || false,
       memberLimit: clubData.memberLimit || null,
+      memberCount: 0, // Will be incremented to 1 by the addMember call below
       createdAt: timestamp,
       updatedAt: timestamp,
     };
 
     if (isOffline()) {
       await LocalStorage.createClub(club);
-      // Add creator as admin member
       await this.addMember(clubId, createdBy, 'admin');
-      return club;
+      const updatedClub = await this.getById(clubId);
+      return updatedClub || club;
     }
 
     await dynamoDb.put(getTableName('bookclub-groups'), club);
     // Add creator as admin member
     await this.addMember(clubId, createdBy, 'admin');
-    return club;
+    const updatedClub = await this.getById(clubId);
+    return updatedClub || club;
   }
 
   static async listPendingRequests(clubId) {
@@ -80,7 +82,16 @@ class BookClub {
       ReturnValues: 'ALL_NEW',
     };
     const result = await dynamoDb.update(params);
-    return result.Attributes;
+    const updatedMember = result.Attributes;
+    
+    // Update memberCount
+    try {
+      await this.recalculateMemberCount(clubId);
+    } catch (e) {
+      console.error('Failed to update memberCount in approveJoinRequest:', e);
+    }
+
+    return updatedMember;
   }
 
   static async rejectJoinRequest(clubId, userId) {
@@ -118,7 +129,12 @@ class BookClub {
     }
     const result = await dynamoDb.scan(params);
     return {
-      items: result.Items || [],
+      items: await Promise.all((result.Items || []).map(async c => {
+        if (c.memberCount === undefined || c.memberCount === 0) {
+          return await this.recalculateMemberCount(c.clubId, c);
+        }
+        return c;
+      })),
       nextToken: result.LastEvaluatedKey ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64') : null,
     };
   }
@@ -216,6 +232,14 @@ class BookClub {
     }
 
     await dynamoDb.put(getTableName('bookclub-members'), membership);
+
+    // Update memberCount by recalculating (safest)
+    try {
+      await this.recalculateMemberCount(clubId);
+    } catch (e) {
+      console.error('Failed to recalculate memberCount in addMember:', e);
+    }
+
     return membership;
   }
 
@@ -255,6 +279,13 @@ class BookClub {
     }
 
     await dynamoDb.delete(getTableName('bookclub-members'), { clubId, userId });
+
+    // Update memberCount
+    try {
+      await this.recalculateMemberCount(clubId);
+    } catch (e) {
+      console.error('Failed to update memberCount in removeMember:', e);
+    }
   }
 
   static async getMembers(clubId) {
@@ -311,7 +342,25 @@ class BookClub {
         });
       }
     }
-    return clubs;
+    return await Promise.all(clubs.map(async c => {
+      if (c.memberCount === undefined || c.memberCount === 0) {
+        return await this.recalculateMemberCount(c.clubId, c);
+      }
+      return c;
+    }));
+  }
+
+  static async recalculateMemberCount(clubId, clubData = null) {
+    const members = await this.getMembers(clubId);
+    const activeMembers = members.filter(m => m.status === 'active');
+    const count = activeMembers.length;
+    
+    const club = clubData || await this.getById(clubId);
+    if (club) {
+      const updated = await this.update(clubId, { memberCount: count });
+      return updated;
+    }
+    return club;
   }
 
   static async isMember(clubId, userId) {

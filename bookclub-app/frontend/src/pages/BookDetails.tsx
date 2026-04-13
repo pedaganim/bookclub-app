@@ -127,8 +127,7 @@ const BookDetails: React.FC = () => {
       ));
 
     return (
-      <div className="space-y-2">
-        <div className="text-sm text-gray-600">Source: {source} · Language: {lang}</div>
+      <div className="space-y-4">
         {titleCands.length > 0 ? (
           <Section title="Title Candidates">
             <ul className="list-disc ml-5 space-y-1">{fmt(titleCands)}</ul>
@@ -412,24 +411,20 @@ const BookDetails: React.FC = () => {
             {/* Overview removed: no description field shown */}
 
             {/* Google Metadata */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Metadata</h3>
-              {(book as any).google_metadata ? (
-                renderGoogleMetadata((book as any).google_metadata)
-              ) : (
-                <div className="text-sm text-gray-500">No Google metadata available.</div>
-              )}
-            </div>
+            {(book as any).google_metadata && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Metadata</h3>
+                {renderGoogleMetadata((book as any).google_metadata)}
+              </div>
+            )}
 
             {/* Bedrock Analysis */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Bedrock Analysis</h3>
-              {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) ? (
-                renderBedrockMetadata((book as any).mcp_metadata.bedrock)
-              ) : (
-                <div className="text-sm text-gray-500">No Bedrock analysis available.</div>
-              )}
-            </div>
+            {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Bedrock Analysis</h3>
+                {renderBedrockMetadata((book as any).mcp_metadata.bedrock)}
+              </div>
+            )}
           </div>
         </div>
       </div>
