@@ -182,24 +182,26 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
         )}
       </div>
       
-      {showEditModal && (
-        <EditBookModal
-          book={book}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={onUpdate}
+      <div onClick={(e) => e.stopPropagation()}>
+        {showEditModal && (
+          <EditBookModal
+            book={book}
+            onClose={() => setShowEditModal(false)}
+            onUpdate={onUpdate}
+          />
+        )}
+        
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          title="Delete Book"
+          message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+          isDestructive={true}
         />
-      )}
-      
-      <ConfirmationModal
-        isOpen={showDeleteModal}
-        title="Delete Book"
-        message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={handleDelete}
-        onCancel={() => setShowDeleteModal(false)}
-        isDestructive={true}
-      />
+      </div>
     </div>
   );
 };

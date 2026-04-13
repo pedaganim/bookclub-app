@@ -133,7 +133,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   if (!isLocal) {
                     // Upload any size (multipart for large)
                     uploadResult = await withRetry(
-                      () => apiService.uploadAnySize(image.file, { partConcurrency: 5, partSize: 8 * 1024 * 1024 }),
+                      () => apiService.uploadAnySize(image.file, { partConcurrency: 3, partSize: 5 * 1024 * 1024 }),
                       'uploadAnySize'
                     );
                   }
