@@ -102,31 +102,61 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
   };
 
   return (
-    <div 
-      className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer ${
-        listView ? 'flex' : ''
-      }`}
-      onClick={handleCardClick}
-    >
-      {book.coverImage && (
-        <img
-          src={book.coverImage}
-          alt={book.title}
-          className={listView 
-            ? "w-20 h-28 object-cover flex-shrink-0" 
-            : "w-full h-48 object-cover"
-          }
-        />
-      )}
-      <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
-        <div className={listView ? "flex-1" : ""}>
-          {/* Show title and author; remove description */}
-          <div className="mb-3">
-            <div className={`text-gray-900 ${listView ? 'text-base font-semibold' : 'text-sm font-medium'}`}>{book.title || 'Untitled Book'}</div>
-            <div className="text-gray-600 text-xs">{book.author || 'Unknown author'}</div>
+    <>
+      <div 
+        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer ${
+          listView ? 'flex' : ''
+        }`}
+        onClick={handleCardClick}
+      >
+        {book.coverImage && (
+          <img
+            src={book.coverImage}
+            alt={book.title}
+            className={listView 
+              ? "w-20 h-28 object-cover flex-shrink-0" 
+              : "w-full h-48 object-cover"
+            }
+          />
+        )}
+        <div className={listView ? "flex-1 p-4 flex justify-between items-start" : "p-4"}>
+          <div className={listView ? "flex-1" : ""}>
+            {/* Show title and author; remove description */}
+            <div className="mb-3">
+              <div className={`text-gray-900 ${listView ? 'text-base font-semibold' : 'text-sm font-medium'}`}>{book.title || 'Untitled Book'}</div>
+              <div className="text-gray-600 text-xs">{book.author || 'Unknown author'}</div>
+            </div>
+            {!listView && (
+              <div>
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={book.status} />
+                  {book.status === 'borrowed' && (book as any).lentToUserId && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
+                      Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
+                    </span>
+                  )}
+                  <Link 
+                    to={`/books/${book.bookId}`} 
+                    className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View details
+                  </Link>
+                </div>
+                {showActions && user?.userId === book.userId && (
+                  <div className="mt-2">
+                    <ActionButtons
+                      onEdit={handleEditClick}
+                      onDelete={handleDeleteClick}
+                      loading={loading}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          {!listView && (
-            <div>
+          {listView && (
+            <div className="ml-4 flex flex-col items-end space-y-2">
               <div className="flex items-center gap-3">
                 <StatusBadge status={book.status} />
                 {book.status === 'borrowed' && (book as any).lentToUserId && (
@@ -143,66 +173,36 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                 </Link>
               </div>
               {showActions && user?.userId === book.userId && (
-                <div className="mt-2">
-                  <ActionButtons
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteClick}
-                    loading={loading}
-                  />
-                </div>
+                <ActionButtons
+                  onEdit={handleEditClick}
+                  onDelete={handleDeleteClick}
+                  loading={loading}
+                />
               )}
             </div>
           )}
         </div>
-        {listView && (
-          <div className="ml-4 flex flex-col items-end space-y-2">
-            <div className="flex items-center gap-3">
-              <StatusBadge status={book.status} />
-              {book.status === 'borrowed' && (book as any).lentToUserId && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
-                  Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
-                </span>
-              )}
-              <Link 
-                to={`/books/${book.bookId}`} 
-                className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                View details
-              </Link>
-            </div>
-            {showActions && user?.userId === book.userId && (
-              <ActionButtons
-                onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
-                loading={loading}
-              />
-            )}
-          </div>
-        )}
       </div>
       
-      <div onClick={(e) => e.stopPropagation()}>
-        {showEditModal && (
-          <EditBookModal
-            book={book}
-            onClose={() => setShowEditModal(false)}
-            onUpdate={onUpdate}
-          />
-        )}
-        
-        <ConfirmationModal
-          isOpen={showDeleteModal}
-          title="Delete Book"
-          message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
-          confirmText="Delete"
-          cancelText="Cancel"
-          onConfirm={handleDelete}
-          onCancel={() => setShowDeleteModal(false)}
-          isDestructive={true}
+      {showEditModal && (
+        <EditBookModal
+          book={book}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={onUpdate}
         />
-      </div>
-    </div>
+      )}
+      
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title="Delete Book"
+        message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        isDestructive={true}
+      />
+    </>
   );
 };
 

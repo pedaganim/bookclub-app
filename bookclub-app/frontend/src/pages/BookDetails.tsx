@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { NotificationContext } from '../contexts/NotificationContext';
@@ -17,6 +17,7 @@ const Section: React.FC<{ title: string; children?: React.ReactNode }> = ({ titl
 
 const BookDetails: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>();
+  const navigate = useNavigate();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -249,7 +250,7 @@ const BookDetails: React.FC = () => {
 
   const handleEdit = () => {
     if (!bookId) return;
-    window.location.assign(`/books/${bookId}/edit`);
+    navigate(`/books/${bookId}/edit`);
   };
 
   const handleDelete = async () => {
@@ -260,7 +261,7 @@ const BookDetails: React.FC = () => {
       setDeleting(true);
       await apiService.deleteBook(bookId);
       notificationCtx?.addNotification('success', 'Book deleted');
-      window.location.assign('/my-books');
+      navigate('/my-books');
     } catch (e: any) {
       notificationCtx?.addNotification('error', e?.message || 'Failed to delete book');
     } finally {
@@ -270,7 +271,7 @@ const BookDetails: React.FC = () => {
 
   const handleBorrow = async () => {
     if (!isAuthenticated) {
-      window.location.assign('/login');
+      navigate('/login');
       return;
     }
     try {
@@ -282,10 +283,10 @@ const BookDetails: React.FC = () => {
       await apiService.dmSendMessage(conversation.conversationId, book.userId as any, message);
       try { trackBorrowIntent(book.userId as any, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'BookDetails' }); } catch {}
       notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
-      window.location.assign(`/messages/${conversation.conversationId}`);
+      navigate(`/messages/${conversation.conversationId}`);
     } catch (e) {
       notificationCtx?.addNotification('error', 'Could not start a chat. Opening Messages…');
-      window.location.assign('/messages');
+      navigate('/messages');
     }
   };
 
@@ -412,18 +413,12 @@ const BookDetails: React.FC = () => {
 
             {/* Google Metadata */}
             {(book as any).google_metadata && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Google Metadata</h3>
-                {renderGoogleMetadata((book as any).google_metadata)}
-              </div>
+              renderGoogleMetadata((book as any).google_metadata)
             )}
 
             {/* Bedrock Analysis */}
             {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Bedrock Analysis</h3>
-                {renderBedrockMetadata((book as any).mcp_metadata.bedrock)}
-              </div>
+              renderBedrockMetadata((book as any).mcp_metadata.bedrock)
             )}
           </div>
         </div>

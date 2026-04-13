@@ -7,10 +7,10 @@ on:
         description: "Create API Gateway base path mapping (requires Serverless exports)"
         type: boolean
         default: true
-  # Run automatically after app deploy succeeds so Serverless stack exports exist
-  workflow_run:
-    workflows: ["Deploy Booklub Prod"]
-    types: ["completed"]
+      confirm_apply:
+        description: "Are you sure you want to run Terraform APPLY?"
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -18,11 +18,12 @@ permissions:
 
 jobs:
   terraform:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       AWS_REGION: us-east-1
       TF_IN_AUTOMATION: true
+      CONFIRM_APPLY: ${{ github.event.inputs.confirm_apply }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -120,7 +121,7 @@ jobs:
         run: terraform plan -input=false
 
       - name: Terraform apply
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_apply == 'true'
         working-directory: bookclub-app/backend/terraform
         env:
           TF_VAR_google_client_id: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -133,3 +134,7 @@ jobs:
           TF_VAR_frontend_bucket_name: ${{ secrets.FRONTEND_S3_BUCKET }}
           TF_VAR_enable_api_mapping: ${{ env.TF_VAR_enable_api_mapping || github.event.inputs.enable_api_mapping || 'true' }}
         run: terraform apply -auto-approve -input=false
+
+      - name: Skip Terraform apply
+        if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_apply != 'true'
+        run: echo "Skipping Terraform apply because confirm_apply was not set to true."
