@@ -420,10 +420,7 @@ const BookDetails: React.FC = () => {
 
             {/* Bedrock Analysis */}
             {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Bedrock Analysis</h3>
-                {renderBedrockMetadata((book as any).mcp_metadata.bedrock)}
-              </div>
+              renderBedrockMetadata((book as any).mcp_metadata.bedrock)
             )}
           </div>
         </div>
