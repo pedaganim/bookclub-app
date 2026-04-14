@@ -73,6 +73,8 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-conversations-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-messages-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-club-messages-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-club-messages-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}/index/*
         - Effect: Allow
@@ -777,6 +779,31 @@ functions:
     environment:
       PYTHONUNBUFFERED: '1'
 # Club-related functions
+  # Club messaging
+  clubSendMessage:
+    handler: src/handlers/clubs/sendMessage.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/messages
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  clubListMessages:
+    handler: src/handlers/clubs/listMessages.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}/messages
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   createClub:
     handler: src/handlers/clubs/create.handler
     events:
@@ -1240,6 +1267,7 @@ resources:
                     - dynamodb:DescribeStream
                   Resource: 
                     - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-*-${self:provider.stage}
+                    - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-club-messages-${self:provider.stage}
 
     # Permission for CloudFormation to invoke the custom resource
     DynamoTableManagerInvokePermission:
@@ -1640,6 +1668,41 @@ resources:
           - IndexName: ConversationCreatedAtIndex
             KeySchema:
               - AttributeName: conversationId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    ClubMessagesTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-club-messages-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: clubId
+            AttributeType: S
+          - AttributeName: messageId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: clubId
+            KeyType: HASH
+          - AttributeName: messageId
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: ClubCreatedAtIndex
+            KeySchema:
+              - AttributeName: clubId
                 KeyType: HASH
               - AttributeName: createdAt
                 KeyType: RANGE

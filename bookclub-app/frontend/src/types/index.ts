@@ -182,6 +182,20 @@ export interface DMMessageList {
   nextToken?: string;
 }
 
+// Club Messaging types
+export interface ClubMessage {
+  clubId: string;
+  messageId: string;
+  fromUserId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ClubMessageList {
+  items: ClubMessage[];
+  nextToken?: string;
+}
+
 // Swap Toys types
 export interface ToyListing {
   listingId: string;

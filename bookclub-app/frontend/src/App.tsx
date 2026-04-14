@@ -29,6 +29,7 @@ import LibraryHub from './pages/LibraryHub';
 import LibraryPage from './pages/LibraryPage';
 import ClubRequests from './pages/ClubRequests';
 import ClubBooks from './pages/ClubBooks';
+import ClubChat from './pages/ClubChat';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
 import { useSubdomain } from './hooks/useSubdomain';
 
@@ -148,6 +149,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <ClubBooks />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/clubs/:clubId/chat"
+                    element={
+                      <ProtectedRoute>
+                        <ClubChat />
                       </ProtectedRoute>
                     }
                   />

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList, ClubMessage, ClubMessageList } from '../types';
 import { config } from '../config';
 import { getCookie } from '../utils/cookies';
 
@@ -581,6 +581,26 @@ class ApiService {
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to mark conversation as read');
     }
+  }
+
+  // Club Messaging
+  async clubSendMessage(clubId: string, content: string): Promise<ClubMessage> {
+    const response: AxiosResponse<ApiResponse<ClubMessage>> = await this.api.post(`/clubs/${clubId}/messages`, { content });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to send club message');
+    }
+    return response.data.data!;
+  }
+
+  async clubListMessages(clubId: string, limit = 50, nextToken?: string): Promise<ClubMessageList> {
+    const query = new URLSearchParams();
+    query.set('limit', String(limit));
+    if (nextToken) query.set('nextToken', nextToken);
+    const response: AxiosResponse<ApiResponse<ClubMessageList>> = await this.api.get(`/clubs/${clubId}/messages?${query.toString()}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list club messages');
+    }
+    return response.data.data!;
   }
 
   // Public user lookup

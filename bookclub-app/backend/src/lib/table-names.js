@@ -9,6 +9,7 @@ const tableNames = {
   'bookclub-members': `${SERVICE_NAME}-bookclub-members-${STAGE}`,
   'dm-conversations': `${SERVICE_NAME}-dm-conversations-${STAGE}`,
   'dm-messages': `${SERVICE_NAME}-dm-messages-${STAGE}`,
+  'club-messages': `${SERVICE_NAME}-club-messages-${STAGE}`,
   'toy-listings': `${SERVICE_NAME}-toy-listings-${STAGE}`,
 };
 

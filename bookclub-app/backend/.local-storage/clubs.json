@@ -1,27 +1,70 @@
 {
-  "4f40d781-dbc1-435c-8611-9b6b08eeea14": {
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+  "a158f90c-b659-4f3b-9329-58f8b81a9774": {
+    "clubId": "a158f90c-b659-4f3b-9329-58f8b81a9774",
     "name": "Test Book Club",
     "slug": "test-book-club",
     "description": "A test club",
     "createdBy": "test-user-123",
-    "inviteCode": "C42112B3",
+    "inviteCode": "4A9E6F17",
     "isPrivate": false,
     "memberLimit": null,
-    "createdAt": "2026-04-12T04:02:38.975Z",
-    "updatedAt": "2026-04-12T04:02:38.975Z"
+    "createdAt": "2026-04-12T12:46:30.629Z",
+    "updatedAt": "2026-04-12T12:46:30.630Z"
   },
-  "f25d299b-af6b-4f4b-aa76-1e82921ba23c": {
-    "clubId": "f25d299b-af6b-4f4b-aa76-1e82921ba23c",
-    "name": "wqejlk",
-    "slug": "wqejlk",
-    "description": "qew",
-    "location": "Melbourne, Victoria",
+  "9f5dde4a-8960-4473-a66b-cafdb976720e": {
+    "clubId": "9f5dde4a-8960-4473-a66b-cafdb976720e",
+    "name": "qwekqwe",
+    "slug": "qwekqwe",
+    "description": "qwe",
+    "location": "eqwe",
     "createdBy": "local-user",
-    "inviteCode": "C0DE706E",
+    "inviteCode": "CFD1D4C3",
     "isPrivate": false,
     "memberLimit": null,
-    "createdAt": "2026-04-12T04:07:40.174Z",
-    "updatedAt": "2026-04-12T04:07:40.174Z"
+    "memberCount": 2,
+    "createdAt": "2026-04-13T08:39:06.508Z",
+    "updatedAt": "2026-04-13T08:39:06.508Z"
+  },
+  "92b728eb-8879-4ef1-a2e7-8cf1fe7a937a": {
+    "clubId": "92b728eb-8879-4ef1-a2e7-8cf1fe7a937a",
+    "name": "qwekqweq",
+    "slug": "qwekqweq",
+    "description": "qeqwe",
+    "location": "Melbourne",
+    "createdBy": "local-user",
+    "inviteCode": "3B1C9D36",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 2,
+    "createdAt": "2026-04-13T08:40:46.626Z",
+    "updatedAt": "2026-04-13T08:40:46.626Z"
+  },
+  "ec84c038-4433-4a66-b6f5-96e492f4bf68": {
+    "clubId": "ec84c038-4433-4a66-b6f5-96e492f4bf68",
+    "name": "eqweqwe",
+    "slug": "eqweqwe",
+    "description": "qwe",
+    "location": "qe",
+    "createdBy": "local-user",
+    "inviteCode": "7AC3C85C",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 1,
+    "createdAt": "2026-04-13T08:44:21.372Z",
+    "updatedAt": "2026-04-13T08:44:21.372Z"
+  },
+  "c9e2ede2-47dc-472a-b0dc-5a763b75c945": {
+    "clubId": "c9e2ede2-47dc-472a-b0dc-5a763b75c945",
+    "name": "Maddy",
+    "slug": "maddy",
+    "description": "erqw",
+    "location": "qweqwe",
+    "createdBy": "local-user",
+    "inviteCode": "A509E567",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 1,
+    "createdAt": "2026-04-13T08:44:58.640Z",
+    "updatedAt": "2026-04-13T08:44:58.640Z"
   }
 }

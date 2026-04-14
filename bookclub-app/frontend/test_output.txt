@@ -2,160 +2,1808 @@
 > frontend@0.1.0 test
 > react-scripts test --watchAll=false
 
+FAIL src/__tests__/components/PublicBookCard.test.tsx
+  ● PublicBookCard › should render book cover image when provided
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:31:11)
+
+  ● PublicBookCard › should use default placeholder when no cover image is provided
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:40:11)
+
+  ● PublicBookCard › should use generic alt text when no title is provided
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:49:11)
+
+  ● PublicBookCard › should not display description in public card
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:57:11)
+
+  ● PublicBookCard › should not display description section when empty
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:64:11)
+
+  ● PublicBookCard › should show title and author on public card
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:72:11)
+
+  ● PublicBookCard › should display simplified username from userId
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:78:11)
+
+  ● PublicBookCard › should handle fallback when image fails to load
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:85:11)
+
+  ● PublicBookCard › should not display status field in public view
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:105:11)
+
+FAIL src/__tests__/components/BookCard.test.tsx
+  ● BookCard › should render book information correctly (title/author visible, no description)
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:63:11)
+
+  ● BookCard › should render in grid view by default (title/author visible, no description)
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:80:11)
+
+  ● BookCard › should render in list view when listView prop is true (title/author visible, no description)
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:98:11)
+
+  ● BookCard › should render book cover image correctly in grid view
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:118:11)
+
+  ● BookCard › should render book cover image correctly in list view
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:137:11)
+
+  ● BookCard › should show action buttons when showActions is true
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:156:11)
+
+  ● BookCard › should not show action buttons when showActions is false
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:172:11)
+
+  ● BookCard › should show confirmation modal when delete button is clicked
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:188:11)
+
+  ● BookCard › should close confirmation modal when cancel is clicked
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:212:11)
+
+  ● BookCard › should handle delete when user confirms
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:237:11)
+
+  ● BookCard › should handle delete error gracefully
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:273:11)
+
+PASS src/__tests__/Pagination.test.tsx
+FAIL src/__tests__/AddBookModal.test.tsx
+  ● Add Books Modal (Bulk Upload) › handles manual book entry
+
+    TestingLibraryElementError: Unable to find a label with the text of: /Title/i
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start sm:items-center justify-center"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative w-full h-full sm:h-auto sm:max-w-4xl sm:my-8 mx-0 sm:mx-auto p-4 sm:p-6 border-0 sm:border shadow-none sm:shadow-lg rounded-none sm:rounded-md bg-white overflow-y-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between items-center mb-4 sm:mb-6"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mAdd Books[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"p-2 text-gray-400 hover:text-gray-600 sm:hidden"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"h-6 w-6"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 18L18 6M6 6l12 12"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-5 border-b border-gray-200"[39m
+            [36m>[39m
+              [36m<nav[39m
+                [33mclass[39m=[32m"-mb-px flex space-x-6"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-indigo-600 text-indigo-700"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mUpload Images[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mEnter Manually[0m
+                [36m</button>[39m
+              [36m</nav>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-gray-600 mb-4"[39m
+            [36m>[39m
+              [0mUpload multiple book cover images to create entries quickly. We skip image processing; you can edit details later.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-4"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex flex-wrap gap-2 mb-3"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Upload images from device"[39m
+                    [33mclass[39m=[32m"px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0m📁 Add Book Cover Image ([0m
+                    [0m0[0m
+                    [0m/10[0m
+                    [0m)[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33maccept[39m=[32m"image/*"[39m
+                  [33maria-label[39m=[32m"Select multiple image files"[39m
+                  [33mclass[39m=[32m"hidden"[39m
+                  [33mmultiple[39m=[32m""[39m
+                  [33mtype[39m=[32m"file"[39m
+                [36m/>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-sm text-gray-500"[39m
+                  [36m>[39m
+                    [0mUpload up to 10 book images. We'll upload them as-is and process details in the background.[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-gray-400 mt-1"[39m
+                  [36m>[39m
+                    [0mSupported formats: JPG, PNG, GIF • Large files may take longer to upload[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-end space-x-3 pt-4"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mUpload 0 Images[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      139 |
+      140 |     // Default tab is 'manual'
+    > 141 |     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
+          |                             ^
+      142 |     fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
+      143 |     
+      144 |     const submitButton = screen.getByRole('button', { name: /Add Book/i });
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:111:38)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at getByLabelText (node_modules/@testing-library/dom/dist/query-helpers.js:95:19)
+      at Object.<anonymous> (src/__tests__/AddBookModal.test.tsx:141:29)
+
+  ● Add Books Modal (Bulk Upload) › handles manual book entry with optional image
+
+    TestingLibraryElementError: Unable to find a label with the text of: /Title/i
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start sm:items-center justify-center"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative w-full h-full sm:h-auto sm:max-w-4xl sm:my-8 mx-0 sm:mx-auto p-4 sm:p-6 border-0 sm:border shadow-none sm:shadow-lg rounded-none sm:rounded-md bg-white overflow-y-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between items-center mb-4 sm:mb-6"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mAdd Books[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"p-2 text-gray-400 hover:text-gray-600 sm:hidden"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"h-6 w-6"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 18L18 6M6 6l12 12"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-5 border-b border-gray-200"[39m
+            [36m>[39m
+              [36m<nav[39m
+                [33mclass[39m=[32m"-mb-px flex space-x-6"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-indigo-600 text-indigo-700"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mUpload Images[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mEnter Manually[0m
+                [36m</button>[39m
+              [36m</nav>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-gray-600 mb-4"[39m
+            [36m>[39m
+              [0mUpload multiple book cover images to create entries quickly. We skip image processing; you can edit details later.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-4"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex flex-wrap gap-2 mb-3"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Upload images from device"[39m
+                    [33mclass[39m=[32m"px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0m📁 Add Book Cover Image ([0m
+                    [0m0[0m
+                    [0m/10[0m
+                    [0m)[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33maccept[39m=[32m"image/*"[39m
+                  [33maria-label[39m=[32m"Select multiple image files"[39m
+                  [33mclass[39m=[32m"hidden"[39m
+                  [33mmultiple[39m=[32m""[39m
+                  [33mtype[39m=[32m"file"[39m
+                [36m/>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-sm text-gray-500"[39m
+                  [36m>[39m
+                    [0mUpload up to 10 book images. We'll upload them as-is and process details in the background.[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-gray-400 mt-1"[39m
+                  [36m>[39m
+                    [0mSupported formats: JPG, PNG, GIF • Large files may take longer to upload[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-end space-x-3 pt-4"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mUpload 0 Images[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      173 |
+      174 |     // Fill required fields
+    > 175 |     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
+          |                             ^
+      176 |     fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
+      177 |     
+      178 |     // Mock image selection
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:111:38)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at getByLabelText (node_modules/@testing-library/dom/dist/query-helpers.js:95:19)
+      at Object.<anonymous> (src/__tests__/AddBookModal.test.tsx:175:29)
+
 PASS src/__tests__/components/MultiImageUpload.test.tsx
 PASS src/__tests__/pages/BookLibrary.test.tsx
-PASS src/__tests__/Pagination.test.tsx
-PASS src/__tests__/pages/Clubs.test.tsx
 PASS src/__tests__/services/ocrService.test.ts
-  ● Console
-
-    console.error
-      OCR recognition failed: Error: OCR failed
-          at Object.<anonymous> (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/__tests__/services/ocrService.test.ts:63:46)
-          at Promise.then.completed (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/utils.js:391:28)
-          at new Promise (<anonymous>)
-          at callAsyncCircusFn (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/utils.js:316:10)
-          at _callCircusTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:218:40)
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at _runTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:155:3)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:66:9)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:60:9)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:60:9)
-          at run (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:25:3)
-          at runAndTransformResultsToJestFormat (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
-          at jestAdapter (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
-          at runTestInternal (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/runTest.js:389:16)
-          at runTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/runTest.js:475:34)
-          at Object.worker (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/testWorker.js:133:12)
-
-      254 |     } catch (error) {
-      255 |       // eslint-disable-next-line no-console
-    > 256 |       console.error('OCR recognition failed:', error);
-          |               ^
-      257 |       throw new Error('Failed to extract text from image. Please ensure the image is clear and contains readable text.');
-      258 |     }
-      259 |   }
-
-      at OCRService.extractText (src/services/ocrService.ts:256:15)
-      at Object.<anonymous> (src/__tests__/services/ocrService.test.ts:65:7)
-
-    console.error
-      OCR worker initialization failed: Error: Worker init failed
-          at Object.<anonymous> (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/__tests__/services/ocrService.test.ts:72:42)
-          at Promise.then.completed (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/utils.js:391:28)
-          at new Promise (<anonymous>)
-          at callAsyncCircusFn (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/utils.js:316:10)
-          at _callCircusTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:218:40)
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at _runTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:155:3)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:66:9)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:60:9)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:60:9)
-          at run (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:25:3)
-          at runAndTransformResultsToJestFormat (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
-          at jestAdapter (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
-          at runTestInternal (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/runTest.js:389:16)
-          at runTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/runTest.js:475:34)
-          at Object.worker (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/testWorker.js:133:12)
-
-      71 |     } catch (error) {
-      72 |       // eslint-disable-next-line no-console
-    > 73 |       console.error('OCR worker initialization failed:', error);
-         |               ^
-      74 |       throw new Error('Failed to initialize OCR engine. Please try again.');
-      75 |     }
-      76 |   }
-
-      at OCRService.initializeWorker (src/services/ocrService.ts:73:15)
-      at OCRService.extractText (src/services/ocrService.ts:230:5)
-      at Object.<anonymous> (src/__tests__/services/ocrService.test.ts:74:7)
-
-PASS src/__tests__/components/ClubCard.test.tsx
 PASS src/__tests__/pages/BrowseClubs.test.tsx
 PASS src/__tests__/pages/NotificationSettings.test.tsx
-PASS src/__tests__/AddBookModal.test.tsx
-PASS src/__tests__/components/PublicBookCard.test.tsx
-PASS src/__tests__/components/JoinClubModal.test.tsx
-PASS src/__tests__/components/ManageRequestsModal.test.tsx
-PASS src/App.test.tsx
-PASS src/__tests__/services/imageProcessingService.test.ts
-PASS src/__tests__/services/voiceSearchService.test.ts
-  ● Console
-
-    console.error
-      Failed to start voice recording: Error: Permission denied
-          at Object.<anonymous> (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/__tests__/services/voiceSearchService.test.ts:80:60)
-          at Promise.then.completed (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/utils.js:391:28)
-          at new Promise (<anonymous>)
-          at callAsyncCircusFn (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/utils.js:316:10)
-          at _callCircusTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:218:40)
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at _runTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:155:3)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:66:9)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:60:9)
-          at _runTestsForDescribeBlock (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:60:9)
-          at run (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/run.js:25:3)
-          at runAndTransformResultsToJestFormat (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
-          at jestAdapter (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
-          at runTestInternal (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/runTest.js:389:16)
-          at runTest (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/runTest.js:475:34)
-          at Object.worker (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/node_modules/jest-runner/build/testWorker.js:133:12)
-
-      68 |     } catch (error) {
-      69 |       // eslint-disable-next-line no-console
-    > 70 |       console.error('Failed to start voice recording:', error);
-         |               ^
-      71 |       throw new Error('Could not access microphone. Please ensure microphone permissions are granted.');
-      72 |     }
-      73 |   }
-
-      at VoiceSearchService.startRecording (src/services/voiceSearchService.ts:70:15)
-      at Object.<anonymous> (src/__tests__/services/voiceSearchService.test.ts:88:7)
-
-PASS src/__tests__/components/BookCard.test.tsx
-PASS src/__tests__/utils/pkce.test.ts
-PASS src/__tests__/utils/s3Utils.test.ts
-PASS src/__tests__/services/api.test.ts
-PASS src/__tests__/pages/Login.test.tsx
 PASS src/__tests__/components/Navbar.test.tsx
+PASS src/App.test.tsx
+PASS src/__tests__/services/api.test.ts
+PASS src/__tests__/components/ManageRequestsModal.test.tsx
+PASS src/__tests__/components/JoinClubModal.test.tsx
+PASS src/__tests__/pages/Login.test.tsx
+PASS src/__tests__/pages/Clubs.test.tsx
+PASS src/__tests__/services/voiceSearchService.test.ts
+PASS src/__tests__/utils/pkce.test.ts
+PASS src/__tests__/services/imageProcessingService.test.ts
+PASS src/__tests__/utils/s3Utils.test.ts
+PASS src/__tests__/components/ClubCard.test.tsx
 PASS src/__tests__/components/CreateClubModal.test.tsx
-  ● Console
 
-    console.error
-      Reverse geocoding failed: Error: Geocoding service unavailable
-          at reverseGeocode (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/components/CreateClubModal.tsx:49:15)
-          at /Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/components/CreateClubModal.tsx:101:27
+Summary of all failing tests
+FAIL src/__tests__/components/PublicBookCard.test.tsx
+  ● PublicBookCard › should render book cover image when provided
 
-      80 |     } catch (error) {
-      81 |       // eslint-disable-next-line no-console
-    > 82 |       console.error('Reverse geocoding failed:', error);
-         |               ^
-      83 |       // Fallback to coordinates if geocoding fails
-      84 |       return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      85 |     }
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
 
-      at reverseGeocode (src/components/CreateClubModal.tsx:82:15)
-      at src/components/CreateClubModal.tsx:101:27
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
 
-    console.error
-      Reverse geocoding failed: Error: Geocoding service unavailable
-          at reverseGeocode (/Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/components/CreateClubModal.tsx:49:15)
-          at /Users/maddy/CascadeProjects/windsurf-project/bookclub-app/frontend/src/components/CreateClubModal.tsx:101:27
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:31:11)
 
-      80 |     } catch (error) {
-      81 |       // eslint-disable-next-line no-console
-    > 82 |       console.error('Reverse geocoding failed:', error);
-         |               ^
-      83 |       // Fallback to coordinates if geocoding fails
-      84 |       return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      85 |     }
+  ● PublicBookCard › should use default placeholder when no cover image is provided
 
-      at reverseGeocode (src/components/CreateClubModal.tsx:82:15)
-      at src/components/CreateClubModal.tsx:101:27
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:40:11)
+
+  ● PublicBookCard › should use generic alt text when no title is provided
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:49:11)
+
+  ● PublicBookCard › should not display description in public card
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:57:11)
+
+  ● PublicBookCard › should not display description section when empty
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:64:11)
+
+  ● PublicBookCard › should show title and author on public card
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:72:11)
+
+  ● PublicBookCard › should display simplified username from userId
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:78:11)
+
+  ● PublicBookCard › should handle fallback when image fails to load
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:85:11)
+
+  ● PublicBookCard › should not display status field in public view
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      16 |   const [requestingJoin, setRequestingJoin] = React.useState(false);
+      17 |   const [joinRequested, setJoinRequested] = React.useState(false);
+    > 18 |   const navigate = useNavigate();
+         |                               ^
+      19 |
+      20 |   const navigateToJoin = (e: React.MouseEvent) => {
+      21 |     e.stopPropagation();
+
+      at PublicBookCard (src/components/PublicBookCard.tsx:18:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/PublicBookCard.test.tsx:105:11)
+
+FAIL src/__tests__/components/BookCard.test.tsx
+  ● BookCard › should render book information correctly (title/author visible, no description)
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:63:11)
+
+  ● BookCard › should render in grid view by default (title/author visible, no description)
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:80:11)
+
+  ● BookCard › should render in list view when listView prop is true (title/author visible, no description)
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:98:11)
+
+  ● BookCard › should render book cover image correctly in grid view
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:118:11)
+
+  ● BookCard › should render book cover image correctly in list view
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:137:11)
+
+  ● BookCard › should show action buttons when showActions is true
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:156:11)
+
+  ● BookCard › should not show action buttons when showActions is false
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:172:11)
+
+  ● BookCard › should show confirmation modal when delete button is clicked
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:188:11)
+
+  ● BookCard › should close confirmation modal when cancel is clicked
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:212:11)
+
+  ● BookCard › should handle delete when user confirms
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:237:11)
+
+  ● BookCard › should handle delete error gracefully
+
+    TypeError: (0 , _reactRouterDom.useNavigate) is not a function
+
+      72 |   const { user } = useAuth();
+      73 |   const { addNotification } = useNotification();
+    > 74 |   const navigate = useNavigate();
+         |                               ^
+      75 |
+      76 |   const handleDelete = async () => {
+      77 |     try {
+
+      at BookCard (src/components/BookCard.tsx:74:31)
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:23863:20)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom-client.development.js:5529:22)
+      at updateFunctionComponent (node_modules/react-dom/cjs/react-dom-client.development.js:8897:19)
+      at beginWork (node_modules/react-dom/cjs/react-dom-client.development.js:10522:18)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom-client.development.js:15140:22)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom-client.development.js:14956:41)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom-client.development.js:14936:11)
+      at performWorkOnRoot (node_modules/react-dom/cjs/react-dom-client.development.js:14462:44)
+      at performWorkOnRootViaSchedulerTask (node_modules/react-dom/cjs/react-dom-client.development.js:16216:7)
+      at flushActQueue (node_modules/react/cjs/react.development.js:566:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:860:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:190:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:292:10)
+      at Object.<anonymous> (src/__tests__/components/BookCard.test.tsx:273:11)
+
+FAIL src/__tests__/AddBookModal.test.tsx
+  ● Add Books Modal (Bulk Upload) › handles manual book entry
+
+    TestingLibraryElementError: Unable to find a label with the text of: /Title/i
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start sm:items-center justify-center"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative w-full h-full sm:h-auto sm:max-w-4xl sm:my-8 mx-0 sm:mx-auto p-4 sm:p-6 border-0 sm:border shadow-none sm:shadow-lg rounded-none sm:rounded-md bg-white overflow-y-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between items-center mb-4 sm:mb-6"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mAdd Books[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"p-2 text-gray-400 hover:text-gray-600 sm:hidden"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"h-6 w-6"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 18L18 6M6 6l12 12"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-5 border-b border-gray-200"[39m
+            [36m>[39m
+              [36m<nav[39m
+                [33mclass[39m=[32m"-mb-px flex space-x-6"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-indigo-600 text-indigo-700"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mUpload Images[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mEnter Manually[0m
+                [36m</button>[39m
+              [36m</nav>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-gray-600 mb-4"[39m
+            [36m>[39m
+              [0mUpload multiple book cover images to create entries quickly. We skip image processing; you can edit details later.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-4"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex flex-wrap gap-2 mb-3"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Upload images from device"[39m
+                    [33mclass[39m=[32m"px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0m�� Add Book Cover Image ([0m
+                    [0m0[0m
+                    [0m/10[0m
+                    [0m)[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33maccept[39m=[32m"image/*"[39m
+                  [33maria-label[39m=[32m"Select multiple image files"[39m
+                  [33mclass[39m=[32m"hidden"[39m
+                  [33mmultiple[39m=[32m""[39m
+                  [33mtype[39m=[32m"file"[39m
+                [36m/>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-sm text-gray-500"[39m
+                  [36m>[39m
+                    [0mUpload up to 10 book images. We'll upload them as-is and process details in the background.[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-gray-400 mt-1"[39m
+                  [36m>[39m
+                    [0mSupported formats: JPG, PNG, GIF • Large files may take longer to upload[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-end space-x-3 pt-4"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mUpload 0 Images[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      139 |
+      140 |     // Default tab is 'manual'
+    > 141 |     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
+          |                             ^
+      142 |     fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
+      143 |     
+      144 |     const submitButton = screen.getByRole('button', { name: /Add Book/i });
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:111:38)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at getByLabelText (node_modules/@testing-library/dom/dist/query-helpers.js:95:19)
+      at Object.<anonymous> (src/__tests__/AddBookModal.test.tsx:141:29)
+
+  ● Add Books Modal (Bulk Upload) › handles manual book entry with optional image
+
+    TestingLibraryElementError: Unable to find a label with the text of: /Title/i
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start sm:items-center justify-center"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative w-full h-full sm:h-auto sm:max-w-4xl sm:my-8 mx-0 sm:mx-auto p-4 sm:p-6 border-0 sm:border shadow-none sm:shadow-lg rounded-none sm:rounded-md bg-white overflow-y-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-between items-center mb-4 sm:mb-6"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mAdd Books[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"p-2 text-gray-400 hover:text-gray-600 sm:hidden"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"h-6 w-6"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 18L18 6M6 6l12 12"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-5 border-b border-gray-200"[39m
+            [36m>[39m
+              [36m<nav[39m
+                [33mclass[39m=[32m"-mb-px flex space-x-6"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-indigo-600 text-indigo-700"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mUpload Images[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"whitespace-nowrap py-2 px-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [0mEnter Manually[0m
+                [36m</button>[39m
+              [36m</nav>[39m
+            [36m</div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm text-gray-600 mb-4"[39m
+            [36m>[39m
+              [0mUpload multiple book cover images to create entries quickly. We skip image processing; you can edit details later.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-4"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex flex-wrap gap-2 mb-3"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Upload images from device"[39m
+                    [33mclass[39m=[32m"px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [0m�� Add Book Cover Image ([0m
+                    [0m0[0m
+                    [0m/10[0m
+                    [0m)[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+                [36m<input[39m
+                  [33maccept[39m=[32m"image/*"[39m
+                  [33maria-label[39m=[32m"Select multiple image files"[39m
+                  [33mclass[39m=[32m"hidden"[39m
+                  [33mmultiple[39m=[32m""[39m
+                  [33mtype[39m=[32m"file"[39m
+                [36m/>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-sm text-gray-500"[39m
+                  [36m>[39m
+                    [0mUpload up to 10 book images. We'll upload them as-is and process details in the background.[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"text-xs text-gray-400 mt-1"[39m
+                  [36m>[39m
+                    [0mSupported formats: JPG, PNG, GIF • Large files may take longer to upload[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex justify-end space-x-3 pt-4"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mUpload 0 Images[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      173 |
+      174 |     // Fill required fields
+    > 175 |     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Manual Title' } });
+          |                             ^
+      176 |     fireEvent.change(screen.getByLabelText(/Author/i), { target: { value: 'Manual Author' } });
+      177 |     
+      178 |     // Mock image selection
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:111:38)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at getByLabelText (node_modules/@testing-library/dom/dist/query-helpers.js:95:19)
+      at Object.<anonymous> (src/__tests__/AddBookModal.test.tsx:175:29)
 
 
-Test Suites: 22 passed, 22 total
-Tests:       173 passed, 173 total
+Test Suites: 3 failed, 19 passed, 22 total
+Tests:       22 failed, 152 passed, 174 total
 Snapshots:   0 total
-Time:        1.485 s, estimated 2 s
+Time:        1.678 s, estimated 2 s
 Ran all test suites.

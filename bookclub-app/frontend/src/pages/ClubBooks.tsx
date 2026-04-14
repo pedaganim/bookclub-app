@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
+import { ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
 
 const ClubBooks: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>();
@@ -76,6 +77,15 @@ const ClubBooks: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">
             {club ? club.name : 'Club'} — Books
           </h1>
+          <div className="mt-3 flex items-center gap-4">
+            <Link
+              to={`/clubs/${clubId}/chat`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+            >
+              <ChatBubbleOvalLeftIcon className="h-4 w-4" />
+              Club Chat
+            </Link>
+          </div>
           {club?.description && (
             <p className="mt-1 text-gray-600">{club.description}</p>
           )}

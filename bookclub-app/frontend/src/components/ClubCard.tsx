@@ -10,7 +10,8 @@ import {
   InboxArrowDownIcon,
   ClipboardDocumentIcon,
   ArrowRightOnRectangleIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ChatBubbleOvalLeftIcon
 } from '@heroicons/react/24/outline';
 
 interface ClubCardProps {
@@ -116,6 +117,17 @@ const ClubCard: React.FC<ClubCardProps> = ({
           <MagnifyingGlassIcon className="h-3.5 w-3.5" />
           Explore
         </button>
+
+        {isMember && (
+          <button
+            onClick={(e) => handleAction(e, () => navigate(`/clubs/${club.clubId}/chat`))}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+            title="Club Chat"
+          >
+            <ChatBubbleOvalLeftIcon className="h-3.5 w-3.5" />
+            Chat
+          </button>
+        )}
 
         {!isMember && !isCreator && !isRequested && onJoin && (
           <button
