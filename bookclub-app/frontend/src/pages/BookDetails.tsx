@@ -24,6 +24,8 @@ const BookDetails: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const notificationCtx = React.useContext(NotificationContext);
   const [deleting, setDeleting] = useState(false);
+  const [isMemberOfBookClub, setIsMemberOfBookClub] = useState<boolean>(false);
+  const [checkingMembership, setCheckingMembership] = useState(false);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
   const asText = (v: any): string => {
@@ -209,13 +211,32 @@ const BookDetails: React.FC = () => {
         }
         const b = await apiService.getBook(bookId);
         setBook(b);
+
+        // Check membership if book belongs to a club
+        if (isAuthenticated && b.clubId) {
+          try {
+            setCheckingMembership(true);
+            const userClubsRes = await apiService.getUserClubs();
+            const isMember = (userClubsRes.items || []).some((c: any) => c.clubId === b.clubId);
+            setIsMemberOfBookClub(isMember);
+          } catch (e) {
+            console.warn('Failed to check club membership:', e);
+            // Default to false if check fails
+            setIsMemberOfBookClub(false);
+          } finally {
+            setCheckingMembership(false);
+          }
+        } else if (!b.clubId) {
+          // If book doesn't belong to a club, we don't restrict borrowing by club membership
+          setIsMemberOfBookClub(true);
+        }
       } catch (e: any) {
         setError(e?.message || 'Failed to load book');
       } finally {
         setLoading(false);
       }
     })();
-  }, [bookId]);
+  }, [bookId, isAuthenticated]);
 
   // SEO logic moved to SEO component in render
 
@@ -395,14 +416,26 @@ const BookDetails: React.FC = () => {
               </div>
             ) : (
               book.userId ? (
-                <button
-                  type="button"
-                  onClick={handleBorrow}
-                  className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
-                  title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
-                >
-                  {`Borrow from ${book.userName || 'owner'}`}
-                </button>
+                (!book.clubId || isMemberOfBookClub) ? (
+                  <button
+                    type="button"
+                    onClick={handleBorrow}
+                    disabled={checkingMembership}
+                    className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
+                    title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
+                  >
+                    {`Borrow from ${book.userName || 'owner'}`}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/clubs/browse', { state: { search: book.clubName || '' } })}
+                    className="text-sm font-medium text-white px-4 py-2 rounded-md bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
+                    title={`Join ${book.clubName || 'the club'} to borrow this book`}
+                  >
+                    {`Join ${book.clubName || 'Club'} to Borrow`}
+                  </button>
+                )
               ) : null
             )}
           </div>
