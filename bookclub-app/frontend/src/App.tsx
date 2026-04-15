@@ -52,133 +52,133 @@ function App() {
             <Navbar />
             <main className="min-h-screen bg-gray-50 pb-20 md:pb-0">
               <Routes>
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Navigate to="/login" replace />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/about/blogs" element={<BlogsIndex />} />
-                  <Route path="/about/blogs/:slug" element={<BlogPost />} />
-                  <Route path="/library" element={<LibraryHub />} />
-                  {LIBRARY_CONFIGS.map((cfg) => (
-                    <Route
-                      key={cfg.slug}
-                      path={`/library/${cfg.slug}`}
-                      element={<LibraryPage config={cfg} />}
-                    />
-                  ))}
-                  <Route path="/library/books" element={<BookLibrary />} />
-                  {/* Legacy redirects */}
-                  <Route path="/libraries" element={<Navigate to="/library" replace />} />
-                  <Route path="/libraries/*" element={<Navigate to="/library" replace />} />
-                  <Route path="/swap-toys" element={<Navigate to="/library/toys" replace />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Navigate to="/login" replace />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/about/blogs" element={<BlogsIndex />} />
+                <Route path="/about/blogs/:slug" element={<BlogPost />} />
+                <Route path="/library" element={<LibraryHub />} />
+                {LIBRARY_CONFIGS.map((cfg) => (
                   <Route
-                    path="/books/:bookId"
-                    element={<BookDetails />}
+                    key={cfg.slug}
+                    path={`/library/${cfg.slug}`}
+                    element={<LibraryPage config={cfg} />}
                   />
-                  <Route
-                    path="/books/new"
-                    element={
-                      <ProtectedRoute>
-                        <AddBook />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/books/:bookId/edit"
-                    element={
-                      <ProtectedRoute>
-                        <EditBook />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/messages"
-                    element={
-                      <ProtectedRoute>
-                        <Messages />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/messages/:conversationId"
-                    element={
-                      <ProtectedRoute>
-                        <Messages />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/users/:userId"
-                    element={
-                      <ProtectedRoute>
-                        <UserProfile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/clubs"
-                    element={
-                      <ProtectedRoute>
-                        <Clubs />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route 
-                    path="/" 
-                    element={<Navigate to={isSubdomain ? "/library/books" : "/library"} replace />} 
-                  />
-                  <Route
-                    path="/clubs/browse"
-                    element={
-                      <ProtectedRoute>
-                        <BrowseClubs />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/clubs/:clubId/requests"
-                    element={
-                      <ProtectedRoute>
-                        <ClubRequests />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/clubs/:clubId/explore"
-                    element={
-                      <ProtectedRoute>
-                        <ClubBooks />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/my-books"
-                    element={
-                      <ProtectedRoute>
-                        <Home />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <ProfileEdit />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings/notifications"
-                    element={
-                      <ProtectedRoute>
-                        <NotificationSettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="*" element={<Navigate to="/login" replace />} />
-                </Routes>
+                ))}
+                <Route path="/library/books" element={<BookLibrary />} />
+                {/* Legacy redirects */}
+                <Route path="/libraries" element={<Navigate to="/library" replace />} />
+                <Route path="/libraries/*" element={<Navigate to="/library" replace />} />
+                <Route path="/swap-toys" element={<Navigate to="/library/toys" replace />} />
+                <Route
+                  path="/books/:bookId"
+                  element={<BookDetails />}
+                />
+                <Route
+                  path="/books/new"
+                  element={
+                    <ProtectedRoute>
+                      <AddBook />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/books/:bookId/edit"
+                  element={
+                    <ProtectedRoute>
+                      <EditBook />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/messages"
+                  element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/messages/:conversationId"
+                  element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/users/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <UserProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/clubs"
+                  element={
+                    <ProtectedRoute>
+                      <Clubs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/"
+                  element={<Navigate to={isSubdomain ? "/library/books" : "/library"} replace />}
+                />
+                <Route
+                  path="/clubs/browse"
+                  element={
+                    <ProtectedRoute>
+                      <BrowseClubs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/clubs/:clubId/requests"
+                  element={
+                    <ProtectedRoute>
+                      <ClubRequests />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/clubs/:clubId/explore"
+                  element={
+                    <ProtectedRoute>
+                      <ClubBooks />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-books"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfileEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
             </main>
             <Footer />
           </div>

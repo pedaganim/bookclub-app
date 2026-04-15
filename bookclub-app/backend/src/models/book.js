@@ -425,6 +425,55 @@ class Book {
       throw error;
     }
   }
+
+  static async getSummary(userId) {
+    if (isOffline()) {
+      const all = await LocalStorage().listBooks();
+      const owned = all.filter(b => b.userId === userId);
+      return {
+        total: owned.length,
+        lent: owned.filter(b => b.status === 'borrowed').length,
+        borrowed: all.filter(b => b.lentToUserId === userId).length,
+      };
+    }
+
+    const [ownedRes, lentRes, borrowedRes] = await Promise.all([
+      // Total owned
+      dynamoDb.query({
+        TableName: getTableName('books'),
+        IndexName: 'UserIdIndex',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
+        Select: 'COUNT',
+      }),
+      // Lent out (owned by me, but status is borrowed)
+      // Note: If we don't have a GSI for (userId, status), we might have to filter
+      // or just fetch all and count. But for performance, a FilterExpression with Select: COUNT works.
+      dynamoDb.query({
+        TableName: getTableName('books'),
+        IndexName: 'UserIdIndex',
+        KeyConditionExpression: 'userId = :userId',
+        FilterExpression: '#s = :status',
+        ExpressionAttributeNames: { '#s': 'status' },
+        ExpressionAttributeValues: { ':userId': userId, ':status': 'borrowed' },
+        Select: 'COUNT',
+      }),
+      // Borrowed from others
+      dynamoDb.query({
+        TableName: getTableName('books'),
+        IndexName: 'LentToUserIdIndex',
+        KeyConditionExpression: 'lentToUserId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
+        Select: 'COUNT',
+      }),
+    ]);
+
+    return {
+      total: ownedRes.Count || 0,
+      lent: lentRes.Count || 0,
+      borrowed: borrowedRes.Count || 0,
+    };
+  }
 }
 
 module.exports = Book;

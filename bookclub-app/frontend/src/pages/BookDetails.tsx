@@ -209,25 +209,17 @@ const BookDetails: React.FC = () => {
           setLoading(false);
           return;
         }
-        const b = await apiService.getBook(bookId);
+        const [b, userClubsRes] = await Promise.all([
+          apiService.getBook(bookId),
+          isAuthenticated ? apiService.getUserClubs() : Promise.resolve({ items: [] })
+        ]);
+        
         setBook(b);
 
-        // Check membership if book belongs to a club
         if (isAuthenticated && b.clubId) {
-          try {
-            setCheckingMembership(true);
-            const userClubsRes = await apiService.getUserClubs();
-            const isMember = (userClubsRes.items || []).some((c: any) => c.clubId === b.clubId);
-            setIsMemberOfBookClub(isMember);
-          } catch (e) {
-            console.warn('Failed to check club membership:', e);
-            // Default to false if check fails
-            setIsMemberOfBookClub(false);
-          } finally {
-            setCheckingMembership(false);
-          }
+          const isMember = (userClubsRes.items || []).some((c: any) => c.clubId === b.clubId);
+          setIsMemberOfBookClub(isMember);
         } else if (!b.clubId) {
-          // If book doesn't belong to a club, we don't restrict borrowing by club membership
           setIsMemberOfBookClub(true);
         }
       } catch (e: any) {
