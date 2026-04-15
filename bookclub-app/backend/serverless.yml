@@ -31,7 +31,7 @@ provider:
     # Function name for direct invoke from processImageUpload
     BEDROCK_ANALYZE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-bedrockAnalyzeCover
     # Bedrock vision model (Claude 3 family recommended)
-    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-haiku-20240307-v1:0'}
+    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-haiku-20241022-v1:0'}
     # SQS queue for Bedrock analyzer worker
     BEDROCK_ANALYZE_QUEUE_URL: !Ref BedrockAnalyzeQueue
     # Base URL for generating absolute links in sitemap
@@ -391,7 +391,26 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-  
+  getBooksSummary:
+    handler: src/handlers/books/summary.handler
+    events:
+      - http:
+          method: GET
+          path: /books/summary
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
   updateBook:
     handler: src/handlers/books/update.handler
     events:
@@ -819,10 +838,6 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
-          authorizer: 
-            type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
 
   listUserClubs:
     handler: src/handlers/clubs/list.handler

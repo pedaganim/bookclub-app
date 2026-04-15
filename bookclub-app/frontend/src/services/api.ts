@@ -139,8 +139,13 @@ class ApiService {
     clubId?: string;
   }): Promise<Book> {
     const response: AxiosResponse<ApiResponse<Book>> = await this.api.post('/books', bookData);
+    return response.data.data!;
+  }
+
+  async getBooksSummary(): Promise<{ total: number; lent: number; borrowed: number }> {
+    const response: AxiosResponse<ApiResponse<{ total: number; lent: number; borrowed: number }>> = await this.api.get('/books/summary');
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Failed to create book');
+      throw new Error(response.data.error?.message || 'Failed to get book summary');
     }
     return response.data.data!;
   }

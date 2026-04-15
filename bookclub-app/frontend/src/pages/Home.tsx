@@ -35,52 +35,45 @@ const Home: React.FC = () => {
   // Client-side pagination for 'My Books', 'Lent', 'Borrowed'
   const [myPageIndex, setMyPageIndex] = useState(0);
   const { user } = useAuth();
-  // Background total count for 'All Books'
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
+  const [summary, setSummary] = useState<{ total: number; lent: number; borrowed: number } | null>(null);
+
+  const fetchSummary = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await apiService.getBooksSummary();
+      setSummary(res);
+    } catch (e) {
+      console.warn('Failed to fetch summary:', e);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) fetchSummary();
+  }, [user, fetchSummary]);
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
       setLoading(true);
       setError('');
       if (filter !== 'all' && user) {
-        // My Books, Lent, Borrowed - fetch all pages and paginate on the client
-        const maxTotal = 2000;
-        const perPage = 100;
-        let aggregated: Book[] = [];
-        let tokenLocal: string | undefined = undefined;
-        
-        // Determine and call the appropriate API based on filter
-        for (let i = 0; i < Math.ceil(maxTotal / perPage); i++) {
-          let resp: BookListResponse;
-          if (filter === 'borrowed') {
-            resp = await apiService.listBooksBorrowedByMe({
+        const response = filter === 'borrowed' 
+          ? await apiService.listBooksBorrowedByMe({
               userId: user.userId,
-              limit: perPage,
-              nextToken: tokenLocal,
-            });
-          } else {
-            resp = await apiService.listBooks({
+              limit: pageSize,
+              nextToken: token || undefined,
+            })
+          : await apiService.listBooks({
               userId: user.userId,
-              limit: perPage,
-              nextToken: tokenLocal,
+              limit: pageSize,
+              nextToken: token || undefined,
+              filter: filter as any,
             });
-          }
-          if (Array.isArray(resp.items)) {
-            aggregated = aggregated.concat(resp.items as Book[]);
-          }
-          tokenLocal = resp.nextToken || undefined;
-          if (!tokenLocal || aggregated.length >= maxTotal) break;
-        }
 
-        // Apply client-side filter for 'Lent'
-        if (filter === 'lent') {
-          aggregated = aggregated.filter(b => b.status === 'borrowed');
-        }
-
-        setBooks(aggregated);
-        // Reset API pagination state
-        setHasNextPage(false);
-        setNextToken(null);
+        let items = Array.isArray(response.items) ? response.items : [];
+        setBooks(items);
+        setHasNextPage(!!response.nextToken);
+        setNextToken(response.nextToken || null);
       } else {
         // All Books - use public API with search and pagination support
         const response = await apiService.listBooksPublic({ 
@@ -93,32 +86,10 @@ const Home: React.FC = () => {
         setHasNextPage(hasMore);
         setNextToken(response.nextToken || null);
 
-        // On first page for current query/pageSize, compute background total
-        if (token == null) {
-          if (!hasMore) {
-            setTotalCount(Array.isArray(response.items) ? response.items.length : 0);
-          } else {
-            const initial = Array.isArray(response.items) ? response.items.length : 0;
-            void (async () => {
-              try {
-                let count = initial;
-                let tokenLocal: string | undefined = response.nextToken || undefined;
-                const perPage = Math.max(currentPageSize || pageSize, 50);
-                while (tokenLocal) {
-                  const resp = await apiService.listBooksPublic({
-                    search,
-                    limit: perPage,
-                    nextToken: tokenLocal,
-                  });
-                  count += Array.isArray(resp.items) ? resp.items.length : 0;
-                  tokenLocal = resp.nextToken || undefined;
-                }
-                setTotalCount(count);
-              } catch (e) {
-                // ignore errors and leave totalCount undefined
-              }
-            })();
-          }
+        // On first page for current query/pageSize, count is handled by the new summary endpoint
+        // or we simply don't show an exact total for 'All Books' yet.
+        if (token == null && !hasMore) {
+          setTotalCount(Array.isArray(response.items) ? response.items.length : 0);
         }
       }
     } catch (err: any) {
@@ -216,6 +187,7 @@ const Home: React.FC = () => {
   const handleBookAdded = (newBook: Book) => {
     setBooks(prev => [newBook, ...prev]);
     setShowAddModal(false);
+    fetchSummary();
     // Move user to "My Books" once after successful upload
     if (filter !== 'my-books' && !addedNavigateDone.current) {
       addedNavigateDone.current = true;
@@ -229,6 +201,7 @@ const Home: React.FC = () => {
 
   const handleBookDeleted = (bookId: string) => {
     setBooks(books.filter(book => book.bookId !== bookId));
+    fetchSummary();
   };
 
   const handleBookUpdated = (updatedBook: Book) => {
@@ -298,11 +271,19 @@ const Home: React.FC = () => {
                 onPreviousPage={handlePreviousPage}
                 currentItemsCount={displayedBooks.length}
                 isLoading={loading}
-                totalCount={filter === 'my-books' ? books.length : totalCount}
+                totalCount={
+                  filter === 'all'
+                    ? totalCount
+                    : filter === 'my-books'
+                    ? summary?.total
+                    : filter === 'lent'
+                    ? summary?.lent
+                    : summary?.borrowed
+                }
                 startIndex={
-                  filter === 'my-books'
-                    ? (myPageIndex * pageSize) + (displayedBooks.length ? 1 : 0)
-                    : (previousTokens.length * pageSize) + (displayedBooks.length ? 1 : 0)
+                  filter === 'all'
+                    ? (previousTokens.length * pageSize) + (displayedBooks.length ? 1 : 0)
+                    : (myPageIndex * pageSize) + (displayedBooks.length ? 1 : 0)
                 }
               />
             </div>

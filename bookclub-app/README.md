@@ -11,6 +11,7 @@ This directory contains the main application code for the BookClub serverless pl
 - User flow diagrams
 - Cost effectiveness analysis
 - API documentation
+- [Phase 2 Roadmap](PHASE2.md)
 
 ## Quick Start
 
