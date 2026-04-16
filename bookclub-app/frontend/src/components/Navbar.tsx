@@ -161,14 +161,16 @@ const Navbar: React.FC = () => {
               {/* Divider */}
               <span className="w-px h-5 bg-gray-200 mx-1" />
 
+              <Link to={isAuthenticated ? "/clubs" : "/clubs/browse"} className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                Clubs
+              </Link>
 
               {isAuthenticated && (
                 <>
+                  {/* Divider */}
+                  <span className="w-px h-5 bg-gray-200 mx-1" />
                   <Link to="/my-books" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                     My Books
-                  </Link>
-                  <Link to="/clubs" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                    Clubs
                   </Link>
                   <MessagesLinkWithUnread />
                 </>
@@ -219,6 +221,7 @@ const Navbar: React.FC = () => {
             <div className="md:hidden flex items-center gap-2">
               <Link to="/about" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">About</Link>
               <Link to="/about/blogs" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">Blogs</Link>
+              <Link to={isAuthenticated ? "/clubs" : "/clubs/browse"} className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">Clubs</Link>
               {isAuthenticated && (
                 <>
                   <Link to="/my-books" className="text-xs font-medium text-indigo-600 hover:text-indigo-800 px-2 py-1 bg-indigo-50 rounded-md">My Books</Link>

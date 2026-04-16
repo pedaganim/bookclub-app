@@ -109,7 +109,7 @@ const MobileTabBar: React.FC = () => {
             </Link>
           )}
           <Link
-            to="/clubs"
+            to={isAuthenticated ? "/clubs" : "/clubs/browse"}
             className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/clubs') ? 'text-indigo-700' : 'text-gray-600'}`}
           >
             <Icon.Users />
