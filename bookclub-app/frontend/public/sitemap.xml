@@ -11,6 +11,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://booklub.shop/clubs/browse</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://booklub.shop/swap-toys</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>

@@ -1,6 +1,7 @@
 const { success, error } = require('../../lib/response');
 const User = require('../../models/user');
 const DM = require('../../models/dm');
+const BookClub = require('../../models/bookclub');
 
 exports.handler = async (event) => {
   try {
@@ -23,6 +24,12 @@ exports.handler = async (event) => {
     const { toUserId } = JSON.parse(event.body);
     if (!toUserId) return error('toUserId is required', 400);
     if (toUserId === userId) return error('Cannot start a conversation with yourself', 400);
+    
+    // Check if users share at least one club
+    const sharedClubs = await BookClub.getSharedClubIds(userId, toUserId);
+    if (sharedClubs.length === 0) {
+      return error('You must share a common club to start a conversation with this user.', 403);
+    }
 
     const conv = await DM.ensureConversation(userId, toUserId);
     return success(conv);

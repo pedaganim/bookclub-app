@@ -547,11 +547,18 @@ class ApiService {
 
   // Direct Messaging
   async dmCreateConversation(toUserId: string): Promise<DMConversation> {
-    const response: AxiosResponse<ApiResponse<DMConversation>> = await this.api.post('/dm/conversations', { toUserId });
-    if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Failed to create conversation');
+    try {
+      const response: AxiosResponse<ApiResponse<DMConversation>> = await this.api.post('/dm/conversations', { toUserId });
+      if (!response.data.success) {
+        throw new Error(response.data.error?.message || 'Failed to create conversation');
+      }
+      return response.data.data!;
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error(error.response?.data?.error?.message || 'You must share a common club to start a conversation.');
+      }
+      throw error;
     }
-    return response.data.data!;
   }
 
   async dmListConversations(limit = 20): Promise<DMConversationList> {
