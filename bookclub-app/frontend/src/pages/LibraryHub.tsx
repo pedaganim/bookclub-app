@@ -16,17 +16,18 @@ const BOOK_LIBRARY = {
 const LibraryHub: React.FC = () => {
   const activeLibraries = [
     { ...BOOK_LIBRARY, itemCount: null },
-  ];
-
-  const comingSoonLibraries = [
     ...LIBRARY_CONFIGS.map((cfg) => ({
       label: cfg.label,
       emoji: cfg.emoji,
       tagline: cfg.tagline,
-      accentBg: 'bg-gray-100',
-      accentText: 'text-gray-500',
+      accentBg: cfg.accentBg,
+      accentText: cfg.accentText,
+      route: `/library/${cfg.slug}`,
     })),
   ];
+
+  const comingSoonLibraries: any[] = [];
+
 
   return (
     <div className="min-h-screen bg-gray-50">
