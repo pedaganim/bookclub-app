@@ -47,6 +47,7 @@ class Book {
       advancedMetadata: bookData.advancedMetadata || null,
       lastMetadataExtraction: bookData.lastMetadataExtraction || null,
       clubId: bookData.clubId || null,
+      category: bookData.category || 'book', // Default to book for backward compatibility
       createdAt: timestamp,
       updatedAt: timestamp,
     };

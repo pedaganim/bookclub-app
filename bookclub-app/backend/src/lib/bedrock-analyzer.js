@@ -9,7 +9,9 @@ const sharp = require('sharp');
 // - AWS_REGION (fallback to us-east-1)
 // - BOOK_COVERS_BUCKET (default bucket if not provided)
 
-const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+function getS3Client() {
+  return new AWS.S3({ apiVersion: '2006-03-01' });
+}
 
 function getBedrockClient() {
   const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
@@ -53,6 +55,7 @@ async function withRetry(fn, { maxAttempts, baseMs } = {}) {
 }
 
 async function getS3ObjectBytes(bucket, key) {
+  const s3 = getS3Client();
   const resp = await s3.getObject({ Bucket: bucket, Key: key }).promise();
   return Buffer.isBuffer(resp.Body) ? resp.Body : Buffer.from(resp.Body);
 }
@@ -103,59 +106,47 @@ function normalizeMetadata(obj = {}) {
   };
 }
 
-async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
+async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
   modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-haiku-20241022-v1:0';
   const client = getBedrockClient();
   let bytes = await getS3ObjectBytes(bucket, key);
-  // Bedrock image limit is 5MB on the BASE64 payload. So raw bytes must be ~<= 3.75MB.
-  const BASE64_MAX = 5 * 1024 * 1024; // 5MB
+
+  // Bedrock image limit guard
+  const BASE64_MAX = 5 * 1024 * 1024;
   try {
     const overLimit = () => estimateBase64Length(bytes.length) > BASE64_MAX;
     if (overLimit()) {
-      // Convert to JPEG and iteratively compress/resize until under limit
-      let img = sharp(bytes, { failOnError: false });
-      const meta = await img.metadata();
-      let width = meta.width || 1600;
+      let width = 1600;
       let quality = 80;
-      // Always convert to JPEG for smaller size
       for (let i = 0; i < 8; i++) {
-        const pipeline = sharp(bytes, { failOnError: false })
+        const out = await sharp(bytes, { failOnError: false })
           .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
-          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true });
-        const out = await pipeline.toBuffer();
-        if (estimateBase64Length(out.length) <= BASE64_MAX) {
-          bytes = out;
-          contentType = 'image/jpeg';
-          break;
-        }
-        // Reduce further
-        width = width * 0.8;
-        quality = quality * 0.85;
+          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true })
+          .toBuffer();
         bytes = out;
         contentType = 'image/jpeg';
-      }
-      // Final guard: if still too large, take a heavy downscale
-      if (overLimit()) {
-        bytes = await sharp(bytes, { failOnError: false })
-          .resize({ width: 640, withoutEnlargement: true })
-          .jpeg({ quality: 60, mozjpeg: true })
-          .toBuffer();
-        contentType = 'image/jpeg';
+        if (estimateBase64Length(out.length) <= BASE64_MAX) break;
+        width = width * 0.8;
+        quality = quality * 0.85;
       }
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('[Bedrock] Image compression failed, proceeding with original bytes:', e?.message);
+    console.warn('[Bedrock] Image compression failed:', e?.message);
   }
 
   const systemPrompt =
-    'You are analyzing a book cover image. Extract STRICT JSON with the following shape (no commentary): ' +
-    '{"title_candidates":[{"value":"string","confidence":0..1}],"author_candidates":[{"value":"string","confidence":0..1}],"categories":["string"],"age_group":"children|middle_grade|young_adult|adult|all_ages","audience":["string"],"themes":["string"],"content_warnings":["string"],"language_guess":"string","description":"string"}. ' +
-    'Rules: Title candidates exclude subtitles. Authors are names. Categories are 3-6 high-level genres. Age group from the enum. Audience like parents/educators/etc. Themes like friendship/self-discovery. Content warnings if present. Description should be a concise 1-3 sentence summary suitable for a catalog.';
+    'You are a universal community library assistant. Your task is to analyze an image of an item (book, toy, tool, game, etc.) and extract metadata. ' +
+    'FIRST, identify the category of the item from this list: [book, toy, tool, game, event_hire, other]. ' +
+    'SECOND, extract the title and a 1-3 sentence description. ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"category":"string","title":"string","description":"string","author":"string|null","ageRange":"string|null"}. ' +
+    'Rules: ' +
+    '1. For books, "author" is the writer. For other items, set "author" to null. ' +
+    '2. "ageRange" is only for books, toys or games where applicable (e.g. "3-5 years" or "Adult"). ' +
+    '3. Do NOT include condition or player count.';
 
-  const userText = instruction || 'Analyze this book cover image and extract metadata as strict JSON.';
+  const userText = instruction || 'Analyze this item image and extract metadata as strict JSON.';
 
-  // Claude 3 Bedrock format
   const body = JSON.stringify({
     anthropic_version: 'bedrock-2023-05-31',
     max_tokens: 1024,
@@ -179,152 +170,31 @@ async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', inst
 
   const res = await withRetry(() => client.send(cmd));
   const json = JSON.parse(new TextDecoder().decode(res.body));
-
-  // Claude 3 returns { content: [{ type: 'text', text: '...'}] }
-  const text = Array.isArray(json.content) && json.content[0] && json.content[0].text ? json.content[0].text : '';
-  // Safe debug logging of raw text (truncated)
-  try {
-    const snippet = (text || '').slice(0, 500);
-    // eslint-disable-next-line no-console
-    console.log('[Bedrock] Raw text (truncated 500):', snippet);
-  } catch (_) {}
-
-  // Try to parse model's text as JSON
-  let parsed;
-  try { parsed = JSON.parse(text); } catch (e) { parsed = {}; }
-
-  // Safe debug logging of parsed JSON (truncated)
-  try {
-    const serialized = JSON.stringify(parsed);
-    const truncated = serialized.length > 1200 ? (serialized.slice(0, 1200) + '...') : serialized;
-    // eslint-disable-next-line no-console
-    console.log('[Bedrock] Parsed JSON (truncated 1200):', truncated);
-  } catch (_) {}
-  return normalizeMetadata(parsed);
-}
-
-module.exports = {
-  analyzeCoverImage,
-  analyzeLibraryImage,
-};
-
-// ─── Library item analysis ────────────────────────────────────────────────────
-
-const LIBRARY_PROMPTS = {
-  toy: 'You are analysing a photo of a toy to create a community lending/swapping listing. ' +
-    'Return ONLY strict JSON (no commentary) with this shape: ' +
-    '{"title":"short descriptive name of the toy","description":"1-2 sentences about the toy","condition":"new|like_new|good|fair","category":"outdoor|educational|dolls|vehicles|books|other","ageRange":"optional e.g. 3-8 years"}. ' +
-    'Condition must be a visual estimate based on the image.',
-
-  tool: 'You are analysing a photo of a tool or piece of equipment for a community lending library. ' +
-    'Return ONLY strict JSON (no commentary) with this shape: ' +
-    '{"title":"short descriptive name of the tool","description":"1-2 sentences about what it is and what it is used for","condition":"new|like_new|good|fair","category":"power_tools|hand_tools|garden|plumbing|electrical|ladders|other"}. ' +
-    'Condition must be a visual estimate based on the image.',
-
-  event: 'You are analysing a photo of an item available for event hire (e.g. table, chair, decoration, AV equipment, kitchen equipment). ' +
-    'Return ONLY strict JSON (no commentary) with this shape: ' +
-    '{"title":"short descriptive name","description":"1-2 sentences describing the item and its use at events","condition":"new|like_new|good|fair","category":"furniture|decorations|audio_visual|kitchen|other"}. ' +
-    'Condition must be a visual estimate based on the image.',
-
-  game: 'You are analysing a photo of a game (board game, card game, puzzle, or video game) for a community lending library. ' +
-    'Return ONLY strict JSON (no commentary) with this shape: ' +
-    '{"title":"name of the game","description":"1-2 sentences about the game and how it is played","condition":"new|like_new|good|fair","category":"board_games|card_games|puzzles|video_games|outdoor_games|other","playerCount":"optional e.g. 2-4 players","ageRange":"optional e.g. 8+"}. ' +
-    'Condition must be a visual estimate based on the image.',
-
-  default: 'You are analysing a photo of an item for a community lending library. ' +
-    'Return ONLY strict JSON (no commentary) with this shape: ' +
-    '{"title":"short descriptive name","description":"1-2 sentences about the item","condition":"new|like_new|good|fair","category":"other"}. ' +
-    'Condition must be a visual estimate based on the image.',
-};
-
-/**
- * Analyse a library item image (toy, tool, event hire, game) with Claude Vision.
- * Returns a flat object: { title, description, condition, category, ...extra }
- */
-async function analyzeLibraryImage({ bucket, key, contentType = 'image/jpeg', libraryType = 'toy', modelId }) {
-  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-haiku-20241022-v1:0';
-  const client = getBedrockClient();
-
-  let bytes = await getS3ObjectBytes(bucket, key);
-
-  // Reuse the same image size guard as analyzeCoverImage
-  const BASE64_MAX = 5 * 1024 * 1024;
-  try {
-    const overLimit = () => estimateBase64Length(bytes.length) > BASE64_MAX;
-    if (overLimit()) {
-      let width = 1600;
-      let quality = 80;
-      for (let i = 0; i < 8; i++) {
-        const out = await sharp(bytes, { failOnError: false })
-          .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
-          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true })
-          .toBuffer();
-        bytes = out;
-        contentType = 'image/jpeg';
-        if (estimateBase64Length(out.length) <= BASE64_MAX) break;
-        width = width * 0.8;
-        quality = quality * 0.85;
-      }
-    }
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('[Bedrock][Library] Image compression failed, proceeding with original bytes:', e?.message);
-  }
-
-  const prompt = LIBRARY_PROMPTS[libraryType] || LIBRARY_PROMPTS.default;
-
-  const body = JSON.stringify({
-    anthropic_version: 'bedrock-2023-05-31',
-    max_tokens: 512,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          toBase64Image(bytes, contentType),
-        ],
-      },
-    ],
-  });
-
-  const cmd = new InvokeModelCommand({
-    modelId,
-    contentType: 'application/json',
-    accept: 'application/json',
-    body,
-  });
-
-  const res = await withRetry(() => client.send(cmd));
-  const json = JSON.parse(new TextDecoder().decode(res.body));
   const text = Array.isArray(json.content) && json.content[0]?.text ? json.content[0].text : '';
 
-  // eslint-disable-next-line no-console
-  console.log('[Bedrock][Library] Raw text (truncated 500):', (text || '').slice(0, 500));
-
   let parsed = {};
-  // Strip potential markdown code fences before parsing
   try {
     const clean = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
     parsed = JSON.parse(clean);
   } catch (e) {
-    // Try regex extraction as fallback
     try {
       const match = text.match(/\{[\s\S]*\}/);
       if (match) parsed = JSON.parse(match[0]);
     } catch (_) {}
   }
 
-  // Normalise: ensure condition is in the allowed set
-  const ALLOWED_CONDITIONS = ['new', 'like_new', 'good', 'fair'];
-  const condition = ALLOWED_CONDITIONS.includes(parsed.condition) ? parsed.condition : 'good';
-
   return {
-    title: typeof parsed.title === 'string' ? parsed.title.trim() : null,
-    description: typeof parsed.description === 'string' ? parsed.description.trim() : null,
-    condition,
-    category: typeof parsed.category === 'string' ? parsed.category : null,
+    category: parsed.category || 'other',
+    title: typeof parsed.title === 'string' ? parsed.title.trim() : (parsed.title_guess || 'Unknown Item'),
+    description: typeof parsed.description === 'string' ? parsed.description.trim() : undefined,
+    author: typeof parsed.author === 'string' ? parsed.author.trim() : null,
     ageRange: typeof parsed.ageRange === 'string' ? parsed.ageRange : null,
-    playerCount: typeof parsed.playerCount === 'string' ? parsed.playerCount : null,
     raw: parsed,
+    source: 'bedrock_universal_v1'
   };
 }
+
+module.exports = {
+  analyzeUniversalItemImage,
+};
+

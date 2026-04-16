@@ -151,41 +151,17 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       </div>
       
       <div className="p-3 sm:p-4">
-        {/* Title & Author */}
+        {/* Title & Category/Author */}
         <div className="mb-2">
-          <div className="text-sm font-medium text-gray-900 truncate">{book.title || 'Untitled Book'}</div>
-          <div className="text-xs text-gray-600 truncate">{book.author || 'Unknown author'}</div>
+          <div className="text-sm font-medium text-gray-900 truncate">{book.title || 'Untitled Item'}</div>
+          {book.category === 'book' || !book.category ? (
+            <div className="text-xs text-gray-600 truncate">{book.author || 'Unknown author'}</div>
+          ) : (
+            <div className="text-xs text-indigo-600 font-medium uppercase tracking-wider">{book.category.replace('_', ' ')}</div>
+          )}
         </div>
-        {/* Bedrock summary (if available) */}
-        {(() => {
-          const bedrock = (book as any)?.mcp_metadata?.bedrock;
-          if (!bedrock || typeof bedrock !== 'object') return null;
-          const t0 = Array.isArray(bedrock.title_candidates) && bedrock.title_candidates[0]?.value ? String(bedrock.title_candidates[0].value) : '';
-          const a0 = Array.isArray(bedrock.author_candidates) && bedrock.author_candidates[0]?.value ? String(bedrock.author_candidates[0].value) : '';
-          const lang = typeof bedrock.language_guess === 'string' ? bedrock.language_guess : '';
-          if (!t0 && !a0 && !lang) return null;
-          return (
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                {(t0 || a0) && (
-                  <div className="text-xs text-gray-700 truncate">
-                    {t0 && <span className="font-medium">{t0}</span>}
-                    {t0 && a0 && <span className="text-gray-400"> · </span>}
-                    {a0 && <span className="">{a0}</span>}
-                  </div>
-                )}
-              </div>
-              {lang && (
-                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200" title="Language guess">
-                  {lang.toUpperCase()}
-                </span>
-              )}
-            </div>
-          );
-        })()}
-        {/* Description removed on browse card per requirements */}
-        
-        {/* Borrow action */}
+
+        {/* Action Button */}
         {(() => {
           // If the book belongs to a club and the viewer is not a member, show Join Club
           if (book.clubId && !isMemberOfBookClub) {
@@ -207,32 +183,36 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                     className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    View owner profile
+                    View owner
                   </a>
                 )}
               </div>
             );
           }
+
           // Hide borrow button if this is the current user's own book
-          try {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-              const me = JSON.parse(savedUser);
-              if (me?.userId && me.userId === book.userId) {
-                return null;
-              }
-            }
-          } catch {}
+          const isOwn = user?.userId === book.userId;
+          if (isOwn) {
+            return (
+              <div className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1.5 rounded-md inline-block">
+                Your Listing
+              </div>
+            );
+          }
+
+          const categoryName = (book.category || 'item').replace('_', ' ');
+          const actionLabel = `Borrow ${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}`;
+
           return (
             <div className="space-y-2">
               <button
                 type="button"
                 className={`w-full text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                title={'Borrow from User'}
+                title={actionLabel}
                 onClick={handleBorrowClick}
                 disabled={sending}
               >
-                {sending ? 'Sending…' : 'Borrow from User'}
+                {sending ? 'Sending…' : actionLabel}
               </button>
               {book.userId && (
                 <a 
@@ -240,7 +220,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                   className="block text-center text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  View profile
+                  View owner profile
                 </a>
               )}
             </div>
