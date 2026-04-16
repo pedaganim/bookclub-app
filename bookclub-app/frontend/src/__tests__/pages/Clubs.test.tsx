@@ -118,4 +118,24 @@ describe('Clubs page', () => {
       expect(screen.queryByText('Create Book Club')).not.toBeInTheDocument();
     });
   });
+
+  it('opens join modal when Join with Code is clicked', async () => {
+    (apiService.getUserClubs as jest.Mock).mockResolvedValue({ items: [] });
+    render(
+      <TestWrapper>
+        <Clubs />
+      </TestWrapper>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Join with Code')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Join with Code'));
+    expect(screen.getByText('Join Book Club')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cancel'));
+    await waitFor(() => {
+      expect(screen.queryByText('Join Book Club')).not.toBeInTheDocument();
+    });
+  });
 });

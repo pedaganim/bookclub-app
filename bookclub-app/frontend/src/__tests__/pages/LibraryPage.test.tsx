@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LibraryPage from '../../pages/LibraryPage';
 import { apiService } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { useSubdomain } from '../../hooks/useSubdomain';
 
 // Mock the API service
 jest.mock('../../services/api', () => ({
@@ -14,13 +16,13 @@ jest.mock('../../services/api', () => ({
 
 // Mock contexts
 jest.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ isAuthenticated: false, user: null }),
+  useAuth: jest.fn(),
 }));
 jest.mock('../../contexts/NotificationContext', () => ({
   useNotification: () => ({ addNotification: jest.fn() }),
 }));
 jest.mock('../../hooks/useSubdomain', () => ({
-  useSubdomain: () => ({ isSubdomain: false, club: null }),
+  useSubdomain: jest.fn(),
 }));
 
 // Mock react-router-dom
@@ -33,10 +35,11 @@ jest.mock('react-router-dom', () => ({
 
 // Mock components
 jest.mock('../../components/PublicBookCard', () => {
-  return function MockPublicBookCard({ book }: { book: any }) {
+  return function MockPublicBookCard({ book, isMemberOfBookClub }: { book: any; isMemberOfBookClub?: boolean }) {
     return (
       <div data-testid={`book-${book.bookId || book.listingId}`}>
         <span>{book.title}</span>
+        {isMemberOfBookClub && <span data-testid="member-badge">Member</span>}
       </div>
     );
   };
@@ -46,6 +49,8 @@ jest.mock('../../components/SEO', () => () => <div data-testid="seo" />);
 describe('LibraryPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (useAuth as jest.Mock).mockReturnValue({ isAuthenticated: false, user: null });
+    (useSubdomain as jest.Mock).mockReturnValue({ isSubdomain: false, club: null });
   });
 
   it('should render loading state initially', () => {
@@ -134,5 +139,45 @@ describe('LibraryPage', () => {
         bare: true,
       }));
     });
+  });
+
+  it('should filter by club when in subdomain mode', async () => {
+    (useSubdomain as jest.Mock).mockReturnValue({ 
+      isSubdomain: true, 
+      club: { clubId: 'club-123', name: 'Test Club' } 
+    });
+    (apiService.listBooksPublic as jest.Mock).mockResolvedValue({ items: [] });
+
+    render(<LibraryPage />);
+
+    await waitFor(() => {
+      expect(apiService.listBooksPublic).toHaveBeenCalledWith(expect.objectContaining({
+        clubId: 'club-123'
+      }));
+    });
+  });
+
+  it('should determine club membership status for items', async () => {
+    (useAuth as jest.Mock).mockReturnValue({ 
+      isAuthenticated: true, 
+      user: { userId: 'me' } 
+    });
+    (apiService.getUserClubs as jest.Mock).mockResolvedValue({
+      items: [{ clubId: 'club-member', userStatus: 'active' }]
+    });
+    const mockItems = [
+      { bookId: '1', title: 'Club Book', clubId: 'club-member' },
+      { bookId: '2', title: 'Non-Club Book' }
+    ];
+    (apiService.listBooksPublic as jest.Mock).mockResolvedValue({ items: mockItems });
+
+    render(<LibraryPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('book-1')).toBeInTheDocument();
+    });
+    
+    // Book 1 should have membership badge because we mocked user as member of club-member
+    expect(screen.queryAllByTestId('member-badge').length).toBeGreaterThan(0);
   });
 });
