@@ -74,9 +74,16 @@ const Navbar: React.FC = () => {
     ),
   };
 
-  // All library entries for the dropdown (Book Library + dynamic libraries)
+  // All library entries for the dropdown (Book Library + dynamic libraries from config)
   const dropdownLibraries = [
     { label: 'Book Library', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
+    ...LIBRARY_CONFIGS.map(lib => ({
+      label: lib.label,
+      emoji: lib.emoji,
+      route: `/library/${lib.slug}`,
+      accentBg: lib.accentBg,
+      accentText: lib.accentText
+    }))
   ];
 
   return (

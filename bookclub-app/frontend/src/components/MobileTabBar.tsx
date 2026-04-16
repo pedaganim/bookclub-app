@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { LIBRARY_CONFIGS } from '../config/libraryConfig';
 
 const MobileTabBar: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -79,6 +80,13 @@ const MobileTabBar: React.FC = () => {
 
   const allLibraries = [
     { label: 'Books', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
+    ...LIBRARY_CONFIGS.map(lib => ({
+      label: lib.shortLabel,
+      emoji: lib.emoji,
+      route: `/library/${lib.slug}`,
+      accentBg: lib.accentBg,
+      accentText: lib.accentText
+    }))
   ];
 
   return (
