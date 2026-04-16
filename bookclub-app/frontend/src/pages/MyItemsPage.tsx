@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Book, LibraryItem } from '../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { LibraryItem } from '../types';
 import { apiService } from '../services/api';
 import ManagementItemCard from '../components/ManagementItemCard';
 import Pagination from '../components/Pagination';
@@ -8,7 +8,6 @@ import AddBookModal from '../components/AddBookModal';
 import CreateListingModal from '../components/CreateListingModal';
 import { useAuth } from '../contexts/AuthContext';
 import { getLibraryConfig } from '../config/libraryConfig';
-import { getItemLabel } from '../utils/labels';
 import { 
   Squares2X2Icon, 
   ListBulletIcon,
@@ -19,7 +18,6 @@ import SEO from '../components/SEO';
 
 const MyItemsPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
   
   const config = getLibraryConfig(categorySlug || 'books');
@@ -28,7 +26,6 @@ const MyItemsPage: React.FC = () => {
   
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState<'owned' | 'lent' | 'borrowed'>('owned');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -40,7 +37,6 @@ const MyItemsPage: React.FC = () => {
     if (!user || !config) return;
     try {
       setLoading(true);
-      setError('');
       
       const category = config.libraryType;
       
@@ -76,7 +72,7 @@ const MyItemsPage: React.FC = () => {
 
       setItems(fetchedItems);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch items');
+      // Handle error
     } finally {
       setLoading(false);
     }

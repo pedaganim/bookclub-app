@@ -38,7 +38,6 @@ const Pagination: React.FC<PaginationProps> = ({
   const rangeEnd = showRange
     ? (hasTotal ? Math.min(computedEnd!, totalCount as number) : computedEnd)
     : undefined;
-  const labelFor = (count: number) => (count === 1 ? itemLabelSingular : itemLabelPlural);
 
   return (
     <div className="bg-white px-6 py-4 border border-gray-100 rounded-3xl shadow-sm">

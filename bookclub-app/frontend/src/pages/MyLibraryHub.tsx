@@ -8,12 +8,10 @@ import SEO from '../components/SEO';
 const MyLibraryHub: React.FC = () => {
   const { user } = useAuth();
   const [summaries, setSummaries] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
 
   const fetchSummaries = useCallback(async () => {
     if (!user) return;
     try {
-      setLoading(true);
       // For now, we'll fetch each category's count. 
       // In a more optimized version, we'd have a single 'all-summaries' endpoint.
       const counts: Record<string, number> = {};
@@ -34,16 +32,14 @@ const MyLibraryHub: React.FC = () => {
             // Actually, listBooks/listToyListings doesn't always return totalCount cleanly.
             // Let's assume we can fetch at least some count or just show "Manage".
           } catch (e) {
-            console.warn(`Failed to fetch summary for ${cfg.libraryType}`, e);
+            // Silently fail for individual categories
           }
         })
       );
       
       setSummaries(counts);
     } catch (e) {
-      console.error('Failed to fetch library summaries', e);
-    } finally {
-      setLoading(false);
+      // Global fail
     }
   }, [user]);
 

@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import { LibraryConfig, getLibraryConfig } from '../config/libraryConfig';
 import { apiService } from '../services/api';
-import { Book, BookClub } from '../types';
+import { Book } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useSubdomain } from '../hooks/useSubdomain';
@@ -38,7 +38,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
   const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
   const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
-  const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
+  const [totalCount] = useState<number | undefined>(undefined);
   
   const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
 

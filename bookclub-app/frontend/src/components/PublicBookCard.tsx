@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Book, LibraryItem } from '../types';
+import { LibraryItem } from '../types';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
@@ -18,11 +18,6 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const [joinRequested, setJoinRequested] = React.useState(false);
   const navigate = useNavigate();
 
-  const navigateToJoin = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.location.assign('/clubs');
-    try { window.history.replaceState({ openJoin: true }, ''); } catch {}
-  };
 
   const requestToJoin = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -52,30 +47,6 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
     navigate(`/books/${itemId}`);
   };
 
-  // Function to format description text properly
-  const formatDescription = (text?: string) => {
-    if (!text) return '';
-    
-    // Convert to proper sentence case if it's all caps
-    if (text === text.toUpperCase()) {
-      return text.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-    }
-    
-    return text;
-  };
-
-  // Get username from userName field or fallback to simplified userId
-  const getDisplayUsername = (book: LibraryItem) => {
-    if (book.userName) {
-      return book.userName;
-    }
-    // Fallback to simplified version of the userId
-    if (book.userId && typeof book.userId === 'string') {
-      const suffixLen = Math.min(8, book.userId.length);
-      return `User ${book.userId.slice(-suffixLen)}`;
-    }
-    return 'User';
-  };
 
   // Default placeholder image when no cover image is provided
   const itemLabelForSvg = getItemLabel(book.category || 'book');
