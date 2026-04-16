@@ -113,13 +113,23 @@ describe('LibraryPage', () => {
     });
   });
 
+  it('should handle malformed API response', async () => {
+    (apiService.listBooksPublic as jest.Mock).mockResolvedValue({ invalid: 'response' });
+    
+    render(<LibraryPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('No books listed yet. Be the first to share one!')).toBeInTheDocument();
+    });
+  });
+
   it('should call public API with correct parameters', async () => {
     (apiService.listBooksPublic as jest.Mock).mockResolvedValue({ items: [] });
     
     render(<LibraryPage />);
     
     await waitFor(() => {
-      expect(apiService.listBooksPublic).toHaveBeenCalledWith(expect.objectContaining({ 
+      expect(apiService.listBooksPublic).toHaveBeenCalledWith(expect.objectContaining({
         limit: 25, 
         bare: true,
       }));

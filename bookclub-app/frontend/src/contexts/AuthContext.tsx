@@ -32,7 +32,6 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
   const { addNotification } = useNotification();
 
   const logout = () => {
@@ -115,7 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // If the token is definitively invalid (401/403), clear the session.
             // This prevents "caching" issues with stale tokens in the regular browser.
             if (error.response?.status === 401 || error.response?.status === 403) {
-              console.warn('Initial auth check failed, clearing session');
+              // Silent fail to avoid noisy logs in production initial check
               logout();
             }
           }

@@ -1,4 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { 
+  Bars3Icon, 
+  XMarkIcon,
+  BellIcon
+} from '@heroicons/react/24/outline';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
@@ -9,7 +14,7 @@ import { config } from '../config';
 import MobileTabBar from './MobileTabBar';
 
 const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { isSubdomain, club } = useSubdomain();
   const navigate = useNavigate();
   const location = useLocation();

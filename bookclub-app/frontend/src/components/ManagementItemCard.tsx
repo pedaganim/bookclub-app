@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, LibraryItem, ToyListing } from '../types';
+import { Book, LibraryItem } from '../types';
 import { 
   TrashIcon, 
-  PencilIcon, 
+  PencilSquareIcon, 
   UserIcon,
-  ShoppingBagIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
 import EditBookModal from './EditBookModal';

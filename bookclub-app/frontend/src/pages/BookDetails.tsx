@@ -26,7 +26,6 @@ const BookDetails: React.FC = () => {
   const notificationCtx = React.useContext(NotificationContext);
   const [deleting, setDeleting] = useState(false);
   const [isMemberOfBookClub, setIsMemberOfBookClub] = useState<boolean>(false);
-  const [checkingMembership, setCheckingMembership] = useState(false);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
   const asText = (v: any): string => {
@@ -112,8 +111,6 @@ const BookDetails: React.FC = () => {
     if (!meta || typeof meta !== 'object') return null;
     const titleCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).title_candidates) ? (meta as any).title_candidates : [];
     const authorCands: Array<{ value: string; confidence?: number }> = Array.isArray((meta as any).author_candidates) ? (meta as any).author_candidates : [];
-    const lang = asText((meta as any).language_guess) || 'en';
-    const source = asText((meta as any).source) || 'bedrock';
     const categories: string[] = Array.isArray((meta as any).categories) ? (meta as any).categories : [];
     const ageGroup = asText((meta as any).age_group) || '';
     const audience: string[] = Array.isArray((meta as any).audience) ? (meta as any).audience : [];
@@ -416,7 +413,6 @@ const BookDetails: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleBorrow}
-                    disabled={checkingMembership}
                     className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
                     title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
                   >
