@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
+import { ArchiveBoxIcon } from '@heroicons/react/24/outline';
 
 const ClubBooks: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>();
@@ -120,7 +121,7 @@ const ClubBooks: React.FC = () => {
         {books.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
             <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-              <Icon.Package className="w-8 h-8 text-gray-400" />
+              <ArchiveBoxIcon className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900">Virtual shelves are empty</h3>
             <p className="text-gray-500 mt-1">No items have been shared in this club yet.</p>
