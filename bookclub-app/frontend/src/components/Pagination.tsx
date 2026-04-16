@@ -38,18 +38,76 @@ const Pagination: React.FC<PaginationProps> = ({
   const rangeEnd = showRange
     ? (hasTotal ? Math.min(computedEnd!, totalCount as number) : computedEnd)
     : undefined;
+  const labelFor = (count: number) => (count === 1 ? itemLabelSingular : itemLabelPlural);
 
   return (
-    <div className="bg-white px-6 py-4 border border-gray-100 rounded-3xl shadow-sm">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        {/* Page Size Selector */}
-        <div className="flex items-center space-x-3">
-          <span className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-none">Show</span>
+    <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+      {/* Mobile layout */}
+      <div className="flex flex-col space-y-3 sm:hidden">
+        {/* Page size selector and item count */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-700">Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              disabled={isLoading}
+              className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+            >
+              {pageSizeOptions.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm text-gray-700">
+            {showRange ? (
+              hasTotal && (rangeStart as number) <= (totalCount as number) ? (
+                <>{rangeStart}-{rangeEnd} of {totalCount}</>
+              ) : (
+                <>{rangeStart}-{rangeEnd}</>
+              )
+            ) : (
+              hasTotal ? (
+                <>{currentItemsCount} of {totalCount}</>
+              ) : (
+                <>{currentItemsCount}</>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex justify-center space-x-2">
+          <button
+            onClick={onPreviousPage}
+            disabled={!hasPreviousPage || isLoading}
+            className="flex-1 max-w-24 inline-flex items-center justify-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+          >
+            <ChevronLeftIcon className="h-4 w-4 mr-1" />
+            Prev
+          </button>
+          <button
+            onClick={onNextPage}
+            disabled={!hasNextPage || isLoading}
+            className="flex-1 max-w-24 inline-flex items-center justify-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+          >
+            Next
+            <ChevronRightIcon className="h-4 w-4 ml-1" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden sm:flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-700">Show</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             disabled={isLoading}
-            className="border-2 border-gray-100 rounded-xl px-4 py-1.5 text-sm font-bold bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 transition-all cursor-pointer"
+            className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
           >
             {pageSizeOptions.map((size) => (
               <option key={size} value={size}>
@@ -57,45 +115,41 @@ const Pagination: React.FC<PaginationProps> = ({
               </option>
             ))}
           </select>
-          <span className="text-sm font-bold text-gray-400 uppercase tracking-widest leading-none">{itemLabelPlural} per page</span>
+          <span className="text-sm text-gray-700">{itemLabelPlural} per page</span>
         </div>
 
-        {/* Range Info */}
-        <div className="text-center">
-          <span className="text-sm font-black text-gray-900 italic uppercase">
-            {showRange ? (
-              hasTotal && (rangeStart as number) <= (totalCount as number) ? (
-                <>Showing {rangeStart}-{rangeEnd} <span className="text-gray-400">of</span> {totalCount}</>
-              ) : (
-                <>Showing {rangeStart}-{rangeEnd}</>
-              )
+        <div className="text-sm text-gray-700">
+          {showRange ? (
+            hasTotal && (rangeStart as number) <= (totalCount as number) ? (
+              <>Showing {rangeStart}-{rangeEnd} of {totalCount} {labelFor(totalCount as number)}</>
             ) : (
-              hasTotal ? (
-                <>Showing {currentItemsCount} <span className="text-gray-400">of</span> {totalCount}</>
-              ) : (
-                <>Showing {currentItemsCount}</>
-              )
-            )}
-          </span>
+              <>Showing {rangeStart}-{rangeEnd} {labelFor(currentItemsCount)}</>
+            )
+          ) : (
+            hasTotal ? (
+              <>Showing {currentItemsCount} {labelFor(currentItemsCount)} of total {totalCount} {labelFor(totalCount as number)}</>
+            ) : (
+              <>Showing {currentItemsCount} {labelFor(currentItemsCount)}</>
+            )
+          )}
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center space-x-2">
           <button
             onClick={onPreviousPage}
             disabled={!hasPreviousPage || isLoading}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border-2 border-gray-100 text-gray-900 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed group text-xs uppercase tracking-tight"
+            className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
           >
-            <ChevronLeftIcon className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            <ChevronLeftIcon className="h-4 w-4 mr-1" />
             Previous
           </button>
           <button
             onClick={onNextPage}
             disabled={!hasNextPage || isLoading}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border-2 border-gray-100 text-gray-900 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed group text-xs uppercase tracking-tight"
+            className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
           >
             Next
-            <ChevronRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            <ChevronRightIcon className="h-4 w-4 ml-1" />
           </button>
         </div>
       </div>
