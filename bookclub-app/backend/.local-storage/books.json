@@ -163,5 +163,31 @@
     "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
     "createdAt": "2026-04-16T09:25:00.000Z",
     "updatedAt": "2026-04-16T09:25:00.000Z"
+  },
+  "96474566-1978-4e3e-9e7c-d1b1a458415a": {
+    "bookId": "96474566-1978-4e3e-9e7c-d1b1a458415a",
+    "userId": "local-user",
+    "title": "Test Book",
+    "author": "Test Author",
+    "description": "",
+    "coverImage": null,
+    "images": null,
+    "status": "available",
+    "s3Bucket": null,
+    "s3Key": null,
+    "isbn10": null,
+    "isbn13": null,
+    "publishedDate": null,
+    "pageCount": null,
+    "categories": null,
+    "language": null,
+    "publisher": null,
+    "metadataSource": null,
+    "advancedMetadata": null,
+    "lastMetadataExtraction": null,
+    "clubId": null,
+    "category": "book",
+    "createdAt": "2026-04-16T08:11:06.412Z",
+    "updatedAt": "2026-04-16T08:11:06.412Z"
   }
 }

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Book } from '../types';
+import { Book, LibraryItem } from '../types';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
 
 interface PublicBookCardProps {
-  book: Book;
+  book: LibraryItem;
   isMemberOfBookClub?: boolean; // default true; when false and book has clubId, show Join Club
 }
 
@@ -30,11 +30,12 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       window.location.assign('/login');
       return;
     }
-    if (!book.clubId) return;
+    const clubId = (book as any).clubId;
+    if (!clubId) return;
     try {
       setRequestingJoin(true);
       const { apiService } = await import('../services/api');
-      const res = await apiService.requestClubJoin(book.clubId);
+      const res = await apiService.requestClubJoin(clubId);
       if (res.status === 'pending' || res.status === 'active') {
         setJoinRequested(true);
         notificationCtx?.addNotification('success', res.status === 'active' ? 'Joined club!' : 'Request to join sent');
@@ -47,7 +48,8 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   };
 
   const handleCardClick = () => {
-    navigate(`/books/${book.bookId}`);
+    const itemId = (book as any).bookId || (book as any).listingId;
+    navigate(`/books/${itemId}`);
   };
 
   // Function to format description text properly
@@ -63,7 +65,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   };
 
   // Get username from userName field or fallback to simplified userId
-  const getDisplayUsername = (book: Book) => {
+  const getDisplayUsername = (book: LibraryItem) => {
     if (book.userName) {
       return book.userName;
     }
@@ -76,12 +78,13 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   };
 
   // Default placeholder image when no cover image is provided
-  const defaultBookImage = "data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
+  const itemLabelForSvg = getItemLabel(book.category || 'book');
+  const defaultBookImage = `data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3e${itemLabelForSvg}%3c/text%3e%3c/svg%3e`;
 
   const handleBorrowClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     // If book belongs to a club and viewer is not a member, block borrow and prompt to join
-    if (book.clubId && !isMemberOfBookClub) {
+    if ((book as any).clubId && !isMemberOfBookClub) {
       notificationCtx?.addNotification('info', 'Join this club to contact the owner.');
       return;
     }
@@ -109,7 +112,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       const message = `Hi! I'm interested in borrowing ${title}. Is it available?`;
       await apiService.dmSendMessage(conversation.conversationId, book.userId, message);
       // Track analytics (non-blocking)
-      try { trackBorrowIntent(book.userId, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'PublicBookCard' }); } catch {}
+      try { trackBorrowIntent(book.userId, (book as any).bookId || (book as any).listingId, book.title || '', { currentUserId: user?.userId, source: 'PublicBookCard' }); } catch {}
       // Navigate to the messages thread
       notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
       window.location.assign(`/messages/${conversation.conversationId}`);
@@ -129,13 +132,13 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
     >
       {/* Image - Consistent portrait aspect ratio and crop */}
       <Link 
-        to={`/books/${book.bookId}`} 
+        to={`/books/${(book as any).bookId || (book as any).listingId}`} 
         aria-label={book.title ? `View details for ${book.title}` : 'View book details'}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
           <img
-            src={book.coverImage || defaultBookImage}
+            src={(book as any).coverImage || ((book as any).images && (book as any).images[0]) || defaultBookImage}
             alt={book.title ? `Cover of ${book.title}` : `${getItemLabel(book.category || 'book')} cover`}
             className="w-full h-full object-cover object-center"
             onError={(e) => {
@@ -147,7 +150,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       </Link>
       {/* Screen-reader only "View details" control for accessibility */}
       <div className="sr-only">
-        <Link to={`/books/${book.bookId}`}>
+        <Link to={`/books/${(book as any).bookId || (book as any).listingId}`}>
           {book.title ? `View details for ${book.title}` : `View ${getItemLabelLower(book.category || 'book')} details`}
         </Link>
       </div>
@@ -157,7 +160,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
         <div className="mb-2">
           <div className="text-sm font-medium text-gray-900 truncate">{book.title || 'Untitled Item'}</div>
           {book.category === 'book' || !book.category ? (
-            <div className="text-xs text-gray-600 truncate">{book.author || 'Unknown author'}</div>
+            <div className="text-xs text-gray-600 truncate">{(book as any).author || 'Unknown author'}</div>
           ) : (
             <div className="text-xs text-indigo-600 font-medium uppercase tracking-wider">{book.category.replace('_', ' ')}</div>
           )}
@@ -166,7 +169,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
         {/* Action Button */}
         {(() => {
           // If the book belongs to a club and the viewer is not a member, show Join Club
-          if (book.clubId && !isMemberOfBookClub) {
+          if ((book as any).clubId && !isMemberOfBookClub) {
             const joinLabel = `Join the Club to Borrow`;
             return (
               <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">

@@ -209,3 +209,5 @@ export interface ToyListingListResponse {
   nextToken?: string;
 }
 
+export type LibraryItem = Book | ToyListing;
+

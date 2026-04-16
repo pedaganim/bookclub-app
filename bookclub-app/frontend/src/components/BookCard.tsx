@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import ConfirmationModal from './ConfirmationModal';
+import EditBookModal from './EditBookModal';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
 
 interface BookCardProps {
@@ -79,7 +80,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       setLoading(true);
       await apiService.deleteBook(book.bookId);
       onDelete(book.bookId);
-      notificationCtx?.addNotification('success', `${getItemLabel(book.category || 'book')} deleted successfully`);
+      addNotification('success', `${getItemLabel(book.category || 'book')} deleted successfully`);
     } catch (error) {
       addNotification('error', 'Failed to delete book');
     } finally {
@@ -189,7 +190,10 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
         <EditBookModal
           book={book}
           onClose={() => setShowEditModal(false)}
-          onUpdate={onUpdate}
+          onBookUpdated={(updated) => {
+            onUpdate(updated);
+            setShowEditModal(false);
+          }}
         />
       )}
       
@@ -204,192 +208,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
         isDestructive={true}
       />
     </>
-  );
-};
-
-interface EditBookModalProps {
-  book: Book;
-  onClose: () => void;
-  onUpdate: (book: Book) => void;
-}
-
-const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }) => {
-  const [formData, setFormData] = useState({
-    title: book.title,
-    author: book.author,
-    description: book.description || '',
-    status: book.status,
-    lentToUserId: book.lentToUserId || '',
-    lentToUserName: book.lentToUserName || '',
-  });
-  const [lentToEmail, setLentToEmail] = useState('');
-  const [searchingUser, setSearchingUser] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const updatedBook = await apiService.updateBook(book.bookId, formData);
-      onUpdate(updatedBook);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || `Failed to update ${getItemLabelLower(book.category || 'book')}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">{`Edit ${getItemLabel(book.category || 'book')}`}</h3>
-          {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Author</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.author}
-                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.status}
-                onChange={(e) => {
-                  const newStatus = e.target.value as any;
-                  const updates: any = { status: newStatus };
-                  // Clear lending info if changing away from borrowed
-                  if (newStatus !== 'borrowed') {
-                    updates.lentToUserId = '';
-                    updates.lentToUserName = '';
-                  }
-                  setFormData({ ...formData, ...updates });
-                }}
-              >
-                <option value="available">Available</option>
-                <option value="borrowed">Lent</option>
-                <option value="reading">Reading</option>
-                <option value="giving_away">Giving away</option>
-              </select>
-            </div>
-
-            {formData.status === 'borrowed' && (
-              <div className="bg-amber-50 p-3 rounded-md border border-amber-200 space-y-3">
-                <label className="block text-sm font-medium text-amber-800">Lent to (Selection)</label>
-                
-                {formData.lentToUserName ? (
-                  <div className="flex items-center justify-between bg-white p-2 rounded border border-amber-300 shadow-sm">
-                    <span className="text-sm text-gray-900 font-medium">
-                      {formData.lentToUserName}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, lentToUserId: '', lentToUserName: '' })}
-                      className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex space-x-2">
-                      <input
-                        type="email"
-                        placeholder="recipient@email.com"
-                        className="flex-1 text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                        value={lentToEmail}
-                        onChange={(e) => setLentToEmail(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        disabled={searchingUser || !lentToEmail}
-                        onClick={async () => {
-                          const normalizedEmail = lentToEmail.trim().toLowerCase();
-                          if (!normalizedEmail) return;
-                          setSearchingUser(true);
-                          try {
-                            const found = await apiService.findUserByEmail(normalizedEmail);
-                            if (found) {
-                              setFormData({
-                                ...formData,
-                                lentToUserId: found.userId,
-                                lentToUserName: found.name
-                              });
-                              setLentToEmail('');
-                            } else {
-                              setError('No user found with that email. Ensure they have signed up.');
-                            }
-                          } catch (err: any) {
-                            setError(err.message || 'Error searching for user');
-                          } finally {
-                            setSearchingUser(false);
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-amber-600 text-white text-xs rounded-md hover:bg-amber-700 disabled:opacity-50"
-                      >
-                        {searchingUser ? '...' : 'Find'}
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-amber-700 italic">
-                      Lending field is optional; you can search by the recipient's registered email.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {loading ? 'Updating...' : 'Update'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
   );
 };
 

@@ -78,16 +78,13 @@ const MobileTabBar: React.FC = () => {
     ),
   };
 
-  const allLibraries = [
-    { label: 'Books', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
-    ...LIBRARY_CONFIGS.map(lib => ({
-      label: lib.shortLabel,
-      emoji: lib.emoji,
-      route: `/library/${lib.slug}`,
-      accentBg: lib.accentBg,
-      accentText: lib.accentText
-    }))
-  ];
+  const allLibraries = LIBRARY_CONFIGS.map(lib => ({
+    label: lib.shortLabel,
+    emoji: lib.emoji,
+    route: `/library/${lib.slug}`,
+    accentBg: lib.accentBg,
+    accentText: lib.accentText
+  }));
 
   return (
     <>
@@ -106,14 +103,14 @@ const MobileTabBar: React.FC = () => {
           </button>
           {isAuthenticated && (
             <Link 
-              to="/my-books" 
-              state={{ openAddBooks: true }}
-              className={`flex flex-col items-center justify-center py-2 gap-0.5 font-semibold ${isActive('/my-books') ? 'text-indigo-700' : 'text-indigo-600'}`}
+              to="/library/events" 
+              state={{ openAddModal: true }}
+              className={`flex flex-col items-center justify-center py-1 gap-0.5 transition-all ${location.pathname === '/library/events' && location.state?.openAddModal ? 'text-indigo-700' : 'text-indigo-600'}`}
+              aria-label="Add Items"
             >
-              <div className="bg-indigo-600 text-white rounded-full p-1.5 shadow-sm -mt-1">
+              <div className="bg-indigo-600 text-white rounded-full p-2.5 shadow-lg -mt-4 transform hover:scale-105 active:scale-95 transition-all">
                 <Icon.Plus />
               </div>
-              <span className="mt-0.5 text-[11px]">Add</span>
             </Link>
           )}
           <Link

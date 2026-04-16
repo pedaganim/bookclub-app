@@ -276,7 +276,7 @@ const BookDetails: React.FC = () => {
       setDeleting(true);
       await apiService.deleteBook(bookId);
       notificationCtx?.addNotification('success', `${getItemLabel(book.category || 'book')} deleted`);
-      navigate('/my-books');
+      navigate(`/my-library/${book.category || 'books'}`);
     } catch (e: any) {
       notificationCtx?.addNotification('error', e?.message || 'Failed to delete book');
     } finally {
@@ -329,7 +329,7 @@ const BookDetails: React.FC = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to="/my-books" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My Books</Link>
+          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getItemLabel(book.category || 'book')}s</Link>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
