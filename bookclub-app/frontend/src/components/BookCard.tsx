@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import ConfirmationModal from './ConfirmationModal';
+import { getItemLabel, getItemLabelLower } from '../utils/labels';
 
 interface BookCardProps {
   book: Book;
@@ -78,7 +79,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       setLoading(true);
       await apiService.deleteBook(book.bookId);
       onDelete(book.bookId);
-      addNotification('success', 'Book deleted successfully');
+      notificationCtx?.addNotification('success', `${getItemLabel(book.category || 'book')} deleted successfully`);
     } catch (error) {
       addNotification('error', 'Failed to delete book');
     } finally {
@@ -112,7 +113,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
         {book.coverImage && (
           <img
             src={book.coverImage}
-            alt={book.title}
+            alt={book.title || `${getItemLabel(book.category || 'book')} cover`}
             className={listView 
               ? "w-20 h-28 object-cover flex-shrink-0" 
               : "w-full h-48 object-cover"
@@ -123,7 +124,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
           <div className={listView ? "flex-1" : ""}>
             {/* Show title and author; remove description */}
             <div className="mb-3">
-              <div className={`text-gray-900 ${listView ? 'text-base font-semibold' : 'text-sm font-medium'}`}>{book.title || 'Untitled Book'}</div>
+              <div className={`text-gray-900 ${listView ? 'text-base font-semibold' : 'text-sm font-medium'}`}>{book.title || `Untitled ${getItemLabel(book.category || 'book')}`}</div>
               <div className="text-gray-600 text-xs">{book.author || 'Unknown author'}</div>
             </div>
             {!listView && (
@@ -131,7 +132,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
                 <div className="flex items-center gap-3">
                   <StatusBadge status={book.status} />
                   {book.status === 'borrowed' && (book as any).lentToUserId && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title={`This ${getItemLabelLower(book.category || 'book')} is currently lent out`}>
                       Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
                     </span>
                   )}
@@ -160,7 +161,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
               <div className="flex items-center gap-3">
                 <StatusBadge status={book.status} />
                 {book.status === 'borrowed' && (book as any).lentToUserId && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title="This book is currently lent out">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200" title={`This ${getItemLabelLower(book.category || 'book')} is currently lent out`}>
                     Lent to {(book as any).lentToUserName || (book as any).lentToUserId}
                   </span>
                 )}
@@ -194,7 +195,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onDelete, onUpdate, showActio
       
       <ConfirmationModal
         isOpen={showDeleteModal}
-        title="Delete Book"
+        title={`Delete ${getItemLabel(book.category || 'book')}`}
         message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
@@ -236,7 +237,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
       onUpdate(updatedBook);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update book');
+      setError(err.message || `Failed to update ${getItemLabelLower(book.category || 'book')}`);
     } finally {
       setLoading(false);
     }
@@ -246,7 +247,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ book, onClose, onUpdate }
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Book</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">{`Edit ${getItemLabel(book.category || 'book')}`}</h3>
           {error && (
             <div className="mb-4 rounded-md bg-red-50 p-4">
               <div className="text-sm text-red-700">{error}</div>

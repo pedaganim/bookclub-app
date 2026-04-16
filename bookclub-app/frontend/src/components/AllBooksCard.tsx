@@ -1,5 +1,5 @@
-import React from 'react';
 import { Book } from '../types';
+import { getItemLabel } from '../utils/labels';
 
 interface AllBooksCardProps {
   book: Book;
@@ -29,7 +29,7 @@ const AllBooksCard: React.FC<AllBooksCardProps> = ({ book, listView = false }) =
         {/* Thumbnail */}
         <img
           src={book.coverImage || defaultBookImage}
-          alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
+          alt={book.title ? `Cover of ${book.title}` : `${getItemLabel(book.category || 'book')} cover`}
           className="w-20 h-28 object-cover flex-shrink-0"
           onError={(e) => {
             (e.target as HTMLImageElement).src = defaultBookImage;
@@ -53,7 +53,7 @@ const AllBooksCard: React.FC<AllBooksCardProps> = ({ book, listView = false }) =
       <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
         <img
           src={book.coverImage || defaultBookImage}
-          alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
+          alt={book.title ? `Cover of ${book.title}` : `${getItemLabel(book.category || 'book')} cover`}
           className="w-full h-full object-cover object-center"
           onError={(e) => {
             // Fallback to default image if cover image fails to load

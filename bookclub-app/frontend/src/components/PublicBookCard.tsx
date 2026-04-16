@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Book } from '../types';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
+import { getItemLabel, getItemLabelLower } from '../utils/labels';
 
 interface PublicBookCardProps {
   book: Book;
@@ -103,7 +104,8 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       // Create or fetch conversation with the owner
       const conversation = await apiService.dmCreateConversation(book.userId);
       // Send an initial templated message
-      const title = book.title ? `"${book.title}"` : 'your book';
+      const itemLabelLower = getItemLabelLower(book.category || 'book');
+      const title = book.title ? `"${book.title}"` : `your ${itemLabelLower}`;
       const message = `Hi! I'm interested in borrowing ${title}. Is it available?`;
       await apiService.dmSendMessage(conversation.conversationId, book.userId, message);
       // Track analytics (non-blocking)
@@ -134,7 +136,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
         <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
           <img
             src={book.coverImage || defaultBookImage}
-            alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
+            alt={book.title ? `Cover of ${book.title}` : `${getItemLabel(book.category || 'book')} cover`}
             className="w-full h-full object-cover object-center"
             onError={(e) => {
               // Fallback to default image if cover image fails to load
@@ -146,7 +148,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       {/* Screen-reader only "View details" control for accessibility */}
       <div className="sr-only">
         <Link to={`/books/${book.bookId}`}>
-          {book.title ? `View details for ${book.title}` : 'View book details'}
+          {book.title ? `View details for ${book.title}` : `View ${getItemLabelLower(book.category || 'book')} details`}
         </Link>
       </div>
       
@@ -165,7 +167,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
         {(() => {
           // If the book belongs to a club and the viewer is not a member, show Join Club
           if (book.clubId && !isMemberOfBookClub) {
-            const joinLabel = 'Join the Club';
+            const joinLabel = `Join the Club to Borrow`;
             return (
               <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
                 <button
@@ -200,8 +202,16 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
             );
           }
 
-          const categoryName = (book.category || 'item').replace('_', ' ');
-          const actionLabel = `Borrow ${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}`;
+          const itemLabel = getItemLabel(book.category || 'book');
+          const actionLabel = `Borrow ${itemLabel}`;
+          
+          if (book.status === 'borrowed') {
+            return (
+              <div className="text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-md inline-block">
+                Currently Lent
+              </div>
+            );
+          }
 
           return (
             <div className="space-y-2">
