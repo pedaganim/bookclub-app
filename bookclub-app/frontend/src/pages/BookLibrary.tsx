@@ -1,0 +1,267 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Book, BookClub } from '../types';
+import { apiService } from '../services/api';
+import PublicBookCard from '../components/PublicBookCard';
+import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
+import { useAuth } from '../contexts/AuthContext';
+import { useSubdomain } from '../hooks/useSubdomain';
+import SEO from '../components/SEO';
+
+const BookLibrary: React.FC = () => {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState(25);
+  const [nextToken, setNextToken] = useState<string | null>(null);
+  const [previousTokens, setPreviousTokens] = useState<(string | null)[]>([]);
+  const [currentPageToken, setCurrentPageToken] = useState<string | null>(null);
+  // Track counts of items actually shown on each visited page to compute accurate ranges
+  const [previousPageCounts, setPreviousPageCounts] = useState<number[]>([]);
+  const [shownBeforeCurrent, setShownBeforeCurrent] = useState<number>(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
+  const { isAuthenticated, user } = useAuth();
+  const { isSubdomain, club } = useSubdomain();
+  const [userClubs, setUserClubs] = useState<BookClub[]>([]);
+  const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
+  
+
+  const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
+    try {
+      setLoading(true);
+      setError('');
+      // Make public request without userId to get all books
+      const response = await apiService.listBooksPublic({ 
+        search, 
+        limit: currentPageSize || pageSize,
+        nextToken: token || undefined,
+        clubId: (isSubdomain && club) ? club.clubId : undefined,
+        bare: true,
+      });
+      const desired = currentPageSize || pageSize;
+      let items = Array.isArray(response.items) ? response.items : [];
+      let filtered = (isAuthenticated && user?.userId)
+        ? items.filter((b) => b.userId !== user.userId)
+        : items;
+      // Top up the page to the desired count if client-side filters removed items
+      let tokenLocal: string | undefined = response.nextToken || undefined;
+      while (filtered.length < desired && tokenLocal) {
+        const resp = await apiService.listBooksPublic({
+          search,
+          limit: desired,
+          nextToken: tokenLocal,
+          clubId: (isSubdomain && club) ? club.clubId : undefined,
+          bare: true,
+        });
+        const batch = Array.isArray(resp.items) ? resp.items : [];
+        const batchFiltered = (isAuthenticated && user?.userId)
+          ? batch.filter((b) => b.userId !== user.userId)
+          : batch;
+        filtered = filtered.concat(batchFiltered);
+        tokenLocal = resp.nextToken || undefined;
+      }
+      // Trim to desired page size for display
+      const pageItems = filtered.slice(0, desired);
+      setBooks(pageItems);
+      const hasMore = !!tokenLocal;
+      setHasNextPage(hasMore);
+      setNextToken(tokenLocal || null);
+
+      // Skip computing total count for performance
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch books');
+    } finally {
+      setLoading(false);
+    }
+  }, [pageSize, currentPageToken, isAuthenticated, user?.userId, isSubdomain, club?.clubId]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // Reset pagination when searching
+    setPreviousTokens([]);
+    setNextToken(null);
+    setCurrentPageToken(null);
+    setPreviousPageCounts([]);
+    setShownBeforeCurrent(0);
+    setTotalCount(undefined);
+    fetchBooks(query || undefined, pageSize, null);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    // Reset pagination when changing page size
+    setPreviousTokens([]);
+    setNextToken(null);
+    setCurrentPageToken(null);
+    setPreviousPageCounts([]);
+    setShownBeforeCurrent(0);
+    setTotalCount(undefined);
+    fetchBooks(searchQuery || undefined, newPageSize, null);
+  };
+
+  const handleNextPage = () => {
+    if (hasNextPage && nextToken) {
+      // Store current page's starting token and count in history for going back
+      setPreviousTokens(prev => [...prev, currentPageToken]);
+      setPreviousPageCounts(prev => [...prev, books.length]);
+      setShownBeforeCurrent(prev => prev + books.length);
+      setCurrentPageToken(nextToken);
+      fetchBooks(searchQuery || undefined, pageSize, nextToken);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (previousTokens.length > 0) {
+      // Get the previous page's starting token
+      const newPreviousTokens = [...previousTokens];
+      const poppedToken = newPreviousTokens.pop();
+      const previousPageToken = poppedToken !== undefined ? poppedToken : null;
+      setPreviousTokens(newPreviousTokens);
+      // Adjust shown count using the count stack
+      const newCounts = [...previousPageCounts];
+      const lastCount = newCounts.pop() || 0;
+      setPreviousPageCounts(newCounts);
+      setShownBeforeCurrent(prev => Math.max(0, prev - lastCount));
+      setCurrentPageToken(previousPageToken);
+      
+      fetchBooks(searchQuery || undefined, pageSize, previousPageToken);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks(undefined, pageSize, null);
+  }, [fetchBooks]);
+
+  // SEO logic moved to SEO component in render
+
+  // Load user's clubs to determine membership for Join vs Borrow action
+  useEffect(() => {
+    (async () => {
+      if (!isAuthenticated) {
+        setUserClubs([]);
+        setUserClubIdSet(new Set());
+        return;
+      }
+      try {
+        const res = await apiService.getUserClubs();
+        const items = res.items || [];
+        const active = items.filter((c: any) => (c?.userStatus || 'active') === 'active');
+        setUserClubs(active);
+        setUserClubIdSet(new Set(active.map((c) => c.clubId)));
+      } catch {
+        setUserClubs([]);
+        setUserClubIdSet(new Set());
+      }
+    })();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your library...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <SEO 
+        title={(isSubdomain && club) ? `${club.name} Library` : 'Library'}
+        description={(isSubdomain && club) 
+          ? `Discover books shared by the ${club.name} community. Browse our collection and find your next read.`
+          : 'Discover books shared by our community. Filter by audience and search to find your next read.'
+        }
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
+            {(isSubdomain && club) ? club.name : 'Library'}
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600">
+            {(isSubdomain && club) 
+              ? `Discover books shared by the ${club.name} community`
+              : 'Discover books shared by our community'
+            }
+          </p>
+        </div>
+
+        {/* Top Pagination */}
+        <div className="mb-4">
+          <Pagination 
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            hasNextPage={hasNextPage}
+            hasPreviousPage={previousTokens.length > 0}
+            onNextPage={handleNextPage}
+            onPreviousPage={handlePreviousPage}
+            currentItemsCount={books.length}
+            isLoading={loading}
+            totalCount={totalCount}
+            startIndex={shownBeforeCurrent + (books.length ? 1 : 0)}
+          />
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <SearchBar 
+            onSearch={handleSearch}
+            placeholder="Search books..."
+            value={searchQuery}
+          />
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{error}</div>
+          </div>
+        )}
+
+        {(!Array.isArray(books) || books?.length === 0) ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500">
+              {searchQuery 
+                ? `No books found matching "${searchQuery}".`
+                : "No books are available in your library yet."
+              }
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+              {books.map((book) => (
+                <PublicBookCard
+                  key={book.bookId}
+                  book={book}
+                  isMemberOfBookClub={book.clubId ? userClubIdSet.has(book.clubId) : true}
+                />
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="mt-8">
+              <Pagination
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                hasNextPage={hasNextPage}
+                hasPreviousPage={previousTokens.length > 0}
+                onNextPage={handleNextPage}
+                onPreviousPage={handlePreviousPage}
+                currentItemsCount={books.length}
+                isLoading={loading}
+                totalCount={totalCount}
+                startIndex={shownBeforeCurrent + (books.length ? 1 : 0)}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default BookLibrary;

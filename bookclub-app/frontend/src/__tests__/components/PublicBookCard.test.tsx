@@ -65,7 +65,7 @@ describe('PublicBookCard', () => {
     render(<PublicBookCard book={bookWithoutDescription} />);
     
     // Should only show the borrow action button (generic label without owner name)
-    expect(screen.getByText('Borrow Book')).toBeInTheDocument();
+    expect(screen.getByText('Borrow from User')).toBeInTheDocument();
     expect(screen.queryByText('A test book description')).not.toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('PublicBookCard', () => {
     render(<PublicBookCard book={mockBook} />);
     
     // Borrow button shows generic label without owner name
-    expect(screen.getByText('Borrow Book')).toBeInTheDocument();
+    expect(screen.getByText('Borrow from User')).toBeInTheDocument();
   });
 
   it('should handle fallback when image fails to load', async () => {
