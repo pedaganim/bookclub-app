@@ -12,5 +12,19 @@
     "role": "admin",
     "joinedAt": "2026-04-12T04:07:40.175Z",
     "status": "active"
+  },
+  "4f40d781-dbc1-435c-8611-9b6b08eeea14:local-user": {
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "userId": "local-user",
+    "role": "member",
+    "joinedAt": "2026-04-16T16:17:16.000Z",
+    "status": "active"
+  },
+  "4f40d781-dbc1-435c-8611-9b6b08eeea14:local-user-2": {
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "userId": "local-user-2",
+    "role": "member",
+    "joinedAt": "2026-04-16T16:17:16.000Z",
+    "status": "active"
   }
 }

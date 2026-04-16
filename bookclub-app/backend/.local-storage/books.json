@@ -43,6 +43,7 @@
     "coverImage": null,
     "status": "borrowed",
     "lentToUserId": "local-user",
+    "clubId": "weqwe",
     "lentAt": "2026-04-05T09:00:00.000Z",
     "createdAt": "2026-03-10T09:00:00.000Z",
     "updatedAt": "2026-04-05T09:00:00.000Z"
@@ -96,5 +97,71 @@
     "clubId": null,
     "createdAt": "2026-04-12T01:58:41.369Z",
     "updatedAt": "2026-04-12T01:58:41.369Z"
+  },
+  "test-toy-1": {
+    "bookId": "test-toy-1",
+    "userId": "test-user-123",
+    "title": "LEGO Star Wars X-Wing",
+    "description": "Building set for Star Wars fans.",
+    "category": "toy",
+    "status": "available",
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "createdAt": "2026-04-16T09:00:00.000Z",
+    "updatedAt": "2026-04-16T09:00:00.000Z"
+  },
+  "test-tool-1": {
+    "bookId": "test-tool-1",
+    "userId": "test-user-123",
+    "title": "Cordless Power Drill",
+    "description": "High performance 18V drill with extra batteries.",
+    "category": "tool",
+    "status": "available",
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "createdAt": "2026-04-16T09:05:00.000Z",
+    "updatedAt": "2026-04-16T09:05:00.000Z"
+  },
+  "test-book-diff-club": {
+    "bookId": "test-book-diff-club",
+    "userId": "test-user-123",
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "category": "book",
+    "status": "available",
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "createdAt": "2026-04-16T09:10:00.000Z",
+    "updatedAt": "2026-04-16T09:10:00.000Z"
+  },
+  "test-game-1": {
+    "bookId": "test-game-1",
+    "userId": "test-user-123",
+    "title": "Settlers of Catan",
+    "description": "The classic board game of trading and building.",
+    "category": "game",
+    "status": "available",
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "createdAt": "2026-04-16T09:15:00.000Z",
+    "updatedAt": "2026-04-16T09:15:00.000Z"
+  },
+  "test-event-1": {
+    "bookId": "test-event-1",
+    "userId": "test-user-123",
+    "title": "Party Marquee (3x3m)",
+    "description": "Waterproof pop-up marquee, perfect for hostings.",
+    "category": "event_hire",
+    "status": "available",
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "createdAt": "2026-04-16T09:20:00.000Z",
+    "updatedAt": "2026-04-16T09:20:00.000Z"
+  },
+  "test-other-1": {
+    "bookId": "test-other-1",
+    "userId": "test-user-123",
+    "title": "Professional Camera Tripod",
+    "description": "Sturdy aluminum tripod with fluid head for video.",
+    "category": "other",
+    "status": "available",
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "createdAt": "2026-04-16T09:25:00.000Z",
+    "updatedAt": "2026-04-16T09:25:00.000Z"
   }
 }
