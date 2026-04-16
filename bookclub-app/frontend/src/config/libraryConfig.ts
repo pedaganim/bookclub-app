@@ -164,6 +164,33 @@ export const LIBRARY_CONFIGS: LibraryConfig[] = [
       { value: 'other', label: '📦 Other' },
     ],
   },
+  {
+    libraryType: 'book',
+    slug: 'books',
+    label: 'Book Library',
+    shortLabel: 'Books',
+    emoji: '📚',
+    tagline: 'Browse and borrow books',
+    description: 'Discover books shared by your community. Find your next great read and share your own.',
+    postLabel: 'Post a Book',
+    itemLabel: 'book',
+    itemLabelPlural: 'books',
+    emptyBrowseText: 'No books listed yet. Be the first to share one!',
+    emptyMineText: 'You haven\'t posted any books yet. Click "Post a Book" to get started.',
+    searchPlaceholder: 'Search books...',
+    pageTitle: 'Book Library — Community Library',
+    metaDescription: 'Discover books shared by your community. Find your next great read.',
+    accentBg: 'bg-amber-100',
+    accentText: 'text-amber-700',
+    conditions: DEFAULT_CONDITIONS,
+    categories: [
+      { value: '', label: 'All Age Groups' },
+      { value: 'early_reader', label: '👶 Early Reader' },
+      { value: 'middle_grade', label: '👦 Middle Grade' },
+      { value: 'young_adult', label: '🧑 Young Adult' },
+      { value: 'adult', label: '👴 Adult' },
+    ],
+  },
 ];
 
 /** Look up a library config by slug or libraryType */

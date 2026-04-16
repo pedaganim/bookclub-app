@@ -1,4 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { 
+  Bars3Icon, 
+  XMarkIcon,
+  BellIcon
+} from '@heroicons/react/24/outline';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
@@ -9,12 +14,14 @@ import { config } from '../config';
 import MobileTabBar from './MobileTabBar';
 
 const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const { isSubdomain, club } = useSubdomain();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isSubdomain, club } = useSubdomain();
   const [librariesOpen, setLibrariesOpen] = useState(false);
+  const [myLibraryOpen, setMyLibraryOpen] = useState(false);
   const librariesRef = useRef<HTMLDivElement>(null);
+  const myLibraryRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -22,13 +29,19 @@ const Navbar: React.FC = () => {
       if (librariesRef.current && !librariesRef.current.contains(e.target as Node)) {
         setLibrariesOpen(false);
       }
+      if (myLibraryRef.current && !myLibraryRef.current.contains(e.target as Node)) {
+        setMyLibraryOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   // Close dropdown on route change
-  useEffect(() => { setLibrariesOpen(false); }, [location.pathname]);
+  useEffect(() => { 
+    setLibrariesOpen(false); 
+    setMyLibraryOpen(false);
+  }, [location.pathname]);
 
   // Simple inline SVG icons
   const Icon = {
@@ -74,10 +87,14 @@ const Navbar: React.FC = () => {
     ),
   };
 
-  // All library entries for the dropdown (Book Library + dynamic libraries)
-  const dropdownLibraries = [
-    { label: 'Book Library', emoji: '📚', route: '/library/books', accentBg: 'bg-amber-50', accentText: 'text-amber-700' },
-  ];
+  // All library entries for the dropdown (Book Library + dynamic libraries from config)
+  const dropdownLibraries = LIBRARY_CONFIGS.map(lib => ({
+    label: lib.label,
+    emoji: lib.emoji,
+    route: `/library/${lib.slug}`,
+    accentBg: lib.accentBg,
+    accentText: lib.accentText
+  }));
 
   return (
     <>
@@ -150,26 +167,58 @@ const Navbar: React.FC = () => {
                 )}
               </div>
 
-              {/* Divider */}
-              <span className="w-px h-5 bg-gray-200 mx-1" />
-
-              {/* Individual library links */}
-              <Link to="/library/books" className="px-2.5 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-amber-700 hover:bg-amber-50 transition-colors">
-                📚 Books
+              <Link to={isAuthenticated ? "/clubs" : "/clubs/browse"} className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                Clubs
               </Link>
 
-              {/* Divider */}
-              <span className="w-px h-5 bg-gray-200 mx-1" />
+              {/* My items dropdown */}
+              {isAuthenticated && (
+                <div ref={myLibraryRef} className="relative">
+                  <button
+                    onClick={() => setMyLibraryOpen((o) => !o)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      myLibraryOpen ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    My Library
+                    <span className={`transition-transform duration-200 ${myLibraryOpen ? 'rotate-180' : ''}`}>
+                      <Icon.ChevronDown />
+                    </span>
+                  </button>
 
+                  {myLibraryOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-2 mb-2">Manage My Items</p>
+                      <div className="space-y-1">
+                        {dropdownLibraries.map((lib) => (
+                          <Link
+                            key={`my-${lib.route}`}
+                            to={lib.route.replace('/library/', '/my-library/')}
+                            className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{lib.emoji}</span>
+                              <span>{lib.label.replace(' Library', '')}</span>
+                            </div>
+                            <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Manage</span>
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <Link
+                          to="/my-library"
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        >
+                          📦 View My Dashboard
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {isAuthenticated && (
                 <>
-                  <Link to="/my-books" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                    My Books
-                  </Link>
-                  <Link to="/clubs" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                    Clubs
-                  </Link>
                   <MessagesLinkWithUnread />
                 </>
               )}
@@ -219,9 +268,9 @@ const Navbar: React.FC = () => {
             <div className="md:hidden flex items-center gap-2">
               <Link to="/about" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">About</Link>
               <Link to="/about/blogs" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">Blogs</Link>
+              <Link to="/my-library" className="text-xs font-bold text-indigo-600 px-2 py-1">My Library</Link>
               {isAuthenticated && (
                 <>
-                  <Link to="/my-books" className="text-xs font-medium text-indigo-600 hover:text-indigo-800 px-2 py-1 bg-indigo-50 rounded-md">My Books</Link>
                   <Link to="/profile" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1 flex items-center gap-1">
                     {user?.profilePicture ? (
                       <img src={user.profilePicture} alt="Avatar" className="h-5 w-5 rounded-full object-cover" />

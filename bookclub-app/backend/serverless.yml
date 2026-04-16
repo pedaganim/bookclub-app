@@ -360,37 +360,6 @@ functions:
             authorizerId:
               Ref: ApiGatewayAuthorizer
   
-  getBook:
-    handler: src/handlers/books/get.handler
-    events:
-      - http:
-          method: GET
-          path: /books/{bookId}
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-  
-  listBooks:
-    handler: src/handlers/books/list.handler
-    events:
-      - http:
-          method: GET
-          path: /books
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
   getBooksSummary:
     handler: src/handlers/books/summary.handler
     events:
@@ -410,6 +379,58 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId: 
               Ref: ApiGatewayAuthorizer
+
+  bookMetadata:
+    handler: src/handlers/books/metadata.handler
+    events:
+      - http:
+          method: GET
+          path: /books/metadata
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer: 
+            type: COGNITO_USER_POOLS
+            authorizerId: 
+              Ref: ApiGatewayAuthorizer
+
+  getBook:
+    handler: src/handlers/books/get.handler
+    events:
+      - http:
+          method: GET
+          path: /books/{bookId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  listBooks:
+    handler: src/handlers/books/list.handler
+    events:
+      - http:
+          method: GET
+          path: /books
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
 
   updateBook:
     handler: src/handlers/books/update.handler
@@ -458,26 +479,6 @@ functions:
       - http:
           method: POST
           path: /books/{bookId}/extract-metadata
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer: 
-            type: COGNITO_USER_POOLS
-            authorizerId: 
-              Ref: ApiGatewayAuthorizer
-  
-  bookMetadata:
-    handler: src/handlers/books/metadata.handler
-    events:
-      - http:
-          method: GET
-          path: /books/metadata
           cors:
             origin: '*'
             headers:
