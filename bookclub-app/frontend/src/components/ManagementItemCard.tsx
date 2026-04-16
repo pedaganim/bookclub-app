@@ -82,7 +82,7 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
             onClick={() => setShowEditModal(true)}
             className="p-2 text-gray-400 hover:text-indigo-600 transition-colors bg-gray-50 rounded-lg"
           >
-            <PencilIcon className="h-5 w-5" />
+            <PencilSquareIcon className="h-5 w-5" />
           </button>
           <button 
             onClick={() => { if(window.confirm(`Are you sure you want to delete this ${label}?`)) onDelete(itemId); }}
@@ -137,7 +137,7 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
             onClick={() => setShowEditModal(true)}
             className="bg-white/90 backdrop-blur-sm text-gray-900 p-2.5 rounded-2xl hover:bg-white transition-colors shadow-lg flex items-center gap-2 text-xs font-bold"
           >
-            <PencilIcon className="h-4 w-4" /> Edit
+            <PencilSquareIcon className="h-4 w-4" /> Edit
           </button>
           <button 
             onClick={() => { if(window.confirm(`Are you sure you want to delete this ${label}?`)) onDelete(itemId); }}
