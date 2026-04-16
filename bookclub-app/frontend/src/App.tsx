@@ -129,11 +129,7 @@ function App() {
                 />
                 <Route
                   path="/clubs/browse"
-                  element={
-                    <ProtectedRoute>
-                      <BrowseClubs />
-                    </ProtectedRoute>
-                  }
+                  element={<BrowseClubs />}
                 />
                 <Route
                   path="/clubs/:clubId/requests"
@@ -145,11 +141,7 @@ function App() {
                 />
                 <Route
                   path="/clubs/:clubId/explore"
-                  element={
-                    <ProtectedRoute>
-                      <ClubBooks />
-                    </ProtectedRoute>
-                  }
+                  element={<ClubBooks />}
                 />
                 <Route
                   path="/my-books"

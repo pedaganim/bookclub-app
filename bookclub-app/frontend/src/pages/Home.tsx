@@ -37,6 +37,7 @@ const Home: React.FC = () => {
   const { user } = useAuth();
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const [summary, setSummary] = useState<{ total: number; lent: number; borrowed: number } | null>(null);
+  const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
 
   const fetchSummary = useCallback(async () => {
     if (!user) return;
@@ -48,9 +49,30 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
+  const fetchUserClubs = useCallback(async () => {
+    if (!user) {
+      setUserClubIds(new Set());
+      return;
+    }
+    try {
+      const res = await apiService.getUserClubs();
+      const activeIds = new Set<string>(
+        (res.items || [])
+          .filter((c: any) => (c?.userStatus || 'active') === 'active')
+          .map((c: any) => c.clubId)
+      );
+      setUserClubIds(activeIds);
+    } catch (e) {
+      console.warn('Failed to fetch user clubs:', e);
+    }
+  }, [user]);
+
   useEffect(() => {
-    if (user) fetchSummary();
-  }, [user, fetchSummary]);
+    if (user) {
+      fetchSummary();
+      fetchUserClubs();
+    }
+  }, [user, fetchSummary, fetchUserClubs]);
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
@@ -394,7 +416,7 @@ const Home: React.FC = () => {
                       <PublicBookCard
                         key={book.bookId}
                         book={book}
-                        // Using the same card in both views to ensure borrow/profile actions are available
+                        isMemberOfBookClub={!book.clubId || userClubIds.has(book.clubId)}
                       />
                     ) : (
                       <BookCard
