@@ -121,6 +121,7 @@ export interface BookClub {
   userRole?: 'admin' | 'member';
   joinedAt?: string;
   userStatus?: 'active' | 'pending';
+  isMember?: boolean;
 }
 
 export interface BookClubMember {

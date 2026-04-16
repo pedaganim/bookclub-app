@@ -106,6 +106,10 @@ const BrowseClubs: React.FC = () => {
   const hasNext = Boolean(nextToken);
 
   const handleRequestJoin = async (club: BookClub) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: window.location.pathname } });
+      return;
+    }
     try {
       setRequestingId(club.clubId);
       await apiService.requestClubJoin(club.clubId);

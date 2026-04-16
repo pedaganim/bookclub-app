@@ -4,7 +4,13 @@ User-agent: *
 # Public pages are allowed by default, 
 # but we explicitly disallow authenticated or private areas.
 Disallow: /messages/
-Disallow: /clubs/
+# Public club Discovery
+Allow: /clubs/browse
+Allow: /clubs/*/explore
+Disallow: /clubs/*
+Disallow: /clubs/*/requests
+Disallow: /clubs/*/settings
+Disallow: /clubs/*/invite
 Disallow: /my-books/
 Disallow: /profile/
 Disallow: /settings/

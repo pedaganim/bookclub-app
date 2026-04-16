@@ -9,7 +9,7 @@ interface PublicBookCardProps {
   isMemberOfBookClub?: boolean; // default true; when false and book has clubId, show Join Club
 }
 
-const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClub = true }) => {
+const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClub = false }) => {
   const [sending, setSending] = React.useState(false);
   const notificationCtx = React.useContext(NotificationContext);
   const { isAuthenticated, user } = useAuth();

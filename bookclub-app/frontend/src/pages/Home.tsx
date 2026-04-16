@@ -37,6 +37,7 @@ const Home: React.FC = () => {
   const { user } = useAuth();
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const [summary, setSummary] = useState<{ total: number; lent: number; borrowed: number } | null>(null);
+  const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
 
   const fetchSummary = useCallback(async () => {
     if (!user) return;
@@ -48,9 +49,30 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
+  const fetchUserClubs = useCallback(async () => {
+    if (!user) {
+      setUserClubIds(new Set());
+      return;
+    }
+    try {
+      const res = await apiService.getUserClubs();
+      const activeIds = new Set<string>(
+        (res.items || [])
+          .filter((c: any) => (c?.userStatus || 'active') === 'active')
+          .map((c: any) => c.clubId)
+      );
+      setUserClubIds(activeIds);
+    } catch (e) {
+      console.warn('Failed to fetch user clubs:', e);
+    }
+  }, [user]);
+
   useEffect(() => {
-    if (user) fetchSummary();
-  }, [user, fetchSummary]);
+    if (user) {
+      fetchSummary();
+      fetchUserClubs();
+    }
+  }, [user, fetchSummary, fetchUserClubs]);
 
   const fetchBooks = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     try {
@@ -295,8 +317,8 @@ const Home: React.FC = () => {
             )}
 
             <div className="mb-6">
-              <div className="flex justify-between items-center">
-                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex w-full sm:w-auto space-x-1 bg-gray-100 p-1 rounded-lg overflow-x-auto justify-center sm:justify-start">
                   <button
                     onClick={() => { setFilter('my-books'); setMyPageIndex(0); }}
                     className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
@@ -326,7 +348,7 @@ const Home: React.FC = () => {
                   {filter !== 'all' && (
                     <button
                       onClick={() => setShowAddModal(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors mr-2"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
                       title="Add Book"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -394,7 +416,7 @@ const Home: React.FC = () => {
                       <PublicBookCard
                         key={book.bookId}
                         book={book}
-                        // Using the same card in both views to ensure borrow/profile actions are available
+                        isMemberOfBookClub={!book.clubId || userClubIds.has(book.clubId)}
                       />
                     ) : (
                       <BookCard

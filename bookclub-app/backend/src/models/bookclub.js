@@ -369,7 +369,18 @@ class BookClub {
     }
 
     const result = await dynamoDb.get(getTableName('bookclub-members'), { clubId, userId });
-    return result !== null;
+    return result !== null && result.status === 'active';
+  }
+
+  static async getSharedClubIds(userAId, userBId) {
+    const clubsA = await this.getUserClubs(userAId);
+    const clubsB = await this.getUserClubs(userBId);
+
+    const activeIdsA = new Set(clubsA.filter(c => c.userStatus === 'active').map(c => c.clubId));
+    const activeIdsB = new Set(clubsB.filter(c => c.userStatus === 'active').map(c => c.clubId));
+
+    const intersection = [...activeIdsA].filter(id => activeIdsB.has(id));
+    return intersection;
   }
 
   static async getMemberRole(clubId, userId) {
