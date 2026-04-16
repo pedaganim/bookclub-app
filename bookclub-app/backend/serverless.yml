@@ -159,11 +159,11 @@ plugins:
   - serverless-prune-plugin
 functions:
   # Book-related functions
-  listBooks:
-    handler: src/handlers/books/list.handler
+  createBook:
+    handler: src/handlers/books/create.handler
     events:
       - http:
-          method: GET
+          method: POST
           path: /books
           cors:
             origin: '*'
@@ -174,7 +174,192 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
 
+  # Strands + Bedrock analyzer endpoint (HTTP + can be invoked by S3)
+  bedrockAnalyzeCover:
+    handler: src/handlers/strands/bedrockAnalyzeCover.handler
+    timeout: 900
+    memorySize: 1536
+    events:
+      - http:
+          method: POST
+          path: /strands/analyze-cover
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+      - eventBridge:
+          eventBus: ${self:provider.environment.EVENT_BUS_NAME}
+          pattern:
+            source:
+              - ${self:provider.environment.EVENT_BUS_SOURCE}
+            detail-type:
+              - 'S3.ObjectCreated'
+            detail:
+              eventType:
+                - 'book-cover-uploaded'
+
+  # Bedrock analyzer SQS worker (processes messages one-by-one)
+  bedrockAnalyzeWorker:
+    handler: src/handlers/strands/bedrockAnalyzeWorker.handler
+    timeout: 900
+    memorySize: 1536
+    events:
+      - sqs:
+          arn: !GetAtt BedrockAnalyzeQueue.Arn
+          batchSize: 1
+          maximumConcurrency: 2
+
+  getUserPublic:
+    handler: src/handlers/users/getById.handler
+    events:
+      - http:
+          method: GET
+          path: /users/{userId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  findUserByEmail:
+    handler: src/handlers/users/findByEmail.handler
+    events:
+      - http:
+          method: GET
+          path: /users/query
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmMarkRead:
+    handler: src/handlers/dm/markRead.handler
+    events:
+      - http:
+          method: PATCH
+          path: /dm/conversations/{conversationId}/read
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  # Direct Messages (DM)
+  dmCreateConversation:
+    handler: src/handlers/dm/createConversation.handler
+    events:
+      - http:
+          method: POST
+          path: /dm/conversations
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmListConversations:
+    handler: src/handlers/dm/listConversations.handler
+    events:
+      - http:
+          method: GET
+          path: /dm/conversations
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmSendMessage:
+    handler: src/handlers/dm/sendMessage.handler
+    events:
+      - http:
+          method: POST
+          path: /dm/conversations/{conversationId}/messages
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  dmListMessages:
+    handler: src/handlers/dm/listMessages.handler
+    events:
+      - http:
+          method: GET
+          path: /dm/conversations/{conversationId}/messages
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  
   getBooksSummary:
     handler: src/handlers/books/summary.handler
     events:
@@ -231,7 +416,21 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
-  createBook:
+  listBooks:
+    handler: src/handlers/books/list.handler
+    events:
+      - http:
+          method: GET
+          path: /books
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
 
   updateBook:
     handler: src/handlers/books/update.handler
