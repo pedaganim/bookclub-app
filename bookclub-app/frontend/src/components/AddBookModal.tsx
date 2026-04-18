@@ -16,6 +16,7 @@ type SelectedImage = { file: File; preview?: string };
 const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => {
   const [tab, setTab] = useState<'upload' | 'manual'>('upload');
   const [uploadedImages, setUploadedImages] = useState<SelectedImage[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [uploadingBatch, setUploadingBatch] = useState(false);
@@ -35,7 +36,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   const deriveTitle = (filename: string) => {
     return filename
       .replace(/\.[^/.]+$/, '')
-      .replace(/[_\-.]/g, ' ')
+      .replace(/[_\-\.]/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase())
       .trim();
   };
@@ -111,8 +112,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
               throw lastErr || new Error(`${label} failed`);
             };
 
-            let successCount = 0;
-            let failedCount = 0;
+            let success = 0;
+            let failed = 0;
             setUploadProgress({ index: 0, total: imagesToUpload.length, success: 0, failed: 0, currentName: '' });
 
             // Worker pool for concurrent image uploads
@@ -150,22 +151,22 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                     }),
                     'createBook'
                   );
-                  successCount++;
-                  setUploadProgress(p => ({ ...p, success: p.success + 1 }));
+                  success += 1;
+                  setUploadProgress(p => ({ ...p, success }));
                   onBookAdded(book);
                 } catch (imageError: any) {
                   // eslint-disable-next-line no-console
                   console.error(`Background upload failed for an image:`, imageError);
                   addNotification?.('error', imageError?.message || 'Failed to upload one of the images');
-                  failedCount++;
-                  setUploadProgress(p => ({ ...p, failed: p.failed + 1 }));
+                  failed += 1;
+                  setUploadProgress(p => ({ ...p, failed }));
                 }
               }
             };
 
             await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
-            addNotification?.('success', `Added ${successCount}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
+            addNotification?.('success', `Added ${success}/${imagesToUpload.length} book${imagesToUpload.length !== 1 ? 's' : ''}.`);
             setStatusMessage('');
             setUploadingBatch(false);
           })();
@@ -178,7 +179,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
   };
 
   const handleClose = () => {
-    if (!uploadingBatch && !manualSaving) onClose();
+    if (!loading) onClose();
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -296,7 +297,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                 <MultiImageUpload
                   onImagesProcessed={handleImagesProcessed}
                   onError={handleImageError}
-                  disabled={uploadingBatch || manualSaving}
+                  disabled={loading}
                   maxImages={process.env.NODE_ENV === 'test' ? 10 : Infinity}
                   itemLabel="Book Cover"
                   itemLabelPlural="Book Covers"

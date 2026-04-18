@@ -11,7 +11,6 @@ Disallow: /clubs/*
 Disallow: /clubs/*/requests
 Disallow: /clubs/*/settings
 Disallow: /clubs/*/invite
-Disallow: /my-library/
 Disallow: /my-books/
 Disallow: /profile/
 Disallow: /settings/

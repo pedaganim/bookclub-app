@@ -1,15 +1,27 @@
 {
-  "35502058-e16c-41ec-90bc-83dec6dc7745": {
-    "clubId": "35502058-e16c-41ec-90bc-83dec6dc7745",
+  "4f40d781-dbc1-435c-8611-9b6b08eeea14": {
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
     "name": "Test Book Club",
     "slug": "test-book-club",
     "description": "A test club",
     "createdBy": "test-user-123",
-    "inviteCode": "352B909E",
+    "inviteCode": "C42112B3",
     "isPrivate": false,
     "memberLimit": null,
-    "memberCount": 1,
-    "createdAt": "2026-04-16T12:07:38.557Z",
-    "updatedAt": "2026-04-16T12:07:38.557Z"
+    "createdAt": "2026-04-12T04:02:38.975Z",
+    "updatedAt": "2026-04-12T04:02:38.975Z"
+  },
+  "f25d299b-af6b-4f4b-aa76-1e82921ba23c": {
+    "clubId": "f25d299b-af6b-4f4b-aa76-1e82921ba23c",
+    "name": "wqejlk",
+    "slug": "wqejlk",
+    "description": "qew",
+    "location": "Melbourne, Victoria",
+    "createdBy": "local-user",
+    "inviteCode": "C0DE706E",
+    "isPrivate": false,
+    "memberLimit": null,
+    "createdAt": "2026-04-12T04:07:40.174Z",
+    "updatedAt": "2026-04-12T04:07:40.174Z"
   }
 }

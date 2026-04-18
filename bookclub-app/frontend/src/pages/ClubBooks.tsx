@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
-import { ArchiveBoxIcon } from '@heroicons/react/24/outline';
 
 const ClubBooks: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>();
@@ -52,30 +51,12 @@ const ClubBooks: React.FC = () => {
     setLoadingMore(false);
   };
 
-  // Helper to group books by category
-  const groupedItems = books.reduce((acc, book) => {
-    const category = book.category || 'book';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(book);
-    return acc;
-  }, {} as Record<string, Book[]>);
-
-  // Define display names for categories
-  const categoryLabels: Record<string, string> = {
-    book: '📚 Books',
-    toy: '🧸 Toys',
-    tool: '🛠️ Tools',
-    game: '🎲 Games',
-    event_hire: '🎉 Event Hire',
-    other: '✨ Other Items'
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading library…</p>
+          <p className="mt-4 text-gray-600">Loading books…</p>
         </div>
       </div>
     );
@@ -85,103 +66,55 @@ const ClubBooks: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <button
             onClick={() => navigate('/clubs')}
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-4 inline-flex items-center gap-1 group transition-colors"
+            className="text-sm text-indigo-600 hover:text-indigo-800 mb-3 inline-flex items-center gap-1"
           >
-            <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Clubs
+            ← Back to Clubs
           </button>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                {club ? club.name : 'Community'} Library
-              </h1>
-              {club?.description && (
-                <p className="mt-2 text-lg text-gray-600 max-w-2xl">{club.description}</p>
-              )}
-            </div>
-            <div className="bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm self-start">
-              <p className="text-sm font-medium text-gray-600">
-                <span className="text-indigo-600 font-bold">{books.length}</span> items available
-              </p>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {club ? club.name : 'Club'} — Books
+          </h1>
+          {club?.description && (
+            <p className="mt-1 text-gray-600">{club.description}</p>
+          )}
+          <p className="mt-1 text-sm text-gray-500">{books.length} book{books.length !== 1 ? 's' : ''} in this club</p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 border border-red-100">
-            <div className="flex items-center gap-2 text-red-700">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-              <p className="text-sm font-medium">{error}</p>
-            </div>
+          <div className="mb-6 rounded-md bg-red-50 p-4">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
         {books.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-            <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-              <ArchiveBoxIcon className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">Virtual shelves are empty</h3>
-            <p className="text-gray-500 mt-1">No items have been shared in this club yet.</p>
+          <div className="text-center py-16 text-gray-500">
+            No books have been added to this club yet.
           </div>
         ) : (
-          <div className="space-y-12">
-            {Object.entries(groupedItems).map(([category, items]) => (
-              <section key={category} className="relative">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    {categoryLabels[category] || category}
-                    <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                      {items.length}
-                    </span>
-                  </h2>
-                </div>
-
-                {/* Horizontal Scroll Container */}
-                <div className="relative group">
-                  <div className="flex overflow-x-auto pb-4 gap-6 scrollbar-hide snap-x">
-                    {items.map((item) => (
-                      <div key={item.bookId} className="w-[280px] shrink-0 snap-start">
-                        <PublicBookCard book={item} isMemberOfBookClub={!!club?.isMember} />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Visual Fades for scrolling indicator */}
-                  <div className="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity md:block hidden" />
-                </div>
-              </section>
-            ))}
-
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {books.map((book) => (
+                <PublicBookCard key={book.bookId} book={book} isMemberOfBookClub={!!club?.isMember} />
+              ))}
+            </div>
             {nextToken && (
-              <div className="mt-12 flex justify-center pb-8 border-t border-gray-100 pt-8">
+              <div className="mt-8 flex justify-center">
                 <button
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="inline-flex items-center gap-2 px-8 py-3 bg-white border border-gray-300 rounded-full text-sm font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 transition-all shadow-sm hover:shadow"
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  {loadingMore ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-indigo-600" />
-                      Loading…
-                    </>
-                  ) : (
-                    <>
-                      Explore More Items
-                      <span className="text-gray-400">↓</span>
-                    </>
-                  )}
+                  {loadingMore ? 'Loading…' : 'Load more'}
                 </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
   );
 };
-
 
 export default ClubBooks;
