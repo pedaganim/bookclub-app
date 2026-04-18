@@ -680,18 +680,23 @@ class ApiService {
   }
 
   async createToyListing(data: {
-    title: string;
+    title?: string;
     description?: string;
-    condition: string;
+    condition?: string;
     category?: string;
     location?: string;
     wantInReturn?: string;
     libraryType?: string;
     userName?: string;
+    coverImage?: string;
+    extractFromImage?: boolean;
+    s3Bucket?: string;
+    s3Key?: string;
+    status?: string;
   }): Promise<import('../types').ToyListing> {
     const response = await this.api.post('/books', {
       ...data,
-      category: data.libraryType || 'toy'
+      category: data.libraryType || data.category || 'toy'
     });
     if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to create item');
     const item = response.data.data as any;

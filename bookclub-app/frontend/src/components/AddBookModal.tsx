@@ -145,7 +145,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                       extractFromImage: !isLocal,
                       s3Bucket: uploadResult.bucket,
                       s3Key: uploadResult.key,
-                      title: isLocal ? deriveTitle(image.file.name) : undefined,
+                      title: isLocal ? deriveTitle(image.file.name) : 'Processing...',
+                      author: 'Processing...',
                     }),
                     'createBook'
                   );
@@ -297,6 +298,8 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   onError={handleImageError}
                   disabled={uploadingBatch || manualSaving}
                   maxImages={process.env.NODE_ENV === 'test' ? 10 : Infinity}
+                  itemLabel="Book Cover"
+                  itemLabelPlural="Book Covers"
                 />
               </div>
               {uploadedImages.length > 0 && (
