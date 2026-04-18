@@ -175,6 +175,7 @@ export const LIBRARY_CONFIGS: LibraryConfig[] = [
     postLabel: 'Post Books',
     itemLabel: 'Book',
     itemLabelPlural: 'Books',
+
     emptyBrowseText: 'No books listed yet. Be the first to share one!',
     emptyMineText: 'You haven\'t posted any books yet. Click "Post a Book" to get started.',
     searchPlaceholder: 'Search books...',

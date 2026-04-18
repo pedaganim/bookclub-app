@@ -5,9 +5,9 @@ const BookClub = require('../../models/bookclub');
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
   try {
-    const { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId } = parseQuery(event);
+    const { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId, category } = parseQuery(event);
     const userId = deriveUserId(event, qs);
-    logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter);
+    logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter, category);
 
     let result;
     if (filter === 'borrowed' && userId) {
@@ -15,11 +15,11 @@ module.exports.handler = async (event) => {
     } else if (clubId) {
       result = await listBooksByClubMembers(clubId, limit);
     } else if (userId) {
-      result = await Book.listByUser(userId, limit, nextToken);
+      result = await Book.listByUser(userId, limit, nextToken, category);
     } else {
-      const options = {};
+      const options = { category };
       if (bare) options.bare = true;
-      result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, Object.keys(options).length ? options : undefined);
+      result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
     }
 
     return response.success({
@@ -41,7 +41,8 @@ const parseQuery = (event) => {
   const bare = qs && typeof qs.bare === 'string' ? (qs.bare === '1' || qs.bare.toLowerCase() === 'true') : false;
   const filter = qs && typeof qs.filter === 'string' ? qs.filter : null;
   const clubId = qs && typeof qs.clubId === 'string' ? qs.clubId : null;
-  return { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId };
+  const category = qs && (qs.category || qs.libraryType) ? String(qs.category || qs.libraryType) : null;
+  return { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId, category };
 };
 
 const deriveUserId = (event, qs) => {
@@ -67,7 +68,7 @@ const listBooksByClubMembers = async (clubId, limit) => {
   return { items: items.slice(0, limit), nextToken: null };
 };
 
-const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, bare, filter) => {
+const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, bare, filter, category) => {
   console.log('listBooks handler', {
     stage: process.env.STAGE,
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION,
@@ -79,5 +80,6 @@ const logListContext = (event, userId, limit, nextToken, search, ageGroupFine, b
     ageGroupFine: ageGroupFine || null,
     bare: !!bare,
     filter: filter || null,
+    category: category || null,
   });
 };

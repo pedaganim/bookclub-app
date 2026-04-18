@@ -11,7 +11,6 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import ProfileEdit from './pages/ProfileEdit';
-import BookLibrary from './pages/BookLibrary';
 import About from './pages/About';
 import BlogsIndex from './pages/blogs/BlogsIndex';
 import BlogPost from './pages/blogs/BlogPost';
@@ -27,6 +26,8 @@ import TermsOfService from './pages/TermsOfService';
 import NotificationSettings from './pages/NotificationSettings';
 import LibraryHub from './pages/LibraryHub';
 import LibraryPage from './pages/LibraryPage';
+import MyLibraryHub from './pages/MyLibraryHub';
+import MyItemsPage from './pages/MyItemsPage';
 import ClubRequests from './pages/ClubRequests';
 import ClubBooks from './pages/ClubBooks';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
@@ -66,11 +67,31 @@ function App() {
                     element={<LibraryPage config={cfg} />}
                   />
                 ))}
-                <Route path="/library/books" element={<BookLibrary />} />
-                {/* Legacy redirects */}
+                
+                {/* Unified Management Routes */}
+                <Route
+                  path="/my-library"
+                  element={
+                    <ProtectedRoute>
+                      <MyLibraryHub />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/my-library/:categorySlug"
+                  element={
+                    <ProtectedRoute>
+                      <MyItemsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Legacy & Backward Compatibility Redirects */}
+                <Route path="/library/books" element={<Navigate to="/library/books" replace />} /> {/* Handled by dynamice loop above, but explicit for clarity */}
+                <Route path="/my-books" element={<Navigate to="/my-library/books" replace />} />
                 <Route path="/libraries" element={<Navigate to="/library" replace />} />
                 <Route path="/libraries/*" element={<Navigate to="/library" replace />} />
-                <Route path="/swap-toys" element={<Navigate to="/library/toys" replace />} />
+
                 <Route
                   path="/books/:bookId"
                   element={<BookDetails />}
@@ -145,11 +166,7 @@ function App() {
                 />
                 <Route
                   path="/my-books"
-                  element={
-                    <ProtectedRoute>
-                      <Home />
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to="/my-library/books" replace />}
                 />
                 <Route
                   path="/profile"

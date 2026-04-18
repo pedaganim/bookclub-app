@@ -659,13 +659,24 @@ class ApiService {
     if (params?.limit) query.append('limit', String(params.limit));
     if (params?.nextToken) query.append('nextToken', params.nextToken);
     if (params?.userId) query.append('userId', params.userId);
-    if (params?.libraryType) query.append('libraryType', params.libraryType);
-    const response = await this.api.get(`/swap-toys?${query.toString()}`);
+    if (params?.libraryType) query.append('category', params.libraryType);
+    const response = await this.api.get(`/books?${query.toString()}`);
     if (response.data?.success !== undefined) {
-      if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to list listings');
-      return response.data.data as import('../types').ToyListingListResponse;
+      if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to list items');
+      const data = response.data.data as import('../types').ToyListingListResponse;
+      // Map bookId to listingId for UI compatibility
+      data.items = data.items.map(item => ({
+        ...item,
+        listingId: (item as any).bookId || item.listingId
+      }));
+      return data;
     }
-    return response.data as import('../types').ToyListingListResponse;
+    const data = response.data as import('../types').ToyListingListResponse;
+    data.items = data.items.map(item => ({
+      ...item,
+      listingId: (item as any).bookId || item.listingId
+    }));
+    return data;
   }
 
   async createToyListing(data: {
@@ -686,6 +697,7 @@ class ApiService {
     const response = await this.api.post('/books', {
       ...data,
       category: data.libraryType || data.category || 'toy'
+
     });
     if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to create item');
     const item = response.data.data as any;
@@ -693,23 +705,25 @@ class ApiService {
   }
 
   async getToyListing(listingId: string): Promise<import('../types').ToyListing> {
-    const response = await this.api.get(`/swap-toys/${listingId}`);
-    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to get toy listing');
-    return response.data.data as import('../types').ToyListing;
+    const response = await this.api.get(`/books/${listingId}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to get item');
+    const item = response.data.data as any;
+    return { ...item, listingId: item.bookId || item.listingId } as import('../types').ToyListing;
   }
 
   async updateToyListing(
     listingId: string,
     updates: Partial<import('../types').ToyListing>
   ): Promise<import('../types').ToyListing> {
-    const response = await this.api.put(`/swap-toys/${listingId}`, updates);
-    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to update toy listing');
-    return response.data.data as import('../types').ToyListing;
+    const response = await this.api.put(`/books/${listingId}`, updates);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to update item');
+    const item = response.data.data as any;
+    return { ...item, listingId: item.bookId || item.listingId } as import('../types').ToyListing;
   }
 
   async deleteToyListing(listingId: string): Promise<void> {
-    const response = await this.api.delete(`/swap-toys/${listingId}`);
-    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to delete toy listing');
+    const response = await this.api.delete(`/books/${listingId}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to delete item');
   }
 
   /**

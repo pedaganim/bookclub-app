@@ -42,6 +42,8 @@ export interface Book {
   clubId?: string;
   clubName?: string;
   clubIsPrivate?: boolean;
+  category?: 'book' | 'toy' | 'tool' | 'game' | 'event_hire' | 'other';
+  ageRange?: string;
 }
 
 export interface BookMetadata {
@@ -206,4 +208,6 @@ export interface ToyListingListResponse {
   items: ToyListing[];
   nextToken?: string;
 }
+
+export type LibraryItem = Book | ToyListing;
 
