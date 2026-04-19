@@ -98,8 +98,13 @@ const MyItemsPage: React.FC = () => {
     fetchItems();
   };
 
-  const handleItemDeleted = (id: string) => {
-    setItems(prev => prev.filter(i => ((i as any).bookId || (i as any).listingId) !== id));
+  const handleItemDeleted = async (id: string) => {
+    try {
+      await apiService.deleteBook(id);
+      setItems(prev => prev.filter(i => ((i as any).bookId || (i as any).listingId) !== id));
+    } catch (err: any) {
+      alert(err?.message || 'Failed to delete item. Please try again.');
+    }
   };
 
   const handleItemUpdated = (updated: any) => {
