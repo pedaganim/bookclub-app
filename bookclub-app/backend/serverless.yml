@@ -1836,7 +1836,7 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
-        CustomResourceVersion: "2"
+        CustomResourceVersion: "3"
         BucketName: ${self:service}-${self:provider.stage}-book-covers
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
