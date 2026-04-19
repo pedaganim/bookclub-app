@@ -47,7 +47,9 @@ exports.handler = async (event) => {
       
       try {
         const metadata = await analyzeUniversalItemImage({ bucket, key, contentType, modelId });
-        
+
+        console.log(`[BedrockAnalyzeWorker] Raw metadata for ${itemId}:`, JSON.stringify(metadata));
+
         const names = { '#meta': 'advancedMetadata' };
         const vals = { ':val': metadata, ':ts': new Date().toISOString() };
         const sets = ['#meta = :val', 'updatedAt = :ts'];
@@ -65,7 +67,7 @@ exports.handler = async (event) => {
         if (metadata.description) {
           names['#d'] = 'description';
           vals[':d'] = metadata.description;
-          sets.push('#d = if_not_exists(#d, :d)');
+          sets.push('#d = :d'); // always write — items are created with description='' which blocks if_not_exists
         }
         if (metadata.category) {
           names['#c'] = 'category';
