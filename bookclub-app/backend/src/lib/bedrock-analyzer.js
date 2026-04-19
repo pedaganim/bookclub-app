@@ -106,27 +106,11 @@ function normalizeMetadata(obj = {}) {
   };
 }
 
-// MIME types Bedrock/Claude natively accepts
-const BEDROCK_SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
   modelId = modelId || process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
   const client = getBedrockClient();
   let bytes = await getS3ObjectBytes(bucket, key);
-
-  // Normalise image/jpg → image/jpeg
-  if (contentType === 'image/jpg') contentType = 'image/jpeg';
-
-  // Convert unsupported types (HEIC, HEIF, TIFF, BMP, …) to JPEG before sending to Bedrock
-  if (!BEDROCK_SUPPORTED_TYPES.includes(contentType)) {
-    try {
-      bytes = await sharp(bytes, { failOnError: false }).jpeg({ quality: 85 }).toBuffer();
-      contentType = 'image/jpeg';
-      console.log(`[Bedrock] Converted ${contentType} → image/jpeg for Bedrock compatibility`);
-    } catch (e) {
-      console.warn('[Bedrock] Could not convert image to JPEG, proceeding with original bytes:', e?.message);
-    }
-  }
 
   // Bedrock image limit guard
   const BASE64_MAX = 5 * 1024 * 1024;
