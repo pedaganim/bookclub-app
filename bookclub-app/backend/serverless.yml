@@ -119,6 +119,9 @@ provider:
           Action:
             - bedrock:InvokeModel
             - bedrock:InvokeModelWithResponseStream
+            - aws-marketplace:ViewSubscriptions
+            - aws-marketplace:Subscribe
+            - aws-marketplace:Unsubscribe
           Resource: "*"
         - Effect: Allow
           Action:
