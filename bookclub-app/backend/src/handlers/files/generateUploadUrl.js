@@ -45,19 +45,15 @@ module.exports.handler = async (event) => {
       return response.validationError({ fileType: 'File type is required' });
     }
 
-    const validFileTypes = [
-      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-      'image/heic', 'image/heif', 'image/tiff', 'image/bmp',
-    ];
-    if (!validFileTypes.includes(fileType)) {
+    // Accept any image/* type; strip MIME parameters (e.g. image/jpeg;charset=utf-8)
+    const baseFileType = fileType.split(';')[0].trim().toLowerCase();
+    if (!baseFileType.startsWith('image/')) {
       // eslint-disable-next-line no-console
       console.warn(`[generateUploadUrl] Rejected fileType=${fileType}`);
-      return response.validationError({
-        fileType: 'Invalid file type. Allowed: JPEG, PNG, GIF, WEBP, HEIC/HEIF, TIFF, BMP.',
-      });
+      return response.validationError({ fileType: 'Only image file types are allowed.' });
     }
 
-    const fileExtension = fileType.split('/')[1];
+    const fileExtension = baseFileType.split('/')[1] || 'jpg';
     const fileId = uuidv4();
 
     // Key format: library-images/{libraryType}/{userId}/{uuid}.ext  (encodes both for processUpload)

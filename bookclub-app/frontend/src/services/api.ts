@@ -311,16 +311,17 @@ class ApiService {
 
   // High-level uploader: uses multipart for large files
   async uploadAnySize(file: File, opts: { partSize?: number; partConcurrency?: number; multipartThreshold?: number } = {}): Promise<{ fileUrl: string; bucket?: string; key?: string }>{
-    let fileType = file.type;
-    if (!fileType) {
+    let fileType = file.type ? file.type.split(';')[0].trim().toLowerCase() : '';
+    if (fileType === 'image/jpg') fileType = 'image/jpeg';
+    if (!fileType || !fileType.startsWith('image/')) {
       const ext = file.name.split('.').pop()?.toLowerCase();
-      if (ext === 'jpg' || ext === 'jpeg') fileType = 'image/jpeg';
-      else if (ext === 'png') fileType = 'image/png';
-      else if (ext === 'gif') fileType = 'image/gif';
-      else if (ext === 'webp') fileType = 'image/webp';
-      else if (ext === 'heic') fileType = 'image/heic';
-      else if (ext === 'heif') fileType = 'image/heif';
-      else fileType = 'image/jpeg'; // Default fallback
+      const extMap: Record<string, string> = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+        gif: 'image/gif', webp: 'image/webp', heic: 'image/heic',
+        heif: 'image/heif', tiff: 'image/tiff', tif: 'image/tiff',
+        bmp: 'image/bmp', avif: 'image/avif', svg: 'image/svg+xml',
+      };
+      fileType = (ext && extMap[ext]) ? extMap[ext] : 'image/jpeg';
     }
 
     const partSize = Math.max(5 * 1024 * 1024, opts.partSize || 5 * 1024 * 1024); // >=5MB
