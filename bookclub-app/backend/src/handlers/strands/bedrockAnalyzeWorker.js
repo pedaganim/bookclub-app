@@ -1,11 +1,9 @@
 const AWS = require('aws-sdk');
 const { analyzeUniversalItemImage } = require('../../lib/bedrock-analyzer');
-const Book = require('../../models/book');
+const { getTableName } = require('../../lib/table-names');
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const eventBridge = new AWS.EventBridge();
-
-const BOOKS_TABLE = process.env.SERVICE_NAME ? `${process.env.SERVICE_NAME}-books-${process.env.STAGE}` : `bookclub-app-books-${process.env.STAGE}`;
 
 exports.handler = async (event) => {
   try {
@@ -25,26 +23,31 @@ exports.handler = async (event) => {
 
       const bucket = payload.bucket || payload.s3Bucket;
       const key = payload.key || payload.s3Key;
-      const bookId = payload.bookId || payload.listingId; // Universal ID support
+      // listingId means it's a library item (toy-listings table); bookId means it's a book
+      const isLibraryItem = !!payload.listingId;
+      const itemId = payload.listingId || payload.bookId;
       const modelId = payload.modelId;
       const contentType = payload.contentType || 'image/jpeg';
 
-      if (!bucket || !key || !bookId) {
+      if (!bucket || !key || !itemId) {
         console.warn('[BedrockAnalyzeWorker] Missing required fields in message (bucket/key/id)');
         continue;
       }
+
+      // Route to the correct DynamoDB table and primary key
+      const tableName = isLibraryItem ? getTableName('toy-listings') : getTableName('books');
+      const tableKey = isLibraryItem ? { listingId: itemId } : { bookId: itemId };
 
       // Add small delay to avoid overwhelming Bedrock
       const baseDelayMs = parseInt(process.env.BEDROCK_PRE_DELAY_MS || '400', 10);
       const jitterMs = Math.floor(Math.random() * (parseInt(process.env.BEDROCK_PRE_DELAY_JITTER_MS || '400', 10)));
       await new Promise(r => setTimeout(r, baseDelayMs + jitterMs));
 
-      console.log(`[BedrockAnalyzeWorker] Analyzing item image for id=${bookId}`);
+      console.log(`[BedrockAnalyzeWorker] Analyzing item image for id=${itemId} table=${tableName}`);
       
       try {
         const metadata = await analyzeUniversalItemImage({ bucket, key, contentType, modelId });
         
-        // Prepare updates for the books table
         const names = { '#meta': 'advancedMetadata' };
         const vals = { ':val': metadata, ':ts': new Date().toISOString() };
         const sets = ['#meta = :val', 'updatedAt = :ts'];
@@ -75,29 +78,41 @@ exports.handler = async (event) => {
           sets.push('#ar = :ar');
         }
 
+        // For library items Bedrock couldn't classify, route them to the misc library
+        if (isLibraryItem && metadata.category === 'other') {
+          names['#lt'] = 'libraryType';
+          vals[':lt'] = 'misc';
+          sets.push('#lt = :lt');
+          console.log(`[BedrockAnalyzeWorker] Unrecognized library item ${itemId} → routing to misc library`);
+        }
+
         await dynamo.update({
-          TableName: BOOKS_TABLE,
-          Key: { bookId },
+          TableName: tableName,
+          Key: tableKey,
           UpdateExpression: 'SET ' + sets.join(', '),
           ExpressionAttributeNames: names,
           ExpressionAttributeValues: vals,
         }).promise();
 
-        console.log(`[BedrockAnalyzeWorker] Successfully analyzed and updated item ${bookId} (Category: ${metadata.category})`);
+        console.log(`[BedrockAnalyzeWorker] Successfully analyzed and updated item ${itemId} (Category: ${metadata.category})`);
 
         // Notify downstream systems
+        const eventDetail = isLibraryItem
+          ? { listingId: itemId, bucket, key, metadata, modelId }
+          : { bookId: itemId, bucket, key, metadata, modelId };
+
         if (process.env.EVENT_BUS_NAME && process.env.EVENT_BUS_SOURCE) {
           await eventBridge.putEvents({
             Entries: [{
               EventBusName: process.env.EVENT_BUS_NAME,
               Source: process.env.EVENT_BUS_SOURCE,
-              DetailType: 'Book.StrandsAnalyzedCompleted',
-              Detail: JSON.stringify({ bookId, bucket, key, metadata, modelId }),
+              DetailType: isLibraryItem ? 'Library.StrandsAnalyzedCompleted' : 'Book.StrandsAnalyzedCompleted',
+              Detail: JSON.stringify(eventDetail),
             }],
           }).promise();
         }
       } catch (e) {
-        console.warn(`[BedrockAnalyzeWorker] Failed to analyze item ${bookId}:`, e.message);
+        console.warn(`[BedrockAnalyzeWorker] Failed to analyze item ${itemId}:`, e.message);
       }
     }
 
