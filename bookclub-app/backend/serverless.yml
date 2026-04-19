@@ -31,7 +31,7 @@ provider:
     # Function name for direct invoke from processImageUpload
     BEDROCK_ANALYZE_FUNCTION_NAME: ${self:service}-${self:provider.stage}-bedrockAnalyzeCover
     # Bedrock vision model (Claude 3 family recommended)
-    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'anthropic.claude-3-5-haiku-20241022-v1:0'}
+    BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID, 'us.anthropic.claude-haiku-4-5-20251001-v1:0'}
     # SQS queue for Bedrock analyzer worker
     BEDROCK_ANALYZE_QUEUE_URL: !Ref BedrockAnalyzeQueue
     # Base URL for generating absolute links in sitemap
@@ -119,6 +119,9 @@ provider:
           Action:
             - bedrock:InvokeModel
             - bedrock:InvokeModelWithResponseStream
+            - aws-marketplace:ViewSubscriptions
+            - aws-marketplace:Subscribe
+            - aws-marketplace:Unsubscribe
           Resource: "*"
         - Effect: Allow
           Action:
@@ -1846,6 +1849,9 @@ resources:
                 - HEAD
               AllowedOrigins:
                 - "*"
+              ExposeHeaders:
+                - "ETag"
+                - "x-amz-meta-uploaded-by"
               MaxAge: 3000
         EnablePublicRead: true
 

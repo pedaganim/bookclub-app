@@ -12,31 +12,25 @@ const MyLibraryHub: React.FC = () => {
   const fetchSummaries = useCallback(async () => {
     if (!user) return;
     try {
-      // For now, we'll fetch each category's count. 
-      // In a more optimized version, we'd have a single 'all-summaries' endpoint.
       const counts: Record<string, number> = {};
-      
-      const bookSummary = await apiService.getBooksSummary();
-      counts['book'] = bookSummary.total;
 
-      // Parallel fetch for other categories
+      // Fetch counts for all categories in parallel using a consistent approach.
+      // limit:100 ensures DynamoDB scans enough items for the FilterExpression to match.
       await Promise.all(
-        LIBRARY_CONFIGS.filter(c => c.libraryType !== 'book').map(async (cfg) => {
+        LIBRARY_CONFIGS.map(async (cfg) => {
           try {
             const res = await apiService.listToyListings({
               userId: user.userId,
               libraryType: cfg.libraryType,
-              limit: 1 // We only care about the total count for the hub
+              limit: 100,
             });
-            counts[cfg.libraryType] = res.items.length; // Approximate for now if top-level count isn't in API
-            // Actually, listBooks/listToyListings doesn't always return totalCount cleanly.
-            // Let's assume we can fetch at least some count or just show "Manage".
+            counts[cfg.libraryType] = res.items.length;
           } catch (e) {
-            // Silently fail for individual categories
+            counts[cfg.libraryType] = 0;
           }
         })
       );
-      
+
       setSummaries(counts);
     } catch (e) {
       // Global fail
@@ -64,6 +58,26 @@ const MyLibraryHub: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        {/* All Items summary card */}
+        <Link
+          to="/my-library/all"
+          className="group flex items-center justify-between bg-indigo-600 text-white rounded-3xl px-8 py-5 mb-6 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-4xl" role="img" aria-label="All items">📦</span>
+            <div>
+              <h2 className="text-xl font-bold">All My Items</h2>
+              <p className="text-indigo-200 text-sm">View everything across all categories</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-bold">
+              {Object.values(summaries).reduce((a, b) => a + b, 0)} items
+            </span>
+            <span className="font-bold text-indigo-200 group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+        </Link>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {LIBRARY_CONFIGS.map((cfg) => (
             <Link

@@ -46,8 +46,15 @@ module.exports.handler = async (event) => {
     }
 
     const validFileTypes = [
-      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-      'image/heic', 'image/heif', 'image/tiff', 'image/bmp',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      'image/tiff',
+      'image/bmp',
     ];
     if (!validFileTypes.includes(fileType)) {
       // eslint-disable-next-line no-console

@@ -6,6 +6,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { Book } from '../types';
 import SEO from '../components/SEO';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
+import { getLibraryConfig } from '../config/libraryConfig';
 
 const Section: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-6">
@@ -326,7 +327,7 @@ const BookDetails: React.FC = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getItemLabel(book.category || 'book')}s</Link>
+          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getLibraryConfig(book.category || 'book')?.shortLabel ?? 'Books'}</Link>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
@@ -360,8 +361,9 @@ const BookDetails: React.FC = () => {
                 {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
                 {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
                 {(() => {
-                  // Prefer explicit ageGroupFine fields; fallback to Bedrock mcp age_group
+                  // Prefer explicit ageGroupFine fields; fallback to ageRange (set by Bedrock worker) or mcp age_group
                   const direct = (book as any).ageGroupFine || (book as any).advancedMetadata?.metadata?.ageGroupFine;
+                  const ageRange = asText((book as any).ageRange);
                   const fromBedrock = (book as any).mcp_metadata?.bedrock?.age_group;
                   const mapBedrock = (v: string) => {
                     switch ((v || '').toLowerCase()) {
@@ -373,9 +375,10 @@ const BookDetails: React.FC = () => {
                       default: return '';
                     }
                   };
-                  const resolved = asText(direct) || mapBedrock(asText(fromBedrock));
-                  return resolved ? (<p className="text-gray-600"><span className="font-medium">Audience:</span> {resolved}</p>) : null;
-                })()}
+                  const resolved = asText(direct) || ageRange || mapBedrock(asText(fromBedrock));
+                  return resolved ? (<p className="text-gray-600"><span className="font-medium">Age Range:</span> {resolved}</p>) : null;
+                })()
+}
               </div>
               {book.status === 'borrowed' && (book as any).lentToUserId && (
                 <div className="mt-2">
@@ -434,14 +437,17 @@ const BookDetails: React.FC = () => {
 
           {/* Inline sections (no tabs) */}
           <div className="mt-6 space-y-4">
-            {/* Overview removed: no description field shown */}
+            {/* Description */}
+            {hasText((book as any).description) && (
+              <Section title="Description">{asText((book as any).description)}</Section>
+            )}
 
             {/* Google Metadata */}
             {(book as any).google_metadata && (
               renderGoogleMetadata((book as any).google_metadata)
             )}
 
-            {/* Bedrock Analysis */}
+            {/* Bedrock Analysis (legacy mcp_metadata path) */}
             {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
               renderBedrockMetadata((book as any).mcp_metadata.bedrock)
             )}

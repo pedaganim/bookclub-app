@@ -25,7 +25,6 @@ module.exports.handler = async (event) => {
       UploadId: uploadId,
       PartNumber: Number(partNumber),
       Expires: 900, // 15 minutes
-      ContentType: contentType || undefined,
     };
 
     // getSignedUrl for uploadPart

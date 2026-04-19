@@ -106,8 +106,9 @@ function normalizeMetadata(obj = {}) {
   };
 }
 
+
 async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
-  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-haiku-20241022-v1:0';
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
   const client = getBedrockClient();
   let bytes = await getS3ObjectBytes(bucket, key);
 
