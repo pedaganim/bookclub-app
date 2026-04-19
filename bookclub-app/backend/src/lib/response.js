@@ -83,6 +83,20 @@ const response = {
     };
   },
 
+  forbidden(message = 'Forbidden') {
+    return {
+      statusCode: 403,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message,
+        },
+      }),
+    };
+  },
+
   methodNotAllowed() {
     return {
       statusCode: 405,
