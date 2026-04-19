@@ -58,6 +58,26 @@ const MyLibraryHub: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        {/* All Items summary card */}
+        <Link
+          to="/my-library/all"
+          className="group flex items-center justify-between bg-indigo-600 text-white rounded-3xl px-8 py-5 mb-6 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-4xl" role="img" aria-label="All items">📦</span>
+            <div>
+              <h2 className="text-xl font-bold">All My Items</h2>
+              <p className="text-indigo-200 text-sm">View everything across all categories</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-bold">
+              {Object.values(summaries).reduce((a, b) => a + b, 0)} items
+            </span>
+            <span className="font-bold text-indigo-200 group-hover:translate-x-1 transition-transform">→</span>
+          </div>
+        </Link>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {LIBRARY_CONFIGS.map((cfg) => (
             <Link
