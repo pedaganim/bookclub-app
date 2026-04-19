@@ -172,7 +172,11 @@ const configureBucket = async (bucketName, config) => {
 
   // Public Access Block (compare and only update if needed)
   if (config.PublicAccessBlockConfiguration) {
-    const desiredPab = config.PublicAccessBlockConfiguration;
+    const desiredPab = Object.entries(config.PublicAccessBlockConfiguration).reduce((acc, [k, v]) => {
+      acc[k] = v === 'true' || v === true;
+      return acc;
+    }, {});
+    
     if (!current.pab || !deepEqual(desiredPab, current.pab)) {
       try {
         console.log('Updating public access block configuration for bucket:', bucketName);
@@ -187,7 +191,7 @@ const configureBucket = async (bucketName, config) => {
   }
 
   // Bucket policy for public read (compare and only update if needed)
-  if (config.EnablePublicRead) {
+  if (config.EnablePublicRead === 'true' || config.EnablePublicRead === true) {
     const desired = desiredPublicReadPolicy(bucketName);
     const isSame = current.policy && deepEqual(current.policy, desired);
     if (!isSame) {
