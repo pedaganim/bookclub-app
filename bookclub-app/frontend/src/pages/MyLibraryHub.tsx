@@ -12,31 +12,25 @@ const MyLibraryHub: React.FC = () => {
   const fetchSummaries = useCallback(async () => {
     if (!user) return;
     try {
-      // For now, we'll fetch each category's count. 
-      // In a more optimized version, we'd have a single 'all-summaries' endpoint.
       const counts: Record<string, number> = {};
-      
-      const bookSummary = await apiService.getBooksSummary();
-      counts['book'] = bookSummary.total;
 
-      // Parallel fetch for other categories
+      // Fetch counts for all categories in parallel using a consistent approach.
+      // limit:100 ensures DynamoDB scans enough items for the FilterExpression to match.
       await Promise.all(
-        LIBRARY_CONFIGS.filter(c => c.libraryType !== 'book').map(async (cfg) => {
+        LIBRARY_CONFIGS.map(async (cfg) => {
           try {
             const res = await apiService.listToyListings({
               userId: user.userId,
               libraryType: cfg.libraryType,
-              limit: 1 // We only care about the total count for the hub
+              limit: 100,
             });
-            counts[cfg.libraryType] = res.items.length; // Approximate for now if top-level count isn't in API
-            // Actually, listBooks/listToyListings doesn't always return totalCount cleanly.
-            // Let's assume we can fetch at least some count or just show "Manage".
+            counts[cfg.libraryType] = res.items.length;
           } catch (e) {
-            // Silently fail for individual categories
+            counts[cfg.libraryType] = 0;
           }
         })
       );
-      
+
       setSummaries(counts);
     } catch (e) {
       // Global fail

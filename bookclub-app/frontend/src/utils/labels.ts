@@ -8,7 +8,7 @@ export function getItemLabel(category: string = 'book'): string {
   if (!category || category === 'book') return 'Book';
   
   const config = getLibraryConfig(category);
-  const label = config?.shortLabel || config?.itemLabel;
+  const label = config?.itemLabel || config?.shortLabel;
   
   if (!label) return 'Item';
   

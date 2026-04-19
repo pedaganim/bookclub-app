@@ -6,6 +6,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { Book } from '../types';
 import SEO from '../components/SEO';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
+import { getLibraryConfig } from '../config/libraryConfig';
 
 const Section: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-6">
@@ -326,7 +327,7 @@ const BookDetails: React.FC = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getItemLabel(book.category || 'book')}s</Link>
+          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getLibraryConfig(book.category || 'book')?.shortLabel ?? 'Books'}</Link>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
