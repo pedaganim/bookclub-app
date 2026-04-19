@@ -32,8 +32,8 @@ describe('MultiImageUpload', () => {
   it('should render the upload interface', () => {
     renderComponent();
     
-    expect(screen.getByText(/Add Items \(0\/25\)/)).toBeInTheDocument();
-    expect(screen.getByText(/Upload up to 25 items/)).toBeInTheDocument();
+    expect(screen.getByText(/Add Book Cover Image \(0\/25\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Upload up to 25 book images/)).toBeInTheDocument();
   });
 
   it('should handle file selection and preview', async () => {
@@ -142,6 +142,6 @@ describe('MultiImageUpload', () => {
   it('should be disabled when prop is set', () => {
     renderComponent({ disabled: true });
     
-    expect(screen.getByText(/Add Items \(0\/25\)/)).toBeDisabled();
+    expect(screen.getByText(/Add Book Cover Image \(0\/25\)/)).toBeDisabled();
   });
 });

@@ -42,7 +42,6 @@ module.exports.handler = async (event) => {
     if (!userId) return response.unauthorized('Missing or invalid authentication');
 
     const data = parseBody(event);
-    console.log('[BookCreate] Request received:', JSON.stringify(data, null, 2));
     const isExtractingFromImage = isTextractFlow(data);
     // Idempotency: if using extractFromImage with s3 info, reuse existing mapping
     if (isExtractingFromImage && process.env.NODE_ENV !== 'test') {
@@ -122,18 +121,12 @@ const setMappedBookId = async (bucket, key, bookId, userId) => {
 };
 
 const validateInitialInput = (data, isExtracting) => {
-  if (isExtracting) return null;
-
-  const category = data.category || data.libraryType || 'book';
-  const isBook = category === 'book';
-  
-  if (!data.title || (isBook && !data.author)) {
-    const err = {
+  // When extracting from image, allow minimal payload (no title/author required)
+  if (!isExtracting && (!data.title || !data.author)) {
+    return response.validationError({
       title: data.title ? undefined : 'Title is required',
-      author: (isBook && !data.author) ? 'Author is required' : undefined,
-    };
-    console.warn('[BookCreate] Initial validation failed:', JSON.stringify(err));
-    return response.validationError(err);
+      author: data.author ? undefined : 'Author is required',
+    });
   }
   return null;
 };
@@ -142,7 +135,6 @@ const buildInitialBookData = (data) => ({
   title: data.title,
   author: data.author,
   description: data.description,
-  category: data.category || data.libraryType || 'book',
   coverImage: data.coverImage,
   images: data.images, // Support for additional images
   status: data.status,
@@ -230,19 +222,12 @@ const maybeApplyTextractExtraction = async (data, bookData) => {
 
 const validateFinalBookData = (bookData, isExtracting) => {
   // When extracting from image in production, allow minimal creation without title/author.
+  // In test environment, enforce presence to satisfy legacy tests.
   if (isExtracting && process.env.NODE_ENV !== 'test') return null;
-  
-  const isBook = !bookData.category || bookData.category === 'book';
-  
-  // If it's a book, we require title and author.
-  // If it's not a book, we only require title.
-  if (bookData.title && (!isBook || bookData.author)) return null;
-  
+  if (bookData.title && bookData.author) return null;
   const missingFields = [];
   if (!bookData.title) missingFields.push('title');
-  if (isBook && !bookData.author) missingFields.push('author');
-  
-  console.warn('[BookCreate] Final validation failed:', JSON.stringify({ missingFields, bookData }));
+  if (!bookData.author) missingFields.push('author');
   return response.validationError({
     extraction: `Could not extract required fields: ${missingFields.join(', ')}. Please provide them manually or try a different image.`
   });

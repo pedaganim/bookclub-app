@@ -11,8 +11,6 @@ interface MultiImageUploadProps {
   onError: (error: string) => void;
   disabled?: boolean;
   maxImages?: number;
-  itemLabel?: string;
-  itemLabelPlural?: string;
 }
 
 const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
@@ -20,8 +18,6 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
   onError,
   disabled = false,
   maxImages = 25,
-  itemLabel = 'Item',
-  itemLabelPlural = 'Items',
 }) => {
   const [processedImages, setProcessedImages] = useState<SelectedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -101,9 +97,9 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
           onClick={() => fileInputDeviceRef.current?.click()}
           className="px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
           disabled={disabled || isProcessing}
-          aria-label={`Upload ${itemLabelPlural.toLowerCase()} from device`}
+          aria-label="Upload images from device"
         >
-          📁 Add {itemLabelPlural} ({processedImages.length}{Number.isFinite(maxImages) ? `/${maxImages}` : ''})
+          📁 Add Book Cover Image ({processedImages.length}{Number.isFinite(maxImages) ? `/${maxImages}` : ''})
         </button>
 
         {processedImages.length > 0 && (
@@ -184,8 +180,8 @@ const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
           <p className="text-sm text-gray-500">
             {Number.isFinite(maxImages)
-              ? `Upload up to ${maxImages} ${itemLabelPlural.toLowerCase()}. We'll upload them as-is and process details in the background.`
-              : `Upload any number of ${itemLabelPlural.toLowerCase()}. We'll upload them as-is and process details in the background.`}
+              ? `Upload up to ${maxImages} book images. We'll upload them as-is and process details in the background.`
+              : `Upload any number of book images. We'll upload them as-is and process details in the background.`}
           </p>
           <p className="text-xs text-gray-400 mt-1">
             Supported formats: JPG, PNG, GIF • Large files may take longer to upload

@@ -64,9 +64,9 @@ describe('Add Books Modal (Bulk Upload)', () => {
     renderWithProviders();
     fireEvent.click(screen.getByText('Upload Images'));
     expect(
-      screen.getByText("Upload up to 10 book covers. We'll upload them as-is and process details in the background.")
+      screen.getByText("Upload up to 10 book images. We'll upload them as-is and process details in the background.")
     ).toBeInTheDocument();
-    expect(screen.getByText('📁 Add Book Covers (0/10)')).toBeInTheDocument();
+    expect(screen.getByText('📁 Add Book Cover Image (0/10)')).toBeInTheDocument();
   });
 
   test('shows Cancel and Upload Images buttons', () => {

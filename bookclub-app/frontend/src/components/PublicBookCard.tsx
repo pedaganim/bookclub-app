@@ -1,12 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LibraryItem } from '../types';
+import { Book } from '../types';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
-import { getItemLabel, getItemLabelLower } from '../utils/labels';
 
 interface PublicBookCardProps {
-  book: LibraryItem;
+  book: Book;
   isMemberOfBookClub?: boolean; // default true; when false and book has clubId, show Join Club
 }
 
@@ -18,6 +17,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const [joinRequested, setJoinRequested] = React.useState(false);
   const navigate = useNavigate();
 
+  const navigateToJoin = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.location.assign('/clubs');
+    try { window.history.replaceState({ openJoin: true }, ''); } catch {}
+  };
 
   const requestToJoin = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -25,12 +29,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       window.location.assign('/login');
       return;
     }
-    const clubId = (book as any).clubId;
-    if (!clubId) return;
+    if (!book.clubId) return;
     try {
       setRequestingJoin(true);
       const { apiService } = await import('../services/api');
-      const res = await apiService.requestClubJoin(clubId);
+      const res = await apiService.requestClubJoin(book.clubId);
       if (res.status === 'pending' || res.status === 'active') {
         setJoinRequested(true);
         notificationCtx?.addNotification('success', res.status === 'active' ? 'Joined club!' : 'Request to join sent');
@@ -43,19 +46,41 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   };
 
   const handleCardClick = () => {
-    const itemId = (book as any).bookId || (book as any).listingId;
-    navigate(`/books/${itemId}`);
+    navigate(`/books/${book.bookId}`);
   };
 
+  // Function to format description text properly
+  const formatDescription = (text?: string) => {
+    if (!text) return '';
+    
+    // Convert to proper sentence case if it's all caps
+    if (text === text.toUpperCase()) {
+      return text.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+    }
+    
+    return text;
+  };
+
+  // Get username from userName field or fallback to simplified userId
+  const getDisplayUsername = (book: Book) => {
+    if (book.userName) {
+      return book.userName;
+    }
+    // Fallback to simplified version of the userId
+    if (book.userId && typeof book.userId === 'string') {
+      const suffixLen = Math.min(8, book.userId.length);
+      return `User ${book.userId.slice(-suffixLen)}`;
+    }
+    return 'User';
+  };
 
   // Default placeholder image when no cover image is provided
-  const itemLabelForSvg = getItemLabel(book.category || 'book');
-  const defaultBookImage = `data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3e${itemLabelForSvg}%3c/text%3e%3c/svg%3e`;
+  const defaultBookImage = "data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='14' fill='%23374151' text-anchor='middle' dy='.3em'%3eBook%3c/text%3e%3c/svg%3e";
 
   const handleBorrowClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     // If book belongs to a club and viewer is not a member, block borrow and prompt to join
-    if ((book as any).clubId && !isMemberOfBookClub) {
+    if (book.clubId && !isMemberOfBookClub) {
       notificationCtx?.addNotification('info', 'Join this club to contact the owner.');
       return;
     }
@@ -78,12 +103,11 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       // Create or fetch conversation with the owner
       const conversation = await apiService.dmCreateConversation(book.userId);
       // Send an initial templated message
-      const itemLabelLower = getItemLabelLower(book.category || 'book');
-      const title = book.title ? `"${book.title}"` : `your ${itemLabelLower}`;
+      const title = book.title ? `"${book.title}"` : 'your book';
       const message = `Hi! I'm interested in borrowing ${title}. Is it available?`;
       await apiService.dmSendMessage(conversation.conversationId, book.userId, message);
       // Track analytics (non-blocking)
-      try { trackBorrowIntent(book.userId, (book as any).bookId || (book as any).listingId, book.title || '', { currentUserId: user?.userId, source: 'PublicBookCard' }); } catch {}
+      try { trackBorrowIntent(book.userId, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'PublicBookCard' }); } catch {}
       // Navigate to the messages thread
       notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
       window.location.assign(`/messages/${conversation.conversationId}`);
@@ -103,14 +127,14 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
     >
       {/* Image - Consistent portrait aspect ratio and crop */}
       <Link 
-        to={`/books/${(book as any).bookId || (book as any).listingId}`} 
+        to={`/books/${book.bookId}`} 
         aria-label={book.title ? `View details for ${book.title}` : 'View book details'}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-full bg-gray-100" style={{ aspectRatio: '3 / 4' }}>
           <img
-            src={(book as any).coverImage || ((book as any).images && (book as any).images[0]) || defaultBookImage}
-            alt={book.title ? `Cover of ${book.title}` : `${getItemLabel(book.category || 'book')} cover`}
+            src={book.coverImage || defaultBookImage}
+            alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
             className="w-full h-full object-cover object-center"
             onError={(e) => {
               // Fallback to default image if cover image fails to load
@@ -121,27 +145,51 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
       </Link>
       {/* Screen-reader only "View details" control for accessibility */}
       <div className="sr-only">
-        <Link to={`/books/${(book as any).bookId || (book as any).listingId}`}>
-          {book.title ? `View details for ${book.title}` : `View ${getItemLabelLower(book.category || 'book')} details`}
+        <Link to={`/books/${book.bookId}`}>
+          {book.title ? `View details for ${book.title}` : 'View book details'}
         </Link>
       </div>
       
       <div className="p-3 sm:p-4">
-        {/* Title & Category/Author */}
+        {/* Title & Author */}
         <div className="mb-2">
-          <div className="text-sm font-medium text-gray-900 truncate">{book.title || 'Untitled Item'}</div>
-          {book.category === 'book' || !book.category ? (
-            <div className="text-xs text-gray-600 truncate">{(book as any).author || 'Unknown author'}</div>
-          ) : (
-            <div className="text-xs text-indigo-600 font-medium uppercase tracking-wider">{book.category.replace('_', ' ')}</div>
-          )}
+          <div className="text-sm font-medium text-gray-900 truncate">{book.title || 'Untitled Book'}</div>
+          <div className="text-xs text-gray-600 truncate">{book.author || 'Unknown author'}</div>
         </div>
-
-        {/* Action Button */}
+        {/* Bedrock summary (if available) */}
+        {(() => {
+          const bedrock = (book as any)?.mcp_metadata?.bedrock;
+          if (!bedrock || typeof bedrock !== 'object') return null;
+          const t0 = Array.isArray(bedrock.title_candidates) && bedrock.title_candidates[0]?.value ? String(bedrock.title_candidates[0].value) : '';
+          const a0 = Array.isArray(bedrock.author_candidates) && bedrock.author_candidates[0]?.value ? String(bedrock.author_candidates[0].value) : '';
+          const lang = typeof bedrock.language_guess === 'string' ? bedrock.language_guess : '';
+          if (!t0 && !a0 && !lang) return null;
+          return (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                {(t0 || a0) && (
+                  <div className="text-xs text-gray-700 truncate">
+                    {t0 && <span className="font-medium">{t0}</span>}
+                    {t0 && a0 && <span className="text-gray-400"> · </span>}
+                    {a0 && <span className="">{a0}</span>}
+                  </div>
+                )}
+              </div>
+              {lang && (
+                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200" title="Language guess">
+                  {lang.toUpperCase()}
+                </span>
+              )}
+            </div>
+          );
+        })()}
+        {/* Description removed on browse card per requirements */}
+        
+        {/* Borrow action */}
         {(() => {
           // If the book belongs to a club and the viewer is not a member, show Join Club
-          if ((book as any).clubId && !isMemberOfBookClub) {
-            const joinLabel = `Join the Club to Borrow`;
+          if (book.clubId && !isMemberOfBookClub) {
+            const joinLabel = 'Join the Club';
             return (
               <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
                 <button
@@ -159,44 +207,32 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                     className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    View owner
+                    View owner profile
                   </a>
                 )}
               </div>
             );
           }
-
           // Hide borrow button if this is the current user's own book
-          const isOwn = user?.userId === book.userId;
-          if (isOwn) {
-            return (
-              <div className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1.5 rounded-md inline-block">
-                Your Listing
-              </div>
-            );
-          }
-
-          const itemLabel = getItemLabel(book.category || 'book');
-          const actionLabel = `Borrow ${itemLabel}`;
-          
-          if (book.status === 'borrowed') {
-            return (
-              <div className="text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-md inline-block">
-                Currently Lent
-              </div>
-            );
-          }
-
+          try {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+              const me = JSON.parse(savedUser);
+              if (me?.userId && me.userId === book.userId) {
+                return null;
+              }
+            }
+          } catch {}
           return (
             <div className="space-y-2">
               <button
                 type="button"
                 className={`w-full text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${sending ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                title={actionLabel}
+                title={'Borrow from User'}
                 onClick={handleBorrowClick}
                 disabled={sending}
               >
-                {sending ? 'Sending…' : actionLabel}
+                {sending ? 'Sending…' : 'Borrow from User'}
               </button>
               {book.userId && (
                 <a 
@@ -204,7 +240,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                   className="block text-center text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  View owner profile
+                  View profile
                 </a>
               )}
             </div>

@@ -18,7 +18,7 @@ const ALLOWED_CATEGORIES = [
   'other',
 ];
 
-const ALLOWED_LIBRARY_TYPES = ['toy', 'tool', 'event', 'game', 'misc'];
+const ALLOWED_LIBRARY_TYPES = ['toy', 'tool', 'event', 'game'];
 
 exports.handler = async (event) => {
   try {
