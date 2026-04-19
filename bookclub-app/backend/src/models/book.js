@@ -93,9 +93,14 @@ class Book {
     };
 
     if (category) {
-      params.FilterExpression = '#cat = :category';
       params.ExpressionAttributeNames = { '#cat': 'category' };
       params.ExpressionAttributeValues[':category'] = category;
+      // For books: also include legacy items where category attribute is absent
+      if (category === 'book') {
+        params.FilterExpression = '(#cat = :category OR attribute_not_exists(#cat))';
+      } else {
+        params.FilterExpression = '#cat = :category';
+      }
     }
 
     if (nextToken) {
@@ -229,11 +234,16 @@ class Book {
 
     // Apply category filter in DynamoDB if provided
     if (categoryFilter) {
-      params.FilterExpression = '#cat = :category';
       params.ExpressionAttributeNames = params.ExpressionAttributeNames || {};
       params.ExpressionAttributeNames['#cat'] = 'category';
       params.ExpressionAttributeValues = params.ExpressionAttributeValues || {};
       params.ExpressionAttributeValues[':category'] = categoryFilter;
+      // For books: also match legacy items where category attribute is absent
+      if (categoryFilter === 'book') {
+        params.FilterExpression = '(#cat = :category OR attribute_not_exists(#cat))';
+      } else {
+        params.FilterExpression = '#cat = :category';
+      }
     }
 
     let result;
