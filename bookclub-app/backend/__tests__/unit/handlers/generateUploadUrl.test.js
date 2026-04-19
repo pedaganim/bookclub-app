@@ -81,7 +81,7 @@ describe('generateUploadUrl handler', () => {
     const result = await handler({ ...mockEvent, body: JSON.stringify({ fileType: 'text/plain', fileName: 'test.txt' }) });
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
-    expect(body.error.errors.fileType).toContain('image file types');
+    expect(body.error.errors.fileType).toContain('Invalid file type');
   });
 
   test('should reject missing file type', async () => {

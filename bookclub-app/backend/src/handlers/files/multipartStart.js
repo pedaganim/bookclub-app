@@ -17,15 +17,24 @@ module.exports.handler = async (event) => {
       return response.validationError({ fileType: 'File type is required' });
     }
 
-    // Accept any image/* type; strip MIME parameters (e.g. image/jpeg;charset=utf-8)
-    const baseFileType = fileType.split(';')[0].trim().toLowerCase();
-    if (!baseFileType.startsWith('image/')) {
+    const validFileTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+      'image/tiff',
+      'image/bmp',
+    ];
+    if (!validFileTypes.includes(fileType)) {
       // eslint-disable-next-line no-console
       console.warn(`[multipartStart] Rejected fileType=${fileType}`);
-      return response.validationError({ fileType: 'Only image file types are allowed.' });
+      return response.validationError({ fileType: 'Invalid file type. Allowed: JPEG, JPG, PNG, GIF, WEBP, HEIC/HEIF, TIFF, BMP.' });
     }
 
-    const ext = baseFileType.split('/')[1] || 'jpg';
+    const ext = fileType.split('/')[1] || 'jpg';
     const key = `book-covers/${userId}/${uuidv4()}.${ext}`;
 
     const params = {
