@@ -1360,10 +1360,15 @@ resources:
                     - s3:DeleteBucket
                     - s3:HeadBucket
                     - s3:PutBucketCors
+                    - s3:GetBucketCors
                     - s3:PutBucketPolicy
+                    - s3:GetBucketPolicy
                     - s3:PutPublicAccessBlock
+                    - s3:GetPublicAccessBlock
                     - s3:GetBucketLocation
                     - s3:ListBucket
+                    - s3:GetBucketAcl
+                    - s3:PutBucketAcl
                   Resource: 
                     - arn:aws:s3:::${self:service}-${self:provider.stage}-*
 
