@@ -34,7 +34,7 @@ describe('listBooks handler', () => {
 
     const result = await handler(event);
 
-    expect(Book.listByUser).toHaveBeenCalledWith('user123', 5, null);
+    expect(Book.listByUser).toHaveBeenCalledWith('user123', 5, null, null);
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: mockBooks.nextToken
@@ -64,7 +64,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listByUser).toHaveBeenCalledWith('cognito-user-123', 10, null);
+    expect(Book.listByUser).toHaveBeenCalledWith('cognito-user-123', 10, null, null);
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: null
@@ -86,7 +86,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, undefined);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, { category: null });
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: null
@@ -112,7 +112,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listByUser).toHaveBeenCalledWith('user456', 20, 'prev123');
+    expect(Book.listByUser).toHaveBeenCalledWith('user456', 20, 'prev123', null);
   });
 
   it('should handle errors gracefully', async () => {
@@ -139,7 +139,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, undefined);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, { category: null });
   });
 
   it('should list all books with search filter when search query provided', async () => {
@@ -159,7 +159,7 @@ describe('listBooks handler', () => {
 
     await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, 'fiction', null, undefined);
+    expect(Book.listAll).toHaveBeenCalledWith(10, null, 'fiction', null, { category: null });
     expect(response.success).toHaveBeenCalledWith({
       items: mockBooks.items,
       nextToken: null

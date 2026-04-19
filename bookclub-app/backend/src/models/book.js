@@ -47,6 +47,7 @@ class Book {
       advancedMetadata: bookData.advancedMetadata || null,
       lastMetadataExtraction: bookData.lastMetadataExtraction || null,
       clubId: bookData.clubId || null,
+      category: bookData.category || 'book', // Default to book for backward compatibility
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -67,9 +68,12 @@ class Book {
     return dynamoDb.get(getTableName('books'), { bookId });
   }
 
-  static async listByUser(userId, limit = 10, nextToken = null) {
+  static async listByUser(userId, limit = 10, nextToken = null, category = null) {
     if (isOffline()) {
-      const result = await LocalStorage().listBooks(userId);
+      let result = await LocalStorage().listBooks(userId);
+      if (category) {
+        result = result.filter(b => b.category === category);
+      }
       // For offline mode, we'll implement simple pagination later if needed
       return {
         items: result.slice(0, limit),
@@ -87,6 +91,12 @@ class Book {
       Limit: limit,
       ScanIndexForward: false, // Sort by most recent first
     };
+
+    if (category) {
+      params.FilterExpression = '#cat = :category';
+      params.ExpressionAttributeNames = { '#cat': 'category' };
+      params.ExpressionAttributeValues[':category'] = category;
+    }
 
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
@@ -145,9 +155,16 @@ class Book {
   }
 
   static async listAll(limit = 10, nextToken = null, searchQuery = null, ageGroupFine = null, options = undefined) {
+    const categoryFilter = options?.category || null;
+
     if (isOffline()) {
       let result = await LocalStorage().listBooks();
       
+      // Apply category filter if provided
+      if (categoryFilter) {
+        result = result.filter(book => (book.category || 'book') === categoryFilter);
+      }
+
       // Apply search filter if provided
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -208,6 +225,15 @@ class Book {
 
     if (nextToken) {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+    }
+
+    // Apply category filter in DynamoDB if provided
+    if (categoryFilter) {
+      params.FilterExpression = '#cat = :category';
+      params.ExpressionAttributeNames = params.ExpressionAttributeNames || {};
+      params.ExpressionAttributeNames['#cat'] = 'category';
+      params.ExpressionAttributeValues = params.ExpressionAttributeValues || {};
+      params.ExpressionAttributeValues[':category'] = categoryFilter;
     }
 
     let result;

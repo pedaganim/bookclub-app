@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "BookClub",
+  "name": "BookClub — Community Library",
+  "description": "Discover and share books, toys, tools, and games with your community.",
   "icons": [
     {
       "src": "logo192.png",
@@ -11,15 +12,10 @@
       "src": "logo512.png",
       "type": "image/png",
       "sizes": "512x512"
-    },
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "1024x1024"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#4f46e5",
   "background_color": "#ffffff"
 }
