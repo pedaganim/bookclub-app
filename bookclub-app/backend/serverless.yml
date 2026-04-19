@@ -1846,6 +1846,9 @@ resources:
                 - HEAD
               AllowedOrigins:
                 - "*"
+              ExposeHeaders:
+                - "ETag"
+                - "x-amz-meta-uploaded-by"
               MaxAge: 3000
         EnablePublicRead: true
 

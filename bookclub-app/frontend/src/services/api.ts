@@ -360,7 +360,11 @@ class ApiService {
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
       });
-      const eTag = (putRes.headers.etag || putRes.headers.ETag || '').replace(/\"/g, '');
+      const rawETag = putRes.headers.etag || putRes.headers.ETag || putRes.headers['etag'] || '';
+      const eTag = rawETag.replace(/\"/g, '');
+      if (!eTag) {
+        throw new Error('ETag missing from S3 upload response. This is usually a CORS issue — ensure the S3 bucket ExposeHeaders includes "ETag".');
+      }
       partsEtags[index] = { ETag: eTag, PartNumber: partNumber };
     };
 
