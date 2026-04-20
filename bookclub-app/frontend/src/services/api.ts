@@ -525,8 +525,8 @@ class ApiService {
   }
 
   // Admin - list pending join requests for a club
-  async listJoinRequests(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; status: string; requestedAt?: string }> }> {
-    const response: AxiosResponse<ApiResponse<{ items: Array<{ clubId: string; userId: string; status: string; requestedAt?: string }> }>> = await this.api.get(`/clubs/${clubId}/requests`);
+  async listJoinRequests(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; status: string; requestedAt?: string; name?: string; email?: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ items: Array<{ clubId: string; userId: string; status: string; requestedAt?: string; name?: string; email?: string }> }>> = await this.api.get(`/clubs/${clubId}/requests`);
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to list join requests');
     }

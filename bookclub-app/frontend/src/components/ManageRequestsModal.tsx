@@ -12,6 +12,8 @@ interface PendingRequest {
   userId: string;
   status: string;
   requestedAt?: string;
+  name?: string;
+  email?: string;
 }
 
 const ManageRequestsModal: React.FC<ManageRequestsModalProps> = ({ clubId, onClose }) => {
@@ -80,8 +82,9 @@ const ManageRequestsModal: React.FC<ManageRequestsModalProps> = ({ clubId, onClo
             {items.map((req) => (
               <li key={req.userId} className="py-3 flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-900">User {req.userId.slice(-6)}</div>
-                  <div className="text-xs text-gray-500">Requested {req.requestedAt ? new Date(req.requestedAt).toLocaleString() : ''}</div>
+                  <div className="text-sm font-medium text-gray-900">{req.name || req.email || `User …${req.userId.slice(-6)}`}</div>
+                  {req.email && req.name && <div className="text-xs text-gray-500">{req.email}</div>}
+                  <div className="text-xs text-gray-400">Requested {req.requestedAt ? new Date(req.requestedAt).toLocaleString() : ''}</div>
                 </div>
                 <div className="flex gap-2">
                   <button
