@@ -22,7 +22,7 @@ describe('ManageRequestsModal', () => {
   it('loads and shows pending requests', async () => {
     (apiService.listJoinRequests as jest.Mock).mockResolvedValue({
       items: [
-        { clubId: 'c1', userId: 'u1', status: 'pending', requestedAt: '2024-01-01T00:00:00Z' },
+        { clubId: 'c1', userId: 'u1', status: 'pending', requestedAt: '2024-01-01T00:00:00Z', name: 'Alice Smith' },
       ],
     });
 
@@ -30,47 +30,47 @@ describe('ManageRequestsModal', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Manage Join Requests/i)).toBeInTheDocument();
-      expect(screen.getByText(/User u1/i)).toBeInTheDocument();
+      expect(screen.getByText(/Alice Smith/i)).toBeInTheDocument();
     });
   });
 
   it('approves a request and removes from list', async () => {
     (apiService.listJoinRequests as jest.Mock).mockResolvedValue({
-      items: [ { clubId: 'c1', userId: 'u1', status: 'pending' } ],
+      items: [ { clubId: 'c1', userId: 'u1', status: 'pending', name: 'Alice Smith' } ],
     });
     (apiService.approveJoinRequest as jest.Mock).mockResolvedValue({ approved: true });
 
     render(<ManageRequestsModal clubId="c1" onClose={() => {}} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/User u1/i)).toBeInTheDocument();
+      expect(screen.getByText(/Alice Smith/i)).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText(/Approve/i));
 
     await waitFor(() => {
       expect(apiService.approveJoinRequest).toHaveBeenCalledWith('c1', 'u1');
-      expect(screen.queryByText(/User u1/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Alice Smith/i)).not.toBeInTheDocument();
     });
   });
 
   it('rejects a request and removes from list', async () => {
     (apiService.listJoinRequests as jest.Mock).mockResolvedValue({
-      items: [ { clubId: 'c1', userId: 'u2', status: 'pending' } ],
+      items: [ { clubId: 'c1', userId: 'u2', status: 'pending', name: 'Bob Jones' } ],
     });
     (apiService.rejectJoinRequest as jest.Mock).mockResolvedValue({ rejected: true });
 
     render(<ManageRequestsModal clubId="c1" onClose={() => {}} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/User u2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Bob Jones/i)).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText(/Reject/i));
 
     await waitFor(() => {
       expect(apiService.rejectJoinRequest).toHaveBeenCalledWith('c1', 'u2');
-      expect(screen.queryByText(/User u2/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Bob Jones/i)).not.toBeInTheDocument();
     });
   });
 });
