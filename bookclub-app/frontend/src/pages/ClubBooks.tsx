@@ -3,17 +3,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
-import { ArchiveBoxIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
+import { ArchiveBoxIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 
 const ClubBooks: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [club, setClub] = useState<BookClub | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState('');
 
   const fetchClub = useCallback(async () => {
     if (!clubId) return;
@@ -24,6 +28,24 @@ const ClubBooks: React.FC = () => {
       // club info is optional — continue without it
     }
   }, [clubId]);
+
+  const handleRequestJoin = async () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: window.location.pathname } });
+      return;
+    }
+    if (!clubId) return;
+    try {
+      setJoining(true);
+      setJoinError('');
+      await apiService.requestClubJoin(clubId);
+      setClub(prev => prev ? { ...prev, userStatus: 'pending' } : prev);
+    } catch (e: any) {
+      setJoinError(e.message || 'Failed to send join request');
+    } finally {
+      setJoining(false);
+    }
+  };
 
   const fetchBooks = useCallback(async (token?: string | null) => {
     if (!clubId) return;
@@ -101,13 +123,39 @@ const ClubBooks: React.FC = () => {
                 <p className="mt-2 text-lg text-gray-600 max-w-2xl">{club.description}</p>
               )}
             </div>
-            <div className="bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm self-start">
-              <p className="text-sm font-medium text-gray-600">
-                <span className="text-indigo-600 font-bold">{books.length}</span> items available
-              </p>
+            <div className="flex items-center gap-3 self-start flex-wrap">
+              <div className="bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+                <p className="text-sm font-medium text-gray-600">
+                  <span className="text-indigo-600 font-bold">{books.length}</span> items available
+                </p>
+              </div>
+
+              {/* Join / pending for non-members */}
+              {club && !club.isMember && club.userStatus !== 'active' && (
+                club.userStatus === 'pending' ? (
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Request Sent
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleRequestJoin}
+                    disabled={joining}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                  >
+                    <UserPlusIcon className="h-4 w-4" />
+                    {joining ? 'Sending…' : (isAuthenticated ? 'Request to Join' : 'Join Club')}
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>
+
+        {joinError && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-100">
+            <p className="text-sm text-red-700">{joinError}</p>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 border border-red-100">
