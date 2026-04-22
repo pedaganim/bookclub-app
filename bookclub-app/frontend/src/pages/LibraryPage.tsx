@@ -144,7 +144,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
       
       {/* Premium Hero with Breadcrumbs */}
       <div className="bg-white border-b border-gray-100 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 w-full">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="max-w-2xl">
               <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
