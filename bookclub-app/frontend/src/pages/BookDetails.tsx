@@ -328,7 +328,18 @@ const BookDetails: React.FC = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getLibraryConfig(book.category || 'book')?.shortLabel ?? 'Books'}</Link>
+          <button 
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                navigate(`/library/${book.category === 'toy' ? 'toys' : book.category === 'game' ? 'games' : book.category === 'tool' ? 'tools' : book.category === 'event' ? 'events' : 'books'}`);
+              }
+            }} 
+            className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm"
+          >
+            ← Back
+          </button>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
