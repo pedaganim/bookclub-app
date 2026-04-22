@@ -22,7 +22,7 @@ const Login: React.FC = () => {
             />
           </div>
           <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
-            Sign in to BookClub
+            Sign in to NearBorrow
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             More login options will be added in the future

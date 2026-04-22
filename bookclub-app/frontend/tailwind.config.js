@@ -1,3 +1,5 @@
+const colors = require('tailwindcss/colors');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -5,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        // Broadly override the old indigo brand color to the new NearBorrow Teal/Emerald brand hue
+        indigo: colors.teal,
+      },
       // Add mobile-friendly spacing
       spacing: {
         'touch': '44px', // Minimum touch target size

@@ -305,7 +305,7 @@ const BookDetails: React.FC = () => {
   };
 
   const itemLabel = getItemLabel(book.category || 'book');
-  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on BookClub.`;
+  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on NearBorrow.`;
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'Book',
