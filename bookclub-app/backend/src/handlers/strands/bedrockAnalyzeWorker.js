@@ -80,14 +80,6 @@ exports.handler = async (event) => {
           sets.push('#ar = :ar');
         }
 
-        // For library items Bedrock couldn't classify, route them to the misc library
-        if (isLibraryItem && metadata.category === 'other') {
-          names['#lt'] = 'libraryType';
-          vals[':lt'] = 'misc';
-          sets.push('#lt = :lt');
-          console.log(`[BedrockAnalyzeWorker] Unrecognized library item ${itemId} → routing to misc library`);
-        }
-
         await dynamo.update({
           TableName: tableName,
           Key: tableKey,
