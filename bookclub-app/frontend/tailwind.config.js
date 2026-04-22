@@ -8,8 +8,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Broadly override the old indigo brand color to the new NearBorrow Teal/Emerald brand hue
-        indigo: colors.teal,
+        // Shifted the teal scale one shade darker (e.g. 600 maps to 700) to make the UI less bright
+        indigo: {
+          50: colors.teal[100],
+          100: colors.teal[200],
+          200: colors.teal[300],
+          300: colors.teal[400],
+          400: colors.teal[500],
+          500: colors.teal[600],
+          600: colors.teal[700],
+          700: colors.teal[800],
+          800: colors.teal[900],
+          900: '#042f2e', // teal-950 equivalent or dark teal
+        },
       },
       // Add mobile-friendly spacing
       spacing: {
