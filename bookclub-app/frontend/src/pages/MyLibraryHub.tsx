@@ -61,20 +61,20 @@ const MyLibraryHub: React.FC = () => {
         {/* All Items summary card */}
         <Link
           to="/my-library/all"
-          className="group flex items-center justify-between bg-indigo-600 text-white rounded-3xl px-8 py-5 mb-6 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+          className="group flex items-center justify-between bg-slate-900 text-white rounded-3xl px-8 py-5 mb-6 hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
         >
           <div className="flex items-center gap-4">
             <span className="text-4xl" role="img" aria-label="All items">📦</span>
             <div>
               <h2 className="text-xl font-bold">All My Items</h2>
-              <p className="text-indigo-200 text-sm">View everything across all categories</p>
+              <p className="text-slate-300 text-sm">View everything across all categories</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <span className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-bold">
               {Object.values(summaries).reduce((a, b) => a + b, 0)} items
             </span>
-            <span className="font-bold text-indigo-200 group-hover:translate-x-1 transition-transform">→</span>
+            <span className="font-bold text-slate-300 group-hover:translate-x-1 transition-transform">→</span>
           </div>
         </Link>
 
@@ -109,17 +109,17 @@ const MyLibraryHub: React.FC = () => {
         </div>
 
         {/* Global Stats or Tips section could go here */}
-        <div className="mt-12 bg-indigo-900 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mt-12 bg-slate-900 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex-1">
             <h3 className="text-2xl font-bold mb-2">Power Sharing 💡</h3>
-            <p className="text-indigo-100">
+            <p className="text-slate-300">
               Items with good photos and clear descriptions are 3x more likely to be borrowed. 
               Take a moment to polish your listings!
             </p>
           </div>
           <Link 
             to="/library"
-            className="px-8 py-3 bg-white text-indigo-900 rounded-2xl font-bold hover:bg-indigo-50 transition-colors"
+            className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-bold hover:bg-slate-100 transition-colors"
           >
             Browse Public Library
           </Link>
