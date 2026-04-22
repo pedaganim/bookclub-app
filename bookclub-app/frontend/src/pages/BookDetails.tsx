@@ -339,6 +339,7 @@ const BookDetails: React.FC = () => {
                 if (c === 'game') p = 'games';
                 if (c === 'tool') p = 'tools';
                 if (c === 'event_hire' || c === 'event') p = 'events';
+                if (c === 'other' || c === 'misc') p = 'misc';
                 navigate(`/library/${p}`);
               }
             }} 
