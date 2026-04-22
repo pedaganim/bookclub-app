@@ -16,8 +16,8 @@ const Login: React.FC = () => {
         <div>
           <div className="flex justify-center mb-4 sm:mb-6">
             <img 
-              src="/logo.svg" 
-              alt="Book Club" 
+              src="/logo.png" 
+              alt="NearBorrow" 
               className="h-16 w-auto sm:h-24"
             />
           </div>
