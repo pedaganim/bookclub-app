@@ -165,7 +165,7 @@ export const LIBRARY_CONFIGS: LibraryConfig[] = [
     ],
   },
   {
-    libraryType: 'misc',
+    libraryType: 'other',
     slug: 'misc',
     label: 'Miscellaneous',
     shortLabel: 'Misc',

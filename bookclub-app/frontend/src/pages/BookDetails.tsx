@@ -259,6 +259,7 @@ const BookDetails: React.FC = () => {
     `data:image/svg+xml,%3csvg width='300' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='300' height='400' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3e${getItemLabel(book.category || 'book')}%3c/text%3e%3c/svg%3e`;
 
   const isOwner = !!(user?.userId && book.userId && user.userId === (book.userId as any));
+  const isBook = !book.category || book.category === 'book';
 
   const handleEdit = () => {
     if (!bookId) return;
@@ -305,7 +306,7 @@ const BookDetails: React.FC = () => {
   };
 
   const itemLabel = getItemLabel(book.category || 'book');
-  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on BookClub.`;
+  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on NearBorrow.`;
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'Book',
@@ -327,7 +328,25 @@ const BookDetails: React.FC = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getLibraryConfig(book.category || 'book')?.shortLabel ?? 'Books'}</Link>
+          <button 
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                let p = 'books';
+                const c = book.category as string;
+                if (c === 'toy') p = 'toys';
+                if (c === 'game') p = 'games';
+                if (c === 'tool') p = 'tools';
+                if (c === 'event_hire' || c === 'event') p = 'events';
+                if (c === 'other' || c === 'misc') p = 'misc';
+                navigate(`/library/${p}`);
+              }
+            }} 
+            className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm"
+          >
+            ← Back
+          </button>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
@@ -338,7 +357,8 @@ const BookDetails: React.FC = () => {
             </div>
             <div className="sm:w-2/3 mt-4 sm:mt-0">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{asText(book.title) || `Untitled ${getItemLabel(book.category || 'book')}`}</h1>
-              <p className="text-gray-700 mb-1"><span className="font-medium">Author:</span> {asText(book.author) || 'Unknown'}</p>
+              {isBook && <p className="text-gray-700 mb-1"><span className="font-medium">Author:</span> {asText(book.author) || 'Unknown'}</p>}
+              {!isBook && hasText(book.author) && <p className="text-gray-700 mb-1"><span className="font-medium">Brand/Maker:</span> {asText(book.author)}</p>}
               {book.userName && (
                 <p className="text-gray-700 mb-1"><span className="font-medium">Owner:</span> {book.userName}</p>
               )}
@@ -354,12 +374,12 @@ const BookDetails: React.FC = () => {
                 </p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm">
-                {hasText(book.isbn10) && (<p className="text-gray-600"><span className="font-medium">ISBN-10:</span> {asText(book.isbn10)}</p>)}
-                {hasText(book.isbn13) && (<p className="text-gray-600"><span className="font-medium">ISBN-13:</span> {asText(book.isbn13)}</p>)}
-                {hasText(book.publishedDate) && (<p className="text-gray-600"><span className="font-medium">Published:</span> {asText(book.publishedDate)}</p>)}
-                {hasText(book.pageCount) && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {asText(book.pageCount)}</p>)}
-                {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
-                {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
+                {isBook && hasText(book.isbn10) && (<p className="text-gray-600"><span className="font-medium">ISBN-10:</span> {asText(book.isbn10)}</p>)}
+                {isBook && hasText(book.isbn13) && (<p className="text-gray-600"><span className="font-medium">ISBN-13:</span> {asText(book.isbn13)}</p>)}
+                {isBook && hasText(book.publishedDate) && (<p className="text-gray-600"><span className="font-medium">Published:</span> {asText(book.publishedDate)}</p>)}
+                {isBook && hasText(book.pageCount) && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {asText(book.pageCount)}</p>)}
+                {isBook && hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
+                {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">{isBook ? 'Publisher' : 'Brand/Manufacturer'}:</span> {asText(book.publisher)}</p>)}
                 {(() => {
                   // Prefer explicit ageGroupFine fields; fallback to ageRange (set by Bedrock worker) or mcp age_group
                   const direct = (book as any).ageGroupFine || (book as any).advancedMetadata?.metadata?.ageGroupFine;
@@ -443,12 +463,12 @@ const BookDetails: React.FC = () => {
             )}
 
             {/* Google Metadata */}
-            {(book as any).google_metadata && (
+            {isBook && (book as any).google_metadata && (
               renderGoogleMetadata((book as any).google_metadata)
             )}
 
             {/* Bedrock Analysis (legacy mcp_metadata path) */}
-            {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
+            {isBook && ((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
               renderBedrockMetadata((book as any).mcp_metadata.bedrock)
             )}
           </div>
