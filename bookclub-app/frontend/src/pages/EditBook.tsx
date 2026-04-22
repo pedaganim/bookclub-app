@@ -100,7 +100,7 @@ const EditBook: React.FC = () => {
           <Link to={`/books/${book.bookId}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to Book</Link>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Edit Book</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-4">Edit Listing</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Title</label>
