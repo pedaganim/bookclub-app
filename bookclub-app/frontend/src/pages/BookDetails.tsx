@@ -333,7 +333,13 @@ const BookDetails: React.FC = () => {
               if (window.history.state && window.history.state.idx > 0) {
                 navigate(-1);
               } else {
-                navigate(`/library/${book.category === 'toy' ? 'toys' : book.category === 'game' ? 'games' : book.category === 'tool' ? 'tools' : book.category === 'event' ? 'events' : 'books'}`);
+                let p = 'books';
+                const c = book.category as string;
+                if (c === 'toy') p = 'toys';
+                if (c === 'game') p = 'games';
+                if (c === 'tool') p = 'tools';
+                if (c === 'event_hire' || c === 'event') p = 'events';
+                navigate(`/library/${p}`);
               }
             }} 
             className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm"
