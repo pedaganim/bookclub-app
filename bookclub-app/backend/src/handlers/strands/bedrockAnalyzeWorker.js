@@ -48,7 +48,37 @@ exports.handler = async (event) => {
       try {
         const metadata = await analyzeUniversalItemImage({ bucket, key, contentType, modelId });
 
-        console.log(`[BedrockAnalyzeWorker] Raw metadata for ${itemId}:`, JSON.stringify(metadata));
+        if (metadata.category === 'person_error') {
+          console.warn(`[BedrockAnalyzeWorker] PERSON DETECTED for item ${itemId}. Deleting from DB and S3.`);
+          
+          // 1. Delete from DynamoDB
+          await dynamo.delete({
+            TableName: tableName,
+            Key: tableKey,
+          }).promise();
+
+          // 2. Delete from S3
+          const s3 = new AWS.S3();
+          await s3.deleteObject({
+            Bucket: bucket,
+            Key: key,
+          }).promise();
+
+          console.log(`[BedrockAnalyzeWorker] Successfully purged personal image item ${itemId}`);
+          
+          // Notify downstream of the deletion/violation
+          if (process.env.EVENT_BUS_NAME && process.env.EVENT_BUS_SOURCE) {
+            await eventBridge.putEvents({
+              Entries: [{
+                EventBusName: process.env.EVENT_BUS_NAME,
+                Source: process.env.EVENT_BUS_SOURCE,
+                DetailType: isLibraryItem ? 'Library.ItemPurgedPrivacyViolation' : 'Book.ItemPurgedPrivacyViolation',
+                Detail: JSON.stringify({ itemId, bucket, key, reason: 'person_detected' }),
+              }],
+            }).promise();
+          }
+          continue; // Move to next record
+        }
 
         const names = { '#meta': 'advancedMetadata' };
         const vals = { ':val': metadata, ':ts': new Date().toISOString() };
@@ -78,14 +108,6 @@ exports.handler = async (event) => {
           names['#ar'] = 'ageRange';
           vals[':ar'] = metadata.ageRange;
           sets.push('#ar = :ar');
-        }
-
-        // For library items Bedrock couldn't classify, route them to the misc library
-        if (isLibraryItem && metadata.category === 'other') {
-          names['#lt'] = 'libraryType';
-          vals[':lt'] = 'misc';
-          sets.push('#lt = :lt');
-          console.log(`[BedrockAnalyzeWorker] Unrecognized library item ${itemId} → routing to misc library`);
         }
 
         await dynamo.update({

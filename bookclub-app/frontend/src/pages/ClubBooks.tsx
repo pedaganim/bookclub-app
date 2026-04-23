@@ -109,7 +109,7 @@ const ClubBooks: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/clubs')}
+            onClick={() => navigate(isAuthenticated ? '/clubs' : '/clubs/browse')}
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-4 inline-flex items-center gap-1 group transition-colors"
           >
             <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Clubs
