@@ -353,11 +353,8 @@ class ApiService {
       'Content-Type': contentType || file.type,
     };
     
-    // If the URL was signed with metadata, we MUST send the corresponding header
-    // to avoid a 403 Signature Mismatch/CORS error.
-    if (userId) {
-      headers['x-amz-meta-uploaded-by'] = userId;
-    }
+    // Removed x-amz-meta-uploaded-by header as it's no longer signed by the backend
+    // and was causing 403 Forbidden errors on some mobile devices.
 
     await axios.put(uploadUrl, file, {
       headers,
