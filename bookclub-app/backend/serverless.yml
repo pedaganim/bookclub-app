@@ -1422,6 +1422,13 @@ resources:
         SupportedIdentityProviders:
           - COGNITO
           - Google
+        AccessTokenValidity: 24
+        IdTokenValidity: 24
+        RefreshTokenValidity: 3650
+        TokenValidityUnits:
+          AccessToken: hours
+          IdToken: hours
+          RefreshToken: days
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
         LogoutURLs:
