@@ -76,7 +76,9 @@ module.exports.handler = async (event) => {
     const params = {
       Bucket: BUCKET_NAME,
       Key: fileKey,
-      Expires: 3600, // 1 hour for slow mobile uploads
+      Expires: 300,
+      ContentType: fileType,
+      Metadata: { 'uploaded-by': userId },
     };
 
     const uploadUrl = await s3.getSignedUrlPromise('putObject', params);

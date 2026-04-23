@@ -139,8 +139,6 @@ async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpe
     'You are a universal community library assistant. Your task is to analyze an image of an item (book, toy, tool, game, etc.) and extract metadata. ' +
     'FIRST, identify the category of the item from this list: [book, toy, tool, game, event_hire, other]. ' +
     'SECOND, extract the title and a 1-3 sentence description. ' +
-    'THIRD, CRITICAL SAFETY RULE: If the image is primarily of a human person, a face, or contains personal identifying information of a person (and is not an item for the library), ' +
-    'set the "category" to "person_error" and "description" to "PERSON_DETECTED". ' +
     'Return ONLY strict JSON (no commentary) with this shape: ' +
     '{"category":"string","title":"string","description":"string","author":"string|null","ageRange":"string|null"}. ' +
     'Rules: ' +
@@ -200,3 +198,4 @@ async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpe
 module.exports = {
   analyzeUniversalItemImage,
 };
+

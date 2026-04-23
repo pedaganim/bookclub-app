@@ -174,7 +174,7 @@ class Book {
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         result = result.filter(book => {
-          const md = (book.advancedMetadata && book.advancedMetadata.metadata) || book.advancedMetadata || {};
+          const md = book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
           const fields = [
             book.description,
             book.title,
@@ -182,7 +182,6 @@ class Book {
             book.publisher,
             book.isbn10,
             book.isbn13,
-            md && md.description,
             md && md.title,
             md && md.author,
             md && md.publisher,
@@ -274,7 +273,7 @@ class Book {
     if (searchQuery) {
       const q = String(searchQuery).toLowerCase();
       items = items.filter((book) => {
-        const md = (book && book.advancedMetadata && book.advancedMetadata.metadata) || (book && book.advancedMetadata) || {};
+        const md = book && book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
         const fields = [
           book && book.description,
           book && book.title,
@@ -282,7 +281,6 @@ class Book {
           book && book.publisher,
           book && book.isbn10,
           book && book.isbn13,
-          md && md.description,
           md && md.title,
           md && md.author,
           md && md.publisher,

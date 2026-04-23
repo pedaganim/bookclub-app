@@ -24,7 +24,7 @@ module.exports.handler = async (event) => {
       Key: key,
       UploadId: uploadId,
       PartNumber: Number(partNumber),
-      Expires: 3600, // 1 hour for slow mobile uploads
+      Expires: 900, // 15 minutes
     };
 
     // getSignedUrl for uploadPart
