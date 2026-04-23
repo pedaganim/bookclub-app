@@ -365,7 +365,7 @@ const BookDetails: React.FC = () => {
               {(book.clubName || book.clubId) && (
                 <p className="text-gray-700 mb-1">
                   <span className="font-medium">Club:</span> {book.clubName || 'Member Club'}
-                  {book.clubId && (
+                  {book.clubId && isAuthenticated && (
                     <>
                       {' '}
                       <Link to="/clubs" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">(manage)</Link>
