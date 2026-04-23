@@ -1425,6 +1425,7 @@ resources:
           - profile
         SupportedIdentityProviders:
           - COGNITO
+          - Google
         AccessTokenValidity: 24
         IdTokenValidity: 24
         RefreshTokenValidity: 365
