@@ -362,7 +362,7 @@ class ApiService {
     await axios.put(uploadUrl, file, {
       headers,
       // Mobile networks can be slow; extend timeout for PUT to S3
-      timeout: 15 * 60 * 1000, // 15 minutes
+      timeout: 30 * 60 * 1000, // 30 minutes for slow mobile networks
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
@@ -434,7 +434,7 @@ class ApiService {
       const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: fileType });
       const putRes = await axios.put(uploadUrl, blob, {
         headers: { 'Content-Type': fileType },
-        timeout: 15 * 60 * 1000,
+        timeout: 30 * 60 * 1000, // 30 minutes
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
       });
