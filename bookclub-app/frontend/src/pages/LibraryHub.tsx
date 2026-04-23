@@ -17,7 +17,7 @@ const LibraryHub: React.FC = () => {
       />
       
       {/* Library categories section */}
-      <div id="browse-libraries" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex-grow">
+      <div id="browse-libraries" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex-grow">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 mb-2">The Collection</h2>
@@ -73,7 +73,7 @@ const LibraryHub: React.FC = () => {
         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-indigo-50 rounded-full blur-3xl opacity-50" />
         <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-amber-50 rounded-full blur-3xl opacity-50" />
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative text-center">
           <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter mb-6 uppercase italic">
             Borrow <span className="text-indigo-600">Everything.</span><br />
             Share Your <span className="text-amber-500 underline decoration-amber-200">World.</span>
