@@ -84,7 +84,8 @@ provider:
             - s3:UploadPart
             - s3:CompleteMultipartUpload
             - s3:AbortMultipartUpload
-          Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+          Resource: 
+            - "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
         - Effect: Allow
           Action:
             - ses:SendEmail
@@ -1409,8 +1410,11 @@ resources:
         UserPoolId: !Ref UserPool
         GenerateSecret: false
         ExplicitAuthFlows:
-          - ADMIN_NO_SRP_AUTH
-          - USER_PASSWORD_AUTH
+          - ALLOW_ADMIN_USER_PASSWORD_AUTH
+          - ALLOW_CUSTOM_AUTH
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
         PreventUserExistenceErrors: ENABLED
         AllowedOAuthFlowsUserPoolClient: true
         AllowedOAuthFlows:
@@ -1421,10 +1425,9 @@ resources:
           - profile
         SupportedIdentityProviders:
           - COGNITO
-          - Google
         AccessTokenValidity: 24
         IdTokenValidity: 24
-        RefreshTokenValidity: 3650
+        RefreshTokenValidity: 365
         TokenValidityUnits:
           AccessToken: hours
           IdToken: hours
