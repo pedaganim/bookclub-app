@@ -349,9 +349,7 @@ class ApiService {
   }
 
   async uploadFile(uploadUrl: string, file: File, userId?: string | null, contentType?: string): Promise<void> {
-    const headers: Record<string, string> = {
-      'Content-Type': contentType || file.type,
-    };
+    const headers: Record<string, string> = {};
     
     // Removed x-amz-meta-uploaded-by header as it's no longer signed by the backend
     // and was causing 403 Forbidden errors on some mobile devices.
@@ -430,7 +428,7 @@ class ApiService {
       const partNumber = index + 1;
       const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: fileType });
       const putRes = await axios.put(uploadUrl, blob, {
-        headers: { 'Content-Type': fileType },
+        headers: {},
         timeout: 30 * 60 * 1000, // 30 minutes
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
