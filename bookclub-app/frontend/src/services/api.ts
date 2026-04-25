@@ -349,15 +349,13 @@ class ApiService {
   }
 
   async uploadFile(uploadUrl: string, file: File, userId?: string | null, contentType?: string): Promise<void> {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'Content-Type': contentType || file.type || 'application/octet-stream'
+    };
     
-    // Removed x-amz-meta-uploaded-by header as it's no longer signed by the backend
-    // and was causing 403 Forbidden errors on some mobile devices.
-
     await axios.put(uploadUrl, file, {
       headers,
-      // Mobile networks can be slow; extend timeout for PUT to S3
-      timeout: 30 * 60 * 1000, // 30 minutes for slow mobile networks
+      timeout: 30 * 60 * 1000,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
@@ -428,7 +426,9 @@ class ApiService {
       const partNumber = index + 1;
       const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: fileType });
       const putRes = await axios.put(uploadUrl, blob, {
-        headers: {},
+        headers: {
+          'Content-Type': fileType || 'application/octet-stream'
+        },
         timeout: 30 * 60 * 1000, // 30 minutes
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
