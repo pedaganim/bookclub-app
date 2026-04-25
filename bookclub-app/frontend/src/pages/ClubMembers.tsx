@@ -8,9 +8,7 @@ import {
   UserIcon, 
   ShieldCheckIcon, 
   UserMinusIcon,
-  ChevronLeftIcon,
-  EllipsisVerticalIcon,
-  ExclamationTriangleIcon
+  ChevronLeftIcon
 } from '@heroicons/react/24/outline';
 import ConfirmationModal from '../components/ConfirmationModal';
 

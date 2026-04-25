@@ -6,7 +6,6 @@ import { UserGroupIcon } from '@heroicons/react/24/outline';
 import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
-import ManageRequestsModal from '../components/ManageRequestsModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import ClubCard from '../components/ClubCard';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';

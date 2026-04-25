@@ -1,6 +1,6 @@
-import axios from 'axios';
+import { apiService } from '../../services/api';
 
-// Mock axios BEFORE importing apiService
+// Mock axios
 jest.mock('axios', () => {
   const mockInstance = {
     get: jest.fn(),
@@ -18,8 +18,6 @@ jest.mock('axios', () => {
     defaults: { adapter: {} }
   };
 });
-
-import { apiService } from '../../services/api';
 
 describe('ApiService Core Methods', () => {
   const clubId = 'test-club-id';

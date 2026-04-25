@@ -434,7 +434,7 @@ class ApiService {
         maxContentLength: Infinity,
       });
       const rawETag = putRes.headers.etag || putRes.headers.ETag || putRes.headers['etag'] || '';
-      const eTag = rawETag.replace(/\"/g, '');
+      const eTag = rawETag.replace(/"/g, '');
       if (!eTag) {
         throw new Error('ETag missing from S3 upload response. This is usually a CORS issue — ensure the S3 bucket ExposeHeaders includes "ETag".');
       }

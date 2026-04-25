@@ -1,10 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  Bars3Icon, 
-  XMarkIcon,
-  BellIcon
-} from '@heroicons/react/24/outline';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { LIBRARY_CONFIGS } from '../config/libraryConfig';
@@ -16,7 +11,6 @@ import MobileTabBar from './MobileTabBar';
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { isSubdomain, club } = useSubdomain();
-  const navigate = useNavigate();
   const location = useLocation();
   const [librariesOpen, setLibrariesOpen] = useState(false);
   const [myLibraryOpen, setMyLibraryOpen] = useState(false);

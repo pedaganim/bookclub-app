@@ -104,9 +104,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
     fetchItems(q || undefined, PAGE_SIZE, null);
   };
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    // We'll stick to fixed page size for now for simplicity in the unified view
-  };
+
 
   const handleNextPage = () => {
     if (hasNextPage && nextToken) {
