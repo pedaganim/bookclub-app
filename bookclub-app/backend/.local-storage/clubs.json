@@ -1,0 +1,29 @@
+{
+  "5a5fac2e-93dc-45b5-967b-677e02c098cd": {
+    "clubId": "5a5fac2e-93dc-45b5-967b-677e02c098cd",
+    "name": "Test Book Club",
+    "slug": "test-book-club",
+    "description": "A test club",
+    "createdBy": "test-user-123",
+    "inviteCode": "20EB0FE6",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 1,
+    "createdAt": "2026-04-25T10:17:10.303Z",
+    "updatedAt": "2026-04-25T10:17:10.304Z"
+  },
+  "1783f5de-7554-40d9-9292-627eadf86a08": {
+    "clubId": "1783f5de-7554-40d9-9292-627eadf86a08",
+    "name": "qweqwe",
+    "slug": "qweqwe",
+    "description": "eqwe",
+    "location": "Werribee",
+    "createdBy": "local-user",
+    "inviteCode": "F7075662",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 1,
+    "createdAt": "2026-04-25T10:51:36.670Z",
+    "updatedAt": "2026-04-25T10:51:36.670Z"
+  }
+}
