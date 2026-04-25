@@ -622,6 +622,22 @@ class ApiService {
     }
   }
 
+  // Member Management
+  async listMembers(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; role: 'admin' | 'member'; status: string; joinedAt: string; name?: string; email?: string; profilePicture?: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ items: any[] }>> = await this.api.get(`/clubs/${clubId}/members`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list members');
+    }
+    return response.data.data!;
+  }
+
+  async removeMember(clubId: string, userId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(`/clubs/${clubId}/members/${userId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to remove member');
+    }
+  }
+
   // Direct Messaging
   async dmCreateConversation(toUserId: string): Promise<DMConversation> {
     try {

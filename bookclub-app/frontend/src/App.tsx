@@ -29,6 +29,7 @@ import LibraryPage from './pages/LibraryPage';
 import MyLibraryHub from './pages/MyLibraryHub';
 import MyItemsPage from './pages/MyItemsPage';
 import ClubRequests from './pages/ClubRequests';
+import ClubMembers from './pages/ClubMembers';
 import ClubBooks from './pages/ClubBooks';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
 import { useSubdomain } from './hooks/useSubdomain';
@@ -157,6 +158,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <ClubRequests />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/clubs/:clubId/members"
+                  element={
+                    <ProtectedRoute>
+                      <ClubMembers />
                     </ProtectedRoute>
                   }
                 />

@@ -982,6 +982,46 @@ functions:
             authorizerId:
               Ref: ApiGatewayAuthorizer
 
+  listClubMembers:
+    handler: src/handlers/clubs/listMembers.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}/members
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  removeClubMember:
+    handler: src/handlers/clubs/removeMember.handler
+    events:
+      - http:
+          method: DELETE
+          path: /clubs/{clubId}/members/{userId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   approveJoinRequest:
     handler: src/handlers/clubs/approveRequest.handler
     events:
