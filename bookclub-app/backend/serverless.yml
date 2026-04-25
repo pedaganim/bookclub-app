@@ -1484,7 +1484,6 @@ resources:
           - email
           - profile
         SupportedIdentityProviders:
-          - COGNITO
           - Google
         AccessTokenValidity: 24
         IdTokenValidity: 24
@@ -1523,7 +1522,7 @@ resources:
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
-        Domain: ${self:custom.appConfig.userPoolDomainPrefix}
+        Domain: ${self:custom.appConfig.userPoolDomainPrefix}-${self:provider.stage}
         UserPoolId: !Ref UserPool
 
     ApiGatewayAuthorizer:
