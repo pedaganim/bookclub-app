@@ -339,5 +339,30 @@
     "category": "misc",
     "createdAt": "2026-04-19T04:57:54.451Z",
     "updatedAt": "2026-04-19T04:57:54.451Z"
+  },
+  "3fedd78e-4849-4680-b7f4-64d38b47f2b4": {
+    "bookId": "3fedd78e-4849-4680-b7f4-64d38b47f2b4",
+    "userId": "local-user",
+    "title": "WhatsApp Image 2026 04 22 at 20 19 01 (1)",
+    "description": "",
+    "coverImage": null,
+    "images": null,
+    "status": "available",
+    "s3Bucket": null,
+    "s3Key": null,
+    "isbn10": null,
+    "isbn13": null,
+    "publishedDate": null,
+    "pageCount": null,
+    "categories": null,
+    "language": null,
+    "publisher": null,
+    "metadataSource": null,
+    "advancedMetadata": null,
+    "lastMetadataExtraction": null,
+    "clubId": null,
+    "category": "toy",
+    "createdAt": "2026-04-25T11:06:36.366Z",
+    "updatedAt": "2026-04-25T11:06:36.366Z"
   }
 }

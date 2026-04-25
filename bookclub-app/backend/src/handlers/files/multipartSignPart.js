@@ -24,6 +24,7 @@ module.exports.handler = async (event) => {
       Key: key,
       UploadId: uploadId,
       PartNumber: Number(partNumber),
+      ContentType: contentType,
       Expires: 3600, // 1 hour for slow mobile uploads
     };
 

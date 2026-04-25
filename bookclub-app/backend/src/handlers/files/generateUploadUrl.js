@@ -76,6 +76,7 @@ module.exports.handler = async (event) => {
     const params = {
       Bucket: BUCKET_NAME,
       Key: fileKey,
+      ContentType: fileType,
       Expires: 3600, // 1 hour for slow mobile uploads
     };
 
