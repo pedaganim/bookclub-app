@@ -987,7 +987,7 @@ functions:
     events:
       - http:
           method: GET
-          path: /clubs/{clubId}/members
+          path: clubs/{clubId}/members
           cors:
             origin: '*'
             headers:
@@ -1007,7 +1007,7 @@ functions:
     events:
       - http:
           method: DELETE
-          path: /clubs/{clubId}/members/{userId}
+          path: clubs/{clubId}/members/{userId}
           cors:
             origin: '*'
             headers:
@@ -1027,7 +1027,7 @@ functions:
     events:
       - http:
           method: POST
-          path: /clubs/{clubId}/requests/{userId}/approve
+          path: clubs/{clubId}/requests/{userId}/approve
           cors:
             origin: '*'
             headers:
@@ -1047,7 +1047,7 @@ functions:
     events:
       - http:
           method: POST
-          path: /clubs/{clubId}/requests/{userId}/reject
+          path: clubs/{clubId}/requests/{userId}/reject
           cors:
             origin: '*'
             headers:
