@@ -6,7 +6,6 @@ import { UserGroupIcon } from '@heroicons/react/24/outline';
 import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
-import ManageRequestsModal from '../components/ManageRequestsModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import ClubCard from '../components/ClubCard';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
@@ -21,7 +20,6 @@ const Clubs: React.FC = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
   const [showJoin, setShowJoin] = useState(false);
-  const [manageClubId, setManageClubId] = useState<string | null>(null);
   const [clubToDelete, setClubToDelete] = useState<BookClub | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -171,12 +169,18 @@ const Clubs: React.FC = () => {
                 isRequested={isPending(club)}
                 onEdit={() => setEditingClub(club)}
                 onDelete={() => setClubToDelete(club)}
-                onManageRequests={() => setManageClubId(club.clubId)}
+                onManageRequests={() => navigate(`/clubs/${club.clubId}/requests`)}
+                onManageMembers={() => navigate(`/clubs/${club.clubId}/members`)}
                 onCopyInvite={() => handleCopyInvite(club.inviteCode)}
-                onLeave={() => {
+                onLeave={async () => {
                   if (window.confirm(`Are you sure you want to leave "${club.name}"?`)) {
-                    // Actual leave logic would go here, for now it's a placeholder
-                    addNotification('info', 'Leave functionality coming soon');
+                    try {
+                      await apiService.leaveClub(club.clubId);
+                      setClubs(prev => prev.filter(c => c.clubId !== club.clubId));
+                      addNotification('success', `Left "${club.name}" successfully`);
+                    } catch (e: any) {
+                      addNotification('error', e.message || 'Failed to leave club');
+                    }
                   }
                 }}
               />
@@ -211,12 +215,6 @@ const Clubs: React.FC = () => {
           />
         )}
 
-        {manageClubId && (
-          <ManageRequestsModal
-            clubId={manageClubId}
-            onClose={() => setManageClubId(null)}
-          />
-        )}
 
         <ConfirmationModal
           isOpen={!!clubToDelete}

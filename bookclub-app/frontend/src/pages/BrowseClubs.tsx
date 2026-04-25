@@ -156,10 +156,13 @@ const BrowseClubs: React.FC = () => {
             key={club.clubId}
             club={club}
             isCreator={isCreatorOf(club)}
+            isAdmin={club.userRole === 'admin' || isCreatorOf(club)}
             isMember={userClubIds.has(club.clubId)}
             isRequested={requestedClubIds.has(club.clubId)}
             onJoin={() => handleRequestJoin(club)}
             isJoining={requestingId === club.clubId}
+            onManageRequests={() => navigate(`/clubs/${club.clubId}/requests`)}
+            onManageMembers={() => navigate(`/clubs/${club.clubId}/members`)}
           />
         ))}
       </div>

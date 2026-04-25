@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom';
 import { LIBRARY_CONFIGS } from '../config/libraryConfig';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
-import { useSubdomain } from '../hooks/useSubdomain';
+
 
 const LibraryHub: React.FC = () => {
   const { isAuthenticated } = useAuth();
-  const { isSubdomain, club } = useSubdomain();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

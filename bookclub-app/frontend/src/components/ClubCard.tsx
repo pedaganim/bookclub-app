@@ -25,6 +25,7 @@ interface ClubCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onManageRequests?: () => void;
+  onManageMembers?: () => void;
   onCopyInvite?: () => void;
 }
 
@@ -40,6 +41,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
   onEdit,
   onDelete,
   onManageRequests,
+  onManageMembers,
   onCopyInvite
 }) => {
   const navigate = useNavigate();
@@ -160,6 +162,14 @@ const ClubCard: React.FC<ClubCardProps> = ({
 
         {isAdmin && (
           <>
+            <button
+              onClick={(e) => handleAction(e, onManageMembers)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+              title="Manage Members"
+            >
+              <UserGroupIcon className="h-3.5 w-3.5" />
+              Members
+            </button>
             <button
               onClick={(e) => handleAction(e, onManageRequests)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"

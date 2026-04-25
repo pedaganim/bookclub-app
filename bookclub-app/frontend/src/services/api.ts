@@ -434,7 +434,7 @@ class ApiService {
         maxContentLength: Infinity,
       });
       const rawETag = putRes.headers.etag || putRes.headers.ETag || putRes.headers['etag'] || '';
-      const eTag = rawETag.replace(/\"/g, '');
+      const eTag = rawETag.replace(/"/g, '');
       if (!eTag) {
         throw new Error('ETag missing from S3 upload response. This is usually a CORS issue — ensure the S3 bucket ExposeHeaders includes "ETag".');
       }
@@ -619,6 +619,29 @@ class ApiService {
     const response: AxiosResponse<ApiResponse<{ rejected: boolean }>> = await this.api.post(`/clubs/${clubId}/requests/${userId}/reject`);
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to reject join request');
+    }
+  }
+
+  // Member Management
+  async listMembers(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; role: 'admin' | 'member'; status: string; joinedAt: string; name?: string; email?: string; profilePicture?: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ items: any[] }>> = await this.api.get(`/clubs/${clubId}/members`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list members');
+    }
+    return response.data.data!;
+  }
+
+  async removeMember(clubId: string, userId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(`/clubs/${clubId}/members/${userId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to remove member');
+    }
+  }
+
+  async updateMemberRole(clubId: string, userId: string, role: 'admin' | 'member'): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.patch(`/clubs/${clubId}/members/${userId}/role`, { role });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to update member role');
     }
   }
 
