@@ -1,9 +1,0 @@
-{
-  "56c96df0-5c45-403c-8ca8-973ba6d5f8d1:test-user-123": {
-    "clubId": "56c96df0-5c45-403c-8ca8-973ba6d5f8d1",
-    "userId": "test-user-123",
-    "role": "admin",
-    "joinedAt": "2026-04-23T13:15:29.548Z",
-    "status": "active"
-  }
-}

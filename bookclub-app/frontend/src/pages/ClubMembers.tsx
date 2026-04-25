@@ -9,8 +9,10 @@ import {
   ShieldCheckIcon, 
   UserMinusIcon,
   ChevronLeftIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 type Member = { 
   clubId: string; 
@@ -32,6 +34,7 @@ const ClubMembers: React.FC = () => {
   const [club, setClub] = useState<BookClub | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [acting, setActing] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
   const { addNotification } = useNotification();
 
   const isAdmin = useMemo(() => {
@@ -61,17 +64,33 @@ const ClubMembers: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);
 
-  const handleRemove = async (targetUserId: string, name?: string) => {
+  const handleRemove = async () => {
+    if (!clubId || !memberToRemove) return;
+
+    try {
+      setActing(memberToRemove.userId);
+      await apiService.removeMember(clubId, memberToRemove.userId);
+      addNotification?.('success', 'Member removed successfully');
+      setMembers(prev => prev.filter(m => m.userId !== memberToRemove.userId));
+    } catch (e: any) {
+      addNotification?.('error', e?.message || 'Failed to remove member');
+    } finally {
+      setActing(null);
+      setMemberToRemove(null);
+    }
+  };
+
+  const handleRoleUpdate = async (targetUserId: string, newRole: 'admin' | 'member', name?: string) => {
     if (!clubId) return;
-    if (!window.confirm(`Are you sure you want to remove ${name || 'this member'} from the club?`)) return;
+    const action = newRole === 'admin' ? 'made admin' : 'demoted';
 
     try {
       setActing(targetUserId);
-      await apiService.removeMember(clubId, targetUserId);
-      addNotification?.('success', 'Member removed successfully');
-      setMembers(prev => prev.filter(m => m.userId !== targetUserId));
+      await apiService.updateMemberRole(clubId, targetUserId, newRole);
+      addNotification?.('success', `Member ${action} successfully`);
+      setMembers(prev => prev.map(m => m.userId === targetUserId ? { ...m, role: newRole } : m));
     } catch (e: any) {
-      addNotification?.('error', e?.message || 'Failed to remove member');
+      addNotification?.('error', e?.message || 'Failed to update role');
     } finally {
       setActing(null);
     }
@@ -147,17 +166,39 @@ const ClubMembers: React.FC = () => {
 
                 {isAdmin && m.userId !== user?.userId && (
                   <div className="flex items-center gap-2">
+                    {m.role === 'member' ? (
+                      <button
+                        onClick={() => handleRoleUpdate(m.userId, 'admin', m.name)}
+                        disabled={acting === m.userId}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all"
+                      >
+                        <ShieldCheckIcon className="h-4 w-4" />
+                        <span>Make Admin</span>
+                      </button>
+                    ) : (
+                      // Only show demote if they are not the creator (model also enforces this)
+                      m.userId !== club?.createdBy && (
+                        <button
+                          onClick={() => handleRoleUpdate(m.userId, 'member', m.name)}
+                          disabled={acting === m.userId}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-all"
+                        >
+                          <UserIcon className="h-4 w-4" />
+                          <span>Remove Admin</span>
+                        </button>
+                      )
+                    )}
                     <button
-                      onClick={() => handleRemove(m.userId, m.name)}
+                      onClick={() => setMemberToRemove(m)}
                       disabled={acting === m.userId}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all group"
-                      title="Remove Member"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
                     >
                       {acting === m.userId ? (
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
                       ) : (
-                        <UserMinusIcon className="h-5 w-5" />
+                        <UserMinusIcon className="h-4 w-4" />
                       )}
+                      <span>Remove</span>
                     </button>
                   </div>
                 )}
@@ -206,6 +247,17 @@ const ClubMembers: React.FC = () => {
         
         {content}
       </div>
+
+      <ConfirmationModal
+        isOpen={!!memberToRemove}
+        title="Remove Member"
+        message={`Are you sure you want to remove ${memberToRemove?.name || 'this member'} from the club? This action will revoke their access immediately.`}
+        confirmText="Remove Member"
+        cancelText="Cancel"
+        onConfirm={handleRemove}
+        onCancel={() => setMemberToRemove(null)}
+        isDestructive={true}
+      />
     </div>
   );
 };

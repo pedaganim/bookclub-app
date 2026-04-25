@@ -32,7 +32,7 @@ USER_POOL_ID=$(serverless info --stage prod --verbose | grep "UserPoolId:" | awk
 USER_POOL_CLIENT_ID=$(serverless info --stage prod --verbose | grep "UserPoolClientId:" | awk '{print $2}')
 REGION=$(cat config/app.prod.json | grep '"region"' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
 DOMAIN_PREFIX=$(cat config/app.prod.json | grep 'userPoolDomainPrefix' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
-COGNITO_DOMAIN="${DOMAIN_PREFIX}-prod.auth.${REGION}.amazoncognito.com"
+COGNITO_DOMAIN="${DOMAIN_PREFIX}.auth.${REGION}.amazoncognito.com"
 REDIRECT_SIGNIN=$(cat config/app.prod.json | grep 'redirectSignIn' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
 REDIRECT_SIGNOUT=$(cat config/app.prod.json | grep 'redirectSignOut' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
 

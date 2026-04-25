@@ -638,6 +638,13 @@ class ApiService {
     }
   }
 
+  async updateMemberRole(clubId: string, userId: string, role: 'admin' | 'member'): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.patch(`/clubs/${clubId}/members/${userId}/role`, { role });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to update member role');
+    }
+  }
+
   // Direct Messaging
   async dmCreateConversation(toUserId: string): Promise<DMConversation> {
     try {
