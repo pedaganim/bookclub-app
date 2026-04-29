@@ -309,7 +309,12 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   </div>
                 </div>
               )}
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="mb-4 border-t border-gray-100 pt-4">
+                <p className="text-xs text-gray-500 italic">
+                  By listing this item, you acknowledge that lending is at your own risk. Our website is not liable for any loss, damage, or unreturned items.
+                </p>
+              </div>
+              <div className="flex justify-end space-x-3">
                 <button type="button" onClick={handleClose} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                   Cancel
                 </button>
@@ -444,17 +449,22 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
-              <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={handleClose} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={manualSaving || !manualTitle.trim() || !manualAuthor.trim()}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {manualSaving ? 'Adding…' : 'Add Book'}
-                </button>
+              <div className="pt-4 border-t border-gray-100 mt-6">
+                <p className="mb-4 text-xs text-gray-500 italic">
+                  By listing this item, you acknowledge that lending is at your own risk. Our website is not liable for any loss, damage, or unreturned items.
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button type="button" onClick={handleClose} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={manualSaving || !manualTitle.trim() || !manualAuthor.trim()}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {manualSaving ? 'Adding…' : 'Add Book'}
+                  </button>
+                </div>
               </div>
             </form>
           )}

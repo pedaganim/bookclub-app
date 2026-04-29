@@ -793,6 +793,7 @@ class ApiService {
     s3Bucket?: string;
     s3Key?: string;
     status?: string;
+    clubId?: string;
   }): Promise<import('../types').ToyListing> {
     const response = await this.api.post('/books', {
       ...data,
