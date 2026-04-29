@@ -433,14 +433,19 @@ const BookDetails: React.FC = () => {
             ) : (
               book.userId ? (
                 (!book.clubId || isMemberOfBookClub) ? (
-                  <button
-                    type="button"
-                    onClick={handleBorrow}
-                    className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
-                    title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
-                  >
-                    {`Borrow from ${book.userName || 'owner'}`}
-                  </button>
+                  <div className="flex flex-col items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={handleBorrow}
+                      className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
+                      title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
+                    >
+                      {`Borrow from ${book.userName || 'owner'}`}
+                    </button>
+                    <p className="text-xs text-gray-500 italic max-w-xl">
+                      By requesting to borrow, you agree to treat this item with care and return it promptly. Our website is a community platform and is not liable for any disputes, loss, or damage.
+                    </p>
+                  </div>
                 ) : (
                   <button
                     type="button"

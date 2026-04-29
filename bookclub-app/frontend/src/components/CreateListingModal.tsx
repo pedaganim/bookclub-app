@@ -240,6 +240,12 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
             />
           </div>
 
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 italic">
+              By listing this item, you acknowledge that lending is at your own risk. Our website is not liable for any loss, damage, or unreturned items.
+            </p>
+          </div>
+
           {/* Footer buttons */}
           <div className="flex gap-3 pt-2">
             <button
