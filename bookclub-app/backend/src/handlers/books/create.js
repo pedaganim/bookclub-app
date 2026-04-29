@@ -6,6 +6,7 @@ const textractService = require('../../lib/textract-service');
 const imageMetadataService = require('../../lib/image-metadata-service');
 const { DynamoDB } = require('../../lib/aws-config');
 const { getTableName } = require('../../lib/table-names');
+const BookClub = require('../../models/bookclub');
 
 /**
  * Helper function to assign ISBN based on extracted metadata
@@ -58,6 +59,9 @@ module.exports.handler = async (event) => {
     }
     const initialValidationError = validateInitialInput(data, isExtractingFromImage);
     if (initialValidationError) return initialValidationError;
+
+    const clubAccessError = await validateClubLostAndFoundAccess(data, userId);
+    if (clubAccessError) return clubAccessError;
 
     // Build minimal book data, then optionally enrich (gated for prod; on in tests)
     let bookData = buildInitialBookData(data);
@@ -149,7 +153,30 @@ const buildInitialBookData = (data) => ({
   // Persist original upload location for downstream processors
   s3Bucket: data.s3Bucket,
   s3Key: data.s3Key,
+  clubId: data.clubId || null,
 });
+
+const validateClubLostAndFoundAccess = async (data, userId) => {
+  const category = data.category || data.libraryType || 'book';
+  if (category !== 'lost_found') return null;
+
+  if (!data.clubId) {
+    return response.validationError({ clubId: 'clubId is required for Lost & Found posts' });
+  }
+
+  const club = await BookClub.getById(data.clubId);
+  if (!club) return response.notFound('Club not found');
+
+  const isMember = await BookClub.isMember(data.clubId, userId);
+  if (!isMember) return response.forbidden('You must be an active club member to post Lost & Found items');
+
+  const role = await BookClub.getMemberRole(data.clubId, userId);
+  if (!['admin', 'moderator'].includes(role)) {
+    return response.forbidden('Only club admins or moderators can post Lost & Found items');
+  }
+
+  return null;
+};
 
 // Enrichment is gated to preserve minimal creation in production. Enabled in tests or when explicitly allowed.
 const maybeEnrichWithMetadata = async (data, bookData) => {

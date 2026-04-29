@@ -48,6 +48,30 @@ const DEFAULT_CONDITIONS: LibraryConfig['conditions'] = [
 
 export const LIBRARY_CONFIGS: LibraryConfig[] = [
   {
+    libraryType: 'lost_found',
+    slug: 'lost-found',
+    label: 'Club Lost & Found',
+    shortLabel: 'Lost & Found',
+    emoji: '🧾',
+    tagline: 'Help club members recover their things',
+    description: 'Post found items and missing-item notices for your club. Only club admins and moderators can create posts.',
+    postLabel: 'Post Lost & Found',
+    itemLabel: 'Listing',
+    itemLabelPlural: 'Listings',
+    emptyBrowseText: 'No lost & found items yet for this club.',
+    emptyMineText: 'You have not posted any lost & found listings yet.',
+    searchPlaceholder: 'Search lost & found...',
+    pageTitle: 'Club Lost & Found — Community Library',
+    metaDescription: 'Browse club lost and found listings to reunite items with their owners.',
+    accentBg: 'bg-rose-100',
+    accentText: 'text-rose-700',
+    conditions: DEFAULT_CONDITIONS,
+    categories: [
+      { value: '', label: 'All listing types' },
+      { value: 'lost_found', label: '🧾 Lost & Found' },
+    ],
+  },
+  {
     libraryType: 'toy',
     slug: 'toys',
     label: 'Toy Library',
