@@ -26,6 +26,10 @@ exports.handler = async (event) => {
       // listingId means it's a library item (toy-listings table); bookId means it's a book
       const isLibraryItem = !!payload.listingId;
       const itemId = payload.listingId || payload.bookId;
+      const libraryType = payload.libraryType || null;
+      // Library types whose category must never be overwritten by AI analysis
+      const PINNED_CATEGORY_TYPES = ['lost_found'];
+      const isCategoryPinned = isLibraryItem && PINNED_CATEGORY_TYPES.includes(libraryType);
       const modelId = payload.modelId;
       const contentType = payload.contentType || 'image/jpeg';
 
@@ -99,7 +103,12 @@ exports.handler = async (event) => {
           vals[':d'] = metadata.description;
           sets.push('#d = :d'); // always write — items are created with description='' which blocks if_not_exists
         }
-        if (metadata.category) {
+        if (isCategoryPinned) {
+          // Keep category pinned to the libraryType — do not let AI overwrite it
+          names['#c'] = 'category';
+          vals[':c'] = libraryType;
+          sets.push('#c = :c');
+        } else if (metadata.category) {
           names['#c'] = 'category';
           vals[':c'] = metadata.category;
           sets.push('#c = :c');

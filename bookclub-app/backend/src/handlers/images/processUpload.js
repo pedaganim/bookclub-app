@@ -212,6 +212,7 @@ async function processLibraryUpload({ bucket, key, userId, libraryType }) {
   // Find the draft listing pre-created by generateUploadUrl
   let listingId = await getMappedListingId(bucket, key);
 
+  const PINNED_CATEGORY_TYPES = ['lost_found'];
   if (!listingId) {
     // Fallback: create minimal draft listing if mapping wasn't stored
     const draft = await ToyListing.create({
@@ -221,6 +222,7 @@ async function processLibraryUpload({ bucket, key, userId, libraryType }) {
       status: 'draft',
       images: [fileUrl],
       libraryType,
+      category: PINNED_CATEGORY_TYPES.includes(libraryType) ? libraryType : null,
     }, userId);
     listingId = draft.listingId;
     console.log(`[ImageProcessor] Created fallback draft listing: ${listingId}`);
