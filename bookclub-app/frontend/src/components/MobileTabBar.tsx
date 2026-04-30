@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useUploadModal } from '../contexts/UploadModalContext';
 import { apiService } from '../services/api';
-import { LIBRARY_CONFIGS } from '../config/libraryConfig';
 
 const MobileTabBar: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
+  const { openModal } = useUploadModal();
   const location = useLocation();
-  const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const pollRef = useRef<number | undefined>(undefined);
 
@@ -40,12 +40,8 @@ const MobileTabBar: React.FC = () => {
     }
   }, [isAuthenticated, user?.userId]);
 
-  const isActive = (path: string) => {
-    if (path === '/library') {
-      return location.pathname === '/library' || (location.pathname.startsWith('/library/') && location.pathname !== '/library/books');
-    }
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + '/');
 
   const Icon = {
     Home: () => (
@@ -53,12 +49,9 @@ const MobileTabBar: React.FC = () => {
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
       </svg>
     ),
-    Grid: () => (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
+    LostFound: () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isActive('/library/lost-found') ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
       </svg>
     ),
     Plus: () => (
@@ -78,99 +71,59 @@ const MobileTabBar: React.FC = () => {
     ),
   };
 
-  const allLibraries = LIBRARY_CONFIGS.map(lib => ({
-    label: lib.shortLabel,
-    emoji: lib.emoji,
-    route: `/library/${lib.slug}`,
-    accentBg: lib.accentBg,
-    accentText: lib.accentText
-  }));
-
   return (
-    <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
-        <div className="max-w-7xl mx-auto grid grid-cols-5 text-[10px]">
-          <Link to="/library" className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/library') ? 'text-indigo-700' : 'text-gray-600'}`}>
-            <Icon.Home />
-            <span className={isActive('/library') ? 'font-medium' : ''}>Home</span>
-          </Link>
-          <button
-            onClick={() => setLibrarySheetOpen(true)}
-            className="flex flex-col items-center justify-center py-2 gap-0.5 text-gray-600 hover:text-indigo-700 transition-colors"
-          >
-            <Icon.Grid />
-            <span>Libraries</span>
-          </button>
-          {isAuthenticated && (
-            <Link 
-              to="/library/events" 
-              state={{ openAddModal: true }}
-              className={`flex flex-col items-center justify-center py-1 gap-0.5 transition-all ${location.pathname === '/library/events' && location.state?.openAddModal ? 'text-indigo-700' : 'text-indigo-600'}`}
-              aria-label="Add Items"
-            >
-              <div className="bg-indigo-600 text-white rounded-full p-2.5 shadow-lg -mt-4 transform hover:scale-105 active:scale-95 transition-all">
-                <Icon.Plus />
-              </div>
-            </Link>
-          )}
-          <Link
-            to={isAuthenticated ? "/clubs" : "/clubs/browse"}
-            className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/clubs') ? 'text-indigo-700' : 'text-gray-600'}`}
-          >
-            <Icon.Users />
-            <span className={isActive('/clubs') ? 'font-medium' : ''}>Clubs</span>
-          </Link>
-          <Link to="/messages" className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors relative ${isActive('/messages') ? 'text-indigo-700' : 'text-gray-600'}`}>
-            <Icon.Chat />
-            <span className={isActive('/messages') ? 'font-medium' : ''}>Chat</span>
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-600 rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </Link>
-        </div>
-      </div>
-
-      {/* Mobile library picker bottom sheet */}
-      {librarySheetOpen && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col justify-end md:hidden"
-          onClick={() => setLibrarySheetOpen(false)}
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
+      <div className="max-w-7xl mx-auto grid grid-cols-5 text-[10px]">
+        <Link
+          to="/library"
+          className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/library') && location.pathname !== '/library/lost-found' ? 'text-indigo-700' : 'text-gray-600'}`}
         >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <div
-            className="relative bg-white rounded-t-3xl px-4 py-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+          <Icon.Home />
+          <span className={isActive('/library') && location.pathname !== '/library/lost-found' ? 'font-medium' : ''}>Browse</span>
+        </Link>
+
+        <Link
+          to="/library/lost-found"
+          className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/library/lost-found') ? 'text-rose-600' : 'text-gray-600'}`}
+        >
+          <Icon.LostFound />
+          <span className={isActive('/library/lost-found') ? 'font-medium' : ''}>Lost & Found</span>
+        </Link>
+
+        {isAuthenticated && (
+          <button
+            onClick={openModal}
+            className="flex flex-col items-center justify-center py-1 gap-0.5 text-indigo-600"
+            aria-label="Add to Library"
           >
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
-            <p className="text-sm font-semibold text-gray-800 mb-4">Browse Libraries</p>
-            <div className="grid grid-cols-2 gap-3">
-              {allLibraries.map((lib) => (
-                <Link
-                  key={lib.route}
-                  to={lib.route}
-                  onClick={() => setLibrarySheetOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl ${lib.accentBg}`}
-                >
-                  <span className="text-2xl">{lib.emoji}</span>
-                  <span className={`text-sm font-medium ${lib.accentText}`}>{lib.label}</span>
-                </Link>
-              ))}
+            <div className="bg-indigo-600 text-white rounded-full p-2.5 shadow-lg -mt-4 transform hover:scale-105 active:scale-95 transition-all">
+              <Icon.Plus />
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <Link
-                to="/library"
-                onClick={() => setLibrarySheetOpen(false)}
-                className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-gray-50 text-sm font-medium text-gray-700"
-              >
-                🏛️ View all libraries
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+          </button>
+        )}
+
+        <Link
+          to={isAuthenticated ? '/clubs' : '/clubs/browse'}
+          className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/clubs') ? 'text-indigo-700' : 'text-gray-600'}`}
+        >
+          <Icon.Users />
+          <span className={isActive('/clubs') ? 'font-medium' : ''}>Clubs</span>
+        </Link>
+
+        <Link
+          to="/messages"
+          className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors relative ${isActive('/messages') ? 'text-indigo-700' : 'text-gray-600'}`}
+        >
+          <Icon.Chat />
+          <span className={isActive('/messages') ? 'font-medium' : ''}>Chat</span>
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-600 rounded-full">
+              {unreadCount}
+            </span>
+          )}
+        </Link>
+      </div>
+    </div>
   );
 };
 

@@ -14,33 +14,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
   const [sending, setSending] = React.useState(false);
   const notificationCtx = React.useContext(NotificationContext);
   const { isAuthenticated, user } = useAuth();
-  const [requestingJoin, setRequestingJoin] = React.useState(false);
-  const [joinRequested, setJoinRequested] = React.useState(false);
   const navigate = useNavigate();
-
-
-  const requestToJoin = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      window.location.assign('/login');
-      return;
-    }
-    const clubId = (book as any).clubId;
-    if (!clubId) return;
-    try {
-      setRequestingJoin(true);
-      const { apiService } = await import('../services/api');
-      const res = await apiService.requestClubJoin(clubId);
-      if (res.status === 'pending' || res.status === 'active') {
-        setJoinRequested(true);
-        notificationCtx?.addNotification('success', res.status === 'active' ? 'Joined club!' : 'Request to join sent');
-      }
-    } catch (e) {
-      notificationCtx?.addNotification('error', 'Could not request to join club');
-    } finally {
-      setRequestingJoin(false);
-    }
-  };
 
   const handleCardClick = () => {
     const itemId = (book as any).bookId || (book as any).listingId;
@@ -139,33 +113,6 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
 
         {/* Action Button */}
         {(() => {
-          // If the book belongs to a club and the viewer is not a member, show Join Club
-          if ((book as any).clubId && !isMemberOfBookClub) {
-            const joinLabel = `Join the Club to Borrow`;
-            return (
-              <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-2">
-                <button
-                  type="button"
-                  className={`w-full sm:w-auto text-sm font-medium text-white px-4 py-2 rounded-md transition-colors ${requestingJoin || joinRequested ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'}`}
-                  title={joinRequested ? 'Request sent' : joinLabel}
-                  onClick={requestToJoin}
-                  disabled={requestingJoin || joinRequested}
-                >
-                  {joinRequested ? 'Requested' : joinLabel}
-                </button>
-                {book.userId && (
-                  <a 
-                    href={`/users/${book.userId}`} 
-                    className="block text-center sm:inline text-sm text-indigo-700 hover:text-indigo-900 hover:underline py-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View owner
-                  </a>
-                )}
-              </div>
-            );
-          }
-
           // Hide borrow button if this is the current user's own book
           const isOwn = user?.userId === book.userId;
           if (isOwn) {
@@ -204,7 +151,7 @@ const PublicBookCard: React.FC<PublicBookCardProps> = ({ book, isMemberOfBookClu
                   className="block text-center text-sm text-indigo-700 hover:text-indigo-900 hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  View owner profile
+                  {(book as any).userName || 'View owner'}
                 </a>
               )}
             </div>

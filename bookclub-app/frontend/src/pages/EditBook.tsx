@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Book } from '../types';
 import { useNotification } from '../contexts/NotificationContext';
@@ -63,7 +63,7 @@ const EditBook: React.FC = () => {
       }
       const updated = await apiService.updateBook(bookId, payload);
       addNotification('success', 'Book updated');
-      navigate(`/books/${updated.bookId}`);
+      navigate(`/books/${updated.bookId}`, { replace: true });
     } catch (e: any) {
       addNotification('error', e?.message || 'Failed to update book');
     } finally {
@@ -84,9 +84,9 @@ const EditBook: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 mb-4">{error}</div>
-        <Link to="/library" className="text-indigo-600 hover:text-indigo-800 hover:underline">Back to Library</Link>
+        <button onClick={() => navigate('/library')} className="text-indigo-600 hover:text-indigo-800 hover:underline">Back to Library</button>
       </div>
     );
   }
@@ -95,9 +95,10 @@ const EditBook: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <div className="max-w-2xl">
         <div className="mb-6">
-          <Link to={`/books/${book.bookId}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to Book</Link>
+          <button onClick={() => navigate(-1)} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to Item</button>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <h1 className="text-xl font-semibold text-gray-900 mb-4">Edit Listing</h1>
@@ -217,15 +218,16 @@ const EditBook: React.FC = () => {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Link to={`/books/${book.bookId}`} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                 Cancel
-              </Link>
+              </button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
                 {saving ? 'Saving…' : 'Save'}
               </button>
             </div>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );

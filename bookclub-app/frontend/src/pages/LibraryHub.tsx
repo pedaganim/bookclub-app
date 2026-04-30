@@ -1,128 +1,148 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LIBRARY_CONFIGS } from '../config/libraryConfig';
-import SEO from '../components/SEO';
+import { apiService } from '../services/api';
+import { Book } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import PublicBookCard from '../components/PublicBookCard';
+import SearchBar from '../components/SearchBar';
+import SEO from '../components/SEO';
 
+const FILTER_TYPES = [
+  { key: 'all',   label: 'All Items', emoji: '🏛️' },
+  { key: 'book',  label: 'Books',     emoji: '📚' },
+  { key: 'toy',   label: 'Toys',      emoji: '🧸' },
+  { key: 'tool',  label: 'Tools',     emoji: '🔧' },
+  { key: 'game',  label: 'Games',     emoji: '🎮' },
+  { key: 'event', label: 'Events',    emoji: '🎉' },
+  { key: 'other', label: 'Misc',      emoji: '📦' },
+];
 
 const LibraryHub: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [items, setItems] = useState<Book[]>([]);
+  const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isAuthenticated) { setUserClubIds(new Set()); return; }
+    apiService.getUserClubs()
+      .then(res => {
+        const active = (res.items || []).filter((c: any) => (c?.userStatus || 'active') === 'active');
+        setUserClubIds(new Set(active.map((c: any) => c.clubId)));
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
+
+  const fetchItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await apiService.listBooksPublic({ limit: 60, bare: true });
+      let all: Book[] = Array.isArray(response.items) ? response.items : [];
+
+      if (isAuthenticated && user?.userId) {
+        all = all.filter((i: any) => i.userId !== user.userId);
+      }
+      all = all.filter((i: any) => i.category !== 'lost_found');
+
+      setItems(all);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load items');
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, user?.userId]);
+
+  useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  const filtered = items.filter((i: any) => {
+    // Only show club items if user is a member of that club
+    if (i.clubId) {
+      if (!isAuthenticated || !userClubIds.has(i.clubId)) return false;
+    }
+    const matchType = activeFilter === 'all'
+      || i.category === activeFilter
+      || (!i.category && activeFilter === 'book');
+    const matchSearch = !search
+      || (i.title || '').toLowerCase().includes(search.toLowerCase());
+    return matchType && matchSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <SEO 
-        title="Community Library — Share & Borrow Together"
-        description="One place to borrow books, toys, tools, event gear and more from your local community. Discover, share and borrow together."
+    <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="Browse Library — Community Library"
+        description="Browse books, toys, tools, games and more shared by your community."
       />
-      
-      {/* Library categories section */}
-      <div id="browse-libraries" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex-grow">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div>
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 mb-2">The Collection</h2>
-            <h3 className="text-4xl font-black text-gray-900 tracking-tight leading-none uppercase italic">
-              Explore Our <span className="text-gray-400">Libraries</span>
-            </h3>
-          </div>
-          <p className="text-gray-500 max-w-sm text-sm font-medium">
-            Each library is managed by your local neighbors. Pick a category and see what's available today.
+
+      {/* Page header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">Browse Library</h1>
+          <p className="text-sm text-gray-500 mt-1 font-medium">
+            Items shared by your community — available to borrow
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {LIBRARY_CONFIGS.map((lib) => (
-            <Link
-              key={lib.slug}
-              to={`/library/${lib.slug}`}
-              className="group relative bg-white border border-gray-100 rounded-[32px] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden flex flex-col"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Search */}
+        <div className="mb-4">
+          <SearchBar
+            onSearch={setSearch}
+            placeholder="Search items…"
+            value={search}
+          />
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex flex-wrap md:flex-nowrap gap-2 pb-1 mb-6">
+          {FILTER_TYPES.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveFilter(t.key)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+                activeFilter === t.key
+                  ? 'bg-indigo-600 text-white border-transparent shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
             >
-              {/* Decorative accent */}
-              <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-10 group-hover:scale-150 transition-transform duration-700 ${lib.accentBg}`} />
-              
-              <div className="mb-8 relative">
-                <span className="text-6xl block group-hover:scale-110 transition-transform duration-500 origin-left" role="img" aria-label={lib.label}>
-                  {lib.emoji}
-                </span>
-              </div>
-              
-              <div className="relative flex-grow">
-                <h4 className={`text-2xl font-bold mb-2 group-hover:text-indigo-600 transition-colors uppercase tracking-tight`}>
-                  {lib.label}
-                </h4>
-                <p className="text-gray-500 leading-relaxed font-medium">
-                  {lib.tagline}. {lib.description}
-                </p>
-              </div>
-              
-              <div className="mt-10 pt-6 border-t border-gray-50 flex items-center justify-between">
-                <span className={`text-[11px] font-black uppercase tracking-widest ${lib.accentText}`}>
-                  View items →
-                </span>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-colors ${lib.accentBg} ${lib.accentText} group-hover:bg-indigo-600 group-hover:text-white`}>
-                   +
-                </div>
-              </div>
-            </Link>
+              <span>{t.emoji}</span>
+              <span>{t.label}</span>
+            </button>
           ))}
         </div>
-      </div>
 
-      {/* High-Impact Hero Section (Moved Below Libraries) */}
-      <div className="relative overflow-hidden bg-white border-t border-gray-100">
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-indigo-50 rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-amber-50 rounded-full blur-3xl opacity-50" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-gray-900 tracking-tighter mb-6 uppercase italic">
-            Borrow <span className="text-indigo-600">Everything.</span><br />
-            Share Your <span className="text-amber-500 underline decoration-amber-200">World.</span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-            Join thousands of neighbors sharing books, tools, toys, and more. 
-            Save money, reduce waste, and build a stronger community.
+        {/* Count */}
+        {!loading && (
+          <p className="text-xs text-gray-400 mb-3">
+            {filtered.length} item{filtered.length !== 1 ? 's' : ''}
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button 
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="w-full sm:w-auto px-10 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-tight hover:bg-black transition-all shadow-2xl active:scale-95"
-            >
-              Start Browsing
-            </button>
-            {isAuthenticated ? (
-              <Link 
-                to="/my-library"
-                className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 block sm:inline-block"
-              >
-                Go to My Dashboard
-              </Link>
-            ) : (
-              <Link 
-                to="/login"
-                className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 block sm:inline-block"
-              >
-                Join the Community
-              </Link>
-            )}
+        )}
+
+        {/* States */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
           </div>
-        </div>
-      </div>
-      
-      {/* Quick Footer-like Tip Section */}
-      <div className="bg-indigo-900 py-16 text-white text-center">
-        <div className="max-w-3xl mx-auto px-4">
-          <h3 className="text-3xl font-black uppercase tracking-tight mb-4 italic leading-tight">Ready to declutter your life?</h3>
-          <p className="text-indigo-100 mb-8 text-lg">
-            Start sharing the things you don't use every day and discover hidden treasures in your neighborhood.
-          </p>
-          <Link 
-            to={isAuthenticated ? "/my-library" : "/login"}
-            className="inline-block px-12 py-4 bg-white text-indigo-900 rounded-2xl font-black uppercase tracking-tight hover:bg-indigo-50 transition-all"
-          >
-            {isAuthenticated ? "Go to Dashboard" : "Get Started Now"}
-          </Link>
-        </div>
+        ) : error ? (
+          <div className="text-center py-16 text-red-600 text-sm">{error}</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-4xl mb-3">🔍</p>
+            <p className="font-bold text-gray-700">No items found</p>
+            <p className="text-sm text-gray-400 mt-1">Try a different filter or search term</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filtered.map((item: any) => (
+              <PublicBookCard key={(item as any).bookId || (item as any).listingId} book={item} isMemberOfBookClub={true} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
