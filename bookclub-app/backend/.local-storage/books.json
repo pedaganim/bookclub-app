@@ -364,5 +364,28 @@
     "category": "toy",
     "createdAt": "2026-04-25T11:06:36.366Z",
     "updatedAt": "2026-04-25T11:06:36.366Z"
+  },
+  "test-item-same-club": {
+    "bookId": "test-item-same-club",
+    "userId": "local-user-2",
+    "title": "Same Club Shared Item",
+    "author": "Jane Reader",
+    "description": "An item in the same club (qweqwe) as local-user. You should see the Borrow button for this.",
+    "category": "book",
+    "status": "available",
+    "clubId": "1783f5de-7554-40d9-9292-627eadf86a08",
+    "createdAt": "2026-04-29T23:49:52.449Z",
+    "updatedAt": "2026-04-29T23:49:52.450Z"
+  },
+  "test-item-diff-club": {
+    "bookId": "test-item-diff-club",
+    "userId": "local-user-2",
+    "title": "Different Club Item",
+    "description": "An item in a different club (Test Book Club). You should see the Request to Join button.",
+    "category": "tool",
+    "status": "available",
+    "clubId": "5a5fac2e-93dc-45b5-967b-677e02c098cd",
+    "createdAt": "2026-04-29T23:49:52.450Z",
+    "updatedAt": "2026-04-29T23:49:52.450Z"
   }
 }

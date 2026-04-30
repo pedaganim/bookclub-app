@@ -6,7 +6,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { Book } from '../types';
 import SEO from '../components/SEO';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
-import { getLibraryConfig } from '../config/libraryConfig';
+
 
 const Section: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-6">
@@ -27,6 +27,7 @@ const BookDetails: React.FC = () => {
   const notificationCtx = React.useContext(NotificationContext);
   const [deleting, setDeleting] = useState(false);
   const [isMemberOfBookClub, setIsMemberOfBookClub] = useState<boolean>(false);
+  const [joinStatus, setJoinStatus] = useState<string | null>(null);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
   const asText = (v: any): string => {
@@ -216,8 +217,11 @@ const BookDetails: React.FC = () => {
         setBook(b);
 
         if (isAuthenticated && b.clubId) {
-          const isMember = (userClubsRes.items || []).some((c: any) => c.clubId === b.clubId);
-          setIsMemberOfBookClub(isMember);
+          const club = (userClubsRes.items || []).find((c: any) => c.clubId === b.clubId);
+          setIsMemberOfBookClub(club?.userStatus === 'active');
+          if (club?.userStatus === 'pending') {
+            setJoinStatus('pending');
+          }
         } else if (!b.clubId) {
           setIsMemberOfBookClub(true);
         }
@@ -299,9 +303,24 @@ const BookDetails: React.FC = () => {
       try { trackBorrowIntent(book.userId as any, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'BookDetails' }); } catch {}
       notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
       navigate(`/messages/${conversation.conversationId}`);
-    } catch (e) {
-      notificationCtx?.addNotification('error', 'Could not start a chat. Opening Messages…');
-      navigate('/messages');
+    } catch (e: any) {
+      notificationCtx?.addNotification('error', e?.message || 'Could not start a chat.');
+      // Do not navigate away if it's a 403 or other error, let them see the error
+    }
+  };
+
+  const handleRequestJoin = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (!book.clubId) return;
+    try {
+      await apiService.requestClubJoin(book.clubId);
+      notificationCtx?.addNotification('success', 'Join request sent!');
+      setJoinStatus('pending');
+    } catch (e: any) {
+      notificationCtx?.addNotification('error', e?.message || 'Failed to request join');
     }
   };
 
@@ -449,11 +468,12 @@ const BookDetails: React.FC = () => {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => navigate('/clubs/browse', { state: { search: book.clubName || '' } })}
-                    className="text-sm font-medium text-white px-4 py-2 rounded-md bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
-                    title={`Join ${book.clubName || 'the club'} to borrow this ${getItemLabelLower(book.category || 'book')}`}
+                    onClick={joinStatus === 'pending' ? undefined : handleRequestJoin}
+                    disabled={joinStatus === 'pending'}
+                    className={`text-sm font-medium px-4 py-2 rounded-md ${joinStatus === 'pending' ? 'bg-amber-300 cursor-not-allowed text-white' : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white'}`}
+                    title={joinStatus === 'pending' ? 'Your request is pending approval' : `Join ${book.clubName || 'the club'} to borrow this ${getItemLabelLower(book.category || 'book')}`}
                   >
-                    {`Join ${book.clubName || 'Club'} to Borrow`}
+                    {joinStatus === 'pending' ? 'Join Request Pending' : 'Request to join the club'}
                   </button>
                 )
               ) : null
