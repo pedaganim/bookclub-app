@@ -343,6 +343,54 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  listClubMembers:
+    handler: src/handlers/clubs/listMembers.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}/members
+          cors: true
+
+  removeClubMember:
+    handler: src/handlers/clubs/removeMember.handler
+    events:
+      - http:
+          method: DELETE
+          path: /clubs/{clubId}/members/{userId}
+          cors: true
+
+  updateMemberRole:
+    handler: src/handlers/clubs/updateMemberRole.handler
+    events:
+      - http:
+          method: PATCH
+          path: /clubs/{clubId}/members/{userId}/role
+          cors: true
+
+  listClubRequests:
+    handler: src/handlers/clubs/listRequests.handler
+    events:
+      - http:
+          method: GET
+          path: /clubs/{clubId}/requests
+          cors: true
+
+  approveJoinRequest:
+    handler: src/handlers/clubs/approveRequest.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/requests/{userId}/approve
+          cors: true
+
+  rejectJoinRequest:
+    handler: src/handlers/clubs/rejectRequest.handler
+    events:
+      - http:
+          method: POST
+          path: /clubs/{clubId}/requests/{userId}/reject
+          cors: true
+
   # Direct Messages (DM)
   dmCreateConversation:
     handler: src/handlers/dm/createConversation.handler

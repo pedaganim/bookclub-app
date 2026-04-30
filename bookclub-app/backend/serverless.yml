@@ -84,7 +84,8 @@ provider:
             - s3:UploadPart
             - s3:CompleteMultipartUpload
             - s3:AbortMultipartUpload
-          Resource: "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+          Resource: 
+            - "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
         - Effect: Allow
           Action:
             - ses:SendEmail
@@ -981,12 +982,72 @@ functions:
             authorizerId:
               Ref: ApiGatewayAuthorizer
 
+  listClubMembers:
+    handler: src/handlers/clubs/listMembers.handler
+    events:
+      - http:
+          method: GET
+          path: clubs/{clubId}/members
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  removeClubMember:
+    handler: src/handlers/clubs/removeMember.handler
+    events:
+      - http:
+          method: DELETE
+          path: clubs/{clubId}/members/{userId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  updateMemberRole:
+    handler: src/handlers/clubs/updateMemberRole.handler
+    events:
+      - http:
+          method: PATCH
+          path: clubs/{clubId}/members/{userId}/role
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   approveJoinRequest:
     handler: src/handlers/clubs/approveRequest.handler
     events:
       - http:
           method: POST
-          path: /clubs/{clubId}/requests/{userId}/approve
+          path: clubs/{clubId}/requests/{userId}/approve
           cors:
             origin: '*'
             headers:
@@ -1006,7 +1067,7 @@ functions:
     events:
       - http:
           method: POST
-          path: /clubs/{clubId}/requests/{userId}/reject
+          path: clubs/{clubId}/requests/{userId}/reject
           cors:
             origin: '*'
             headers:
@@ -1409,23 +1470,31 @@ resources:
         UserPoolId: !Ref UserPool
         GenerateSecret: false
         ExplicitAuthFlows:
-          - ADMIN_NO_SRP_AUTH
-          - USER_PASSWORD_AUTH
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_USER_SRP_AUTH
         PreventUserExistenceErrors: ENABLED
         AllowedOAuthFlowsUserPoolClient: true
         AllowedOAuthFlows:
           - code
         AllowedOAuthScopes:
-          - openid
           - email
+          - openid
           - profile
         SupportedIdentityProviders:
-          - COGNITO
           - Google
+        AccessTokenValidity: 1
+        IdTokenValidity: 1
+        RefreshTokenValidity: 365
+        TokenValidityUnits:
+          AccessToken: days
+          IdToken: days
+          RefreshToken: days
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
+          - https://nearborrow.com.au/auth/callback
         LogoutURLs:
           - ${self:custom.appConfig.oauth.redirectSignOut}
+          - https://nearborrow.com.au
 
     GoogleIdentityProvider:
       Type: AWS::CloudFormation::CustomResource
@@ -1446,6 +1515,7 @@ resources:
           given_name: given_name
           family_name: family_name
           name: name
+          username: sub
 
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain

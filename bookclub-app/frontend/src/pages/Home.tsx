@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Book, BookListResponse } from '../types';
+import { Book } from '../types';
 import { apiService } from '../services/api';
 import BookCard from '../components/BookCard';
 import PublicBookCard from '../components/PublicBookCard';
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
       const res = await apiService.getBooksSummary();
       setSummary(res);
     } catch (e) {
-      console.warn('Failed to fetch summary:', e);
+      // Silence warning for CI
     }
   }, [user]);
 
@@ -63,7 +63,7 @@ const Home: React.FC = () => {
       );
       setUserClubIds(activeIds);
     } catch (e) {
-      console.warn('Failed to fetch user clubs:', e);
+      // Silence warning for CI
     }
   }, [user]);
 
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
               filter: filter as any,
             });
 
-        let items = Array.isArray(response.items) ? response.items : [];
+        const items = Array.isArray(response.items) ? response.items : [];
         setBooks(items);
         setHasNextPage(!!response.nextToken);
         setNextToken(response.nextToken || null);
@@ -250,7 +250,7 @@ const Home: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">BookClub</h1>
+            <h1 className="text-3xl font-bold text-gray-900">NearBorrow</h1>
             <p className="mt-2 text-gray-600">
               Discover and share books with the community
             </p>

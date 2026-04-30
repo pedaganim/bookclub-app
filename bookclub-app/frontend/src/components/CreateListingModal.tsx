@@ -22,8 +22,19 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
   const [uploadingBatch, setUploadingBatch] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ index: 0, total: 0, success: 0, failed: 0, currentName: '' });
   const [error, setError] = useState('');
+  const [clubId, setClubId] = useState('');
+  const [managedClubs, setManagedClubs] = useState<any[]>([]);
   const [statusMessage, setStatusMessage] = useState('');
   const isLocal = appConfig.apiBaseUrl.includes('localhost');
+
+  React.useEffect(() => {
+    if (config.libraryType !== 'lost_found') return;
+    apiService.getUserClubs().then((res: any) => {
+      const allowed = (res.items || []).filter((c: any) => ['admin', 'moderator'].includes(c.userRole));
+      setManagedClubs(allowed);
+      if (allowed.length === 1) setClubId(allowed[0].clubId);
+    }).catch(() => setManagedClubs([]));
+  }, [config.libraryType]);
 
   const handleImagesProcessed = (images: SelectedImage[]) => {
     setUploadedImages(images);
@@ -37,6 +48,10 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
   const uploadImagesOnly = async () => {
     if (uploadedImages.length === 0) {
       setError(`Please upload at least one ${config.itemLabel} image.`);
+      return;
+    }
+    if (config.libraryType === 'lost_found' && !clubId) {
+      setError('Please select a club for this Lost & Found post.');
       return;
     }
 
@@ -98,6 +113,7 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
                   title: isLocal ? image.file.name.replace(/\.[^/.]+$/, '').replace(/[_\-.]/g, ' ') : 'Processing...',
                   libraryType: config.libraryType === 'all' ? 'toy' : config.libraryType,
                   userName: user?.name || user?.email || 'Community Member',
+                  clubId: config.libraryType === 'lost_found' ? clubId : undefined,
                 }),
                 'createToyListing'
               );
@@ -198,6 +214,22 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
           )}
 
           <div className="mb-6">
+            {config.libraryType === 'lost_found' && (
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Club</label>
+                <select
+                  value={clubId}
+                  onChange={(e) => setClubId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  disabled={uploadingBatch}
+                >
+                  <option value="">Select a club</option>
+                  {managedClubs.map((c) => (
+                    <option key={c.clubId} value={c.clubId}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <MultiImageUpload
               onImagesProcessed={handleImagesProcessed}
               onError={handleImageError}
@@ -206,6 +238,12 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
               itemLabel={config.itemLabel}
               itemLabelPlural={config.itemLabelPlural}
             />
+          </div>
+
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 italic">
+              By listing this item, you acknowledge that lending is at your own risk. Our website is not liable for any loss, damage, or unreturned items.
+            </p>
           </div>
 
           {/* Footer buttons */}

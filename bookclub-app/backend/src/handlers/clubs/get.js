@@ -37,17 +37,23 @@ exports.handler = async (event) => {
     // For now, we allow public viewing of all clubs, but certain actions/roles require membership
     let isMember = false;
     let userRole = null;
+    let userStatus = null;
 
     if (userId) {
-      isMember = await BookClub.isMember(clubId, userId);
-      userRole = isMember ? await BookClub.getMemberRole(clubId, userId) : null;
+      const memberRecord = await BookClub.getMemberRecord(clubId, userId);
+      if (memberRecord) {
+        userStatus = memberRecord.status || null;
+        isMember = userStatus === 'active';
+        userRole = memberRecord.role || null;
+      }
     }
 
-    // Return club with user's role (if member)
+    // Return club with user's membership info
     const result = {
       ...club,
       isMember,
       userRole,
+      userStatus,
     };
 
     return success(result);

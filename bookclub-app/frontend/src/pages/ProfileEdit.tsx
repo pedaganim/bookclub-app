@@ -120,6 +120,9 @@ const ProfileEdit: React.FC = () => {
               value={formData.name}
               onChange={handleInputChange}
               required
+              maxLength={50}
+              pattern="^[a-zA-Z0-9\s\-_.'’]*$"
+              title="Display name can only contain letters, numbers, spaces, hyphens, underscores, dots, and apostrophes."
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>

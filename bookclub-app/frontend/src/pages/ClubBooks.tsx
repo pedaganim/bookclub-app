@@ -4,12 +4,12 @@ import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import { useAuth } from '../contexts/AuthContext';
-import { ArchiveBoxIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, UserPlusIcon, UsersIcon } from '@heroicons/react/24/outline';
 
 const ClubBooks: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [club, setClub] = useState<BookClub | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,13 @@ const ClubBooks: React.FC = () => {
       // club info is optional — continue without it
     }
   }, [clubId]);
+
+  // Re-fetch club when authentication changes to get membership status
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchClub();
+    }
+  }, [isAuthenticated, fetchClub]);
 
   const handleRequestJoin = async () => {
     if (!isAuthenticated) {
@@ -109,7 +116,7 @@ const ClubBooks: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/clubs')}
+            onClick={() => navigate(isAuthenticated ? '/clubs' : '/clubs/browse')}
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-4 inline-flex items-center gap-1 group transition-colors"
           >
             <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Clubs
@@ -131,7 +138,7 @@ const ClubBooks: React.FC = () => {
               </div>
 
               {/* Join / pending for non-members */}
-              {club && !club.isMember && club.userStatus !== 'active' && (
+              {club && !club.isMember && club.userRole !== 'admin' && club.createdBy !== user?.userId && club.userStatus !== 'active' && (
                 club.userStatus === 'pending' ? (
                   <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                     Request Sent
@@ -146,6 +153,16 @@ const ClubBooks: React.FC = () => {
                     {joining ? 'Sending…' : (isAuthenticated ? 'Request to Join' : 'Join Club')}
                   </button>
                 )
+              )}
+
+              {club && (club.isMember || club.userRole === 'admin') && (
+                <button
+                  onClick={() => navigate(`/clubs/${clubId}/members`)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  <UsersIcon className="h-4 w-4 text-gray-400" />
+                  {club.userRole === 'admin' ? 'Manage Members' : 'View Members'}
+                </button>
               )}
             </div>
           </div>

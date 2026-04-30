@@ -20,5 +20,40 @@
     "timezone": "UTC",
     "createdAt": "2026-04-03T11:02:46.178Z",
     "updatedAt": "2026-04-03T11:02:46.178Z"
+  },
+  "local-bob@example.com": {
+    "userId": "user-2",
+    "email": "bob@example.com",
+    "name": "Bob Builder",
+    "createdAt": "2026-04-25T09:37:43.692Z",
+    "updatedAt": "2026-04-25T09:37:43.693Z"
+  },
+  "local-alice@example.com": {
+    "userId": "user-3",
+    "email": "alice@example.com",
+    "name": "Alice Wonderland",
+    "createdAt": "2026-04-25T09:37:43.693Z",
+    "updatedAt": "2026-04-25T09:37:43.693Z"
+  },
+  "local-charlie@example.com": {
+    "userId": "user-4",
+    "email": "charlie@example.com",
+    "name": "Charlie Brown",
+    "createdAt": "2026-04-25T09:37:43.693Z",
+    "updatedAt": "2026-04-25T09:37:43.693Z"
+  },
+  "local-david@example.com": {
+    "userId": "user-5",
+    "email": "david@example.com",
+    "name": "David Goggins",
+    "createdAt": "2026-04-25T09:38:22.502Z",
+    "updatedAt": "2026-04-25T09:38:22.502Z"
+  },
+  "local-eve@example.com": {
+    "userId": "user-6",
+    "email": "eve@example.com",
+    "name": "Eve Online",
+    "createdAt": "2026-04-25T09:38:22.502Z",
+    "updatedAt": "2026-04-25T09:38:22.502Z"
   }
 }

@@ -41,6 +41,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
   const [totalCount] = useState<number | undefined>(undefined);
   
   const [userClubIdSet, setUserClubIdSet] = useState<Set<string>>(new Set());
+  const [accessibleOwnerIdSet, setAccessibleOwnerIdSet] = useState<Set<string>>(new Set());
 
   const fetchItems = useCallback(async (search?: string, currentPageSize?: number, token?: string | null) => {
     if (!config) return;
@@ -84,15 +85,24 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
     fetchItems();
   }, [fetchItems]);
 
-  // Load user's clubs to determine membership
+  // Load user's clubs + all member IDs from those clubs for borrow-gating
   useEffect(() => {
     if (!isAuthenticated) {
       setUserClubIdSet(new Set());
+      setAccessibleOwnerIdSet(new Set());
       return;
     }
-    apiService.getUserClubs().then(res => {
+    apiService.getUserClubs().then(async (res) => {
       const active = (res.items || []).filter((c: any) => (c?.userStatus || 'active') === 'active');
-      setUserClubIdSet(new Set(active.map(c => c.clubId)));
+      setUserClubIdSet(new Set(active.map((c: any) => c.clubId)));
+      // Load member IDs from all active clubs so we can gate items with no clubId
+      const memberLists = await Promise.all(
+        active.map((c: any) => apiService.listMembers(c.clubId).catch(() => ({ items: [] })))
+      );
+      const allMemberIds = new Set<string>(
+        memberLists.flatMap((r: any) => (r.items || []).map((m: any) => m.userId))
+      );
+      setAccessibleOwnerIdSet(allMemberIds);
     }).catch(() => {});
   }, [isAuthenticated]);
 
@@ -104,9 +114,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
     fetchItems(q || undefined, PAGE_SIZE, null);
   };
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    // We'll stick to fixed page size for now for simplicity in the unified view
-  };
+
 
   const handleNextPage = () => {
     if (hasNextPage && nextToken) {
@@ -144,7 +152,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
       
       {/* Premium Hero with Breadcrumbs */}
       <div className="bg-white border-b border-gray-100 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 w-full">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="max-w-2xl">
               <nav className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
@@ -153,9 +161,9 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
                 <span className="text-gray-900">{config.shortLabel}</span>
               </nav>
               
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-6xl" role="img" aria-label={config.label}>{config.emoji}</span>
-                <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-none uppercase italic">
+              <div className="flex items-center flex-wrap gap-4 mb-4">
+                <span className="text-5xl sm:text-6xl flex-shrink-0" role="img" aria-label={config.label}>{config.emoji}</span>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-none uppercase italic break-words">
                   {config.label}
                 </h1>
               </div>
@@ -249,7 +257,11 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
                <PublicBookCard
                  key={item.bookId}
                  book={item}
-                 isMemberOfBookClub={item.clubId ? userClubIdSet.has(item.clubId) : true}
+                 isMemberOfBookClub={
+                   item.clubId
+                     ? userClubIdSet.has(item.clubId)
+                     : isAuthenticated && accessibleOwnerIdSet.has((item as any).userId)
+                 }
                />
             ))}
           </div>

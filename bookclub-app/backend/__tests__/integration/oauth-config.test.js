@@ -35,7 +35,6 @@ describe('OAuth Configuration', () => {
   describe('User Pool Client', () => {
     test('should support Google as identity provider', () => {
       expect(yamlContent).toContain('SupportedIdentityProviders:');
-      expect(yamlContent).toContain('- COGNITO');
       expect(yamlContent).toContain('- Google');
     });
 

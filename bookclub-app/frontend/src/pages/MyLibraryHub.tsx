@@ -49,7 +49,7 @@ const MyLibraryHub: React.FC = () => {
       />
       
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">My Library</h1>
           <p className="text-lg text-gray-600 max-w-xl">
             Manage everything you're sharing with the community.
@@ -61,20 +61,20 @@ const MyLibraryHub: React.FC = () => {
         {/* All Items summary card */}
         <Link
           to="/my-library/all"
-          className="group flex items-center justify-between bg-indigo-600 text-white rounded-3xl px-8 py-5 mb-6 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+          className="group flex items-center justify-between bg-indigo-50 text-indigo-900 rounded-3xl px-8 py-5 mb-6 hover:bg-indigo-100 transition-all border border-indigo-100"
         >
           <div className="flex items-center gap-4">
             <span className="text-4xl" role="img" aria-label="All items">📦</span>
             <div>
               <h2 className="text-xl font-bold">All My Items</h2>
-              <p className="text-indigo-200 text-sm">View everything across all categories</p>
+              <p className="text-indigo-700 text-sm">View everything across all categories</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="bg-white/20 px-4 py-1.5 rounded-full text-sm font-bold">
+            <span className="bg-white px-4 py-1.5 rounded-full text-sm font-bold text-indigo-700">
               {Object.values(summaries).reduce((a, b) => a + b, 0)} items
             </span>
-            <span className="font-bold text-indigo-200 group-hover:translate-x-1 transition-transform">→</span>
+            <span className="font-bold text-indigo-700 group-hover:translate-x-1 transition-transform">→</span>
           </div>
         </Link>
 
@@ -109,17 +109,17 @@ const MyLibraryHub: React.FC = () => {
         </div>
 
         {/* Global Stats or Tips section could go here */}
-        <div className="mt-12 bg-indigo-900 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mt-12 bg-indigo-50 rounded-3xl p-8 text-indigo-900 flex flex-col md:flex-row items-center justify-between gap-6 border border-indigo-100">
           <div className="flex-1">
             <h3 className="text-2xl font-bold mb-2">Power Sharing 💡</h3>
-            <p className="text-indigo-100">
+            <p className="text-indigo-800">
               Items with good photos and clear descriptions are 3x more likely to be borrowed. 
               Take a moment to polish your listings!
             </p>
           </div>
           <Link 
             to="/library"
-            className="px-8 py-3 bg-white text-indigo-900 rounded-2xl font-bold hover:bg-indigo-50 transition-colors"
+            className="px-8 py-3 bg-white border border-indigo-200 text-indigo-900 rounded-2xl font-bold hover:bg-indigo-100 transition-colors"
           >
             Browse Public Library
           </Link>

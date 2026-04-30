@@ -1,12 +1,13 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList } from '../types';
 import { config } from '../config';
-import { getCookie } from '../utils/cookies';
+import { getCookie, setCookie, getBaseDomain } from '../utils/cookies';
 
 class ApiService {
   private api: AxiosInstance;
   private baseURL: string;
   private onSessionExpired?: () => void;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
     this.baseURL = config.apiBaseUrl;
@@ -41,16 +42,105 @@ class ApiService {
     // Add response interceptor to handle errors and detect auth failures
     this.api.interceptors.response.use(
       (response) => response,
-      (error) => {
-        // Redirect to login on any authentication/authorization failure
-        if (!config.skipAuth && (error.response?.status === 401 || error.response?.status === 403) && this.onSessionExpired) {
-          // Previously, we only redirected for specific token errors. To ensure consistent UX,
-          // we now redirect on any 401/403 from protected endpoints.
+      async (error) => {
+        const originalRequest = error.config;
+
+        // Determine if this is a true authentication failure (API Gateway/Cognito) vs an application-level permission error
+        const isAppError = error.response?.data && 'success' in error.response.data;
+        const isAuthError = (error.response?.status === 401 || error.response?.status === 403) && !isAppError;
+
+        // If the error is an auth failure and we haven't already tried to refresh
+        if (
+          !config.skipAuth && 
+          isAuthError && 
+          !originalRequest._retry &&
+          localStorage.getItem('refreshToken')
+        ) {
+          originalRequest._retry = true;
+
+          try {
+            const success = await this.refreshToken();
+            if (success) {
+              // Get the new token from localStorage
+              const idToken = localStorage.getItem('idToken') || getCookie('idToken');
+              const accessToken = localStorage.getItem('accessToken') || getCookie('accessToken');
+              const token = idToken || accessToken;
+
+              if (token) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                return this.api(originalRequest);
+              }
+            }
+          } catch (refreshError) {
+            // Refresh failed
+          }
+        }
+
+        // If we reach here, either it's not an auth error, or refresh failed
+        if (!config.skipAuth && isAuthError && this.onSessionExpired) {
           this.onSessionExpired();
         }
+
+        // Extract server-provided error message if available
+        if (error.response?.data?.error?.message) {
+          error.message = error.response.data.error.message;
+        } else if (error.response?.data?.message) {
+          error.message = error.response.data.message;
+        }
+
         return Promise.reject(error);
       }
     );
+  }
+
+  private async refreshToken(): Promise<boolean> {
+    // If a refresh is already in progress, return that promise
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      const refreshToken = localStorage.getItem('refreshToken') || getCookie('refreshToken');
+      if (!refreshToken) return false;
+
+      try {
+        const body = new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: config.cognito.userPoolClientId,
+          refresh_token: refreshToken,
+        });
+
+        const resp = await fetch(`https://${config.cognito.domain}/oauth2/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        });
+
+        if (resp.ok) {
+          const tokens = await resp.json();
+          const newAccessToken = tokens.access_token;
+          const newIdToken = tokens.id_token;
+
+          if (newAccessToken) localStorage.setItem('accessToken', newAccessToken);
+          if (newIdToken) localStorage.setItem('idToken', newIdToken);
+
+          // Update cookies too for cross-subdomain support
+          const domain = getBaseDomain();
+          if (newAccessToken) setCookie('accessToken', newAccessToken, { domain });
+          if (newIdToken) setCookie('idToken', newIdToken, { domain });
+
+          return true;
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Token refresh failed:', e);
+      } finally {
+        this.refreshPromise = null;
+      }
+      return false;
+    })();
+
+    return this.refreshPromise;
   }
 
   // Method to register session expiration callback
@@ -272,19 +362,12 @@ class ApiService {
 
   async uploadFile(uploadUrl: string, file: File, userId?: string | null, contentType?: string): Promise<void> {
     const headers: Record<string, string> = {
-      'Content-Type': contentType || file.type,
+      'Content-Type': contentType || file.type || 'application/octet-stream'
     };
     
-    // If the URL was signed with metadata, we MUST send the corresponding header
-    // to avoid a 403 Signature Mismatch/CORS error.
-    if (userId) {
-      headers['x-amz-meta-uploaded-by'] = userId;
-    }
-
     await axios.put(uploadUrl, file, {
       headers,
-      // Mobile networks can be slow; extend timeout for PUT to S3
-      timeout: 15 * 60 * 1000, // 15 minutes
+      timeout: 30 * 60 * 1000,
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
     });
@@ -355,13 +438,15 @@ class ApiService {
       const partNumber = index + 1;
       const { uploadUrl } = await this.multipartSignPart({ key, uploadId, partNumber, contentType: fileType });
       const putRes = await axios.put(uploadUrl, blob, {
-        headers: { 'Content-Type': fileType },
-        timeout: 15 * 60 * 1000,
+        headers: {
+          'Content-Type': fileType || 'application/octet-stream'
+        },
+        timeout: 30 * 60 * 1000, // 30 minutes
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
       });
       const rawETag = putRes.headers.etag || putRes.headers.ETag || putRes.headers['etag'] || '';
-      const eTag = rawETag.replace(/\"/g, '');
+      const eTag = rawETag.replace(/"/g, '');
       if (!eTag) {
         throw new Error('ETag missing from S3 upload response. This is usually a CORS issue — ensure the S3 bucket ExposeHeaders includes "ETag".');
       }
@@ -549,6 +634,29 @@ class ApiService {
     }
   }
 
+  // Member Management
+  async listMembers(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; role: 'admin' | 'member'; status: string; joinedAt: string; name?: string; email?: string; profilePicture?: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ items: any[] }>> = await this.api.get(`/clubs/${clubId}/members`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list members');
+    }
+    return response.data.data!;
+  }
+
+  async removeMember(clubId: string, userId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(`/clubs/${clubId}/members/${userId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to remove member');
+    }
+  }
+
+  async updateMemberRole(clubId: string, userId: string, role: 'admin' | 'member'): Promise<void> {
+    const response: AxiosResponse<ApiResponse<void>> = await this.api.patch(`/clubs/${clubId}/members/${userId}/role`, { role });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to update member role');
+    }
+  }
+
   // Direct Messaging
   async dmCreateConversation(toUserId: string): Promise<DMConversation> {
     try {
@@ -697,6 +805,7 @@ class ApiService {
     s3Bucket?: string;
     s3Key?: string;
     status?: string;
+    clubId?: string;
   }): Promise<import('../types').ToyListing> {
     const response = await this.api.post('/books', {
       ...data,

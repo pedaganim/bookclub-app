@@ -64,7 +64,7 @@ const listBooksByClubMembers = async (clubId, limit) => {
     activeMembers.map(m => Book.listByUser(m.userId, perMember, null).catch(() => ({ items: [] })))
   );
 
-  const items = results.flatMap(r => r.items || []);
+  const items = results.flatMap(r => (r.items || []).map(book => ({ ...book, clubId })));
   return { items: items.slice(0, limit), nextToken: null };
 };
 

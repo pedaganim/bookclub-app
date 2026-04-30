@@ -12,7 +12,7 @@ const About: React.FC = () => {
         <header className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">About Us</h1>
           <p className="text-gray-700">
-            Book Club is a serverless web application that helps readers discover and manage books with a simple, modern interface.
+            NearBorrow is a serverless web application that helps readers discover and manage books with a simple, modern interface.
           </p>
           <p>
             <a href="/about/blogs" className="inline-block mt-2 text-indigo-600 hover:text-indigo-800 underline">

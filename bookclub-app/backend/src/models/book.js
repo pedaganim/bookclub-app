@@ -172,32 +172,38 @@ class Book {
 
       // Apply search filter if provided
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        result = result.filter(book => {
-          const md = book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
-          const fields = [
-            book.description,
-            book.title,
-            book.author,
-            book.publisher,
-            book.isbn10,
-            book.isbn13,
-            md && md.title,
-            md && md.author,
-            md && md.publisher,
-            md && md.subtitle,
-            md && md.series,
-            md && md.edition,
-            md && md.language,
-          ];
-          const categories = []
-            .concat(Array.isArray(book.categories) ? book.categories : [])
-            .concat(Array.isArray(md.categories) ? md.categories : []);
-          return (
-            fields.some(v => typeof v === 'string' && v.toLowerCase().includes(q)) ||
-            categories.some(v => typeof v === 'string' && v.toLowerCase().includes(q))
-          );
-        });
+        const searchTerms = String(searchQuery).toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(Boolean);
+        if (searchTerms.length > 0) {
+          result = result.filter(book => {
+            const md = (book.advancedMetadata && book.advancedMetadata.metadata) || book.advancedMetadata || {};
+            const fields = [
+              book.description,
+              book.title,
+              book.author,
+              book.publisher,
+              book.isbn10,
+              book.isbn13,
+              md && md.description,
+              md && md.title,
+              md && md.author,
+              md && md.publisher,
+              md && md.subtitle,
+              md && md.series,
+              md && md.edition,
+              md && md.language,
+            ];
+            const categories = []
+              .concat(Array.isArray(book.categories) ? book.categories : [])
+              .concat(Array.isArray(md.categories) ? md.categories : []);
+              
+            const allText = [...fields, ...categories]
+              .filter(v => typeof v === 'string')
+              .map(v => v.toLowerCase().replace(/[^\w\s]/g, ''))
+              .join(' ');
+              
+            return searchTerms.every(term => allText.includes(term));
+          });
+        }
       }
 
       // Apply ageGroupFine filter if provided (check top-level and advanced metadata)
@@ -271,32 +277,38 @@ class Book {
     // Apply in-memory filtering for case-insensitive search against multiple fields
     let items = result.Items || [];
     if (searchQuery) {
-      const q = String(searchQuery).toLowerCase();
-      items = items.filter((book) => {
-        const md = book && book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
-        const fields = [
-          book && book.description,
-          book && book.title,
-          book && book.author,
-          book && book.publisher,
-          book && book.isbn10,
-          book && book.isbn13,
-          md && md.title,
-          md && md.author,
-          md && md.publisher,
-          md && md.subtitle,
-          md && md.series,
-          md && md.edition,
-          md && md.language,
-        ];
-        const categories = []
-          .concat(Array.isArray(book && book.categories) ? book.categories : [])
-          .concat(Array.isArray(md && md.categories) ? md.categories : []);
-        return (
-          fields.some(v => typeof v === 'string' && v.toLowerCase().includes(q)) ||
-          categories.some(v => typeof v === 'string' && v.toLowerCase().includes(q))
-        );
-      });
+      const searchTerms = String(searchQuery).toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(Boolean);
+      if (searchTerms.length > 0) {
+        items = items.filter((book) => {
+          const md = (book && book.advancedMetadata && book.advancedMetadata.metadata) || (book && book.advancedMetadata) || {};
+          const fields = [
+            book && book.description,
+            book && book.title,
+            book && book.author,
+            book && book.publisher,
+            book && book.isbn10,
+            book && book.isbn13,
+            md && md.description,
+            md && md.title,
+            md && md.author,
+            md && md.publisher,
+            md && md.subtitle,
+            md && md.series,
+            md && md.edition,
+            md && md.language,
+          ];
+          const categories = []
+            .concat(Array.isArray(book && book.categories) ? book.categories : [])
+            .concat(Array.isArray(md && md.categories) ? md.categories : []);
+            
+          const allText = [...fields, ...categories]
+            .filter(v => typeof v === 'string')
+            .map(v => v.toLowerCase().replace(/[^\w\s]/g, ''))
+            .join(' ');
+            
+          return searchTerms.every(term => allText.includes(term));
+        });
+      }
     }
 
     // Apply ageGroupFine filter if provided

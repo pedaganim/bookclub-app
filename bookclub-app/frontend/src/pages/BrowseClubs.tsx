@@ -156,10 +156,13 @@ const BrowseClubs: React.FC = () => {
             key={club.clubId}
             club={club}
             isCreator={isCreatorOf(club)}
+            isAdmin={club.userRole === 'admin' || isCreatorOf(club)}
             isMember={userClubIds.has(club.clubId)}
             isRequested={requestedClubIds.has(club.clubId)}
             onJoin={() => handleRequestJoin(club)}
             isJoining={requestingId === club.clubId}
+            onManageRequests={() => navigate(`/clubs/${club.clubId}/requests`)}
+            onManageMembers={() => navigate(`/clubs/${club.clubId}/members`)}
           />
         ))}
       </div>
@@ -189,19 +192,21 @@ const BrowseClubs: React.FC = () => {
         {/* Secondary tabs */}
         <div className="mb-8 border-b border-gray-200">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <NavLink
-              to="/clubs"
-              end
-              className={({ isActive }) =>
-                `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
-                  isActive
-                    ? 'border-indigo-600 text-indigo-700'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`
-              }
-            >
-              My Clubs
-            </NavLink>
+            {isAuthenticated && (
+              <NavLink
+                to="/clubs"
+                end
+                className={({ isActive }) =>
+                  `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
+                    isActive
+                      ? 'border-indigo-600 text-indigo-700'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`
+                }
+              >
+                My Clubs
+              </NavLink>
+            )}
             <NavLink
               to="/clubs/browse"
               className={({ isActive }) =>

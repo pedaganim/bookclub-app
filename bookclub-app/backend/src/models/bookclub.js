@@ -288,6 +288,32 @@ class BookClub {
     }
   }
 
+  static async updateMemberRole(clubId, userId, newRole) {
+    if (!['admin', 'member'].includes(newRole)) {
+      throw new Error('Invalid role');
+    }
+
+    if (isOffline()) {
+      const member = await LocalStorage.getClubMember(clubId, userId);
+      if (!member) throw new Error('Member not found');
+      const updated = { ...member, role: newRole };
+      await LocalStorage.createClubMember(updated);
+      return updated;
+    }
+
+    const { UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues } = dynamoDb.generateUpdateExpression({ role: newRole });
+    const params = {
+      TableName: getTableName('bookclub-members'),
+      Key: { clubId, userId },
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+    const result = await dynamoDb.update(params);
+    return result.Attributes;
+  }
+
   static async getMembers(clubId) {
     if (isOffline()) {
       return LocalStorage.getClubMembers(clubId);
@@ -381,6 +407,14 @@ class BookClub {
 
     const intersection = [...activeIdsA].filter(id => activeIdsB.has(id));
     return intersection;
+  }
+
+  static async getMemberRecord(clubId, userId) {
+    if (isOffline()) {
+      return LocalStorage.getClubMember(clubId, userId) || null;
+    }
+    const result = await dynamoDb.get(getTableName('bookclub-members'), { clubId, userId });
+    return result || null;
   }
 
   static async getMemberRole(clubId, userId) {

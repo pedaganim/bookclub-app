@@ -6,7 +6,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { Book } from '../types';
 import SEO from '../components/SEO';
 import { getItemLabel, getItemLabelLower } from '../utils/labels';
-import { getLibraryConfig } from '../config/libraryConfig';
+
 
 const Section: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-6">
@@ -27,6 +27,7 @@ const BookDetails: React.FC = () => {
   const notificationCtx = React.useContext(NotificationContext);
   const [deleting, setDeleting] = useState(false);
   const [isMemberOfBookClub, setIsMemberOfBookClub] = useState<boolean>(false);
+  const [joinStatus, setJoinStatus] = useState<string | null>(null);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
   const asText = (v: any): string => {
@@ -216,8 +217,11 @@ const BookDetails: React.FC = () => {
         setBook(b);
 
         if (isAuthenticated && b.clubId) {
-          const isMember = (userClubsRes.items || []).some((c: any) => c.clubId === b.clubId);
-          setIsMemberOfBookClub(isMember);
+          const club = (userClubsRes.items || []).find((c: any) => c.clubId === b.clubId);
+          setIsMemberOfBookClub(club?.userStatus === 'active');
+          if (club?.userStatus === 'pending') {
+            setJoinStatus('pending');
+          }
         } else if (!b.clubId) {
           setIsMemberOfBookClub(true);
         }
@@ -259,6 +263,7 @@ const BookDetails: React.FC = () => {
     `data:image/svg+xml,%3csvg width='300' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='300' height='400' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3e${getItemLabel(book.category || 'book')}%3c/text%3e%3c/svg%3e`;
 
   const isOwner = !!(user?.userId && book.userId && user.userId === (book.userId as any));
+  const isBook = !book.category || book.category === 'book';
 
   const handleEdit = () => {
     if (!bookId) return;
@@ -298,14 +303,29 @@ const BookDetails: React.FC = () => {
       try { trackBorrowIntent(book.userId as any, book.bookId, book.title || '', { currentUserId: user?.userId, source: 'BookDetails' }); } catch {}
       notificationCtx?.addNotification('success', 'Message sent to the owner. Opening chat…');
       navigate(`/messages/${conversation.conversationId}`);
-    } catch (e) {
-      notificationCtx?.addNotification('error', 'Could not start a chat. Opening Messages…');
-      navigate('/messages');
+    } catch (e: any) {
+      notificationCtx?.addNotification('error', e?.message || 'Could not start a chat.');
+      // Do not navigate away if it's a 403 or other error, let them see the error
+    }
+  };
+
+  const handleRequestJoin = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (!book.clubId) return;
+    try {
+      await apiService.requestClubJoin(book.clubId);
+      notificationCtx?.addNotification('success', 'Join request sent!');
+      setJoinStatus('pending');
+    } catch (e: any) {
+      notificationCtx?.addNotification('error', e?.message || 'Failed to request join');
     }
   };
 
   const itemLabel = getItemLabel(book.category || 'book');
-  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on BookClub.`;
+  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on NearBorrow.`;
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'Book',
@@ -327,7 +347,25 @@ const BookDetails: React.FC = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="mb-6">
-          <Link to={`/my-library/${book.category || 'books'}`} className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">← Back to My {getLibraryConfig(book.category || 'book')?.shortLabel ?? 'Books'}</Link>
+          <button 
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                let p = 'books';
+                const c = book.category as string;
+                if (c === 'toy') p = 'toys';
+                if (c === 'game') p = 'games';
+                if (c === 'tool') p = 'tools';
+                if (c === 'event_hire' || c === 'event') p = 'events';
+                if (c === 'other' || c === 'misc') p = 'misc';
+                navigate(`/library/${p}`);
+              }
+            }} 
+            className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm"
+          >
+            ← Back
+          </button>
         </div>
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="sm:flex sm:gap-6">
@@ -338,14 +376,15 @@ const BookDetails: React.FC = () => {
             </div>
             <div className="sm:w-2/3 mt-4 sm:mt-0">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{asText(book.title) || `Untitled ${getItemLabel(book.category || 'book')}`}</h1>
-              <p className="text-gray-700 mb-1"><span className="font-medium">Author:</span> {asText(book.author) || 'Unknown'}</p>
+              {isBook && <p className="text-gray-700 mb-1"><span className="font-medium">Author:</span> {asText(book.author) || 'Unknown'}</p>}
+              {!isBook && hasText(book.author) && <p className="text-gray-700 mb-1"><span className="font-medium">Brand/Maker:</span> {asText(book.author)}</p>}
               {book.userName && (
                 <p className="text-gray-700 mb-1"><span className="font-medium">Owner:</span> {book.userName}</p>
               )}
               {(book.clubName || book.clubId) && (
                 <p className="text-gray-700 mb-1">
                   <span className="font-medium">Club:</span> {book.clubName || 'Member Club'}
-                  {book.clubId && (
+                  {book.clubId && isAuthenticated && (
                     <>
                       {' '}
                       <Link to="/clubs" className="text-indigo-600 hover:text-indigo-800 hover:underline text-sm">(manage)</Link>
@@ -354,12 +393,12 @@ const BookDetails: React.FC = () => {
                 </p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm">
-                {hasText(book.isbn10) && (<p className="text-gray-600"><span className="font-medium">ISBN-10:</span> {asText(book.isbn10)}</p>)}
-                {hasText(book.isbn13) && (<p className="text-gray-600"><span className="font-medium">ISBN-13:</span> {asText(book.isbn13)}</p>)}
-                {hasText(book.publishedDate) && (<p className="text-gray-600"><span className="font-medium">Published:</span> {asText(book.publishedDate)}</p>)}
-                {hasText(book.pageCount) && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {asText(book.pageCount)}</p>)}
-                {hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
-                {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">Publisher:</span> {asText(book.publisher)}</p>)}
+                {isBook && hasText(book.isbn10) && (<p className="text-gray-600"><span className="font-medium">ISBN-10:</span> {asText(book.isbn10)}</p>)}
+                {isBook && hasText(book.isbn13) && (<p className="text-gray-600"><span className="font-medium">ISBN-13:</span> {asText(book.isbn13)}</p>)}
+                {isBook && hasText(book.publishedDate) && (<p className="text-gray-600"><span className="font-medium">Published:</span> {asText(book.publishedDate)}</p>)}
+                {isBook && hasText(book.pageCount) && (<p className="text-gray-600"><span className="font-medium">Pages:</span> {asText(book.pageCount)}</p>)}
+                {isBook && hasText(book.language) && (<p className="text-gray-600"><span className="font-medium">Language:</span> {asText(book.language)}</p>)}
+                {hasText(book.publisher) && (<p className="text-gray-600"><span className="font-medium">{isBook ? 'Publisher' : 'Brand/Manufacturer'}:</span> {asText(book.publisher)}</p>)}
                 {(() => {
                   // Prefer explicit ageGroupFine fields; fallback to ageRange (set by Bedrock worker) or mcp age_group
                   const direct = (book as any).ageGroupFine || (book as any).advancedMetadata?.metadata?.ageGroupFine;
@@ -413,22 +452,28 @@ const BookDetails: React.FC = () => {
             ) : (
               book.userId ? (
                 (!book.clubId || isMemberOfBookClub) ? (
-                  <button
-                    type="button"
-                    onClick={handleBorrow}
-                    className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
-                    title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
-                  >
-                    {`Borrow from ${book.userName || 'owner'}`}
-                  </button>
+                  <div className="flex flex-col items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={handleBorrow}
+                      className="text-sm font-medium text-white px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50"
+                      title={book.userName ? `Borrow from ${book.userName}` : 'Borrow from owner'}
+                    >
+                      {`Borrow from ${book.userName || 'owner'}`}
+                    </button>
+                    <p className="text-xs text-gray-500 italic max-w-xl">
+                      By requesting to borrow, you agree to treat this item with care and return it promptly. Our website is a community platform and is not liable for any disputes, loss, or damage.
+                    </p>
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => navigate('/clubs/browse', { state: { search: book.clubName || '' } })}
-                    className="text-sm font-medium text-white px-4 py-2 rounded-md bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
-                    title={`Join ${book.clubName || 'the club'} to borrow this ${getItemLabelLower(book.category || 'book')}`}
+                    onClick={joinStatus === 'pending' ? undefined : handleRequestJoin}
+                    disabled={joinStatus === 'pending'}
+                    className={`text-sm font-medium px-4 py-2 rounded-md ${joinStatus === 'pending' ? 'bg-amber-300 cursor-not-allowed text-white' : 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white'}`}
+                    title={joinStatus === 'pending' ? 'Your request is pending approval' : `Join ${book.clubName || 'the club'} to borrow this ${getItemLabelLower(book.category || 'book')}`}
                   >
-                    {`Join ${book.clubName || 'Club'} to Borrow`}
+                    {joinStatus === 'pending' ? 'Join Request Pending' : 'Request to join the club'}
                   </button>
                 )
               ) : null
@@ -443,12 +488,12 @@ const BookDetails: React.FC = () => {
             )}
 
             {/* Google Metadata */}
-            {(book as any).google_metadata && (
+            {isBook && (book as any).google_metadata && (
               renderGoogleMetadata((book as any).google_metadata)
             )}
 
             {/* Bedrock Analysis (legacy mcp_metadata path) */}
-            {((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
+            {isBook && ((book as any).mcp_metadata && (book as any).mcp_metadata.bedrock) && (
               renderBedrockMetadata((book as any).mcp_metadata.bedrock)
             )}
           </div>
