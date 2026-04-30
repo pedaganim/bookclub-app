@@ -98,7 +98,7 @@ describe('Clubs page', () => {
     }
   });
 
-  it('shows Contact Us CTA instead of Create Club button', async () => {
+  it('opens create modal and can close it', async () => {
     (apiService.getUserClubs as jest.Mock).mockResolvedValue({ items: [] });
 
     render(
@@ -111,8 +111,12 @@ describe('Clubs page', () => {
       expect(screen.getByText('You have no clubs yet')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('Create Club')).not.toBeInTheDocument();
-    expect(screen.getByText('Contact Us →')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Create Club'));
+    expect(screen.getByText('Create Book Club')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cancel'));
+    await waitFor(() => {
+      expect(screen.queryByText('Create Book Club')).not.toBeInTheDocument();
+    });
   });
 
   it('opens join modal when Join with Code is clicked', async () => {

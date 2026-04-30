@@ -141,14 +141,6 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
     navigate(`/my-library/${config?.slug}`);
   };
 
-  // Only show club items if the user is an active member of that club
-  const displayedItems = items.filter(item => {
-    if ((item as any).clubId) {
-      return isAuthenticated && userClubIdSet.has((item as any).clubId);
-    }
-    return true;
-  });
-
   if (!config) return <div className="p-20 text-center text-gray-500 font-medium tracking-tight">Library not found.</div>;
 
   return (
@@ -261,11 +253,15 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
-            {displayedItems.map((item) => (
+            {items.map((item) => (
                <PublicBookCard
                  key={item.bookId}
                  book={item}
-                 isMemberOfBookClub={true}
+                 isMemberOfBookClub={
+                   item.clubId
+                     ? userClubIdSet.has(item.clubId)
+                     : isAuthenticated && accessibleOwnerIdSet.has((item as any).userId)
+                 }
                />
             ))}
           </div>

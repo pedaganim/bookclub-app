@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useUploadModal } from '../contexts/UploadModalContext';
 import { apiService } from '../services/api';
+import { LIBRARY_CONFIGS } from '../config/libraryConfig';
 import { useSubdomain } from '../hooks/useSubdomain';
 import { config } from '../config';
 
@@ -11,22 +11,31 @@ import MobileTabBar from './MobileTabBar';
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { isSubdomain, club } = useSubdomain();
-  const { openModal } = useUploadModal();
   const location = useLocation();
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const [librariesOpen, setLibrariesOpen] = useState(false);
+  const [myLibraryOpen, setMyLibraryOpen] = useState(false);
+  const librariesRef = useRef<HTMLDivElement>(null);
+  const myLibraryRef = useRef<HTMLDivElement>(null);
 
+  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false);
+      if (librariesRef.current && !librariesRef.current.contains(e.target as Node)) {
+        setLibrariesOpen(false);
+      }
+      if (myLibraryRef.current && !myLibraryRef.current.contains(e.target as Node)) {
+        setMyLibraryOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  useEffect(() => { setProfileOpen(false); }, [location.pathname]);
+  // Close dropdown on route change
+  useEffect(() => { 
+    setLibrariesOpen(false); 
+    setMyLibraryOpen(false);
+  }, [location.pathname]);
 
   // Simple inline SVG icons
   const Icon = {
@@ -72,8 +81,14 @@ const Navbar: React.FC = () => {
     ),
   };
 
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + '/');
+  // All library entries for the dropdown (Book Library + dynamic libraries from config)
+  const dropdownLibraries = LIBRARY_CONFIGS.map(lib => ({
+    label: lib.label,
+    emoji: lib.emoji,
+    route: `/library/${lib.slug}`,
+    accentBg: lib.accentBg,
+    accentText: lib.accentText
+  }));
 
   return (
     <>
@@ -104,130 +119,136 @@ const Navbar: React.FC = () => {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
-              <Link
-                to="/library"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/library') && location.pathname !== '/library/lost-found'
-                    ? 'text-indigo-700 bg-indigo-50'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                Browse Library
-              </Link>
-
-              {isAuthenticated && (
-                <Link
-                  to="/my-library"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/my-library') ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+              {/* Libraries dropdown */}
+              <div ref={librariesRef} className="relative">
+                <button
+                  onClick={() => setLibrariesOpen((o) => !o)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    librariesOpen ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  My Library
-                </Link>
-              )}
+                  Browse Libraries
+                  <span className={`transition-transform duration-200 ${librariesOpen ? 'rotate-180' : ''}`}>
+                    <Icon.ChevronDown />
+                  </span>
+                </button>
 
-              <Link
-                to="/library/lost-found"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === '/library/lost-found' ? 'text-rose-700 bg-rose-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                🧾 Lost & Found
-              </Link>
+                {/* Mega-menu dropdown */}
+                {librariesOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-2 mb-2">Libraries</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {dropdownLibraries.map((lib) => (
+                        <Link
+                          key={lib.route}
+                          to={lib.route}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-colors hover:${lib.accentBg} ${lib.accentBg} group`}
+                        >
+                          <span className="text-xl flex-shrink-0">{lib.emoji}</span>
+                          <span className={`text-xs font-medium leading-tight ${lib.accentText}`}>{lib.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <Link
+                        to="/library"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        <span>🏛️</span> View all libraries
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <Link
-                to={isAuthenticated ? '/clubs' : '/clubs/browse'}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/clubs') ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
+              <Link to={isAuthenticated ? "/clubs" : "/clubs/browse"} className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                 Clubs
               </Link>
 
+              {/* My items dropdown */}
+              {isAuthenticated && (
+                <div ref={myLibraryRef} className="relative">
+                  <button
+                    onClick={() => setMyLibraryOpen((o) => !o)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      myLibraryOpen ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    My Library
+                    <span className={`transition-transform duration-200 ${myLibraryOpen ? 'rotate-180' : ''}`}>
+                      <Icon.ChevronDown />
+                    </span>
+                  </button>
+
+                  {myLibraryOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-2 mb-2">Manage My Items</p>
+                      <div className="space-y-1">
+                        {dropdownLibraries.map((lib) => (
+                          <Link
+                            key={`my-${lib.route}`}
+                            to={lib.route.replace('/library/', '/my-library/')}
+                            className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{lib.emoji}</span>
+                              <span>{lib.label.replace(' Library', '')}</span>
+                            </div>
+                            <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Manage</span>
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <Link
+                          to="/my-library"
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        >
+                          📦 View My Dashboard
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {isAuthenticated && (
                 <>
-                  <div className="w-px h-4 bg-gray-200 mx-1" />
-                  <button
-                    onClick={openModal}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add to Library
-                  </button>
                   <MessagesLinkWithUnread />
                 </>
               )}
             </div>
 
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-3">
               {isAuthenticated ? (
-                <div ref={profileRef} className="relative">
-                  <button
-                    onClick={() => setProfileOpen(o => !o)}
-                    className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
-                  >
+                <>
+                  <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
                     {user?.profilePicture ? (
-                      <img src={user.profilePicture} alt={`${user.name}'s avatar`} className="h-7 w-7 rounded-full object-cover" />
+                      <img src={user.profilePicture} alt={`${user.name}'s avatar`} className="h-6 w-6 rounded-full object-cover" />
                     ) : (
-                      <div className="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-indigo-700">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                      <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <span className="text-xs font-semibold text-indigo-700">{user?.name?.charAt(0)?.toUpperCase()}</span>
                       </div>
                     )}
-                    <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">{user?.name?.split(' ')[0]}</span>
-                    <span className={`transition-transform duration-200 text-gray-400 ${profileOpen ? 'rotate-180' : ''}`}>
-                      <Icon.ChevronDown />
-                    </span>
-                  </button>
+                    <span>Profile</span>
+                  </Link>
+                  
+                  {/* Moved here */}
+                  <Link to="/about" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                    About
+                  </Link>
+                  <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                    Blogs
+                  </Link>
 
-                  {profileOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                      <div className="px-4 py-2 border-b border-gray-50 mb-1">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-                      </div>
-                      <Link to="/profile" className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                        </svg>
-                        Profile
-                      </Link>
-                      <Link to="/about" className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-                        </svg>
-                        About
-                      </Link>
-                      <Link to="/about/blogs" className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
-                        </svg>
-                        Blogs
-                      </Link>
-                      <Link to="/contact" className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                        </svg>
-                        Contact Us
-                      </Link>
-                      <div className="border-t border-gray-100 my-1" />
-                      <button
-                        onClick={logout}
-                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                        </svg>
-                        Sign out
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  <button onClick={logout} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                    Logout
+                  </button>
+                </>
               ) : (
                 <>
-                  <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">Contact Us</Link>
-                  <a
+                  <Link to="/about" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">About</Link>
+                  <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors mr-2">Blogs</Link>
+                  <a 
                     href={`${config.apiBaseUrl.replace('api.', '')}/login`}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
                   >
@@ -239,11 +260,6 @@ const Navbar: React.FC = () => {
 
             {/* Mobile top bar */}
             <div className="md:hidden flex items-center gap-3">
-              <Link to="/contact" className="text-gray-500 hover:text-indigo-600 transition-colors p-1" aria-label="Contact Us">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                </svg>
-              </Link>
               {isAuthenticated && (
                 <Link to="/my-library" className="text-indigo-600 hover:text-indigo-800 transition-colors p-1" aria-label="My Dashboard">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

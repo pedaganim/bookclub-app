@@ -11,19 +11,5 @@
     "memberCount": 1,
     "createdAt": "2026-04-30T00:50:17.310Z",
     "updatedAt": "2026-04-30T00:50:17.311Z"
-  },
-  "0d1c213f-15cb-4b4f-bff4-391c6685d30e": {
-    "clubId": "0d1c213f-15cb-4b4f-bff4-391c6685d30e",
-    "name": "Test",
-    "slug": "test",
-    "description": "test",
-    "location": "test",
-    "createdBy": "local-user",
-    "inviteCode": "AD8284D9",
-    "isPrivate": false,
-    "memberLimit": null,
-    "memberCount": 1,
-    "createdAt": "2026-04-30T12:19:20.522Z",
-    "updatedAt": "2026-04-30T12:19:20.522Z"
   }
 }
