@@ -383,6 +383,14 @@ class BookClub {
     return intersection;
   }
 
+  static async getMemberRecord(clubId, userId) {
+    if (isOffline()) {
+      return LocalStorage.getClubMember(clubId, userId) || null;
+    }
+    const result = await dynamoDb.get(getTableName('bookclub-members'), { clubId, userId });
+    return result || null;
+  }
+
   static async getMemberRole(clubId, userId) {
     if (isOffline()) {
       const member = await LocalStorage.getClubMember(clubId, userId);
