@@ -471,3 +471,12 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
             allowCredentials: true
+
+  # Contact form (public, no auth)
+  contactSubmit:
+    handler: src/handlers/contact/submit.handler
+    events:
+      - http:
+          method: POST
+          path: /contact
+          cors: true
