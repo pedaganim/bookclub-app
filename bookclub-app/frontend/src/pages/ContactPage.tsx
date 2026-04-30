@@ -71,7 +71,7 @@ const ContactPage: React.FC = () => {
 
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex items-center gap-4 mb-4">
             <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
               <ChatBubbleLeftRightIcon className="h-6 w-6 text-indigo-600" />
@@ -87,7 +87,7 @@ const ContactPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <form onSubmit={handleSubmit} noValidate>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
 
