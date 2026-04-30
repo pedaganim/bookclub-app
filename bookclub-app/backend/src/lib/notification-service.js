@@ -68,7 +68,15 @@ function renderTemplate(templateId, templateData) {
   }
 }
 
+const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true';
+
 async function sendEmail(to, subject, text, html) {
+  if (isOffline()) {
+    // eslint-disable-next-line no-console
+    console.log('[Notify][Offline] Skipped actual SES email send to:', to, '| Subject:', subject);
+    return { MessageId: 'offline-mock-id' };
+  }
+
   const from = process.env.NOTIFY_FROM_EMAIL || 'notify@booklub.shop';
   const params = {
     Source: from,
@@ -94,6 +102,11 @@ async function sendEmail(to, subject, text, html) {
 }
 
 async function sendEmailIfEnabled(userId, type, templateId, templateData) {
+  if (isOffline()) {
+    // eslint-disable-next-line no-console
+    console.log('[Notify][Offline] Skipped email check for user:', userId, type);
+    return { sent: true };
+  }
   const { emailOptIn, prefs, email, name } = await getUserPrefs(userId);
   if (!emailOptIn) {
     // eslint-disable-next-line no-console

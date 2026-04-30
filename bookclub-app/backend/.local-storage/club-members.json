@@ -1,16 +1,9 @@
 {
-  "5a5fac2e-93dc-45b5-967b-677e02c098cd:test-user-123": {
-    "clubId": "5a5fac2e-93dc-45b5-967b-677e02c098cd",
+  "86bf032b-e877-4957-a5f4-10b13d4d2f45:test-user-123": {
+    "clubId": "86bf032b-e877-4957-a5f4-10b13d4d2f45",
     "userId": "test-user-123",
     "role": "admin",
-    "joinedAt": "2026-04-25T10:17:10.303Z",
-    "status": "active"
-  },
-  "1783f5de-7554-40d9-9292-627eadf86a08:local-user": {
-    "clubId": "1783f5de-7554-40d9-9292-627eadf86a08",
-    "userId": "local-user",
-    "role": "admin",
-    "joinedAt": "2026-04-25T10:51:36.671Z",
+    "joinedAt": "2026-04-30T00:13:25.155Z",
     "status": "active"
   }
 }
