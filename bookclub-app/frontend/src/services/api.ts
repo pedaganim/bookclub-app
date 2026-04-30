@@ -869,6 +869,19 @@ class ApiService {
     });
     if (!res.ok) throw new Error(`S3 upload failed: ${res.status} ${res.statusText}`);
   }
+
+  async submitContact(payload: {
+    name: string;
+    email: string;
+    type: 'feedback' | 'feature_request' | 'bug_report' | 'general';
+    message: string;
+  }): Promise<{ sent: boolean }> {
+    const response: AxiosResponse<ApiResponse<{ sent: boolean }>> = await this.api.post('/contact', payload);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to send message');
+    }
+    return response.data.data!;
+  }
 }
 
 export const apiService = new ApiService();

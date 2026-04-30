@@ -18,6 +18,7 @@ provider:
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
     NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com'}
+    CONTACT_RECIPIENTS: ${env:CONTACT_RECIPIENTS, 'madhukar.goud@gmail.com,madhukar.pedagani@gmail.com'}
     EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'default'}
     EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
     ENABLE_IMAGE_ENRICHMENT: ${env:ENABLE_IMAGE_ENRICHMENT, 'false'}
@@ -1236,6 +1237,15 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiGatewayAuthorizer
+
+  # Contact form (public, no auth)
+  contactSubmit:
+    handler: src/handlers/contact/submit.handler
+    events:
+      - http:
+          method: POST
+          path: /contact
+          cors: true
 
   # Interest registration (public, no auth) for upcoming features
   interestRegisterSwapToys:

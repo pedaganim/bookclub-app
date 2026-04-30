@@ -23,6 +23,7 @@ import Messages from './pages/Messages';
 import UserProfile from './pages/UserProfile';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import ContactPage from './pages/ContactPage';
 import NotificationSettings from './pages/NotificationSettings';
 import LibraryHub from './pages/LibraryHub';
 import LibraryPage from './pages/LibraryPage';
@@ -195,6 +196,7 @@ function App() {
                 />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/contact" element={<ContactPage />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </main>

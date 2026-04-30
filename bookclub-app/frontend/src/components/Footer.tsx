@@ -30,6 +30,12 @@ const Footer: React.FC = () => {
             >
               Terms of Service
             </Link>
+            <Link 
+              to="/contact" 
+              className="text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+            >
+              Contact Us
+            </Link>
           </div>
         </div>
       </div>
