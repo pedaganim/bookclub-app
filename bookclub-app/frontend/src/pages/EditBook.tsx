@@ -48,7 +48,7 @@ const EditBook: React.FC = () => {
       setSaving(true);
       // If Lent selected, enforce recipient
       if (status === 'borrowed' && !lentUser?.userId) {
-        setError('Please select who you lent the book to.');
+        addNotification('error', 'Please select who you lent the book to.');
         setSaving(false);
         return;
       }
@@ -119,7 +119,6 @@ const EditBook: React.FC = () => {
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                required
               />
             </div>
             <div>

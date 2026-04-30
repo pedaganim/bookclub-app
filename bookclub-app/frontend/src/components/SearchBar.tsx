@@ -71,6 +71,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
       return;
     }
 
+    if (isRecording) {
+      voiceSearchService.stopVoiceSearch();
+      setIsRecording(false);
+      return;
+    }
+
     setIsRecording(true);
     setVoiceSearchError('');
 
@@ -87,9 +93,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
       onSearch(transcript.trim());
       
     } catch (error: any) {
-      // eslint-disable-next-line no-console
-      console.error('Voice search failed:', error);
-      setVoiceSearchError(error.message || 'Voice search failed. Please try again.');
+      // Aborted error is expected when manually stopping
+      if (error.message !== 'Speech recognition failed: aborted') {
+        // eslint-disable-next-line no-console
+        console.error('Voice search failed:', error);
+        setVoiceSearchError(error.message || 'Voice search failed. Please try again.');
+      }
     } finally {
       setIsRecording(false);
     }
@@ -124,7 +133,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <button
               type="button"
               onClick={handleVoiceSearch}
-              disabled={isRecording}
               className={`p-1 rounded-full transition-colors duration-200 ${
                 isRecording 
                   ? 'bg-red-100 text-red-600 animate-pulse' 

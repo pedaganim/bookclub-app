@@ -73,7 +73,7 @@ const LibraryHub: React.FC = () => {
         <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-amber-50 rounded-full blur-3xl opacity-50" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative text-center">
-          <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter mb-6 uppercase italic">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-gray-900 tracking-tighter mb-6 uppercase italic">
             Borrow <span className="text-indigo-600">Everything.</span><br />
             Share Your <span className="text-amber-500 underline decoration-amber-200">World.</span>
           </h1>
@@ -86,21 +86,21 @@ const LibraryHub: React.FC = () => {
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-10 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-tight hover:bg-black transition-all shadow-2xl active:scale-95"
+              className="w-full sm:w-auto px-10 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-tight hover:bg-black transition-all shadow-2xl active:scale-95"
             >
               Start Browsing
             </button>
             {isAuthenticated ? (
               <Link 
                 to="/my-library"
-                className="px-10 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95"
+                className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 block sm:inline-block"
               >
                 Go to My Dashboard
               </Link>
             ) : (
               <Link 
                 to="/login"
-                className="px-10 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95"
+                className="w-full sm:w-auto px-10 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 block sm:inline-block"
               >
                 Join the Community
               </Link>
@@ -117,10 +117,10 @@ const LibraryHub: React.FC = () => {
             Start sharing the things you don't use every day and discover hidden treasures in your neighborhood.
           </p>
           <Link 
-            to="/login"
+            to={isAuthenticated ? "/my-library" : "/login"}
             className="inline-block px-12 py-4 bg-white text-indigo-900 rounded-2xl font-black uppercase tracking-tight hover:bg-indigo-50 transition-all"
           >
-            Get Started Now
+            {isAuthenticated ? "Go to Dashboard" : "Get Started Now"}
           </Link>
         </div>
       </div>

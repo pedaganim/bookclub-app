@@ -151,9 +151,9 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
                 <span className="text-gray-900">{config.shortLabel}</span>
               </nav>
               
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-6xl" role="img" aria-label={config.label}>{config.emoji}</span>
-                <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-none uppercase italic">
+              <div className="flex items-center flex-wrap gap-4 mb-4">
+                <span className="text-5xl sm:text-6xl flex-shrink-0" role="img" aria-label={config.label}>{config.emoji}</span>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-none uppercase italic break-words">
                   {config.label}
                 </h1>
               </div>
