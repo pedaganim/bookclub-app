@@ -239,6 +239,9 @@ const Navbar: React.FC = () => {
                   <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
                     Blogs
                   </Link>
+                  <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
+                    Contact Us
+                  </Link>
 
                   <button onClick={logout} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">
                     Logout
@@ -247,7 +250,8 @@ const Navbar: React.FC = () => {
               ) : (
                 <>
                   <Link to="/about" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">About</Link>
-                  <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors mr-2">Blogs</Link>
+                  <Link to="/about/blogs" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors">Blogs</Link>
+                  <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md hover:bg-gray-50 transition-colors mr-2">Contact Us</Link>
                   <a 
                     href={`${config.apiBaseUrl.replace('api.', '')}/login`}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
