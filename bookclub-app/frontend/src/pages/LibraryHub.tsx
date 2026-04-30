@@ -99,7 +99,7 @@ const LibraryHub: React.FC = () => {
         </div>
 
         {/* Filter chips */}
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-6" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex flex-wrap md:flex-nowrap gap-2 pb-1 mb-6">
           {FILTER_TYPES.map(t => (
             <button
               key={t.key}
