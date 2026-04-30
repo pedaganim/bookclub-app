@@ -29,6 +29,8 @@ class VoiceSearchService {
     );
   }
 
+  private recognition: any = null;
+
   /**
    * Check if Web Speech API is supported (for real-time transcription)
    */
@@ -110,6 +112,19 @@ class VoiceSearchService {
   }
 
   /**
+   * Stop any active voice search (Web Speech or MediaRecorder)
+   */
+  stopVoiceSearch(): void {
+    if (this.recognition) {
+      try {
+        this.recognition.abort();
+      } catch (e) {}
+      this.recognition = null;
+    }
+    this.cancelRecording();
+  }
+
+  /**
    * Clean up recording resources
    */
   private cleanup(): void {
@@ -170,30 +185,29 @@ class VoiceSearchService {
       }
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+      this.recognition = new SpeechRecognition();
 
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = languageCode;
-      recognition.maxAlternatives = 1;
+      this.recognition.continuous = false;
+      this.recognition.interimResults = false;
+      this.recognition.lang = languageCode;
+      this.recognition.maxAlternatives = 1;
 
-      recognition.onresult = (event: any) => {
+      this.recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         resolve(transcript);
       };
 
-      recognition.onerror = (event: any) => {
+      this.recognition.onerror = (event: any) => {
         // eslint-disable-next-line no-console
         console.error('Speech recognition error:', event.error);
         reject(new Error(`Speech recognition failed: ${event.error}`));
       };
 
-      recognition.onend = () => {
-        // Handle case where no results were returned
-        // This is handled by the onerror callback or onresult
+      this.recognition.onend = () => {
+        this.recognition = null;
       };
 
-      recognition.start();
+      this.recognition.start();
     });
   }
 

@@ -259,23 +259,31 @@ const Navbar: React.FC = () => {
             </div>
 
             {/* Mobile top bar */}
-            <div className="md:hidden flex items-center gap-2">
-              <Link to="/about" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">About</Link>
-              <Link to="/about/blogs" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1">Blogs</Link>
-              <Link to="/my-library" className="text-xs font-bold text-indigo-600 px-2 py-1">My Library</Link>
+            <div className="md:hidden flex items-center gap-3">
               {isAuthenticated && (
-                <>
-                  <Link to="/profile" className="text-xs font-medium text-gray-700 hover:text-gray-900 px-2 py-1 flex items-center gap-1">
-                    {user?.profilePicture ? (
-                      <img src={user.profilePicture} alt="Avatar" className="h-5 w-5 rounded-full object-cover" />
-                    ) : (
-                      <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <span className="text-[10px] font-semibold text-indigo-700">{user?.name?.charAt(0)?.toUpperCase()}</span>
-                      </div>
-                    )}
-                    <span>Profile</span>
-                  </Link>
-                </>
+                <Link to="/my-library" className="text-indigo-600 hover:text-indigo-800 transition-colors p-1" aria-label="My Dashboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </Link>
+              )}
+              {isAuthenticated ? (
+                <Link to="/profile" className="flex items-center hover:opacity-80 transition-opacity">
+                  {user?.profilePicture ? (
+                    <img src={user.profilePicture} alt="Avatar" className="h-7 w-7 rounded-full object-cover border border-gray-200 shadow-sm" />
+                  ) : (
+                    <div className="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 shadow-sm">
+                      <span className="text-xs font-bold text-indigo-700">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                    </div>
+                  )}
+                </Link>
+              ) : (
+                <a 
+                  href={`${config.apiBaseUrl.replace('api.', '')}/login`}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                >
+                  Sign In
+                </a>
               )}
             </div>
           </div>

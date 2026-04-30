@@ -45,10 +45,14 @@ class ApiService {
       async (error) => {
         const originalRequest = error.config;
 
-        // If the error is 401/403 and we haven't already tried to refresh
+        // Determine if this is a true authentication failure (API Gateway/Cognito) vs an application-level permission error
+        const isAppError = error.response?.data && 'success' in error.response.data;
+        const isAuthError = (error.response?.status === 401 || error.response?.status === 403) && !isAppError;
+
+        // If the error is an auth failure and we haven't already tried to refresh
         if (
           !config.skipAuth && 
-          (error.response?.status === 401 || error.response?.status === 403) && 
+          isAuthError && 
           !originalRequest._retry &&
           localStorage.getItem('refreshToken')
         ) {
@@ -73,9 +77,17 @@ class ApiService {
         }
 
         // If we reach here, either it's not an auth error, or refresh failed
-        if (!config.skipAuth && (error.response?.status === 401 || error.response?.status === 403) && this.onSessionExpired) {
+        if (!config.skipAuth && isAuthError && this.onSessionExpired) {
           this.onSessionExpired();
         }
+
+        // Extract server-provided error message if available
+        if (error.response?.data?.error?.message) {
+          error.message = error.response.data.error.message;
+        } else if (error.response?.data?.message) {
+          error.message = error.response.data.message;
+        }
+
         return Promise.reject(error);
       }
     );

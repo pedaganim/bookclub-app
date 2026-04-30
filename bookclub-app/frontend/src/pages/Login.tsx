@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { config } from '../config';
 import { createPkcePair } from '../utils/pkce';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
   const [error, setError] = useState('');
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return <Navigate to="/my-library" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-6 px-4 sm:py-12 sm:px-6 lg:px-8">
