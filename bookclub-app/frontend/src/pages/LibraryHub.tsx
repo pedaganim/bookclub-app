@@ -22,19 +22,9 @@ const LibraryHub: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<Book[]>([]);
-  const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!isAuthenticated) { setUserClubIds(new Set()); return; }
-    apiService.getUserClubs()
-      .then(res => {
-        const active = (res.items || []).filter((c: any) => (c?.userStatus || 'active') === 'active');
-        setUserClubIds(new Set(active.map((c: any) => c.clubId)));
-      })
-      .catch(() => {});
-  }, [isAuthenticated]);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -59,10 +49,6 @@ const LibraryHub: React.FC = () => {
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
   const filtered = items.filter((i: any) => {
-    // Only show club items if user is a member of that club
-    if (i.clubId) {
-      if (!isAuthenticated || !userClubIds.has(i.clubId)) return false;
-    }
     const matchType = activeFilter === 'all'
       || i.category === activeFilter
       || (!i.category && activeFilter === 'book');

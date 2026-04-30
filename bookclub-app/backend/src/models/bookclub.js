@@ -340,6 +340,7 @@ class BookClub {
             ...club,
             userRole: membership.role,
             joinedAt: membership.joinedAt,
+            userStatus: membership.status || 'active',
           });
         }
       }

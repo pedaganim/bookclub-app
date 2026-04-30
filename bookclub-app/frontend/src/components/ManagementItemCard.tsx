@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, LibraryItem } from '../types';
+import { LibraryItem } from '../types';
 import { 
   TrashIcon, 
   PencilSquareIcon, 
   UserIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
-import EditBookModal from './EditBookModal';
 import { getItemLabel } from '../utils/labels';
 
 interface ManagementItemCardProps {
@@ -18,7 +17,6 @@ interface ManagementItemCardProps {
 }
 
 const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete, onUpdate, listView }) => {
-  const [showEditModal, setShowEditModal] = useState(false);
   const navigate = useNavigate();
   const itemId = (item as any).bookId || (item as any).listingId;
   const label = getItemLabel(item.category);
@@ -79,7 +77,7 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
 
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
           <button 
-            onClick={() => setShowEditModal(true)}
+            onClick={() => navigate(`/books/${itemId}/edit`)}
             className="p-2 text-gray-400 hover:text-indigo-600 transition-colors bg-gray-50 rounded-lg"
           >
             <PencilSquareIcon className="h-5 w-5" />
@@ -92,16 +90,6 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
           </button>
         </div>
 
-        {showEditModal && (
-          <EditBookModal
-            book={item as Book}
-            onClose={() => setShowEditModal(false)}
-            onBookUpdated={(updated) => {
-              onUpdate(updated);
-              setShowEditModal(false);
-            }}
-          />
-        )}
       </div>
     );
   }
@@ -134,7 +122,7 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
           onClick={e => e.stopPropagation()}
         >
           <button 
-            onClick={() => setShowEditModal(true)}
+            onClick={() => navigate(`/books/${itemId}/edit`)}
             className="bg-white/90 backdrop-blur-sm text-gray-900 p-2.5 rounded-2xl hover:bg-white transition-colors shadow-lg flex items-center gap-2 text-xs font-bold"
           >
             <PencilSquareIcon className="h-4 w-4" /> Edit
@@ -180,16 +168,6 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
         </div>
       </div>
 
-      {showEditModal && (
-        <EditBookModal
-          book={item as Book}
-          onClose={() => setShowEditModal(false)}
-          onBookUpdated={(updated) => {
-            onUpdate(updated);
-            setShowEditModal(false);
-          }}
-        />
-      )}
     </div>
   );
 };

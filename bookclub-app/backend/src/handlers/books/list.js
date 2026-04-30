@@ -19,6 +19,20 @@ module.exports.handler = async (event) => {
     } else {
       const options = { category };
       if (bare) options.bare = true;
+      // Resolve which club IDs the requesting user is an active member of.
+      // null = unauthenticated (hide all club items). Set = membership set.
+      let memberClubIds = null;
+      if (userId) {
+        try {
+          const userClubs = await BookClub.getUserClubs(userId);
+          memberClubIds = new Set(
+            (userClubs || []).filter(c => c.userStatus === 'active').map(c => c.clubId)
+          );
+        } catch (_) {
+          memberClubIds = new Set();
+        }
+      }
+      options.memberClubIds = memberClubIds;
       result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
     }
 
