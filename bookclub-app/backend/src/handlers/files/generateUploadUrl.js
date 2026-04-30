@@ -84,7 +84,6 @@ module.exports.handler = async (event) => {
     const fileUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
 
     // For library uploads: pre-create a draft listing so frontend can poll it immediately
-    const PINNED_CATEGORY_TYPES = ['lost_found'];
     let listingId = null;
     if (isLibrary) {
       const draft = await ToyListing.create({
@@ -94,7 +93,6 @@ module.exports.handler = async (event) => {
         status: 'draft',
         images: [fileUrl],
         libraryType,
-        category: PINNED_CATEGORY_TYPES.includes(libraryType) ? libraryType : null,
         userName: null,
       }, userId);
       listingId = draft.listingId;

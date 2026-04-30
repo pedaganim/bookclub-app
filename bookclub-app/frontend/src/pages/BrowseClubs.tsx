@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import ClubCard from '../components/ClubCard';
+import CreateClubModal from '../components/CreateClubModal';
 import { useAuth } from '../contexts/AuthContext';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -22,6 +23,7 @@ const BrowseClubs: React.FC = () => {
   const [requestedClubIds, setRequestedClubIds] = useState<Set<string>>(new Set());
   const { isAuthenticated, user } = useAuth();
   const [userClubIds, setUserClubIds] = useState<Set<string>>(new Set());
+  const [showCreate, setShowCreate] = useState(false);
   const { addNotification } = useNotification();
   const navigate = useNavigate();
 
@@ -175,6 +177,16 @@ const BrowseClubs: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
             <p className="mt-1 text-sm text-gray-500">Manage your communities or discover new ones.</p>
           </div>
+          {isAuthenticated && (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowCreate(true)} 
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                Create Club
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Secondary tabs */}
@@ -233,6 +245,16 @@ const BrowseClubs: React.FC = () => {
           />
         </div>
 
+        {showCreate && (
+          <CreateClubModal
+            onClose={() => setShowCreate(false)}
+            onClubCreated={(newClub) => {
+              setShowCreate(false);
+              addNotification('success', 'Club created successfully');
+              load();
+            }}
+          />
+        )}
       </div>
     </div>
   );
