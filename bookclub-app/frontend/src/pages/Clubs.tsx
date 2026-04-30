@@ -3,7 +3,6 @@ import { BookClub } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
-import CreateClubModal from '../components/CreateClubModal';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -17,7 +16,6 @@ const Clubs: React.FC = () => {
   const [error, setError] = useState('');
   const { user } = useAuth();
   const { addNotification } = useNotification();
-  const [showCreate, setShowCreate] = useState(false);
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [clubToDelete, setClubToDelete] = useState<BookClub | null>(null);
@@ -96,12 +94,6 @@ const Clubs: React.FC = () => {
               className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
             >
               Join with Code
-            </button>
-            <button 
-              onClick={() => setShowCreate(true)} 
-              className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-            >
-              Create Club
             </button>
           </div>
         </div>
@@ -188,12 +180,19 @@ const Clubs: React.FC = () => {
           </div>
         )}
 
-        {showCreate && (
-          <CreateClubModal
-            onClose={() => setShowCreate(false)}
-            onClubCreated={(club) => { setClubs(prev => [club, ...prev]); setShowCreate(false); }}
-          />
-        )}
+        {/* Contact CTA */}
+        <div className="mt-10 rounded-3xl bg-indigo-50 border border-indigo-100 p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <h3 className="text-xl font-black text-indigo-900 uppercase tracking-tight">Want to start a new club?</h3>
+            <p className="text-sm text-indigo-700 mt-1">Reach out and we'll set one up for your community.</p>
+          </div>
+          <a
+            href="/contact"
+            className="flex-shrink-0 px-7 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            Contact Us →
+          </a>
+        </div>
 
         {showJoin && (
           <JoinClubModal

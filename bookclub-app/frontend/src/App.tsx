@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { UploadModalProvider, useUploadModal, GENERIC_UPLOAD_CONFIG } from './contexts/UploadModalContext';
+import CreateListingModal from './components/CreateListingModal';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -35,6 +37,12 @@ import ClubBooks from './pages/ClubBooks';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
 import { useSubdomain } from './hooks/useSubdomain';
 
+function GlobalUploadModal() {
+  const { isOpen, closeModal } = useUploadModal();
+  if (!isOpen) return null;
+  return <CreateListingModal config={GENERIC_UPLOAD_CONFIG} onClose={closeModal} onCreated={() => {}} />;
+}
+
 function App() {
   const { isSubdomain, isLoading } = useSubdomain();
 
@@ -51,7 +59,9 @@ function App() {
       <ScrollToTop />
       <NotificationProvider>
         <AuthProvider>
+          <UploadModalProvider>
           <div className="App">
+            <GlobalUploadModal />
             <Navbar />
             <main className="min-h-screen bg-gray-50 pb-20 md:pb-0">
               <Routes>
@@ -202,6 +212,7 @@ function App() {
             </main>
             <Footer />
           </div>
+          </UploadModalProvider>
         </AuthProvider>
       </NotificationProvider>
     </Router>
