@@ -30,7 +30,9 @@ const LibraryHub: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await apiService.listBooksPublic({ limit: 60, bare: true });
+      const response = isAuthenticated
+        ? await apiService.listBooks({ limit: 60, bare: true })
+        : await apiService.listBooksPublic({ limit: 60, bare: true });
       let all: Book[] = Array.isArray(response.items) ? response.items : [];
 
       if (isAuthenticated && user?.userId) {
