@@ -8,6 +8,7 @@ import {
   TagIcon
 } from '@heroicons/react/24/outline';
 import { getItemLabel } from '../utils/labels';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ManagementItemCardProps {
   item: LibraryItem;
@@ -18,6 +19,7 @@ interface ManagementItemCardProps {
 
 const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete, onUpdate, listView }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const itemId = (item as any).bookId || (item as any).listingId;
   const label = getItemLabel(item.category);
 
@@ -27,7 +29,10 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
 
   const statusBadge = () => {
     const status = (item as any).status;
-    if (status === 'lent') return <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Lent</span>;
+    const hasLentTo = !!(item as any).lentToUserId || !!(item as any).lentToUserName || !!(item as any).lentTo;
+    const isOwner = (item as any).userId === user?.userId;
+    if ((hasLentTo && isOwner) || status === 'lent') return <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Lent</span>;
+    if (hasLentTo && !isOwner) return <span className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Borrowed</span>;
     if (status === 'borrowed') return <span className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Borrowed</span>;
     if (status === 'available') return <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Available</span>;
     return null;

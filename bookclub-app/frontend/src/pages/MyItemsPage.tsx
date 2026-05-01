@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { LibraryItem } from '../types';
 import { apiService } from '../services/api';
 import ManagementItemCard from '../components/ManagementItemCard';
@@ -19,16 +19,20 @@ import SEO from '../components/SEO';
 const MyItemsPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const { user } = useAuth();
+  const location = useLocation();
 
   const isAllView = categorySlug === 'all';
   const config = isAllView ? null : getLibraryConfig(categorySlug || 'books');
   const label = isAllView ? 'All Items' : (config?.shortLabel || 'Items');
   const itemLabel = isAllView ? 'item' : (config?.itemLabel || 'item');
   
+  const initialFilter = (location.state as any)?.filter;
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState<'owned' | 'lent' | 'borrowed'>('owned');
+  const [filter, setFilter] = useState<'owned' | 'lent' | 'borrowed'>(
+    initialFilter === 'lent' || initialFilter === 'borrowed' ? initialFilter : 'owned'
+  );
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   const [pageSize, setPageSize] = useState(12);
@@ -73,9 +77,9 @@ const MyItemsPage: React.FC = () => {
 
       if (category === 'book') {
         if (filter === 'lent') {
-           fetchedItems = fetchedItems.filter(i => (i as any).status === 'lent');
+           fetchedItems = fetchedItems.filter(i => (i as any).lentToUserId || (i as any).lentToUserName || (i as any).status === 'lent');
         } else if (filter === 'owned') {
-           fetchedItems = fetchedItems.filter(i => (i as any).status !== 'borrowed');
+           fetchedItems = fetchedItems.filter(i => !(i as any).lentToUserId && (i as any).status !== 'borrowed');
         }
       } else if (filter === 'borrowed') {
         fetchedItems = fetchedItems.filter(i => (i as any).category === category);

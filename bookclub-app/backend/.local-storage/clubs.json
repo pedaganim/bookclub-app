@@ -1,29 +1,15 @@
 {
-  "74658934-6b16-4696-b3cd-e072eaee1e5f": {
-    "clubId": "74658934-6b16-4696-b3cd-e072eaee1e5f",
+  "86ecd675-4caa-4755-abc2-138ae867450b": {
+    "clubId": "86ecd675-4caa-4755-abc2-138ae867450b",
     "name": "Test Book Club",
     "slug": "test-book-club",
     "description": "A test club",
     "createdBy": "test-user-123",
-    "inviteCode": "4565EAD8",
+    "inviteCode": "77889E61",
     "isPrivate": false,
     "memberLimit": null,
     "memberCount": 1,
-    "createdAt": "2026-04-30T00:50:17.310Z",
-    "updatedAt": "2026-04-30T00:50:17.311Z"
-  },
-  "0d1c213f-15cb-4b4f-bff4-391c6685d30e": {
-    "clubId": "0d1c213f-15cb-4b4f-bff4-391c6685d30e",
-    "name": "Test",
-    "slug": "test",
-    "description": "test",
-    "location": "test",
-    "createdBy": "local-user",
-    "inviteCode": "AD8284D9",
-    "isPrivate": false,
-    "memberLimit": null,
-    "memberCount": 1,
-    "createdAt": "2026-04-30T12:19:20.522Z",
-    "updatedAt": "2026-04-30T12:19:20.522Z"
+    "createdAt": "2026-05-01T03:22:19.542Z",
+    "updatedAt": "2026-05-01T03:22:19.542Z"
   }
 }

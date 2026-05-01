@@ -37,10 +37,14 @@ exports.handler = async (event) => {
       return error('Club not found', 404);
     }
 
-    // Check if requester is an admin
-    const requesterRole = await BookClub.getMemberRole(clubId, requesterId);
-    if (requesterRole !== 'admin') {
-      return forbidden('Only admins can manage member roles');
+    // Check if requester is a superadmin or club admin
+    const requesterUser = await User.getById(requesterId);
+    const isSuperAdmin = requesterUser?.role === 'superadmin';
+    if (!isSuperAdmin) {
+      const requesterRole = await BookClub.getMemberRole(clubId, requesterId);
+      if (requesterRole !== 'admin') {
+        return forbidden('Only admins can manage member roles');
+      }
     }
 
     // Check if target user is actually a member

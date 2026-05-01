@@ -25,7 +25,9 @@ module.exports.handler = async (event) => {
     const club = await BookClub.getById(clubId);
     if (!club) return error('Club not found', 404);
 
-    // admin check (creator or admin member)
+    // admin check (superadmin, creator, or club admin)
+    const requesterUser = await User.getById(userId);
+    const isSuperAdmin = requesterUser?.role === 'superadmin';
     const isCreator = club.createdBy === userId;
     let role = null;
     try {
@@ -34,7 +36,7 @@ module.exports.handler = async (event) => {
       console.error('listRequests: getMemberRole failed', { clubId, userId, error: e?.message });
     }
     const isAdmin = role === 'admin';
-    if (!isCreator && !isAdmin) return error('Forbidden', 403);
+    if (!isSuperAdmin && !isCreator && !isAdmin) return error('Forbidden', 403);
 
     const pending = await BookClub.listPendingRequests(clubId).catch((e) => {
       console.error('listRequests: listPendingRequests failed', { clubId, error: e?.message });

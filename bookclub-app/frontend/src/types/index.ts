@@ -6,6 +6,7 @@ export interface User {
   profilePicture?: string;
   timezone?: string;
   createdAt: string;
+  role?: 'superadmin' | 'user';
 }
 
 export interface Book {
