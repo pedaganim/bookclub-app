@@ -23,11 +23,13 @@ module.exports.handler = async (event) => {
     const club = await BookClub.getById(clubId);
     if (!club) return error('Club not found', 404);
 
-    // admin check (creator or admin member)
+    // admin check (superadmin, creator, or club admin)
+    const requesterUser = await User.getById(userId);
+    const isSuperAdmin = requesterUser?.role === 'superadmin';
     const isCreator = club.createdBy === userId;
     const role = await BookClub.getMemberRole(clubId, userId);
     const isAdmin = role === 'admin';
-    if (!isCreator && !isAdmin) return error('Forbidden', 403);
+    if (!isSuperAdmin && !isCreator && !isAdmin) return error('Forbidden', 403);
 
     const updated = await BookClub.approveJoinRequest(clubId, targetUserId);
     return success({ approved: true, membership: updated });

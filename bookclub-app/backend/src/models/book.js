@@ -220,7 +220,18 @@ class Book {
       if (options && options.clubId) {
         result = result.filter(book => book.clubId === options.clubId);
       }
-      
+
+      // Filter club items by membership: hide items from clubs user is not an active member of
+      if (options && 'memberClubIds' in options) {
+        const memberClubIds = options.memberClubIds;
+        result = result.filter(book => {
+          if (book.clubId) {
+            return memberClubIds !== null && memberClubIds.has(book.clubId);
+          }
+          return true;
+        });
+      }
+
       // For offline mode, we'll implement simple pagination later if needed
       return {
         items: result.slice(0, limit),
@@ -324,6 +335,17 @@ class Book {
     // Apply clubId filter if provided
     if (options && options.clubId) {
       items = items.filter((book) => book.clubId === options.clubId);
+    }
+
+    // Filter club items by membership: hide items from clubs user is not an active member of
+    if (options && 'memberClubIds' in options) {
+      const memberClubIds = options.memberClubIds;
+      items = items.filter((book) => {
+        if (book.clubId) {
+          return memberClubIds !== null && memberClubIds.has(book.clubId);
+        }
+        return true;
+      });
     }
 
     // Optionally skip enrichment for performance (bare listing for public browse)

@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, LibraryItem } from '../types';
+import { LibraryItem } from '../types';
 import { 
   TrashIcon, 
   PencilSquareIcon, 
   UserIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
-import EditBookModal from './EditBookModal';
 import { getItemLabel } from '../utils/labels';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ManagementItemCardProps {
   item: LibraryItem;
@@ -18,8 +18,8 @@ interface ManagementItemCardProps {
 }
 
 const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete, onUpdate, listView }) => {
-  const [showEditModal, setShowEditModal] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const itemId = (item as any).bookId || (item as any).listingId;
   const label = getItemLabel(item.category);
 
@@ -29,7 +29,10 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
 
   const statusBadge = () => {
     const status = (item as any).status;
-    if (status === 'lent') return <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Lent</span>;
+    const hasLentTo = !!(item as any).lentToUserId || !!(item as any).lentToUserName || !!(item as any).lentTo;
+    const isOwner = (item as any).userId === user?.userId;
+    if ((hasLentTo && isOwner) || status === 'lent') return <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Lent</span>;
+    if (hasLentTo && !isOwner) return <span className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Borrowed</span>;
     if (status === 'borrowed') return <span className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Borrowed</span>;
     if (status === 'available') return <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Available</span>;
     return null;
@@ -79,7 +82,7 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
 
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
           <button 
-            onClick={() => setShowEditModal(true)}
+            onClick={() => navigate(`/books/${itemId}/edit`)}
             className="p-2 text-gray-400 hover:text-indigo-600 transition-colors bg-gray-50 rounded-lg"
           >
             <PencilSquareIcon className="h-5 w-5" />
@@ -92,16 +95,6 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
           </button>
         </div>
 
-        {showEditModal && (
-          <EditBookModal
-            book={item as Book}
-            onClose={() => setShowEditModal(false)}
-            onBookUpdated={(updated) => {
-              onUpdate(updated);
-              setShowEditModal(false);
-            }}
-          />
-        )}
       </div>
     );
   }
@@ -134,7 +127,7 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
           onClick={e => e.stopPropagation()}
         >
           <button 
-            onClick={() => setShowEditModal(true)}
+            onClick={() => navigate(`/books/${itemId}/edit`)}
             className="bg-white/90 backdrop-blur-sm text-gray-900 p-2.5 rounded-2xl hover:bg-white transition-colors shadow-lg flex items-center gap-2 text-xs font-bold"
           >
             <PencilSquareIcon className="h-4 w-4" /> Edit
@@ -180,16 +173,6 @@ const ManagementItemCard: React.FC<ManagementItemCardProps> = ({ item, onDelete,
         </div>
       </div>
 
-      {showEditModal && (
-        <EditBookModal
-          book={item as Book}
-          onClose={() => setShowEditModal(false)}
-          onBookUpdated={(updated) => {
-            onUpdate(updated);
-            setShowEditModal(false);
-          }}
-        />
-      )}
     </div>
   );
 };

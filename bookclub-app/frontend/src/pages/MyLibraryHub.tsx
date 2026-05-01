@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LIBRARY_CONFIGS } from '../config/libraryConfig';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +19,7 @@ const FILTER_CHIPS = [
 const MyLibraryHub: React.FC = () => {
   const { user } = useAuth();
   const { openModal } = useUploadModal();
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<LibraryItem[]>([]);
@@ -61,6 +63,9 @@ const MyLibraryHub: React.FC = () => {
       i.libraryType === cfg.libraryType || i.category === cfg.libraryType
     ).length;
   });
+
+  const lentCount = items.filter((i: any) => i.lentToUserId || i.lentToUserName || i.status === 'lent').length;
+  const borrowedCount = items.filter((i: any) => i.borrowedFrom || i.status === 'borrowed' && !i.lentToUserId).length;
 
   const filtered = items.filter((i: any) => {
     const matchType = activeFilter === 'all' || i.libraryType === activeFilter || i.category === activeFilter;
@@ -119,6 +124,30 @@ const MyLibraryHub: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Lent / Borrowed quick nav */}
+        {(lentCount > 0 || borrowedCount > 0) && (
+          <div className="flex gap-3 mb-6">
+            {lentCount > 0 && (
+              <button
+                onClick={() => navigate('/my-library/books', { state: { filter: 'lent' } })}
+                className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-2xl text-sm font-bold hover:bg-orange-100 transition-colors"
+              >
+                <span className="text-base">📤</span>
+                <span>{lentCount} Lent Out</span>
+              </button>
+            )}
+            {borrowedCount > 0 && (
+              <button
+                onClick={() => navigate('/my-library/books', { state: { filter: 'borrowed' } })}
+                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-2xl text-sm font-bold hover:bg-indigo-100 transition-colors"
+              >
+                <span className="text-base">📥</span>
+                <span>{borrowedCount} Borrowed</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Search */}
         <div className="mb-4">
