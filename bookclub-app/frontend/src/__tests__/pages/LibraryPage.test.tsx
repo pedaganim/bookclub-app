@@ -10,7 +10,9 @@ import { useSubdomain } from '../../hooks/useSubdomain';
 jest.mock('../../services/api', () => ({
   apiService: {
     listBooksPublic: jest.fn(),
+    listBooks: jest.fn(),
     getUserClubs: jest.fn().mockResolvedValue({ items: [] }),
+    listMembers: jest.fn().mockResolvedValue({ items: [] }),
   },
 }));
 
@@ -169,7 +171,7 @@ describe('LibraryPage', () => {
       { bookId: '1', title: 'Club Book', clubId: 'club-member' },
       { bookId: '2', title: 'Non-Club Book' }
     ];
-    (apiService.listBooksPublic as jest.Mock).mockResolvedValue({ items: mockItems });
+    (apiService.listBooks as jest.Mock).mockResolvedValue({ items: mockItems });
 
     render(<LibraryPage />);
 

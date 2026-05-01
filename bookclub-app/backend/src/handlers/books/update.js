@@ -1,4 +1,6 @@
 const Book = require('../../models/book');
+const User = require('../../models/user');
+const BookClub = require('../../models/bookclub');
 const response = require('../../lib/response');
 const { getAuthenticatedUserId } = require('../../lib/get-user-id');
 
@@ -21,7 +23,28 @@ module.exports.handler = async (event) => {
     const validationErr = validateUpdates(updates);
     if (validationErr) return validationErr;
 
-    const updatedBook = await Book.update(bookId, userId, updates);
+    // Determine the effective owner for the update call.
+    // Club admins can edit items in their club; superadmins can edit any item.
+    let effectiveUserId = userId;
+    if (userId) {
+      const book = await Book.getById(bookId);
+      if (book && book.userId !== userId) {
+        const reqUser = await User.getById(userId);
+        const isSuperAdmin = reqUser?.role === 'superadmin';
+        let isClubAdmin = false;
+        if (book.clubId) {
+          try {
+            const role = await BookClub.getMemberRole(book.clubId, userId);
+            isClubAdmin = role === 'admin';
+          } catch (_) {}
+        }
+        if (isSuperAdmin || isClubAdmin) {
+          effectiveUserId = book.userId;
+        }
+      }
+    }
+
+    const updatedBook = await Book.update(bookId, effectiveUserId, updates);
     if (!updatedBook) {
       return response.notFound('Book not found or you do not have permission to update it');
     }

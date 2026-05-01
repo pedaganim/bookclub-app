@@ -49,15 +49,18 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
       setLoading(true);
       setError('');
       
-      const response = await apiService.listBooksPublic({
+      const browseParams = {
         limit: currentPageSize || PAGE_SIZE,
         nextToken: token || undefined,
         search: search || undefined,
         // If it's a subdomain, filter by club
         clubId: (isSubdomain && club) ? club.clubId : undefined,
         // Filter by category
-        bare: true,
-      });
+        bare: true as const,
+      };
+      const response = isAuthenticated
+        ? await apiService.listBooks(browseParams)
+        : await apiService.listBooksPublic(browseParams);
 
       let items = Array.isArray(response.items) ? response.items : [];
       

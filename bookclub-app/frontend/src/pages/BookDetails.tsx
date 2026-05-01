@@ -23,10 +23,11 @@ const BookDetails: React.FC = () => {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isSuperAdmin } = useAuth();
   const notificationCtx = React.useContext(NotificationContext);
   const [deleting, setDeleting] = useState(false);
   const [isMemberOfBookClub, setIsMemberOfBookClub] = useState<boolean>(false);
+  const [isClubAdmin, setIsClubAdmin] = useState<boolean>(false);
   const [joinStatus, setJoinStatus] = useState<string | null>(null);
 
   // Defensive helpers to avoid rendering non-string values (e.g., objects like {NULL: true})
@@ -219,6 +220,7 @@ const BookDetails: React.FC = () => {
         if (isAuthenticated && b.clubId) {
           const club = (userClubsRes.items || []).find((c: any) => c.clubId === b.clubId);
           setIsMemberOfBookClub(club?.userStatus === 'active');
+          setIsClubAdmin(club?.userRole === 'admin');
           if (club?.userStatus === 'pending') {
             setJoinStatus('pending');
           }
@@ -263,6 +265,7 @@ const BookDetails: React.FC = () => {
     `data:image/svg+xml,%3csvg width='300' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='300' height='400' fill='%23f3f4f6'/%3e%3ctext x='50%25' y='50%25' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3e${getItemLabel(book.category || 'book')}%3c/text%3e%3c/svg%3e`;
 
   const isOwner = !!(user?.userId && book.userId && user.userId === (book.userId as any));
+  const canManage = isOwner || isSuperAdmin || isClubAdmin;
   const isBook = !book.category || book.category === 'book';
 
   const handleEdit = () => {
@@ -431,7 +434,7 @@ const BookDetails: React.FC = () => {
 
           {/* Actions */}
           <div className="mt-4 sm:mt-6">
-            {isAuthenticated && isOwner ? (
+            {isAuthenticated && canManage ? (
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"

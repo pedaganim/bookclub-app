@@ -273,6 +273,8 @@ class ApiService {
     limit?: number;
     nextToken?: string;
     filter?: 'borrowed';
+    bare?: boolean;
+    search?: string;
   }): Promise<BookListResponse> {
     const queryParams = new URLSearchParams();
     if (params?.userId) queryParams.append('userId', params.userId);
@@ -280,6 +282,8 @@ class ApiService {
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.nextToken) queryParams.append('nextToken', params.nextToken);
     if (params?.filter) queryParams.append('filter', params.filter);
+    if (params?.bare) queryParams.append('bare', '1');
+    if (params?.search) queryParams.append('search', params.search);
 
     const response: AxiosResponse<ApiResponse<BookListResponse>> = await this.api.get(
       `/books?${queryParams.toString()}`

@@ -7,24 +7,18 @@ module.exports.handler = async (event) => {
   try {
     const { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId, category } = parseQuery(event);
     const userId = deriveUserId(event, qs);
+    const authUserId = deriveAuthUserId(event);
     logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter, category);
 
     let result;
-    if (filter === 'borrowed' && userId) {
-      result = await Book.listByLentToUser(userId, limit, nextToken);
-    } else if (clubId) {
-      result = await listBooksByClubMembers(clubId, limit);
-    } else if (userId) {
-      result = await Book.listByUser(userId, limit, nextToken, category);
-    } else {
-      const options = { category };
-      if (bare) options.bare = true;
-      // Resolve which club IDs the requesting user is an active member of.
-      // null = unauthenticated (hide all club items). Set = membership set.
+    if (bare) {
+      // Browse library: show all items, filtered by club membership
+      const options = { category, bare: true };
       let memberClubIds = null;
-      if (userId) {
+      const effectiveUserId = authUserId || userId;
+      if (effectiveUserId) {
         try {
-          const userClubs = await BookClub.getUserClubs(userId);
+          const userClubs = await BookClub.getUserClubs(effectiveUserId);
           memberClubIds = new Set(
             (userClubs || []).filter(c => c.userStatus === 'active').map(c => c.clubId)
           );
@@ -33,6 +27,16 @@ module.exports.handler = async (event) => {
         }
       }
       options.memberClubIds = memberClubIds;
+      result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
+    } else if (filter === 'borrowed' && userId) {
+      result = await Book.listByLentToUser(userId, limit, nextToken);
+    } else if (clubId) {
+      result = await listBooksByClubMembers(clubId, limit);
+    } else if (userId) {
+      result = await Book.listByUser(userId, limit, nextToken, category);
+    } else {
+      const options = { category };
+      options.memberClubIds = null;
       result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
     }
 
@@ -65,6 +69,10 @@ const deriveUserId = (event, qs) => {
     userId = event.requestContext.authorizer.claims.sub;
   }
   return userId;
+};
+
+const deriveAuthUserId = (event) => {
+  return event?.requestContext?.authorizer?.claims?.sub || null;
 };
 
 const listBooksByClubMembers = async (clubId, limit) => {
