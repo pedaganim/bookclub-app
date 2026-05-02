@@ -3,7 +3,8 @@ const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 
 const isOffline = () =>
-  process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
+  process.env.APP_ENV !== 'local' &&
+  (process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development');
 
 // Lazy loader to avoid requiring local-storage in AWS Lambda
 let _LocalStorage = null;

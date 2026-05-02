@@ -63,6 +63,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     apiService.setSessionExpiredHandler(logoutWithSessionExpired);
 
     if (config.skipAuth) {
+      // Re-use stored local tokens if they're already valid
+      const stored = localStorage.getItem('accessToken');
+      const storedUser = localStorage.getItem('user');
+      if (stored && stored.startsWith('local-token-') && storedUser) {
+        setUser(JSON.parse(storedUser));
+        setLoading(false);
+        return;
+      }
+      // Auto-login via local backend — no manual curl/copy-paste needed
+      (async () => {
+      try {
+        const resp = await fetch(`${config.apiBaseUrl}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'local-local-user@dev', password: 'local' }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          // Response shape: { success: true, data: { user, tokens } }
+          const { user: userObj, tokens } = data.data;
+          localStorage.setItem('accessToken', tokens.accessToken);
+          if (tokens.refreshToken) localStorage.setItem('refreshToken', tokens.refreshToken);
+          if (tokens.idToken) localStorage.setItem('idToken', tokens.idToken);
+          localStorage.setItem('user', JSON.stringify(userObj));
+          setUser(userObj);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.warn('[local] Auto-login failed, falling back to dummy user', e);
+      }
+      // Fallback: offline dummy so UI still works if backend is down
       const dummyUser: User = {
         userId: 'local-user',
         email: 'local@dev',
@@ -72,11 +103,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         timezone: 'UTC',
         createdAt: new Date().toISOString(),
       };
-
       localStorage.setItem('accessToken', 'local-token-local-user');
       localStorage.setItem('user', JSON.stringify(dummyUser));
       setUser(dummyUser);
       setLoading(false);
+      })();
       return;
     }
 

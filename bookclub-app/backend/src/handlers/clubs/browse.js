@@ -9,7 +9,13 @@ module.exports.handler = async (event) => {
     const search = qs && typeof qs.search === 'string' ? qs.search : null;
 
     const result = await BookClub.listPublicClubs(limit, nextToken, search);
-    return success({ items: result.items, nextToken: result.nextToken || null });
+    return {
+      ...success({ items: result.items, nextToken: result.nextToken || null }),
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    };
   } catch (e) {
     return error(e.message || 'Failed to browse clubs', 500);
   }

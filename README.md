@@ -195,6 +195,116 @@ cd bookclub-app/backend
 npm run dev:seed   # seeds data then starts the server
 ```
 
+## Local Debugging with VS Code
+
+You can set breakpoints and step through backend Lambda handler code while hitting `http://localhost:4000`.
+
+### Prerequisites
+
+Make sure you have the **Debugger for Chrome** extension (or the built-in JS debugger in VS Code) installed.
+
+### 1 — Create `.vscode/launch.json`
+
+Create the file at the repo root (`.vscode/launch.json`) with the following content:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Backend (serverless-offline)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/bookclub-app/backend/node_modules/.bin/serverless",
+      "runtimeArgs": [
+        "offline",
+        "start",
+        "--config",
+        "serverless-offline.yml",
+        "--stage",
+        "dev"
+      ],
+      "cwd": "${workspaceFolder}/bookclub-app/backend",
+      "env": {
+        "SLS_TELEMETRY_DISABLED": "1",
+        "IS_OFFLINE": "true",
+        "NODE_ENV": "development",
+        "AWS_ACCESS_KEY_ID": "local",
+        "AWS_SECRET_ACCESS_KEY": "local",
+        "AWS_REGION": "us-east-1",
+        "AWS_DEFAULT_REGION": "us-east-1",
+        "AWS_SDK_LOAD_CONFIG": "0"
+      },
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Frontend (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/bookclub-app/frontend/src",
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/*"
+      }
+    },
+    {
+      "name": "Debug Backend Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/bookclub-app/backend/node_modules/.bin/jest",
+      "args": ["--runInBand", "--no-coverage"],
+      "cwd": "${workspaceFolder}/bookclub-app/backend",
+      "env": {
+        "IS_OFFLINE": "true",
+        "NODE_ENV": "test",
+        "AWS_ACCESS_KEY_ID": "local",
+        "AWS_SECRET_ACCESS_KEY": "local",
+        "AWS_REGION": "us-east-1"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (Backend + Frontend)",
+      "configurations": ["Debug Backend (serverless-offline)", "Debug Frontend (Chrome)"]
+    }
+  ]
+}
+```
+
+### 2 — Start debugging
+
+**Backend only:**
+1. Open VS Code **Run & Debug** panel (`Cmd+Shift+D`)
+2. Select **"Debug Backend (serverless-offline)"** from the dropdown
+3. Press **F5** (or the green play button)
+4. Backend starts at `http://localhost:4000`
+5. Set breakpoints in any file under `bookclub-app/backend/src/`
+6. Hit the endpoint from the browser or Postman — execution will pause at your breakpoint
+
+**Frontend only (React):**
+1. First start the frontend manually: `cd bookclub-app/frontend && npm start`
+2. Select **"Debug Frontend (Chrome)"** and press **F5**
+3. VS Code launches Chrome and maps source files — set breakpoints in `src/`
+
+**Full Stack:**
+1. Select **"Full Stack (Backend + Frontend)"** compound config
+2. Press **F5** — both processes launch together
+
+### 3 — Verify backend is running
+
+```bash
+curl http://localhost:4000/dev/books
+```
+
+You should see a JSON response. Any handler that processes this request will pause at your breakpoints.
+
+---
+
 ## Deployment
 
 The application is designed to be completely serverless with zero ongoing costs when not in use. Use the automated deployment script:

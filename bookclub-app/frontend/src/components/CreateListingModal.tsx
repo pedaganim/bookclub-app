@@ -96,7 +96,19 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
               
               let uploadResult: { fileUrl?: string; key?: string; bucket?: string } = {};
               
-              if (!isLocal) {
+              if (isLocal) {
+                // Local dev: upload to LocalStack S3 (localhost:4566) via presigned URL
+                const libraryType = config.libraryType === 'all' ? 'toy' : config.libraryType;
+                const urlData = await withRetry(
+                  () => apiService.getLibraryUploadUrl(libraryType, image.file.type),
+                  'getLibraryUploadUrl'
+                );
+                await withRetry(
+                  () => apiService.uploadToS3(urlData.uploadUrl, image.file),
+                  'uploadToS3'
+                );
+                uploadResult = { fileUrl: urlData.fileUrl, key: urlData.fileKey, bucket: 'bookclub-app-local-book-covers' };
+              } else {
                 uploadResult = await withRetry(
                   () => apiService.uploadAnySize(image.file, { partConcurrency: 3, partSize: 5 * 1024 * 1024 }),
                   'uploadAnySize'

@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-// Only enable local file storage when running offline (local dev / serverless-offline) or during tests.
-// Default to false for production safety.
-const OFFLINE = process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
+// Only enable local file storage when running offline (legacy serverless-offline with JSON files) or during tests.
+// When APP_ENV=local, always use real DynamoDB (pointed at localhost:8000) — same code path as production.
+const OFFLINE = process.env.APP_ENV !== 'local' &&
+  (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test');
 
 // Use a simple file-based storage for serverless offline
 const STORAGE_DIR = path.join(__dirname, '../../.local-storage');
@@ -236,10 +237,14 @@ class LocalStorage {
 
   static async verifyToken(token) {
     if (!OFFLINE) return null;
+    // Handle both local-token- and local-id- prefixes (frontend prefers idToken)
+    let userId = null;
     if (token.startsWith('local-token-')) {
-      const userId = token.replace('local-token-', '');
-      const existing = await this.getUserById(userId);
-      if (existing) return existing;
+      userId = token.replace('local-token-', '');
+    } else if (token.startsWith('local-id-')) {
+      userId = token.replace('local-id-', '');
+    }
+    if (userId) {
 
       // Auto-provision a minimal user for local dev tokens.
       // This supports frontend auth bypass without requiring explicit registration.

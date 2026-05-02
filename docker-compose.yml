@@ -1,35 +1,38 @@
-version: '3.8'
-
 services:
-  # Local DynamoDB for development
-  dynamodb:
-    image: amazon/dynamodb-local:latest
-    container_name: bookclub-dynamodb-local
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    container_name: dynamodb-local
     ports:
       - "8000:8000"
     volumes:
-      - dynamodb_data:/home/dynamodblocal/data
+      - "./docker/dynamodb:/home/dynamodblocal/data"
     working_dir: /home/dynamodblocal
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
-    networks:
-      - bookclub-dev
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
 
-  # DynamoDB Admin (optional GUI for viewing tables)
+  # LocalStack — S3 + Lambda triggers locally (free tier covers S3 + Lambda)
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: bookclub-localstack
+    ports:
+      - "4566:4566"       # All services on one port
+    environment:
+      - SERVICES=s3,lambda,events
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - LAMBDA_EXECUTOR=local   # Run lambdas in-process (no Docker-in-Docker needed)
+      - PERSISTENCE=1
+    volumes:
+      - "./docker/localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  # DynamoDB Admin GUI - http://localhost:8001
   dynamodb-admin:
     image: aaronshaf/dynamodb-admin:latest
     container_name: bookclub-dynamodb-admin
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     environment:
-      - DYNAMO_ENDPOINT=http://dynamodb:8000
+      - DYNAMO_ENDPOINT=http://dynamodb-local:8000
     depends_on:
-      - dynamodb
-    networks:
-      - bookclub-dev
-
-volumes:
-  dynamodb_data:
-
-networks:
-  bookclub-dev:
-    driver: bridge
+      - dynamodb-local

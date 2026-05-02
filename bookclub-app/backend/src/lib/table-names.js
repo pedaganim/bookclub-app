@@ -10,6 +10,7 @@ const tableNames = {
   'dm-conversations': `${SERVICE_NAME}-dm-conversations-${STAGE}`,
   'dm-messages': `${SERVICE_NAME}-dm-messages-${STAGE}`,
   'toy-listings': `${SERVICE_NAME}-toy-listings-${STAGE}`,
+  'bookclub-posts': `${SERVICE_NAME}-bookclub-posts-${STAGE}`,
 };
 
 function getTableName(key) {

@@ -4,32 +4,26 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'local'}
   region: ${self:custom.appConfig.region}
   environment:
     STAGE: ${self:provider.stage}
+    APP_ENV: local
+    NODE_ENV: development
     # These will be mocked in local development
     COGNITO_USER_POOL_ID: ${opt:cognito-user-pool-id, 'local-user-pool'}
     COGNITO_CLIENT_ID: ${opt:cognito-client-id, 'local-client-id'}
     BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
 
 custom:
-  appConfig: ${file(./config/app.${self:provider.stage}.json)}
+  appConfig: ${file(./config/app.local.json)}
   serverless-offline:
     httpPort: 4000
-    # Skip resource routes for local development
+    noPrependStageInUrl: true
     resourceRoutes: false
-    # Disable external requests during offline development
     skipCacheInvalidation: true
     disableCookieValidation: true
     noAuth: true
-  dynamodb:
-    stages:
-      - dev
-    start:
-      port: 8000
-      inMemory: true
-      migrate: true
 
 plugins:
   - serverless-offline

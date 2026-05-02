@@ -6,7 +6,9 @@ const User = require('../../models/user');
 const { getTableName } = require('../../lib/table-names');
 
 const s3 = new AWS.S3();
-const BUCKET_NAME = process.env.BOOK_COVERS_BUCKET;
+const IS_LOCAL = process.env.APP_ENV === 'local';
+const BUCKET_NAME = IS_LOCAL ? 'bookclub-app-local-book-covers' : process.env.BOOK_COVERS_BUCKET;
+const LOCALSTACK_URL = 'http://localhost:4566';
 
 // Store listingId → s3Key mapping so processUpload can find the draft listing
 async function storeListingMapping(bucket, key, listingId, userId) {
@@ -77,11 +79,15 @@ module.exports.handler = async (event) => {
       Bucket: BUCKET_NAME,
       Key: fileKey,
       ContentType: fileType,
-      Expires: 3600, // 1 hour for slow mobile uploads
+      Expires: 3600,
     };
 
     const uploadUrl = await s3.getSignedUrlPromise('putObject', params);
-    const fileUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
+    // In local mode the presigned URL points to LocalStack (localhost:4566).
+    // The public-read fileUrl also uses LocalStack so images render in the browser.
+    const fileUrl = IS_LOCAL
+      ? `${LOCALSTACK_URL}/${BUCKET_NAME}/${fileKey}`
+      : `https://${BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
 
     // For library uploads: pre-create a draft listing so frontend can poll it immediately
     const PINNED_CATEGORY_TYPES = ['lost_found'];

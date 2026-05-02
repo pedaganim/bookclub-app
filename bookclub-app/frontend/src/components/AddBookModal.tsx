@@ -129,7 +129,18 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
                   
                   let uploadResult: { fileUrl?: string; key?: string; bucket?: string } = {};
                   
-                  if (!isLocal) {
+                  if (isLocal) {
+                    // Local dev: upload to LocalStack S3 via presigned URL
+                    const urlData = await withRetry(
+                      () => apiService.getBookUploadUrl(image.file.type),
+                      'getBookUploadUrl'
+                    );
+                    await withRetry(
+                      () => apiService.uploadToS3(urlData.uploadUrl, image.file),
+                      'uploadToS3'
+                    );
+                    uploadResult = { fileUrl: urlData.fileUrl, key: urlData.fileKey, bucket: 'bookclub-app-local-book-covers' };
+                  } else {
                     // Upload any size (multipart for large)
                     uploadResult = await withRetry(
                       () => apiService.uploadAnySize(image.file, { partConcurrency: 3, partSize: 5 * 1024 * 1024 }),
@@ -192,7 +203,13 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onBookAdded }) => 
       let s3Bucket: string | undefined;
       let s3Key: string | undefined;
 
-      if (manualImage && !isLocal) {
+      if (manualImage && isLocal) {
+        const urlData = await apiService.getBookUploadUrl(manualImage.file.type);
+        await apiService.uploadToS3(urlData.uploadUrl, manualImage.file);
+        coverImage = urlData.fileUrl;
+        s3Bucket = 'bookclub-app-local-book-covers';
+        s3Key = urlData.fileKey;
+      } else if (manualImage && !isLocal) {
         const uploadResult = await apiService.uploadAnySize(manualImage.file);
         coverImage = uploadResult.fileUrl;
         s3Bucket = uploadResult.bucket;

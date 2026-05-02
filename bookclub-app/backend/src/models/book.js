@@ -2,7 +2,10 @@ const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 
-const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
+// APP_ENV=local uses real DynamoDB (local endpoint) — same code path as production.
+// isOffline() only returns true for legacy serverless-offline with JSON file storage.
+const isOffline = () => process.env.APP_ENV !== 'local' &&
+  (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test');
 
 // Lazy loader to avoid requiring local-storage in AWS Lambda
 let _LocalStorage = null;

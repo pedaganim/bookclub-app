@@ -207,6 +207,10 @@ function App() {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/contact" element={<ContactPage />} />
+                {/* Block bookmarklet page in production — only accessible in local dev */}
+                {process.env.NODE_ENV !== 'development' && (
+                  <Route path="/dev-bookmarklet.html" element={<Navigate to="/login" replace />} />
+                )}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </main>

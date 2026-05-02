@@ -76,6 +76,8 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-messages-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-posts-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-posts-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -1161,6 +1163,47 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  # Club Posts functions
+  createMultiClubPost:
+    handler: src/handlers/posts/createMultiClub.handler
+    events:
+      - http:
+          method: POST
+          path: /posts/multi-club
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  getMultiClubPosts:
+    handler: src/handlers/posts/getMultiClub.handler
+    events:
+      - http:
+          method: GET
+          path: /posts/multi-club
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   # Swap Toys marketplace functions
   listToyListings:
     handler: src/handlers/swaptoys/list.handler
@@ -1746,6 +1789,52 @@ resources:
               - AttributeName: conversationId
                 KeyType: HASH
               - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    ClubPostsTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-bookclub-posts-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: postId
+            AttributeType: S
+          - AttributeName: clubId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt_postId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: postId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ClubIdIndex
+            KeySchema:
+              - AttributeName: clubId
+                KeyType: HASH
+              - AttributeName: createdAt_postId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt_postId
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

@@ -3,7 +3,8 @@ const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
 const LocalStorage = require('../lib/local-storage');
 
-const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
+const isOffline = () => process.env.APP_ENV !== 'local' &&
+  (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test');
 
 class BookClub {
   static async create(clubData, createdBy) {

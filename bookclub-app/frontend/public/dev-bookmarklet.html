@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- DEV ONLY: This file is served in development only. In production it returns 404 via the server config. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dev Login</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 80px auto; padding: 0 20px; color: #333; text-align: center; }
+    h2 { color: #1a1a1a; margin-bottom: 8px; }
+    p { color: #666; margin-bottom: 32px; }
+    button {
+      display: inline-block; padding: 14px 32px;
+      background: #4f46e5; color: white; border: none;
+      border-radius: 10px; font-size: 16px; font-weight: bold;
+      cursor: pointer; width: 100%;
+    }
+    button:hover { background: #4338ca; }
+    button:disabled { background: #a5b4fc; cursor: not-allowed; }
+    #status { margin-top: 20px; font-size: 14px; min-height: 20px; }
+    .error { color: #dc2626; }
+    .success { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <h2>🔑 Local Dev Login</h2>
+  <p>Logs you in with the local DynamoDB account instantly — no production needed.</p>
+
+  <button id="btn" onclick="doLogin()">🚀 Login as Local Dev User</button>
+  <div id="status"></div>
+
+  <script>
+    async function doLogin() {
+      const btn = document.getElementById('btn');
+      const status = document.getElementById('status');
+      btn.disabled = true;
+      btn.textContent = 'Logging in…';
+      status.textContent = '';
+      status.className = '';
+
+      try {
+        const resp = await fetch('http://localhost:4000/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'local-local-user@dev', password: 'local' }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.text();
+          throw new Error(err || `HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        // Response shape: { success: true, data: { user, tokens } }
+        const { user, tokens } = data.data;
+
+        localStorage.setItem('accessToken', tokens.accessToken);
+        if (tokens.refreshToken) localStorage.setItem('refreshToken', tokens.refreshToken);
+        if (tokens.idToken) localStorage.setItem('idToken', tokens.idToken);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        status.className = 'success';
+        status.textContent = '✅ Logged in as ' + user.name + '! Redirecting…';
+        setTimeout(() => { window.location.href = '/'; }, 800);
+      } catch (e) {
+        status.className = 'error';
+        status.textContent = '❌ ' + e.message + ' — Is the backend running?';
+        btn.disabled = false;
+        btn.textContent = '🚀 Login as Local Dev User';
+      }
+    }
+  </script>
+</body>
+</html>

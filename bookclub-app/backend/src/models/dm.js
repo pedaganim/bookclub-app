@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const dynamoDb = require('../lib/dynamodb');
 const { getTableName } = require('../lib/table-names');
 
-const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
+const isOffline = () => process.env.APP_ENV !== 'local' &&
+  (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test');
 
 function makeConversationId(userAId, userBId) {
   const [a, b] = [userAId, userBId].sort();

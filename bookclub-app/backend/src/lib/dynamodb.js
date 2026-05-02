@@ -2,6 +2,13 @@ const AWS = require('./aws-config');
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+// DynamoDB does not accept null attribute values — strip them before writing.
+function stripNulls(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== null && v !== undefined)
+  );
+}
+
 module.exports = {
   async get(tableName, key) {
     const params = {
@@ -25,7 +32,8 @@ module.exports = {
   async put(tableName, item) {
     const params = {
       TableName: tableName,
-      Item: item,
+      // Local DynamoDB rejects null attribute values; strip them only in local dev.
+      Item: process.env.APP_ENV === 'local' ? stripNulls(item) : item,
     };
     await dynamoDb.put(params).promise();
     return item;

@@ -1,0 +1,1 @@
+{"region":"us-east-1","dynamodbEndpoint":"http://localhost:8000","localstackEndpoint":"http://localhost:4566","awsAccessKeyId":"local","awsSecretAccessKey":"local"}

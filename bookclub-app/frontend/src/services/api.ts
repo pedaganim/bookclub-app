@@ -844,6 +844,22 @@ class ApiService {
   }
 
   /**
+   * Get a presigned S3 upload URL for a book cover (no draft listing created).
+   */
+  async getBookUploadUrl(fileType: string): Promise<{
+    uploadUrl: string;
+    fileUrl: string;
+    fileKey: string;
+  }> {
+    const response = await this.api.post('/upload-url', { context: 'book', fileType });
+    if (response.data?.success === false) {
+      throw new Error(response.data.error?.message || 'Failed to get upload URL');
+    }
+    const data = response.data?.data ?? response.data;
+    return data as { uploadUrl: string; fileUrl: string; fileKey: string };
+  }
+
+  /**
    * Get a presigned S3 upload URL for a library item image.
    * Also pre-creates a draft ToyListing and returns its listingId for polling.
    */

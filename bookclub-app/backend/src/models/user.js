@@ -8,7 +8,8 @@ const { sendAdminNewUserNotification } = require('../lib/notification-service');
 // Initialize Cognito
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
-const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
+const isOffline = () => process.env.APP_ENV !== 'local' &&
+  (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test');
 
 class User {
   static async register(userData) {
@@ -166,6 +167,31 @@ class User {
       if (!user) throw new Error('Invalid or expired token');
       return user;
     }
+
+    // APP_ENV=local: resolve local-token-<userId> or local-id-<userId> directly from DynamoDB
+    if (process.env.APP_ENV === 'local' && accessToken && (accessToken.startsWith('local-token-') || accessToken.startsWith('local-id-'))) {
+      const userId = accessToken.startsWith('local-token-')
+        ? accessToken.replace('local-token-', '')
+        : accessToken.replace('local-id-', '');
+      let user = await this.getById(userId);
+      if (!user) {
+        // Auto-provision minimal user so frontend never gets a 401 in local dev
+        const timestamp = new Date().toISOString();
+        user = {
+          userId,
+          email: `local-${userId}@dev`,
+          name: 'Local Dev',
+          bio: '',
+          profilePicture: null,
+          timezone: 'UTC',
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        };
+        await dynamoDb.put(getTableName('users'), user);
+      }
+      return user;
+    }
+
     try {
       const userData = await cognito.getUser({ AccessToken: accessToken }).promise();
       const email = userData.UserAttributes.find(attr => attr.Name === 'email').Value;
