@@ -1,0 +1,13 @@
+{
+  "region": "us-east-1",
+  "apiCustomDomain": "",
+  "userPoolDomainPrefix": "bookclub-app-local",
+  "oauth": {
+    "redirectSignIn": "http://localhost:3000/auth/callback",
+    "redirectSignOut": "http://localhost:3000/"
+  },
+  "frontend": {
+    "domain": "localhost:3000",
+    "bucketName": ""
+  }
+}
