@@ -1247,15 +1247,6 @@ functions:
           path: /contact
           cors: true
 
-  # Interest registration (public, no auth) for upcoming features
-  interestRegisterSwapToys:
-    handler: src/handlers/interest/registerSwapToys.handler
-    events:
-      - http:
-          method: POST
-          path: /interest/swap-toys
-          cors: true
-
   # Public sitemap.xml
   sitemap:
     handler: src/handlers/sitemap/get.handler
