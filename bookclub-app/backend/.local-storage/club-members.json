@@ -1,9 +1,58 @@
 {
-  "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466:test-user-123": {
-    "clubId": "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466",
-    "userId": "test-user-123",
+  "club-fiction-001:local-user": {
+    "clubId": "club-fiction-001",
+    "userId": "local-user",
     "role": "admin",
-    "joinedAt": "2026-05-01T06:13:53.416Z",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-fiction-001:user-2": {
+    "clubId": "club-fiction-001",
+    "userId": "user-2",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-fiction-001:user-3": {
+    "clubId": "club-fiction-001",
+    "userId": "user-3",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-scifi-002:local-user-2": {
+    "clubId": "club-scifi-002",
+    "userId": "local-user-2",
+    "role": "admin",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-scifi-002:user-4": {
+    "clubId": "club-scifi-002",
+    "userId": "user-4",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-scifi-002:user-5": {
+    "clubId": "club-scifi-002",
+    "userId": "user-5",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-nonfiction-003:user-6": {
+    "clubId": "club-nonfiction-003",
+    "userId": "user-6",
+    "role": "admin",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "club-nonfiction-003:test-user-123": {
+    "clubId": "club-nonfiction-003",
+    "userId": "test-user-123",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
     "status": "active"
   }
 }

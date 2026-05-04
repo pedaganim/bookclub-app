@@ -1,15 +1,41 @@
 {
-  "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466": {
-    "clubId": "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466",
-    "name": "Test Book Club",
-    "slug": "test-book-club",
-    "description": "A test club",
-    "createdBy": "test-user-123",
-    "inviteCode": "2CB2DCEC",
+  "club-fiction-001": {
+    "clubId": "club-fiction-001",
+    "name": "Fiction Lovers",
+    "slug": "fiction-lovers",
+    "description": "A club for fiction enthusiasts",
+    "createdBy": "local-user",
+    "inviteCode": "FICTION1",
     "isPrivate": false,
     "memberLimit": null,
-    "memberCount": 1,
-    "createdAt": "2026-05-01T06:13:53.416Z",
-    "updatedAt": "2026-05-01T06:13:53.417Z"
+    "memberCount": 3,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  "club-scifi-002": {
+    "clubId": "club-scifi-002",
+    "name": "Sci-Fi Readers",
+    "slug": "sci-fi-readers",
+    "description": "Exploring science fiction together",
+    "createdBy": "local-user-2",
+    "inviteCode": "SCIFI002",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 3,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  "club-nonfiction-003": {
+    "clubId": "club-nonfiction-003",
+    "name": "Non-Fiction Hub",
+    "slug": "non-fiction-hub",
+    "description": "Learning through non-fiction reads",
+    "createdBy": "user-6",
+    "inviteCode": "NONFIC3",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 2,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
   }
 }

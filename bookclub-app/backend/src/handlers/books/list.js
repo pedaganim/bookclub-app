@@ -1,13 +1,14 @@
 const response = require('../../lib/response');
 const Book = require('../../models/book');
 const BookClub = require('../../models/bookclub');
+const LocalStorage = require('../../lib/local-storage');
 
 // --- Handler (top) ---
 module.exports.handler = async (event) => {
   try {
     const { qs, limit, nextToken, search, ageGroupFine, bare, filter, clubId, category } = parseQuery(event);
     const userId = deriveUserId(event, qs);
-    const authUserId = deriveAuthUserId(event);
+    const authUserId = await deriveAuthUserId(event);
     logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter, category);
 
     let result;
@@ -71,8 +72,17 @@ const deriveUserId = (event, qs) => {
   return userId;
 };
 
-const deriveAuthUserId = (event) => {
-  return event?.requestContext?.authorizer?.claims?.sub || null;
+const deriveAuthUserId = async (event) => {
+  if (event?.requestContext?.authorizer?.claims?.sub) {
+    return event.requestContext.authorizer.claims.sub;
+  }
+  const authHeader = (event?.headers && (event.headers.Authorization || event.headers.authorization)) || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (token && (process.env.IS_OFFLINE === 'true' || process.env.APP_ENV === 'local')) {
+    const user = await LocalStorage.verifyToken(token).catch(() => null);
+    if (user) return user.userId;
+  }
+  return null;
 };
 
 const listBooksByClubMembers = async (clubId, limit) => {

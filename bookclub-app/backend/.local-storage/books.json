@@ -8,7 +8,8 @@
     "coverImage": null,
     "status": "available",
     "createdAt": "2025-08-31T05:40:11.470Z",
-    "updatedAt": "2026-04-11T09:33:53.558Z"
+    "updatedAt": "2026-04-11T09:33:53.558Z",
+    "clubId": "club-fiction-001"
   },
   "476aabcf-3f2d-4848-959a-c36d5a32606d": {
     "bookId": "476aabcf-3f2d-4848-959a-c36d5a32606d",
@@ -19,7 +20,8 @@
     "coverImage": null,
     "status": "available",
     "createdAt": "2025-08-31T05:40:29.470Z",
-    "updatedAt": "2026-04-11T09:33:46.104Z"
+    "updatedAt": "2026-04-11T09:33:46.104Z",
+    "clubId": "club-fiction-001"
   },
   "a1b2c3d4-0001-0001-0001-000000000001": {
     "bookId": "a1b2c3d4-0001-0001-0001-000000000001",
@@ -34,7 +36,8 @@
     "category": "book",
     "lentAt": "2026-04-01T09:00:00.000Z",
     "createdAt": "2026-03-01T09:00:00.000Z",
-    "updatedAt": "2026-04-01T09:00:00.000Z"
+    "updatedAt": "2026-04-01T09:00:00.000Z",
+    "clubId": "club-fiction-001"
   },
   "a1b2c3d4-0002-0002-0002-000000000002": {
     "bookId": "a1b2c3d4-0002-0002-0002-000000000002",
@@ -49,7 +52,8 @@
     "category": "book",
     "lentAt": "2026-04-05T09:00:00.000Z",
     "createdAt": "2026-03-10T09:00:00.000Z",
-    "updatedAt": "2026-04-05T09:00:00.000Z"
+    "updatedAt": "2026-04-05T09:00:00.000Z",
+    "clubId": "club-scifi-002"
   },
   "seed-lent-1": {
     "bookId": "seed-lent-1",
@@ -64,7 +68,8 @@
     "lentToUserName": "Alice Wonderland",
     "lentAt": "2026-04-20T10:00:00.000Z",
     "createdAt": "2026-03-15T09:00:00.000Z",
-    "updatedAt": "2026-04-20T10:00:00.000Z"
+    "updatedAt": "2026-04-20T10:00:00.000Z",
+    "clubId": "club-fiction-001"
   },
   "seed-lent-2": {
     "bookId": "seed-lent-2",
@@ -79,7 +84,8 @@
     "lentToUserName": "Charlie Brown",
     "lentAt": "2026-04-22T14:00:00.000Z",
     "createdAt": "2026-02-10T09:00:00.000Z",
-    "updatedAt": "2026-04-22T14:00:00.000Z"
+    "updatedAt": "2026-04-22T14:00:00.000Z",
+    "clubId": "club-fiction-001"
   },
   "seed-borrowed-1": {
     "bookId": "seed-borrowed-1",
@@ -94,7 +100,8 @@
     "lentToUserName": "Local Dev",
     "lentAt": "2026-04-18T08:00:00.000Z",
     "createdAt": "2026-01-20T09:00:00.000Z",
-    "updatedAt": "2026-04-18T08:00:00.000Z"
+    "updatedAt": "2026-04-18T08:00:00.000Z",
+    "clubId": "club-scifi-002"
   },
   "e3ac8366-d886-452b-9e73-b4c3e9eb4e4e": {
     "bookId": "e3ac8366-d886-452b-9e73-b4c3e9eb4e4e",
@@ -117,7 +124,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "createdAt": "2026-04-12T01:53:12.155Z",
     "updatedAt": "2026-04-12T01:53:12.155Z"
   },
@@ -142,7 +149,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "createdAt": "2026-04-12T01:58:41.369Z",
     "updatedAt": "2026-04-12T01:58:41.369Z"
   },
@@ -153,7 +160,7 @@
     "description": "Building set for Star Wars fans.",
     "category": "toy",
     "status": "available",
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "clubId": "club-nonfiction-003",
     "createdAt": "2026-04-16T09:00:00.000Z",
     "updatedAt": "2026-04-16T09:00:00.000Z"
   },
@@ -164,7 +171,7 @@
     "description": "High performance 18V drill with extra batteries.",
     "category": "tool",
     "status": "available",
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "clubId": "club-nonfiction-003",
     "createdAt": "2026-04-16T09:05:00.000Z",
     "updatedAt": "2026-04-16T09:05:00.000Z"
   },
@@ -175,7 +182,7 @@
     "author": "J.R.R. Tolkien",
     "category": "book",
     "status": "available",
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "clubId": "club-nonfiction-003",
     "createdAt": "2026-04-16T09:10:00.000Z",
     "updatedAt": "2026-04-16T09:10:00.000Z"
   },
@@ -186,7 +193,7 @@
     "description": "The classic board game of trading and building.",
     "category": "game",
     "status": "available",
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "clubId": "club-nonfiction-003",
     "createdAt": "2026-04-16T09:15:00.000Z",
     "updatedAt": "2026-04-16T09:15:00.000Z"
   },
@@ -197,7 +204,7 @@
     "description": "Waterproof pop-up marquee, perfect for hostings.",
     "category": "event_hire",
     "status": "available",
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "clubId": "club-nonfiction-003",
     "createdAt": "2026-04-16T09:20:00.000Z",
     "updatedAt": "2026-04-16T09:20:00.000Z"
   },
@@ -208,7 +215,7 @@
     "description": "Sturdy aluminum tripod with fluid head for video.",
     "category": "other",
     "status": "available",
-    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "clubId": "club-nonfiction-003",
     "createdAt": "2026-04-16T09:25:00.000Z",
     "updatedAt": "2026-04-16T09:25:00.000Z"
   },
@@ -233,7 +240,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "book",
     "createdAt": "2026-04-16T08:11:06.412Z",
     "updatedAt": "2026-04-16T08:11:06.412Z"
@@ -258,7 +265,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "event",
     "createdAt": "2026-04-18T14:21:39.050Z",
     "updatedAt": "2026-04-18T14:21:39.050Z"
@@ -283,7 +290,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "misc",
     "createdAt": "2026-04-19T04:57:54.429Z",
     "updatedAt": "2026-04-19T04:57:54.429Z"
@@ -308,7 +315,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "misc",
     "createdAt": "2026-04-19T04:57:54.431Z",
     "updatedAt": "2026-04-19T04:57:54.431Z"
@@ -333,7 +340,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "misc",
     "createdAt": "2026-04-19T04:57:54.433Z",
     "updatedAt": "2026-04-19T04:57:54.433Z"
@@ -358,7 +365,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "misc",
     "createdAt": "2026-04-19T04:57:54.436Z",
     "updatedAt": "2026-04-19T04:57:54.436Z"
@@ -383,7 +390,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "misc",
     "createdAt": "2026-04-19T04:57:54.451Z",
     "updatedAt": "2026-04-19T04:57:54.451Z"
@@ -408,7 +415,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "toy",
     "createdAt": "2026-04-25T11:06:36.366Z",
     "updatedAt": "2026-04-25T11:06:36.366Z"
@@ -421,7 +428,7 @@
     "description": "An item in the same club (qweqwe) as local-user. You should see the Borrow button for this.",
     "category": "book",
     "status": "available",
-    "clubId": "1783f5de-7554-40d9-9292-627eadf86a08",
+    "clubId": "club-scifi-002",
     "createdAt": "2026-04-29T23:49:52.449Z",
     "updatedAt": "2026-04-29T23:49:52.450Z"
   },
@@ -432,7 +439,7 @@
     "description": "An item in a different club (Test Book Club). You should see the Request to Join button.",
     "category": "tool",
     "status": "available",
-    "clubId": "5a5fac2e-93dc-45b5-967b-677e02c098cd",
+    "clubId": "club-scifi-002",
     "createdAt": "2026-04-29T23:49:52.450Z",
     "updatedAt": "2026-04-29T23:49:52.450Z"
   },
@@ -456,7 +463,7 @@
     "metadataSource": null,
     "advancedMetadata": null,
     "lastMetadataExtraction": null,
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "category": "event",
     "createdAt": "2026-04-30T12:03:33.307Z",
     "updatedAt": "2026-04-30T12:03:33.307Z"
@@ -469,7 +476,7 @@
     "description": "The first book in the Harry Potter series. A young wizard discovers his magical heritage.",
     "category": "book",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "coverImage": null,
     "createdAt": "2026-04-28T08:00:00.000Z",
     "updatedAt": "2026-04-28T08:00:00.000Z"
@@ -482,7 +489,7 @@
     "description": "A dystopian novel set in a totalitarian society under constant surveillance.",
     "category": "book",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "coverImage": null,
     "createdAt": "2026-04-28T08:05:00.000Z",
     "updatedAt": "2026-04-28T08:05:00.000Z"
@@ -492,10 +499,10 @@
     "userId": "user-4",
     "title": "The Design of Everyday Things",
     "author": "Don Norman",
-    "description": "A powerful primer on how — and why — some products delight users while others frustrate them.",
+    "description": "A powerful primer on how \u2014 and why \u2014 some products delight users while others frustrate them.",
     "category": "book",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-scifi-002",
     "coverImage": null,
     "createdAt": "2026-04-28T08:10:00.000Z",
     "updatedAt": "2026-04-28T08:10:00.000Z"
@@ -507,7 +514,7 @@
     "description": "Kids toy kitchen with sounds and accessories. Great for 2-5 year olds.",
     "category": "toy",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "coverImage": null,
     "createdAt": "2026-04-28T09:00:00.000Z",
     "updatedAt": "2026-04-28T09:00:00.000Z"
@@ -519,7 +526,7 @@
     "description": "Classic wooden train set with 50+ pieces including tracks and bridges.",
     "category": "toy",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-scifi-002",
     "coverImage": null,
     "createdAt": "2026-04-28T09:05:00.000Z",
     "updatedAt": "2026-04-28T09:05:00.000Z"
@@ -531,7 +538,7 @@
     "description": "Powerful 1200W circular saw. Includes spare blade. Perfect for DIY timber cuts.",
     "category": "tool",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "coverImage": null,
     "createdAt": "2026-04-28T10:00:00.000Z",
     "updatedAt": "2026-04-28T10:00:00.000Z"
@@ -543,7 +550,7 @@
     "description": "Electric pressure washer 1800W. Great for driveways, decks and cars.",
     "category": "tool",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-nonfiction-003",
     "coverImage": null,
     "createdAt": "2026-04-28T10:10:00.000Z",
     "updatedAt": "2026-04-28T10:10:00.000Z"
@@ -555,7 +562,7 @@
     "description": "The iconic property trading board game for 2-8 players.",
     "category": "game",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-scifi-002",
     "coverImage": null,
     "createdAt": "2026-04-28T11:00:00.000Z",
     "updatedAt": "2026-04-28T11:00:00.000Z"
@@ -567,7 +574,7 @@
     "description": "Award-winning strategy game for 2-5 players. Build train routes across Europe.",
     "category": "game",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-scifi-002",
     "coverImage": null,
     "createdAt": "2026-04-28T11:10:00.000Z",
     "updatedAt": "2026-04-28T11:10:00.000Z"
@@ -579,7 +586,7 @@
     "description": "Full HD outdoor projector with 3000 lumens. Includes 3m inflatable screen.",
     "category": "event",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-nonfiction-003",
     "coverImage": null,
     "createdAt": "2026-04-28T12:00:00.000Z",
     "updatedAt": "2026-04-28T12:00:00.000Z"
@@ -591,7 +598,7 @@
     "description": "Heavy duty waterproof pop-up marquee. Easy 2-person setup. Ideal for garden parties.",
     "category": "event",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "coverImage": null,
     "createdAt": "2026-04-28T12:10:00.000Z",
     "updatedAt": "2026-04-28T12:10:00.000Z"
@@ -603,7 +610,7 @@
     "description": "Spacious 4-person dome tent. Waterproof, easy setup, includes carry bag.",
     "category": "other",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-fiction-001",
     "coverImage": null,
     "createdAt": "2026-04-28T13:00:00.000Z",
     "updatedAt": "2026-04-28T13:00:00.000Z"
@@ -620,7 +627,8 @@
     "lentToUserName": "Eve Online",
     "lentAt": "2026-04-25T11:00:00.000Z",
     "createdAt": "2026-03-05T09:00:00.000Z",
-    "updatedAt": "2026-04-25T11:00:00.000Z"
+    "updatedAt": "2026-04-25T11:00:00.000Z",
+    "clubId": "club-fiction-001"
   },
   "seed-other-2": {
     "bookId": "seed-other-2",
@@ -629,7 +637,7 @@
     "description": "Canon EOS 700D with 50mm f/1.8 lens. Great for portraits and events.",
     "category": "other",
     "status": "available",
-    "clubId": null,
+    "clubId": "club-scifi-002",
     "coverImage": null,
     "createdAt": "2026-04-28T13:10:00.000Z",
     "updatedAt": "2026-04-28T13:10:00.000Z"
