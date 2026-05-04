@@ -28,11 +28,6 @@ pnpm-debug.log*
 *.env.*
 bookclub-app/frontend/.env.development
 
-# Allow example/template files
-!*.example
-!*.env.*.example
-!*.local.json.example
-
 # OS / Editor
 .DS_Store
 Thumbs.db
