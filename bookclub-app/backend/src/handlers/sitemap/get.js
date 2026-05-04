@@ -27,7 +27,6 @@ module.exports.handler = async () => {
     const urls = [
       { loc: `${base}/`, changefreq: 'daily', priority: '0.8' },
       { loc: `${base}/library`, changefreq: 'daily', priority: '0.7' },
-      { loc: `${base}/swap-toys`, changefreq: 'weekly', priority: '0.5' },
     ];
 
     // Add recent book detail pages
