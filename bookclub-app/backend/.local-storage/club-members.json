@@ -1,9 +1,23 @@
 {
-  "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466:test-user-123": {
-    "clubId": "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466",
-    "userId": "test-user-123",
+  "4f40d781-dbc1-435c-8611-9b6b08eeea14:local-user": {
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "userId": "local-user",
     "role": "admin",
-    "joinedAt": "2026-05-01T06:13:53.416Z",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "1783f5de-7554-40d9-9292-627eadf86a08:local-user": {
+    "clubId": "1783f5de-7554-40d9-9292-627eadf86a08",
+    "userId": "local-user",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  "5a5fac2e-93dc-45b5-967b-677e02c098cd:local-user": {
+    "clubId": "5a5fac2e-93dc-45b5-967b-677e02c098cd",
+    "userId": "local-user",
+    "role": "member",
+    "joinedAt": "2026-01-01T00:00:00.000Z",
     "status": "active"
   }
 }

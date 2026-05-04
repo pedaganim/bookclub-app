@@ -1,15 +1,41 @@
 {
-  "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466": {
-    "clubId": "b8c33b6a-c0fc-40ce-a5f1-78984f4a2466",
-    "name": "Test Book Club",
-    "slug": "test-book-club",
-    "description": "A test club",
-    "createdBy": "test-user-123",
-    "inviteCode": "2CB2DCEC",
+  "4f40d781-dbc1-435c-8611-9b6b08eeea14": {
+    "clubId": "4f40d781-dbc1-435c-8611-9b6b08eeea14",
+    "name": "Local Dev Club",
+    "slug": "local-dev-club",
+    "description": "Seed club",
+    "createdBy": "local-user",
+    "inviteCode": "LOCALDEV1",
     "isPrivate": false,
     "memberLimit": null,
     "memberCount": 1,
-    "createdAt": "2026-05-01T06:13:53.416Z",
-    "updatedAt": "2026-05-01T06:13:53.417Z"
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  "1783f5de-7554-40d9-9292-627eadf86a08": {
+    "clubId": "1783f5de-7554-40d9-9292-627eadf86a08",
+    "name": "Seed Club B",
+    "slug": "seed-club-b",
+    "description": "Seed club B",
+    "createdBy": "local-user",
+    "inviteCode": "LOCALDEV2",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 1,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  "5a5fac2e-93dc-45b5-967b-677e02c098cd": {
+    "clubId": "5a5fac2e-93dc-45b5-967b-677e02c098cd",
+    "name": "Seed Club C",
+    "slug": "seed-club-c",
+    "description": "Seed club C",
+    "createdBy": "local-user",
+    "inviteCode": "LOCALDEV3",
+    "isPrivate": false,
+    "memberLimit": null,
+    "memberCount": 1,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
   }
 }

@@ -224,11 +224,12 @@ class Book {
       // Filter club items by membership: hide items from clubs user is not an active member of
       if (options && 'memberClubIds' in options) {
         const memberClubIds = options.memberClubIds;
+        const hideNonClub = !!options.hideNonClub;
         result = result.filter(book => {
           if (book.clubId) {
             return memberClubIds !== null && memberClubIds.has(book.clubId);
           }
-          return true;
+          return !hideNonClub;
         });
       }
 
@@ -340,11 +341,12 @@ class Book {
     // Filter club items by membership: hide items from clubs user is not an active member of
     if (options && 'memberClubIds' in options) {
       const memberClubIds = options.memberClubIds;
+      const hideNonClub = !!options.hideNonClub;
       items = items.filter((book) => {
         if (book.clubId) {
           return memberClubIds !== null && memberClubIds.has(book.clubId);
         }
-        return true;
+        return !hideNonClub;
       });
     }
 
