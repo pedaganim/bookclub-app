@@ -18,6 +18,7 @@ const ClubBooks: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
+  const scrollRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const fetchClub = useCallback(async () => {
     if (!clubId) return;
@@ -97,6 +98,21 @@ const ClubBooks: React.FC = () => {
     game: '🎲 Games',
     event_hire: '🎉 Event Hire',
     other: '✨ Other Items'
+  };
+
+  // Scroll functions for horizontal scrolling
+  const scrollLeft = (category: string) => {
+    const element = scrollRefs.current[category];
+    if (element) {
+      element.scrollBy({ left: -320, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = (category: string) => {
+    const element = scrollRefs.current[category];
+    if (element) {
+      element.scrollBy({ left: 320, behavior: 'smooth' });
+    }
   };
 
   if (loading) {
@@ -206,7 +222,10 @@ const ClubBooks: React.FC = () => {
 
                 {/* Horizontal Scroll Container */}
                 <div className="relative group">
-                  <div className="flex overflow-x-auto pb-4 gap-6 scrollbar-hide snap-x">
+                  <div 
+                    ref={(el) => { if (el) scrollRefs.current[category] = el; }}
+                    className="flex overflow-x-auto pb-4 gap-6 scrollbar-hide snap-x"
+                  >
                     {items.map((item) => (
                       <div key={item.bookId} className="w-[280px] shrink-0 snap-start">
                         <PublicBookCard book={item} isMemberOfBookClub={!!club?.isMember} />
@@ -214,8 +233,34 @@ const ClubBooks: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* Visual Fades for scrolling indicator */}
-                  <div className="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity md:block hidden" />
+                  {/* Scroll Left Button */}
+                  {items.length > 3 && (
+                    <button
+                      onClick={() => scrollLeft(category)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white border border-gray-200 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100"
+                      aria-label="Scroll left"
+                    >
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                  )}
+                  
+                  {/* Scroll Right Button */}
+                  {items.length > 3 && (
+                    <button
+                      onClick={() => scrollRight(category)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white border border-gray-200 rounded-full p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100"
+                    aria-label="Scroll right"
+                  >
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  )}
+                  <div className="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none opacity-100 transition-opacity" />
+                  {/* Left fade indicator when scrolled */}
+                  <div className="absolute top-0 left-0 h-full w-12 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none opacity-0 transition-opacity" />
                 </div>
               </section>
             ))}
