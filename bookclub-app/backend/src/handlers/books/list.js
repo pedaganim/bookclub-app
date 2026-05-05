@@ -28,6 +28,7 @@ module.exports.handler = async (event) => {
         }
       }
       options.memberClubIds = memberClubIds;
+      if (clubId) options.clubId = clubId;
       result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
     } else if (filter === 'borrowed' && userId) {
       result = await Book.listByLentToUser(userId, limit, nextToken);

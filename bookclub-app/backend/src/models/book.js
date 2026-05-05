@@ -43,9 +43,7 @@ class Book {
       language: bookData.language || null,
       publisher: bookData.publisher || null,
       metadataSource: bookData.metadataSource || null,
-      // New advanced metadata column for EventBridge-triggered extraction
       advancedMetadata: bookData.advancedMetadata || null,
-      lastMetadataExtraction: bookData.lastMetadataExtraction || null,
       clubId: bookData.clubId || null,
       category: bookData.category || 'book', // Default to book for backward compatibility
       createdAt: timestamp,
@@ -163,82 +161,28 @@ class Book {
     const categoryFilter = options?.category || null;
 
     if (isOffline()) {
-      let result = await LocalStorage().listBooks();
-      
-      // Apply category filter if provided
-      if (categoryFilter) {
-        result = result.filter(book => (book.category || 'book') === categoryFilter);
-      }
-
-      // Apply search filter if provided
-      if (searchQuery) {
-        const searchTerms = String(searchQuery).toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(Boolean);
-        if (searchTerms.length > 0) {
-          result = result.filter(book => {
-            const md = (book.advancedMetadata && book.advancedMetadata.metadata) || book.advancedMetadata || {};
-            const fields = [
-              book.description,
-              book.title,
-              book.author,
-              book.publisher,
-              book.isbn10,
-              book.isbn13,
-              md && md.description,
-              md && md.title,
-              md && md.author,
-              md && md.publisher,
-              md && md.subtitle,
-              md && md.series,
-              md && md.edition,
-              md && md.language,
-            ];
-            const categories = []
-              .concat(Array.isArray(book.categories) ? book.categories : [])
-              .concat(Array.isArray(md.categories) ? md.categories : []);
-              
-            const allText = [...fields, ...categories]
-              .filter(v => typeof v === 'string')
-              .map(v => v.toLowerCase().replace(/[^\w\s]/g, ''))
-              .join(' ');
-              
-            return searchTerms.every(term => allText.includes(term));
-          });
-        }
-      }
-
-      // Apply ageGroupFine filter if provided (check top-level and advanced metadata)
-      if (ageGroupFine) {
-        const target = String(ageGroupFine).toLowerCase();
-        result = result.filter(book => {
-          const md = book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
-          const v = (book.ageGroupFine || md.ageGroupFine || '').toLowerCase();
-          return v === target;
-        });
-      }
-
-      // Apply clubId filter if provided
-      if (options && options.clubId) {
-        result = result.filter(book => book.clubId === options.clubId);
-      }
-
-      // Filter club items by membership: hide items from clubs user is not an active member of
-      if (options && 'memberClubIds' in options) {
-        const memberClubIds = options.memberClubIds;
-        result = result.filter(book => {
-          if (book.clubId) {
-            return memberClubIds !== null && memberClubIds.has(book.clubId);
-          }
-          return true;
-        });
-      }
-
-      // For offline mode, we'll implement simple pagination later if needed
-      return {
-        items: result.slice(0, limit),
-        nextToken: result.length > limit ? 'has-more' : null,
-      };
+      return this._listAllOffline(limit, searchQuery, ageGroupFine, options, categoryFilter);
     }
 
+    return this._listAllDynamo(limit, nextToken, searchQuery, ageGroupFine, options, categoryFilter);
+  }
+
+  static async _listAllOffline(limit, searchQuery, ageGroupFine, options, categoryFilter) {
+    let result = await LocalStorage().listBooks();
+
+    if (categoryFilter) {
+      result = result.filter(book => (book.category || 'book') === categoryFilter);
+    }
+
+    result = this._applyInMemoryFilters(result, searchQuery, ageGroupFine, options);
+
+    return {
+      items: result.slice(0, limit),
+      nextToken: result.length > limit ? 'has-more' : null,
+    };
+  }
+
+  static async _listAllDynamo(limit, nextToken, searchQuery, ageGroupFine, options, categoryFilter) {
     const params = {
       TableName: getTableName('books'),
       Limit: limit,
@@ -249,18 +193,12 @@ class Book {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
-    // Apply category filter in DynamoDB if provided
     if (categoryFilter) {
-      params.ExpressionAttributeNames = params.ExpressionAttributeNames || {};
-      params.ExpressionAttributeNames['#cat'] = 'category';
-      params.ExpressionAttributeValues = params.ExpressionAttributeValues || {};
-      params.ExpressionAttributeValues[':category'] = categoryFilter;
-      // For books: also match legacy items where category attribute is absent
-      if (categoryFilter === 'book') {
-        params.FilterExpression = '(#cat = :category OR attribute_not_exists(#cat))';
-      } else {
-        params.FilterExpression = '#cat = :category';
-      }
+      params.ExpressionAttributeNames = { '#cat': 'category' };
+      params.ExpressionAttributeValues = { ':category': categoryFilter };
+      params.FilterExpression = categoryFilter === 'book'
+        ? '(#cat = :category OR attribute_not_exists(#cat))'
+        : '#cat = :category';
     }
 
     let result;
@@ -285,62 +223,59 @@ class Book {
       result = await dynamoDb.scan(params);
     }
 
-    // Apply in-memory filtering for case-insensitive search against multiple fields
-    let items = result.Items || [];
+    let items = this._applyInMemoryFilters(result.Items || [], searchQuery, ageGroupFine, options);
+
+    const paginationToken = result.LastEvaluatedKey
+      ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+      : null;
+
+    if (options && options.bare) {
+      return { items, nextToken: paginationToken };
+    }
+
+    let enrichedBooks = await this.enrichBooksWithUserNames(items);
+    enrichedBooks = await this.enrichBooksWithClubInfo(enrichedBooks);
+    return { items: enrichedBooks, nextToken: paginationToken };
+  }
+
+  static _applyInMemoryFilters(items, searchQuery, ageGroupFine, options) {
     if (searchQuery) {
       const searchTerms = String(searchQuery).toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(Boolean);
       if (searchTerms.length > 0) {
-        items = items.filter((book) => {
-          const md = (book && book.advancedMetadata && book.advancedMetadata.metadata) || (book && book.advancedMetadata) || {};
+        items = items.filter(book => {
+          const md = (book.advancedMetadata && book.advancedMetadata.metadata) || book.advancedMetadata || {};
           const fields = [
-            book && book.description,
-            book && book.title,
-            book && book.author,
-            book && book.publisher,
-            book && book.isbn10,
-            book && book.isbn13,
-            md && md.description,
-            md && md.title,
-            md && md.author,
-            md && md.publisher,
-            md && md.subtitle,
-            md && md.series,
-            md && md.edition,
-            md && md.language,
+            book.description, book.title, book.author, book.publisher, book.isbn10, book.isbn13,
+            md.description, md.title, md.author, md.publisher, md.subtitle, md.series, md.edition, md.language,
           ];
           const categories = []
-            .concat(Array.isArray(book && book.categories) ? book.categories : [])
-            .concat(Array.isArray(md && md.categories) ? md.categories : []);
-            
+            .concat(Array.isArray(book.categories) ? book.categories : [])
+            .concat(Array.isArray(md.categories) ? md.categories : []);
           const allText = [...fields, ...categories]
             .filter(v => typeof v === 'string')
             .map(v => v.toLowerCase().replace(/[^\w\s]/g, ''))
             .join(' ');
-            
           return searchTerms.every(term => allText.includes(term));
         });
       }
     }
 
-    // Apply ageGroupFine filter if provided
     if (ageGroupFine) {
       const target = String(ageGroupFine).toLowerCase();
-      items = items.filter((book) => {
-        const md = book && book.advancedMetadata && book.advancedMetadata.metadata ? book.advancedMetadata.metadata : {};
-        const v = ((book && book.ageGroupFine) || (md && md.ageGroupFine) || '').toLowerCase();
+      items = items.filter(book => {
+        const md = (book.advancedMetadata && book.advancedMetadata.metadata) || {};
+        const v = (book.ageGroupFine || md.ageGroupFine || '').toLowerCase();
         return v === target;
       });
     }
 
-    // Apply clubId filter if provided
     if (options && options.clubId) {
-      items = items.filter((book) => book.clubId === options.clubId);
+      items = items.filter(book => book.clubId === options.clubId);
     }
 
-    // Filter club items by membership: hide items from clubs user is not an active member of
     if (options && 'memberClubIds' in options) {
       const memberClubIds = options.memberClubIds;
-      items = items.filter((book) => {
+      items = items.filter(book => {
         if (book.clubId) {
           return memberClubIds !== null && memberClubIds.has(book.clubId);
         }
@@ -348,27 +283,7 @@ class Book {
       });
     }
 
-    // Optionally skip enrichment for performance (bare listing for public browse)
-    if (options && options.bare) {
-      return {
-        items,
-        nextToken: result.LastEvaluatedKey 
-          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
-          : null,
-      };
-    }
-
-    // Enrich books with user names
-    let enrichedBooks = await this.enrichBooksWithUserNames(items);
-    // Enrich with club info when available
-    enrichedBooks = await this.enrichBooksWithClubInfo(enrichedBooks);
-    
-    return {
-      items: enrichedBooks,
-      nextToken: result.LastEvaluatedKey 
-        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
-        : null,
-    };
+    return items;
   }
 
   static async enrichBooksWithUserNames(books) {

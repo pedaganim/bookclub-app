@@ -84,8 +84,6 @@ module.exports.handler = async (event) => {
               publisher: readAttr(newImage, 'publisher') || bookMetadata.publisher,
               publishedDate: readAttr(newImage, 'publishedDate') || bookMetadata.publishedDate,
               textractExtractedText: extractedText?.fullText || extractedText || null,
-              textractConfidence: extractionResult.confidence,
-              textractSource: bookMetadata.extractionSource,
               textractExtractedAt: extractionResult.extractedAt || new Date().toISOString(),
               metadataSource: readAttr(newImage, 'metadataSource') || 'textract-auto-processed',
             });

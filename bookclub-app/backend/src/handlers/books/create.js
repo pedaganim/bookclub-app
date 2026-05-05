@@ -242,10 +242,7 @@ const maybeApplyTextractExtraction = async (data, bookData) => {
         publisher: bookData.publisher || bookMetadata.publisher,
         publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
         textractExtractedText: extractedText?.fullText || extractedText,
-        textractConfidence: extractionResult.confidence,
-        textractSource: bookMetadata.extractionSource,
         textractExtractedAt: extractionResult.extractedAt,
-        isPreExtracted: extractionResult.isPreExtracted || false,
       };
     }
     return bookData;

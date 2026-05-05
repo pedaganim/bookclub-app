@@ -29,7 +29,6 @@ export interface Book {
   metadataSource?: string;
   // Event-driven enrichment fields (optional)
   textractExtractedText?: string;
-  textractConfidence?: number;
   clean_description?: string;
   google_metadata?: Record<string, any>;
   createdAt: string;

@@ -323,7 +323,6 @@ describe('Add Books Flow - End-to-End Integration', () => {
           title: 'Design Patterns',
           author: 'Gang of Four',
           description: 'Elements of Reusable Object-Oriented Software',
-          isPreExtracted: true
         }),
         'user123'
       );
