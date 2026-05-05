@@ -30,7 +30,7 @@ const MyLibraryHub: React.FC = () => {
     try {
       setLoading(true);
       const allResults = await Promise.all(
-        LIBRARY_CONFIGS.map(cfg =>
+        DISPLAY_CONFIGS.map(cfg =>
           apiService.listToyListings({ userId: user.userId, libraryType: cfg.libraryType, limit: 100 })
             .then((r: any) => r.items || [])
             .catch(() => [] as LibraryItem[])
@@ -58,7 +58,7 @@ const MyLibraryHub: React.FC = () => {
   };
 
   const counts: Record<string, number> = { all: items.length };
-  LIBRARY_CONFIGS.forEach(cfg => {
+  DISPLAY_CONFIGS.forEach(cfg => {
     counts[cfg.libraryType] = items.filter((i: any) =>
       i.libraryType === cfg.libraryType || i.category === cfg.libraryType
     ).length;

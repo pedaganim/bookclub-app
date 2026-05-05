@@ -30,7 +30,7 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
   React.useEffect(() => {
     if (config.libraryType !== 'lost_found') return;
     apiService.getUserClubs().then((res: any) => {
-      const allowed = (res.items || []).filter((c: any) => ['admin', 'moderator'].includes(c.userRole));
+      const allowed = (res.items || []).filter((c: any) => c.userStatus === 'active');
       setManagedClubs(allowed);
       if (allowed.length === 1) setClubId(allowed[0].clubId);
     }).catch(() => setManagedClubs([]));

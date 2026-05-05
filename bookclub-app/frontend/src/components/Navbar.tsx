@@ -119,7 +119,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/my-library"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/my-library') ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    isActive('/my-library') && location.pathname !== '/my-library/lost-found' && location.pathname !== '/my-lost-and-found' ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   My Library
@@ -129,7 +129,7 @@ const Navbar: React.FC = () => {
               <Link
                 to="/library/lost-found"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === '/library/lost-found' ? 'text-rose-700 bg-rose-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  location.pathname === '/library/lost-found' || location.pathname === '/my-library/lost-found' || location.pathname === '/my-lost-and-found' ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 🧾 Lost & Found
