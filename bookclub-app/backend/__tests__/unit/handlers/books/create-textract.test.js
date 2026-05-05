@@ -85,8 +85,6 @@ describe('Create Book Handler with Textract Integration', () => {
         author: 'Robert C. Martin',
         description: expect.stringContaining('Clean Code'),
         textractExtractedText: expect.any(String),
-        textractConfidence: 95,
-        textractSource: 'textract'
       }),
       'test-user-123'
     );
@@ -190,7 +188,6 @@ describe('Create Book Handler with Textract Integration', () => {
         title: 'Some Book Title',                    // From Textract
         author: 'Manually Provided Author',         // User provided
         textractExtractedText: expect.any(String),
-        textractConfidence: 70
       }),
       'test-user-123'
     );
@@ -307,7 +304,6 @@ describe('Create Book Handler with Textract Integration', () => {
         title: 'Clean Code',
         author: 'Robert C. Martin',
         description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.',
-        isPreExtracted: true
       }),
       'test-user-123'
     );
@@ -360,7 +356,6 @@ describe('Create Book Handler with Textract Integration', () => {
         title: 'Clean Code',
         author: 'Robert C. Martin',
         description: 'Clean Code: A Handbook of Agile Software Craftsmanship by Robert C. Martin. Prentice Hall 2008.',
-        isPreExtracted: true
       }),
       'test-user-123'
     );
@@ -414,7 +409,6 @@ describe('Create Book Handler with Textract Integration', () => {
         title: 'Clean Code',
         author: 'Robert C. Martin',
         description: 'User provided description',
-        isPreExtracted: true
       }),
       'test-user-123'
     );
