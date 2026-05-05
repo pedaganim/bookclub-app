@@ -60,10 +60,11 @@ const BrowseClubs: React.FC = () => {
         const res = await apiService.getUserClubs();
         const items = res.items || [];
         
-        // Active members
+        // Active members (include admins regardless of userStatus field)
         const activeIds = new Set<string>(
-          items.filter((c: any) => (c?.userStatus || 'active') === 'active')
-               .map((c: BookClub) => c.clubId)
+          items
+            .filter((c: any) => c?.userStatus === 'active' || c?.userRole === 'admin' || c?.userRole === 'moderator')
+            .map((c: BookClub) => c.clubId)
         );
         setUserClubIds(activeIds);
 

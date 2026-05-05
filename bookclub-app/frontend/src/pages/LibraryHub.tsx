@@ -173,9 +173,18 @@ const LibraryHub: React.FC = () => {
               <div className="text-center py-16 text-red-600 text-sm">{error}</div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-4xl mb-3">🔍</p>
-                <p className="font-bold text-gray-700">No items found</p>
-                <p className="text-sm text-gray-400 mt-1">Try a different filter or search term</p>
+                <p className="text-4xl mb-3">{search || activeFilter !== 'all' ? '🔍' : '📚'}</p>
+                <p className="font-bold text-gray-700">
+                  {search || activeFilter !== 'all' ? 'No items found' : 'Nothing shared yet'}
+                </p>
+                {search || activeFilter !== 'all' ? (
+                  <p className="text-sm text-gray-400 mt-1">Try a different filter or search term</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-400 mt-1">No one in {selectedClub?.name || 'this club'} has shared anything yet.</p>
+                    <p className="text-sm text-indigo-500 font-medium mt-2">Invite more members to grow the library! 📬</p>
+                  </>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

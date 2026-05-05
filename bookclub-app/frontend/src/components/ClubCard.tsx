@@ -119,7 +119,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
           Explore
         </button>
 
-        {!isMember && !isCreator && !isRequested && onJoin && (
+        {!isMember && !isAdmin && !isCreator && !isRequested && onJoin && (
           <button
             onClick={(e) => handleAction(e, onJoin)}
             disabled={isJoining}
