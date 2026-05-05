@@ -116,7 +116,8 @@ const LibraryHub: React.FC = () => {
                 className="flex-1 min-w-0"
               />
               {isAuthenticated && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap hidden sm:block">Club</span>
                   {clubsLoading ? (
                     <div className="h-[38px] w-36 bg-gray-100 animate-pulse rounded-md" />
                   ) : userClubs.length > 1 ? (
