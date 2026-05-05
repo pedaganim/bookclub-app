@@ -93,38 +93,8 @@ const LibraryHub: React.FC = () => {
       {/* Page header */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">Browse Library</h1>
-              <p className="text-sm text-gray-500 mt-1 font-medium">
-                {selectedClub ? `Browsing items from ${selectedClub.name}` : 'Items shared by your community — available to borrow'}
-              </p>
-            </div>
-
-            {/* Club selector — authenticated users only */}
-            {isAuthenticated && (
-              <div className="flex-shrink-0">
-                {clubsLoading ? (
-                  <div className="h-9 w-44 bg-gray-100 animate-pulse rounded-lg" />
-                ) : userClubs.length > 1 ? (
-                  <select
-                    value={selectedClubId}
-                    onChange={e => setSelectedClubId(e.target.value)}
-                    className="block w-full sm:w-auto border border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  >
-                    {userClubs.map(c => (
-                      <option key={c.clubId} value={c.clubId}>{c.name}</option>
-                    ))}
-                  </select>
-                ) : selectedClub ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-sm font-semibold text-indigo-700">
-                    <span>🏛️</span>
-                    <span>{selectedClub.name}</span>
-                  </span>
-                ) : null}
-              </div>
-            )}
-          </div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">Browse Library</h1>
+          <p className="text-sm text-gray-500 mt-1 font-medium">Items shared by your community — available to borrow</p>
         </div>
       </div>
 
@@ -137,13 +107,35 @@ const LibraryHub: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Search */}
-            <div className="mb-4">
+            {/* Search + Club selector */}
+            <div className="flex items-center gap-2 mb-4">
               <SearchBar
                 onSearch={setSearch}
                 placeholder="Search items…"
                 value={search}
+                className="flex-1 min-w-0"
               />
+              {isAuthenticated && (
+                <div className="flex-shrink-0">
+                  {clubsLoading ? (
+                    <div className="h-[38px] w-36 bg-gray-100 animate-pulse rounded-md" />
+                  ) : userClubs.length > 1 ? (
+                    <select
+                      value={selectedClubId}
+                      onChange={e => setSelectedClubId(e.target.value)}
+                      className="h-[38px] border border-gray-300 rounded-md px-3 text-sm font-medium text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      {userClubs.map(c => (
+                        <option key={c.clubId} value={c.clubId}>{c.name}</option>
+                      ))}
+                    </select>
+                  ) : selectedClub ? (
+                    <span className="inline-flex items-center h-[38px] px-3 rounded-md bg-indigo-50 border border-indigo-100 text-sm font-semibold text-indigo-700 whitespace-nowrap">
+                      🏛️ {selectedClub.name}
+                    </span>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             {/* Filter chips */}
