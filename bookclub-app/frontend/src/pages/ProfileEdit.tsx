@@ -166,12 +166,19 @@ const ProfileEdit: React.FC = () => {
               Profile Picture
             </label>
             {formData.profilePicture && (
-              <div className="mt-2 mb-3">
+              <div className="mt-2 mb-3 flex items-center space-x-3">
                 <img
                   src={formData.profilePicture}
                   alt="Profile"
                   className="h-20 w-20 rounded-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, profilePicture: '' }))}
+                  className="text-red-600 hover:text-red-800 text-sm font-medium underline"
+                >
+                  Remove photo
+                </button>
               </div>
             )}
             <div className="mt-1 flex items-center space-x-4">

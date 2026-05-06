@@ -170,11 +170,6 @@ const validateClubLostAndFoundAccess = async (data, userId) => {
   const isMember = await BookClub.isMember(data.clubId, userId);
   if (!isMember) return response.forbidden('You must be an active club member to post Lost & Found items');
 
-  const role = await BookClub.getMemberRole(data.clubId, userId);
-  if (!['admin', 'moderator'].includes(role)) {
-    return response.forbidden('Only club admins or moderators can post Lost & Found items');
-  }
-
   return null;
 };
 
