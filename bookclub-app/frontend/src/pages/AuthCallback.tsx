@@ -86,10 +86,30 @@ const AuthCallback: React.FC = () => {
       setCookie('user', JSON.stringify(userObj), { domain });
 
       setStatus('success');
+
+      // Restore pending club join intent if the user clicked "Join" before logging in
+      const pendingClubId = localStorage.getItem('pendingClubJoin');
+      let redirectTo = '/library';
+      if (pendingClubId) {
+        localStorage.removeItem('pendingClubJoin');
+        try {
+          await fetch(`${config.apiBaseUrl}/clubs/${pendingClubId}/request`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+        } catch (_) {
+          // non-critical — they can still join manually
+        }
+        redirectTo = '/clubs/browse';
+      }
+
       setMessage('Signed in successfully. Redirecting…');
       // Force a full reload so AuthProvider initializes with stored tokens before route guards run
       const timer = setTimeout(() => {
-        window.location.replace('/library');
+        window.location.replace(redirectTo);
       }, 400);
       return () => clearTimeout(timer);
     } catch (e: any) {

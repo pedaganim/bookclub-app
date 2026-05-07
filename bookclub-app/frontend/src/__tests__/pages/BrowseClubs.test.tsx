@@ -150,9 +150,8 @@ describe('BrowseClubs page', () => {
     fireEvent.click(screen.getByText(/join club/i));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login', expect.objectContaining({
-        state: expect.objectContaining({ from: expect.any(String) })
-      }));
+      expect(localStorage.getItem('pendingClubJoin')).toBe('c1');
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
   });
 });
