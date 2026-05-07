@@ -186,6 +186,14 @@ class LocalStorage {
     return allBooks;
   }
 
+  static async listBooksByClub(clubId, category = null) {
+    if (!OFFLINE) return [];
+    const books = this.loadBooks();
+    let result = Object.values(books).filter(b => b.clubId === clubId);
+    if (category) result = result.filter(b => b.category === category);
+    return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
   static async updateBook(bookId, updates) {
     if (!OFFLINE) return null;
     const books = this.loadBooks();

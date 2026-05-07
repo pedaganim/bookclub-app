@@ -12,33 +12,29 @@ module.exports.handler = async (event) => {
     logListContext(event, userId, limit, nextToken, search, ageGroupFine, bare, filter, category);
 
     let result;
-    if (bare) {
-      // Browse library: show all items, filtered by club membership
-      const options = { category, bare: true };
-      let memberClubIds = null;
-      const effectiveUserId = authUserId || userId;
-      if (effectiveUserId) {
-        try {
-          const userClubs = await BookClub.getUserClubs(effectiveUserId);
-          memberClubIds = new Set(
-            (userClubs || []).filter(c => c.userStatus === 'active').map(c => c.clubId)
-          );
-        } catch (_) {
-          memberClubIds = new Set();
-        }
-      }
-      options.memberClubIds = memberClubIds;
-      if (clubId) options.clubId = clubId;
-      result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
+    if (clubId) {
+      result = await listBooksByClubMembers(clubId, limit, category, bare);
     } else if (filter === 'borrowed' && userId) {
       result = await Book.listByLentToUser(userId, limit, nextToken);
-    } else if (clubId) {
-      result = await listBooksByClubMembers(clubId, limit);
     } else if (userId) {
       result = await Book.listByUser(userId, limit, nextToken, category);
     } else {
-      const options = { category };
-      options.memberClubIds = null;
+      const options = { category, bare };
+      if (bare) {
+        let memberClubIds = null;
+        const effectiveUserId = authUserId || userId;
+        if (effectiveUserId) {
+          try {
+            const userClubs = await BookClub.getUserClubs(effectiveUserId);
+            memberClubIds = new Set(
+              (userClubs || []).filter(c => c.userStatus === 'active').map(c => c.clubId)
+            );
+          } catch (_) {
+            memberClubIds = new Set();
+          }
+        }
+        options.memberClubIds = memberClubIds;
+      }
       result = await Book.listAll(limit, nextToken, search, ageGroupFine || null, options);
     }
 
@@ -86,7 +82,15 @@ const deriveAuthUserId = async (event) => {
   return null;
 };
 
-const listBooksByClubMembers = async (clubId, limit) => {
+const listBooksByClubMembers = async (clubId, limit, category, bare) => {
+  // In offline/dev mode query books directly by clubId (seed data stores clubId on the book)
+  if (process.env.IS_OFFLINE === 'true' || process.env.APP_ENV === 'local') {
+    const LocalStorage = require('../../lib/local-storage');
+    let items = await LocalStorage.listBooksByClub(clubId, category || null);
+    items = items.filter(b => b.category !== 'lost_found');
+    return { items: items.slice(0, limit), nextToken: null };
+  }
+
   const members = await BookClub.getMembers(clubId);
   const activeMembers = (members || []).filter(m => m.status === 'active');
   if (activeMembers.length === 0) return { items: [], nextToken: null };
@@ -94,7 +98,7 @@ const listBooksByClubMembers = async (clubId, limit) => {
   // Fetch books for each active member in parallel, capped per-member to avoid huge payloads
   const perMember = Math.max(10, Math.ceil(limit / activeMembers.length));
   const results = await Promise.all(
-    activeMembers.map(m => Book.listByUser(m.userId, perMember, null).catch(() => ({ items: [] })))
+    activeMembers.map(m => Book.listByUser(m.userId, perMember, null, category).catch(() => ({ items: [] })))
   );
 
   const items = results.flatMap(r => (r.items || []).map(book => ({ ...book, clubId })));

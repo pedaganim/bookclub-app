@@ -206,14 +206,19 @@ class Book {
       try {
         params.IndexName = 'ClubIdIndex';
         params.KeyConditionExpression = 'clubId = :clubId';
-        params.ExpressionAttributeValues = { ':clubId': options.clubId };
+        params.ExpressionAttributeValues = { ...params.ExpressionAttributeValues, ':clubId': options.clubId };
         result = await dynamoDb.query(params);
       } catch (err) {
         if (err.code === 'ValidationException' && err.message && err.message.includes('index')) {
           console.warn('[listAll] ClubIdIndex not available yet, falling back to scan:', err.message);
           delete params.IndexName;
           delete params.KeyConditionExpression;
-          delete params.ExpressionAttributeValues;
+          if (params.ExpressionAttributeValues) {
+            delete params.ExpressionAttributeValues[':clubId'];
+            if (Object.keys(params.ExpressionAttributeValues).length === 0) {
+              delete params.ExpressionAttributeValues;
+            }
+          }
           result = await dynamoDb.scan(params);
         } else {
           throw err;
