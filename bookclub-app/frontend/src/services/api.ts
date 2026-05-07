@@ -638,6 +638,30 @@ class ApiService {
     }
   }
 
+  // Email invites
+  async inviteClubMembers(clubId: string, emails: string[]): Promise<{ invited: number; invalid: string[]; emails: Array<{ email: string; status: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ invited: number; invalid: string[]; emails: any[] }>> = await this.api.post(`/clubs/${clubId}/invites`, { emails });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to invite members');
+    }
+    return response.data.data!;
+  }
+
+  async listClubInvites(clubId: string): Promise<{ items: Array<{ email: string; status: string; createdAt: string; invitedBy: string }> }> {
+    const response: AxiosResponse<ApiResponse<{ items: any[] }>> = await this.api.get(`/clubs/${clubId}/invites`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to list invites');
+    }
+    return response.data.data!;
+  }
+
+  async revokeClubInvite(clubId: string, email: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<{ revoked: boolean }>> = await this.api.delete(`/clubs/${clubId}/invites/${encodeURIComponent(email)}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to revoke invite');
+    }
+  }
+
   // Member Management
   async listMembers(clubId: string): Promise<{ items: Array<{ clubId: string; userId: string; role: 'admin' | 'member'; status: string; joinedAt: string; name?: string; email?: string; profilePicture?: string }> }> {
     const response: AxiosResponse<ApiResponse<{ items: any[] }>> = await this.api.get(`/clubs/${clubId}/members`);
