@@ -106,7 +106,8 @@ const BrowseClubs: React.FC = () => {
 
   const handleRequestJoin = async (club: BookClub) => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: window.location.pathname } });
+      localStorage.setItem('pendingClubJoin', club.clubId);
+      navigate('/login');
       return;
     }
     try {
@@ -148,9 +149,23 @@ const BrowseClubs: React.FC = () => {
         </div>
       );
     }
+    const visibleClubs = isAuthenticated
+      ? clubs.filter(c => !userClubIds.has(c.clubId))
+      : clubs;
+
+    if (visibleClubs.length === 0) {
+      return (
+        <div className="py-12 text-center bg-white border border-gray-200 rounded-xl shadow-sm">
+          <p className="text-gray-500">
+            {isAuthenticated ? "You're already a member of all clubs here." : 'No clubs found matching your search.'}
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {clubs.map((club) => (
+        {visibleClubs.map((club) => (
           <ClubCard
             key={club.clubId}
             club={club}
