@@ -141,7 +141,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
     setShowModal(false);
     addNotification('success', `${config?.itemLabel} posted!`);
     // Navigate to manage page to see their new item
-    navigate(`/my-library/${config?.slug}`);
+    navigate(config?.slug === 'lost-found' ? '/my-lost-and-found' : `/my-library/${config?.slug}`);
   };
 
   // Only show club items if the user is an active member of that club
@@ -203,7 +203,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
                 </button>
               )}
               <Link
-                to={`/my-library/${config.slug}`}
+                to={config.slug === 'lost-found' ? '/my-lost-and-found' : `/my-library/${config.slug}`}
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95"
               >
                 My {config.shortLabel}

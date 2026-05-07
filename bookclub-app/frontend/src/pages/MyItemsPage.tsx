@@ -16,8 +16,13 @@ import {
 } from '@heroicons/react/24/outline';
 import SEO from '../components/SEO';
 
-const MyItemsPage: React.FC = () => {
-  const { categorySlug } = useParams<{ categorySlug: string }>();
+interface MyItemsPageProps {
+  categorySlugOverride?: string;
+}
+
+const MyItemsPage: React.FC<MyItemsPageProps> = ({ categorySlugOverride }) => {
+  const { categorySlug: paramCategorySlug } = useParams<{ categorySlug: string }>();
+  const categorySlug = categorySlugOverride || paramCategorySlug;
   const { user } = useAuth();
   const location = useLocation();
 
@@ -144,10 +149,10 @@ const MyItemsPage: React.FC = () => {
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
           <Link 
-            to="/my-library"
+            to={config?.libraryType === 'lost_found' ? "/library/lost-found" : "/my-library"}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors mb-4"
           >
-            <ChevronLeftIcon className="h-4 w-4" /> Back to My Library
+            <ChevronLeftIcon className="h-4 w-4" /> {config?.libraryType === 'lost_found' ? "Back to Lost & Found" : "Back to My Library"}
           </Link>
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -174,7 +179,7 @@ const MyItemsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Controls */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-          {!isAllView && (
+          {!isAllView && config?.libraryType !== 'lost_found' && (
           <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm w-full sm:w-auto">
             <button
               onClick={() => { setFilter('owned'); setMyPageIndex(0); }}

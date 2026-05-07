@@ -97,6 +97,14 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/my-lost-and-found"
+                  element={
+                    <ProtectedRoute>
+                      <MyItemsPage categorySlugOverride="lost-found" />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Legacy & Backward Compatibility Redirects */}
                 <Route path="/library/books" element={<Navigate to="/library/books" replace />} /> {/* Handled by dynamice loop above, but explicit for clarity */}
