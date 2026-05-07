@@ -1411,7 +1411,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-lost-found-bedrock-queue
-        VisibilityTimeout: 120
+        VisibilityTimeout: 900
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt LostFoundBedrockDLQ.Arn
           maxReceiveCount: 5
