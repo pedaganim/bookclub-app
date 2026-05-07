@@ -22,7 +22,8 @@ exports.handler = async (event) => {
     const limit = Math.min(parseInt(qs.limit || '100', 10), 200);
 
     const result = await LostFound.listByUser(userId, { limit });
-    return response.success({ items: result.items, count: result.items.length });
+    const items = result.items.map(i => ({ ...i, isOwner: true }));
+    return response.success({ items, count: items.length });
   } catch (err) {
     console.error('[LostFound] mine error:', err);
     return response.error(err.message || 'Failed to list your lost & found items', 500);
