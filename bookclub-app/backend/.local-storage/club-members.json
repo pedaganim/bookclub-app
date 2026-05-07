@@ -41,6 +41,13 @@
     "joinedAt": "2026-01-01T00:00:00.000Z",
     "status": "active"
   },
+  "club-scifi-002:user-2": {
+    "clubId": "club-scifi-002",
+    "userId": "user-2",
+    "role": "member",
+    "joinedAt": "2026-01-05T00:00:00.000Z",
+    "status": "active"
+  },
   "club-nonfiction-003:user-4": {
     "clubId": "club-nonfiction-003",
     "userId": "user-4",

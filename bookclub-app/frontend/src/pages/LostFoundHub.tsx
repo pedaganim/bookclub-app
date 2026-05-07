@@ -4,8 +4,12 @@ import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { LostFoundItem, LostFoundStatus } from '../types';
 import LostFoundCard from '../components/LostFoundCard';
+import CreateListingModal from '../components/CreateListingModal';
 import SearchBar from '../components/SearchBar';
 import SEO from '../components/SEO';
+import { getLibraryConfig } from '../config/libraryConfig';
+
+const LOST_FOUND_CONFIG = getLibraryConfig('lost_found')!;
 
 const STATUS_FILTERS: { key: LostFoundStatus | 'all'; label: string }[] = [
   { key: 'all',       label: 'All' },
@@ -18,7 +22,7 @@ const STATUS_FILTERS: { key: LostFoundStatus | 'all'; label: string }[] = [
 interface UserClub { clubId: string; name: string; userStatus: string; }
 
 const LostFoundHub: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [userClubs, setUserClubs] = useState<UserClub[]>([]);
@@ -32,9 +36,6 @@ const LostFoundHub: React.FC = () => {
   const [activeStatus, setActiveStatus] = useState<LostFoundStatus | 'all'>('all');
 
   const [showPost, setShowPost] = useState(false);
-  const [posting, setPosting] = useState(false);
-  const [postError, setPostError] = useState('');
-  const [form, setForm] = useState({ title: '', description: '', itemType: 'unknown', foundLocation: '', foundDate: '' });
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -70,23 +71,6 @@ const LostFoundHub: React.FC = () => {
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  const handlePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim()) return;
-    try {
-      setPosting(true);
-      setPostError('');
-      const created = await apiService.createLostFoundItem({ ...form, clubId: selectedClubId, itemType: form.itemType as any });
-      setItems(prev => [created, ...prev]);
-      setShowPost(false);
-      setForm({ title: '', description: '', itemType: 'unknown', foundLocation: '', foundDate: '' });
-    } catch (e: any) {
-      setPostError(e.message || 'Failed to post item');
-    } finally {
-      setPosting(false);
-    }
-  };
-
   const selectedClub = userClubs.find(c => c.clubId === selectedClubId);
   const noClubs = isAuthenticated && !clubsLoading && userClubs.length === 0;
 
@@ -96,26 +80,34 @@ const LostFoundHub: React.FC = () => {
 
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">🧾 Lost & Found</h1>
               <p className="text-sm text-gray-500 mt-1 font-medium">Items found within your club — help return them to their owners</p>
             </div>
             {isAuthenticated && selectedClubId && !noClubs && (
-              <button
-                onClick={() => setShowPost(true)}
-                className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Post Item
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/my-lost-and-found')}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  My Lost & Found
+                </button>
+                <button
+                  onClick={() => setShowPost(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Post Lost & Found
+                </button>
+              </div>
             )}
             {!isAuthenticated && (
               <button
                 onClick={() => navigate('/login', { state: { from: '/library/lost-found' } })}
-                className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
               >
                 Sign In to Post
               </button>
@@ -216,92 +208,12 @@ const LostFoundHub: React.FC = () => {
         )}
       </div>
 
-      {/* Post Item Modal */}
       {showPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Post Lost & Found Item</h2>
-              <button onClick={() => setShowPost(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
-            </div>
-            <form onSubmit={handlePost} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="e.g. Blue water bottle"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  rows={2}
-                  placeholder="Any identifying details…"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Item Type</label>
-                  <select
-                    value={form.itemType}
-                    onChange={e => setForm(f => ({ ...f, itemType: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-                  >
-                    <option value="unknown">Unknown</option>
-                    <option value="book">Book</option>
-                    <option value="toy">Toy</option>
-                    <option value="tool">Tool</option>
-                    <option value="game">Game</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Date Found</label>
-                  <input
-                    type="date"
-                    value={form.foundDate}
-                    onChange={e => setForm(f => ({ ...f, foundDate: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Where Found</label>
-                <input
-                  type="text"
-                  value={form.foundLocation}
-                  onChange={e => setForm(f => ({ ...f, foundLocation: e.target.value }))}
-                  placeholder="e.g. Reading corner, front table"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
-              </div>
-              {postError && <p className="text-xs text-red-500">{postError}</p>}
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowPost(false)}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={posting || !form.title.trim()}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                >
-                  {posting ? 'Posting…' : 'Post Item'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <CreateListingModal
+          config={LOST_FOUND_CONFIG}
+          onCreated={item => { setItems(prev => [item, ...prev]); }}
+          onClose={() => setShowPost(false)}
+        />
       )}
     </div>
   );

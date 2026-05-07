@@ -499,7 +499,7 @@
     "userId": "user-4",
     "title": "The Design of Everyday Things",
     "author": "Don Norman",
-    "description": "A powerful primer on how \u2014 and why \u2014 some products delight users while others frustrate them.",
+    "description": "A powerful primer on how — and why — some products delight users while others frustrate them.",
     "category": "book",
     "status": "available",
     "clubId": "club-scifi-002",
@@ -641,5 +641,29 @@
     "coverImage": null,
     "createdAt": "2026-04-28T13:10:00.000Z",
     "updatedAt": "2026-04-28T13:10:00.000Z"
+  },
+  "70d9f2a9-53d8-49f5-977f-9cad6a2adf39": {
+    "bookId": "70d9f2a9-53d8-49f5-977f-9cad6a2adf39",
+    "userId": "local-user",
+    "title": "garden shed",
+    "description": "",
+    "coverImage": null,
+    "images": null,
+    "status": "available",
+    "s3Bucket": null,
+    "s3Key": null,
+    "isbn10": null,
+    "isbn13": null,
+    "publishedDate": null,
+    "pageCount": null,
+    "categories": null,
+    "language": null,
+    "publisher": null,
+    "metadataSource": null,
+    "advancedMetadata": null,
+    "clubId": "club-fiction-001",
+    "category": "lost_found",
+    "createdAt": "2026-05-07T02:58:10.070Z",
+    "updatedAt": "2026-05-07T02:58:10.070Z"
   }
 }

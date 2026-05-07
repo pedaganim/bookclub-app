@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LostFoundItem, LostFoundStatus } from '../types';
 import { apiService } from '../services/api';
+import EditLostFoundModal from './EditLostFoundModal';
 
 interface Props {
   item: LostFoundItem;
@@ -23,27 +24,10 @@ const ITEM_TYPE_EMOJI: Record<string, string> = {
 const STATUS_OPTIONS: LostFoundStatus[] = ['available', 'given_back', 'disposed', 'lent'];
 
 const LostFoundCard: React.FC<Props> = ({ item, isMember, onUpdated, onDeleted }) => {
-  const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(false);
   const [error, setError] = useState('');
-
   const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.available;
-
-  const handleStatusChange = async (newStatus: LostFoundStatus) => {
-    if (newStatus === item.status) { setStatusOpen(false); return; }
-    try {
-      setUpdating(true);
-      setError('');
-      const updated = await apiService.updateLostFoundItem(item.lostFoundId, { status: newStatus });
-      onUpdated?.(updated);
-    } catch (e: any) {
-      setError(e.message || 'Failed to update status');
-    } finally {
-      setUpdating(false);
-      setStatusOpen(false);
-    }
-  };
+  const [editOpen, setEditOpen] = useState(false);
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this lost & found item?')) return;
@@ -107,51 +91,35 @@ const LostFoundCard: React.FC<Props> = ({ item, isMember, onUpdated, onDeleted }
 
         {/* Actions */}
         {error && <p className="text-xs text-red-500">{error}</p>}
-        {(isMember || item.isOwner) && (
+        {item.isOwner && (
           <div className="flex gap-2 pt-1">
-            {/* Status update dropdown */}
-            <div className="relative flex-1">
-              <button
-                onClick={() => setStatusOpen(o => !o)}
-                disabled={updating}
-                className="w-full text-xs font-semibold px-2 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center justify-between gap-1"
-              >
-                <span>{updating ? 'Saving…' : 'Update Status'}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {statusOpen && (
-                <div className="absolute bottom-full left-0 mb-1 w-40 bg-white rounded-xl border border-gray-100 shadow-lg py-1 z-20">
-                  {STATUS_OPTIONS.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => handleStatusChange(s)}
-                      className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors hover:bg-gray-50 flex items-center gap-2 ${s === item.status ? 'text-indigo-600 font-semibold' : 'text-gray-700'}`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${STATUS_CONFIG[s].dot}`} />
-                      {STATUS_CONFIG[s].label}
-                      {s === item.status && <span className="ml-auto text-indigo-400">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => setEditOpen(true)}
+              className="flex-1 text-xs font-semibold px-2 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+            >
+              <span>Edit</span>
+            </button>
 
             {/* Delete (owner only) */}
-            {item.isOwner && (
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="text-xs px-2 py-1.5 rounded-lg border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
-                title="Delete"
-              >
-                🗑
-              </button>
-            )}
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-xs px-2 py-1.5 rounded-lg border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+              title="Delete"
+            >
+              🗑
+            </button>
           </div>
         )}
       </div>
+      
+      {editOpen && (
+        <EditLostFoundModal
+          item={item}
+          onUpdated={onUpdated || (() => {})}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
     </div>
   );
 };

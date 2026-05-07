@@ -74,7 +74,7 @@ function App() {
                 <Route path="/about/blogs" element={<BlogsIndex />} />
                 <Route path="/about/blogs/:slug" element={<BlogPost />} />
                 <Route path="/library" element={<LibraryHub />} />
-                {LIBRARY_CONFIGS.map((cfg) => (
+                {LIBRARY_CONFIGS.filter(c => c.slug !== 'lost-found').map((cfg) => (
                   <Route
                     key={cfg.slug}
                     path={`/library/${cfg.slug}`}
