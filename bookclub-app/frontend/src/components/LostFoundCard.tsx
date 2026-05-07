@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { LostFoundItem, LostFoundStatus } from '../types';
 import { apiService } from '../services/api';
 import EditLostFoundModal from './EditLostFoundModal';
@@ -43,58 +44,65 @@ const LostFoundCard: React.FC<Props> = ({ item, isMember, onUpdated, onDeleted }
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-      {/* Image or placeholder */}
-      {item.images && item.images.length > 0 ? (
-        <div className="h-36 overflow-hidden flex-shrink-0">
-          <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
-        </div>
-      ) : (
-        <div className="h-36 flex-shrink-0 flex items-center justify-center bg-amber-50">
-          <span className="text-5xl">{ITEM_TYPE_EMOJI[item.itemType] || '❓'}</span>
-        </div>
-      )}
-
-      <div className="p-3 flex flex-col gap-2 flex-1">
-        {/* Status badge */}
-        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold self-start ${cfg.bg} ${cfg.text}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-          {cfg.label}
-        </div>
-
-        {/* Title */}
-        <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2">{item.title}</p>
-
-        {/* Description */}
-        {item.description && (
-          <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+      <Link to={`/library/lost-found/${item.lostFoundId}`} className="flex flex-col flex-1">
+        {/* Image or placeholder */}
+        {item.images && item.images.length > 0 ? (
+          <div className="h-36 overflow-hidden flex-shrink-0">
+            <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover transition-transform hover:scale-105" />
+          </div>
+        ) : (
+          <div className="h-36 flex-shrink-0 flex items-center justify-center bg-amber-50">
+            <span className="text-5xl">{ITEM_TYPE_EMOJI[item.itemType] || '❓'}</span>
+          </div>
         )}
 
-        {/* Meta */}
-        <div className="mt-auto pt-1 space-y-1">
-          {item.foundLocation && (
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <span>📍</span> {item.foundLocation}
-            </p>
-          )}
-          {item.foundDate && (
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <span>📅</span> {new Date(item.foundDate).toLocaleDateString()}
-            </p>
-          )}
-          {item.postedByName && (
-            <p className="text-xs text-gray-400 flex items-center gap-1">
-              <span>👤</span> {item.postedByName}
-            </p>
-          )}
-        </div>
+        <div className="p-3 flex flex-col gap-2 flex-1">
+          {/* Status badge */}
+          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold self-start ${cfg.bg} ${cfg.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+          </div>
 
-        {/* Actions */}
-        {error && <p className="text-xs text-red-500">{error}</p>}
+          {/* Title */}
+          <p className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 hover:text-indigo-600 transition-colors">{item.title}</p>
+
+          {/* Description */}
+          {item.description && (
+            <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
+          )}
+
+          {/* Meta */}
+          <div className="mt-auto pt-1 space-y-1">
+            {item.foundLocation && (
+              <p className="text-xs text-gray-400 flex items-center gap-1">
+                <span>📍</span> {item.foundLocation}
+              </p>
+            )}
+            {item.foundDate && (
+              <p className="text-xs text-gray-400 flex items-center gap-1">
+                <span>📅</span> {new Date(item.foundDate).toLocaleDateString()}
+              </p>
+            )}
+            {item.postedByName && (
+              <p className="text-xs text-gray-400 flex items-center gap-1">
+                <span>👤</span> {item.postedByName}
+              </p>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      {/* Actions */}
+      <div className="px-3 pb-3">
+        {error && <p className="text-xs text-red-500 mb-1">{error}</p>}
         {item.isOwner && (
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-2">
             <button
-              onClick={() => setEditOpen(true)}
+              onClick={(e) => {
+                e.preventDefault();
+                setEditOpen(true);
+              }}
               className="flex-1 text-xs font-semibold px-2 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
             >
               <span>Edit</span>
@@ -102,7 +110,10 @@ const LostFoundCard: React.FC<Props> = ({ item, isMember, onUpdated, onDeleted }
 
             {/* Delete (owner only) */}
             <button
-              onClick={handleDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
               disabled={deleting}
               className="text-xs px-2 py-1.5 rounded-lg border border-red-100 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
               title="Delete"

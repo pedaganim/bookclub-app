@@ -35,6 +35,7 @@ import ClubRequests from './pages/ClubRequests';
 import ClubMembers from './pages/ClubMembers';
 import ClubBooks from './pages/ClubBooks';
 import LostFoundHub from './pages/LostFoundHub';
+import LostFoundDetails from './pages/LostFoundDetails';
 import MyLostFound from './pages/MyLostFound';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
 import { useSubdomain } from './hooks/useSubdomain';
@@ -102,6 +103,10 @@ function App() {
                 <Route
                   path="/library/lost-found"
                   element={<LostFoundHub />}
+                />
+                <Route
+                  path="/library/lost-found/:id"
+                  element={<LostFoundDetails />}
                 />
                 <Route
                   path="/my-lost-and-found"
