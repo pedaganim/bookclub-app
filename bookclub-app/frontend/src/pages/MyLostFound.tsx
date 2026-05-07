@@ -138,7 +138,7 @@ const MyLostFound: React.FC = () => {
             {filtered.map(item => (
               <LostFoundCard
                 key={item.lostFoundId}
-                item={item}
+                item={{ ...item, isOwner: true }}
                 isMember={true}
                 onUpdated={updated => setItems(prev => prev.map(i => i.lostFoundId === updated.lostFoundId ? updated : i))}
                 onDeleted={id => setItems(prev => prev.filter(i => i.lostFoundId !== id))}
