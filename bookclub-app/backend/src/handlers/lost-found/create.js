@@ -1,6 +1,7 @@
 const LostFound = require('../../models/lost-found');
 const BookClub = require('../../models/bookclub');
 const response = require('../../lib/response');
+const { publishEvent } = require('../../lib/event-bus');
 
 const deriveUserId = async (event) => {
   if (event?.requestContext?.authorizer?.claims?.sub) {
@@ -31,6 +32,20 @@ exports.handler = async (event) => {
     if (!isMember) return response.forbidden('You must be an active club member to post Lost & Found items');
 
     const item = await LostFound.create({ clubId, title, description, itemType, foundLocation, foundDate, images }, userId);
+    
+    if (item.images && item.images.length > 0) {
+      try {
+        await publishEvent('LostFound.ImageAnalysisRequested', {
+          lostFoundId: item.lostFoundId,
+          clubId: item.clubId,
+          userId: userId,
+          images: item.images
+        });
+      } catch (evtErr) {
+        console.error('[LostFound] Failed to publish ImageAnalysisRequested event', evtErr);
+      }
+    }
+    
     return response.success(item, 201);
   } catch (err) {
     console.error('[LostFound] create error:', err);

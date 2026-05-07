@@ -226,6 +226,16 @@ functions:
           batchSize: 1
           maximumConcurrency: 2
 
+  lostFoundBedrockWorker:
+    handler: src/handlers/lost-found/lostFoundBedrockWorker.handler
+    timeout: 900
+    memorySize: 1536
+    events:
+      - sqs:
+          arn: !GetAtt LostFoundBedrockQueue.Arn
+          batchSize: 1
+          maximumConcurrency: 2
+
   getUserPublic:
     handler: src/handlers/users/getById.handler
     events:
@@ -1390,6 +1400,50 @@ resources:
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt BedrockAnalyzeDLQ.Arn
           maxReceiveCount: 5
+
+    LostFoundBedrockDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-lost-found-bedrock-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    LostFoundBedrockQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-lost-found-bedrock-queue
+        VisibilityTimeout: 120
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt LostFoundBedrockDLQ.Arn
+          maxReceiveCount: 5
+
+    LostFoundBedrockQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - !Ref LostFoundBedrockQueue
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: events.amazonaws.com
+              Action: sqs:SendMessage
+              Resource: !GetAtt LostFoundBedrockQueue.Arn
+
+    LostFoundImageAnalysisRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Name: ${self:service}-${self:provider.stage}-lost-found-image-analysis
+        EventBusName: ${self:provider.environment.EVENT_BUS_NAME}
+        EventPattern:
+          source:
+            - ${self:provider.environment.EVENT_BUS_SOURCE}
+          detail-type:
+            - 'LostFound.ImageAnalysisRequested'
+        Targets:
+          - Arn: !GetAtt LostFoundBedrockQueue.Arn
+            Id: 'LostFoundBedrockQueueTarget'
+
     # IAM role for DynamoDB table manager custom resource
     DynamoTableManagerRole:
       Type: AWS::IAM::Role
