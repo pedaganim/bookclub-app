@@ -197,6 +197,90 @@ async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpe
   };
 }
 
+async function analyzeLostFoundImage({ bucket, key, contentType = 'image/jpeg', modelId }) {
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
+  const client = getBedrockClient();
+  let bytes = await getS3ObjectBytes(bucket, key);
+
+  const BASE64_MAX = 5 * 1024 * 1024;
+  try {
+    const overLimit = () => estimateBase64Length(bytes.length) > BASE64_MAX;
+    if (overLimit()) {
+      let width = 1600;
+      let quality = 80;
+      for (let i = 0; i < 8; i++) {
+        const out = await sharp(bytes, { failOnError: false })
+          .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
+          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true })
+          .toBuffer();
+        bytes = out;
+        contentType = 'image/jpeg';
+        if (estimateBase64Length(out.length) <= BASE64_MAX) break;
+        width = width * 0.8;
+        quality = quality * 0.85;
+      }
+    }
+  } catch (e) {
+    console.warn('[Bedrock] Image compression failed:', e?.message);
+  }
+
+  const systemPrompt =
+    'You are an AI assistant helping a community club manage their lost & found. Your task is to analyze an image of a found item. ' +
+    'Extract a concise title, a detailed description, classify the item type (book, toy, tool, game, or other), and note any visible location hints in the background (where it might have been found). ' +
+    'CRITICAL SAFETY RULE: If the image is primarily of a human person, a face, or contains personal identifying information, ' +
+    'set "itemType" to "person_error" and "description" to "PERSON_DETECTED". ' +
+    'Return ONLY strict JSON (no commentary) with this shape: ' +
+    '{"title":"string","description":"string","itemType":"string","foundLocation":"string"}. ' +
+    'Rules: ' +
+    '1. "itemType" MUST be one of: book, toy, tool, game, other. ' +
+    '2. "foundLocation" is optional. If you cannot guess the location from the background, return an empty string. ';
+
+  const body = JSON.stringify({
+    anthropic_version: 'bedrock-2023-05-31',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: systemPrompt },
+          toBase64Image(bytes, contentType),
+        ],
+      },
+    ],
+  });
+
+  const cmd = new InvokeModelCommand({
+    modelId,
+    contentType: 'application/json',
+    accept: 'application/json',
+    body,
+  });
+
+  const res = await withRetry(() => client.send(cmd));
+  const json = JSON.parse(new TextDecoder().decode(res.body));
+  const text = Array.isArray(json.content) && json.content[0]?.text ? json.content[0].text : '';
+
+  let parsed = {};
+  try {
+    const clean = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    parsed = JSON.parse(clean);
+  } catch (e) {
+    try {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    } catch (_) {}
+  }
+
+  return {
+    title: typeof parsed.title === 'string' ? parsed.title.trim() : 'Unknown Item',
+    description: typeof parsed.description === 'string' ? parsed.description.trim() : undefined,
+    itemType: typeof parsed.itemType === 'string' ? parsed.itemType.toLowerCase() : 'other',
+    foundLocation: typeof parsed.foundLocation === 'string' ? parsed.foundLocation.trim() : undefined,
+    raw: parsed,
+  };
+}
+
 module.exports = {
   analyzeUniversalItemImage,
+  analyzeLostFoundImage,
 };
