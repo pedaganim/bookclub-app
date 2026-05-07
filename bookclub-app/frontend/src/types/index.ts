@@ -211,3 +211,30 @@ export interface ToyListingListResponse {
 
 export type LibraryItem = Book | ToyListing;
 
+export type LostFoundStatus = 'available' | 'given_back' | 'disposed' | 'lent';
+export type LostFoundItemType = 'book' | 'toy' | 'tool' | 'game' | 'other' | 'unknown';
+
+export interface LostFoundItem {
+  lostFoundId: string;
+  clubId: string;
+  userId: string;
+  title: string;
+  description?: string;
+  itemType: LostFoundItemType;
+  status: LostFoundStatus;
+  foundLocation?: string;
+  foundDate?: string;
+  images?: string[];
+  claimedByUserId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  postedByName?: string | null;
+  isOwner?: boolean;
+}
+
+export interface LostFoundListResponse {
+  items: LostFoundItem[];
+  nextToken?: string | null;
+  count: number;
+}
+

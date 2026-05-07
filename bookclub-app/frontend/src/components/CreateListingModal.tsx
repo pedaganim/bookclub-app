@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import MultiImageUpload from './MultiImageUpload';
 import { config as appConfig } from '../config';
+import { LostFoundItemType } from '../types';
 
 interface CreateListingModalProps {
   config: LibraryConfig;
@@ -30,7 +31,7 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
   React.useEffect(() => {
     if (config.libraryType !== 'lost_found') return;
     apiService.getUserClubs().then((res: any) => {
-      const allowed = (res.items || []).filter((c: any) => c.userStatus === 'active');
+      const allowed = (res.items || []).filter((c: any) => c.userStatus === 'active' || c.userRole === 'admin');
       setManagedClubs(allowed);
       if (allowed.length === 1) setClubId(allowed[0].clubId);
     }).catch(() => setManagedClubs([]));
@@ -103,20 +104,30 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
                 );
               }
 
-              const listing = await withRetry(
-                () => apiService.createToyListing({
-                  coverImage: uploadResult.fileUrl,
-                  status: 'available',
-                  extractFromImage: !isLocal,
-                  s3Bucket: uploadResult.bucket,
-                  s3Key: uploadResult.key,
-                  title: isLocal ? image.file.name.replace(/\.[^/.]+$/, '').replace(/[_\-.]/g, ' ') : 'Processing...',
-                  libraryType: config.libraryType === 'all' ? 'toy' : config.libraryType,
-                  userName: user?.name || user?.email || 'Community Member',
-                  clubId: config.libraryType === 'lost_found' ? clubId : undefined,
-                }),
-                'createToyListing'
-              );
+              const derivedTitle = image.file.name.replace(/\.[^/.]+$/, '').replace(/[_\-.]/g, ' ');
+              const listing = config.libraryType === 'lost_found'
+                ? await withRetry(
+                    () => apiService.createLostFoundItem({
+                      clubId,
+                      title: derivedTitle,
+                      itemType: 'unknown' as LostFoundItemType,
+                      images: uploadResult.fileUrl ? [uploadResult.fileUrl] : [],
+                    }),
+                    'createLostFoundItem'
+                  )
+                : await withRetry(
+                    () => apiService.createToyListing({
+                      coverImage: uploadResult.fileUrl,
+                      status: 'available',
+                      extractFromImage: !isLocal,
+                      s3Bucket: uploadResult.bucket,
+                      s3Key: uploadResult.key,
+                      title: isLocal ? derivedTitle : 'Processing...',
+                      libraryType: config.libraryType === 'all' ? 'toy' : config.libraryType,
+                      userName: user?.name || user?.email || 'Community Member',
+                    }),
+                    'createToyListing'
+                  );
               successCount++;
               setUploadProgress(p => ({ ...p, success: p.success + 1 }));
               onCreated(listing);
@@ -175,7 +186,9 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ config, onClose
 
         <div className="px-6 py-5">
           <p className="text-sm text-gray-500 mb-6 font-medium">
-            Upload images of your {config.itemLabelPlural} — AI will fill in the details for you in the background.
+            {config.libraryType === 'lost_found'
+              ? 'Select your club and upload photos of the found item.'
+              : `Upload images of your ${config.itemLabelPlural} — AI will fill in the details for you in the background.`}
           </p>
 
           {error && (

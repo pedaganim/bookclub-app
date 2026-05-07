@@ -227,3 +227,53 @@ resource "aws_ssm_parameter" "bookclub_members_table_name" {
   type  = "String"
   value = aws_dynamodb_table.bookclub_members.name
 }
+
+resource "aws_dynamodb_table" "lost_found" {
+  name         = "${var.service_name}-lost-found-${var.stage}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "lostFoundId"
+
+  attribute {
+    name = "lostFoundId"
+    type = "S"
+  }
+
+  attribute {
+    name = "clubId"
+    type = "S"
+  }
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "createdAt"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "ClubIdIndex"
+    hash_key        = "clubId"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "UserIdIndex"
+    hash_key        = "userId"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_ssm_parameter" "lost_found_table_name" {
+  name  = "/${var.service_name}/${var.stage}/lost_found_table_name"
+  type  = "String"
+  value = aws_dynamodb_table.lost_found.name
+}

@@ -472,6 +472,87 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  # Lost & Found
+  listLostFound:
+    handler: src/handlers/lost-found/list.handler
+    events:
+      - http:
+          method: GET
+          path: /lost-found
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  createLostFound:
+    handler: src/handlers/lost-found/create.handler
+    events:
+      - http:
+          method: POST
+          path: /lost-found
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  myLostFound:
+    handler: src/handlers/lost-found/mine.handler
+    events:
+      - http:
+          method: GET
+          path: /lost-found/mine
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  updateLostFound:
+    handler: src/handlers/lost-found/update.handler
+    events:
+      - http:
+          method: PATCH
+          path: /lost-found/{lostFoundId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  deleteLostFound:
+    handler: src/handlers/lost-found/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /lost-found/{lostFoundId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
   # Contact form (public, no auth)
   contactSubmit:
     handler: src/handlers/contact/submit.handler
