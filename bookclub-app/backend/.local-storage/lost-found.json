@@ -298,5 +298,22 @@
     "claimedByUserId": null,
     "createdAt": "2026-05-07T03:58:30.550Z",
     "updatedAt": "2026-05-07T03:58:30.550Z"
+  },
+  "lf-999": {
+    "lostFoundId": "lf-999",
+    "clubId": "club-scifi-002",
+    "userId": "local-user",
+    "title": "Camera with Leather Strap",
+    "description": "Found a vintage-looking camera left on the back table after the movie night. Has a brown leather strap and a small scratch on the lens cap.",
+    "itemType": "other",
+    "status": "available",
+    "foundLocation": "Back table near the snacks",
+    "foundDate": "2026-05-07",
+    "images": [
+      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+    ],
+    "claimedByUserId": null,
+    "createdAt": "2026-05-07T07:04:52.097Z",
+    "updatedAt": "2026-05-07T07:04:52.097Z"
   }
 }
