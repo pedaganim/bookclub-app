@@ -489,6 +489,22 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
+  getLostFound:
+    handler: src/handlers/lost-found/get.handler
+    events:
+      - http:
+          method: GET
+          path: /lost-found/{lostFoundId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
   createLostFound:
     handler: src/handlers/lost-found/create.handler
     events:

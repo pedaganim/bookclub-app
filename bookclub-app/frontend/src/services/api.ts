@@ -911,6 +911,12 @@ class ApiService {
     return response.data.data!;
   }
 
+  async getLostFoundItem(lostFoundId: string): Promise<LostFoundItem> {
+    const response: AxiosResponse<ApiResponse<LostFoundItem>> = await this.api.get(`/lost-found/${lostFoundId}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to get lost & found item');
+    return response.data.data!;
+  }
+
   async updateLostFoundItem(lostFoundId: string, patch: { status?: LostFoundStatus; title?: string; description?: string; foundLocation?: string; foundDate?: string; itemType?: LostFoundItemType; images?: string[]; claimedByUserId?: string }): Promise<LostFoundItem> {
     const response: AxiosResponse<ApiResponse<LostFoundItem>> = await this.api.patch(`/lost-found/${lostFoundId}`, patch);
     if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to update item');
