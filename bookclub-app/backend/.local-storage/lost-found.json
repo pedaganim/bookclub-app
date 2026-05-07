@@ -1,0 +1,45 @@
+{
+  "lf-seed-001": {
+    "lostFoundId": "lf-seed-001",
+    "clubId": "club-fiction-001",
+    "userId": "user-2",
+    "title": "Blue Water Bottle",
+    "description": "Found near the reading corner. Has a small sticker on the side.",
+    "itemType": "other",
+    "status": "available",
+    "foundLocation": "Community Hall – Reading Corner",
+    "foundDate": "2026-05-01",
+    "images": [],
+    "createdAt": "2026-05-01T09:00:00.000Z",
+    "updatedAt": "2026-05-01T09:00:00.000Z"
+  },
+  "lf-seed-002": {
+    "lostFoundId": "lf-seed-002",
+    "clubId": "club-fiction-001",
+    "userId": "user-3",
+    "title": "Children's Book – 'The Gruffalo'",
+    "description": "No name written inside. Left on the shelf after last month's swap.",
+    "itemType": "book",
+    "status": "available",
+    "foundLocation": "Bookshelf near entrance",
+    "foundDate": "2026-04-28",
+    "images": [],
+    "createdAt": "2026-04-28T14:00:00.000Z",
+    "updatedAt": "2026-04-28T14:00:00.000Z"
+  },
+  "lf-seed-003": {
+    "lostFoundId": "lf-seed-003",
+    "clubId": "club-scifi-002",
+    "userId": "user-4",
+    "title": "Wooden Building Blocks Set",
+    "description": "Small wooden blocks in a red mesh bag. Found after the toy swap event.",
+    "itemType": "toy",
+    "status": "given_back",
+    "foundLocation": "Toy swap table",
+    "foundDate": "2026-04-20",
+    "images": [],
+    "claimedByUserId": "user-5",
+    "createdAt": "2026-04-20T10:00:00.000Z",
+    "updatedAt": "2026-04-22T11:00:00.000Z"
+  }
+}

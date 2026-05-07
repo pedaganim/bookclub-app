@@ -12,6 +12,7 @@ const BOOKS_FILE = path.join(STORAGE_DIR, 'books.json');
 const CLUBS_FILE = path.join(STORAGE_DIR, 'clubs.json');
 const CLUB_MEMBERS_FILE = path.join(STORAGE_DIR, 'club-members.json');
 const TOY_LISTINGS_FILE = path.join(STORAGE_DIR, 'toy-listings.json');
+const LOST_FOUND_FILE = path.join(STORAGE_DIR, 'lost-found.json');
 
 if (OFFLINE) {
   // Ensure storage directory exists (local only)
@@ -448,6 +449,82 @@ class LocalStorage {
     if (listings[listingId]) {
       delete listings[listingId];
       this.saveToyListings(listings);
+      return true;
+    }
+    return false;
+  }
+
+  // Lost & Found operations
+  static loadLostFound() {
+    if (!OFFLINE) return {};
+    try {
+      if (fs.existsSync(LOST_FOUND_FILE)) {
+        return JSON.parse(fs.readFileSync(LOST_FOUND_FILE, 'utf8'));
+      }
+    } catch (error) {
+      console.error('[LocalStorage] Error loading lost-found:', error);
+    }
+    return {};
+  }
+
+  static saveLostFound(items) {
+    if (!OFFLINE) return;
+    try {
+      fs.writeFileSync(LOST_FOUND_FILE, JSON.stringify(items, null, 2));
+    } catch (error) {
+      console.error('[LocalStorage] Error saving lost-found:', error);
+    }
+  }
+
+  static async createLostFoundItem(item) {
+    if (!OFFLINE) return item;
+    const items = this.loadLostFound();
+    items[item.lostFoundId] = item;
+    this.saveLostFound(items);
+    return item;
+  }
+
+  static async getLostFoundItem(lostFoundId) {
+    if (!OFFLINE) return null;
+    const items = this.loadLostFound();
+    return items[lostFoundId] || null;
+  }
+
+  static async listLostFoundByClub(clubId) {
+    if (!OFFLINE) return [];
+    const items = this.loadLostFound();
+    return Object.values(items)
+      .filter(i => i.clubId === clubId)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  static async listLostFoundByUser(userId) {
+    if (!OFFLINE) return [];
+    const items = this.loadLostFound();
+    return Object.values(items)
+      .filter(i => i.userId === userId)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  static async updateLostFoundItem(lostFoundId, updates) {
+    if (!OFFLINE) return null;
+    const items = this.loadLostFound();
+    const item = items[lostFoundId];
+    if (item) {
+      const updated = { ...item, ...updates, updatedAt: new Date().toISOString() };
+      items[lostFoundId] = updated;
+      this.saveLostFound(items);
+      return updated;
+    }
+    return null;
+  }
+
+  static async deleteLostFoundItem(lostFoundId) {
+    if (!OFFLINE) return false;
+    const items = this.loadLostFound();
+    if (items[lostFoundId]) {
+      delete items[lostFoundId];
+      this.saveLostFound(items);
       return true;
     }
     return false;

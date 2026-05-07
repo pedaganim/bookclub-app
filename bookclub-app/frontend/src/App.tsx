@@ -34,6 +34,8 @@ import MyItemsPage from './pages/MyItemsPage';
 import ClubRequests from './pages/ClubRequests';
 import ClubMembers from './pages/ClubMembers';
 import ClubBooks from './pages/ClubBooks';
+import LostFoundHub from './pages/LostFoundHub';
+import MyLostFound from './pages/MyLostFound';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
 import { useSubdomain } from './hooks/useSubdomain';
 
@@ -98,10 +100,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/library/lost-found"
+                  element={<LostFoundHub />}
+                />
+                <Route
                   path="/my-lost-and-found"
                   element={
                     <ProtectedRoute>
-                      <MyItemsPage categorySlugOverride="lost-found" />
+                      <MyLostFound />
                     </ProtectedRoute>
                   }
                 />

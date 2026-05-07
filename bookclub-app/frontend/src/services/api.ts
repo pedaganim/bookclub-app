@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList, LostFoundItem, LostFoundListResponse, LostFoundStatus, LostFoundItemType } from '../types';
 import { config } from '../config';
 import { getCookie, setCookie, getBaseDomain } from '../utils/cookies';
 
@@ -885,6 +885,41 @@ class ApiService {
       throw new Error(response.data.error?.message || 'Failed to send message');
     }
     return response.data.data!;
+  }
+
+  async listLostFound(params: { clubId: string; status?: LostFoundStatus; search?: string; limit?: number; nextToken?: string }): Promise<LostFoundListResponse> {
+    const q = new URLSearchParams();
+    q.append('clubId', params.clubId);
+    if (params.status) q.append('status', params.status);
+    if (params.search) q.append('search', params.search);
+    if (params.limit) q.append('limit', String(params.limit));
+    if (params.nextToken) q.append('nextToken', params.nextToken);
+    const response: AxiosResponse<ApiResponse<LostFoundListResponse>> = await this.api.get(`/lost-found?${q.toString()}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to list lost & found items');
+    return response.data.data!;
+  }
+
+  async createLostFoundItem(payload: { clubId: string; title: string; description?: string; itemType?: LostFoundItemType; foundLocation?: string; foundDate?: string; images?: string[] }): Promise<LostFoundItem> {
+    const response: AxiosResponse<ApiResponse<LostFoundItem>> = await this.api.post('/lost-found', payload);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to create lost & found item');
+    return response.data.data!;
+  }
+
+  async getMyLostFoundItems(): Promise<LostFoundListResponse> {
+    const response: AxiosResponse<ApiResponse<LostFoundListResponse>> = await this.api.get('/lost-found/mine');
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to get your lost & found items');
+    return response.data.data!;
+  }
+
+  async updateLostFoundItem(lostFoundId: string, patch: { status?: LostFoundStatus; title?: string; description?: string; foundLocation?: string; foundDate?: string; itemType?: LostFoundItemType; images?: string[]; claimedByUserId?: string }): Promise<LostFoundItem> {
+    const response: AxiosResponse<ApiResponse<LostFoundItem>> = await this.api.patch(`/lost-found/${lostFoundId}`, patch);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to update item');
+    return response.data.data!;
+  }
+
+  async deleteLostFoundItem(lostFoundId: string): Promise<void> {
+    const response: AxiosResponse<ApiResponse<{ deleted: boolean }>> = await this.api.delete(`/lost-found/${lostFoundId}`);
+    if (!response.data.success) throw new Error(response.data.error?.message || 'Failed to delete item');
   }
 }
 

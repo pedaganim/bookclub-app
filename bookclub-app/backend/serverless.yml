@@ -76,6 +76,8 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-messages-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}/index/*
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-lost-found-${self:provider.stage}
+            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-lost-found-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
             - s3:PutObject
@@ -1104,6 +1106,103 @@ functions:
             authorizerId:
               Ref: ApiGatewayAuthorizer
 
+  # Lost & Found handlers
+  listLostFound:
+    handler: src/handlers/lost-found/list.handler
+    events:
+      - http:
+          method: GET
+          path: /lost-found
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+
+  createLostFound:
+    handler: src/handlers/lost-found/create.handler
+    events:
+      - http:
+          method: POST
+          path: /lost-found
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  myLostFound:
+    handler: src/handlers/lost-found/mine.handler
+    events:
+      - http:
+          method: GET
+          path: /lost-found/mine
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  updateLostFound:
+    handler: src/handlers/lost-found/update.handler
+    events:
+      - http:
+          method: PATCH
+          path: /lost-found/{lostFoundId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+  deleteLostFound:
+    handler: src/handlers/lost-found/delete.handler
+    events:
+      - http:
+          method: DELETE
+          path: /lost-found/{lostFoundId}
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
   # Custom resource function for DynamoDB table management
   dynamoTableManager:
     handler: src/custom-resources/dynamodb-table-manager.handler
@@ -1891,6 +1990,52 @@ resources:
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+    LostFoundTable:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
+        TableName: ${self:service}-lost-found-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: lostFoundId
+            AttributeType: S
+          - AttributeName: clubId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: lostFoundId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ClubIdIndex
+            KeySchema:
+              - AttributeName: clubId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          - IndexName: UserIdIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
