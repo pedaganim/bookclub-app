@@ -185,16 +185,32 @@ class BookClub {
       const clubs = await LocalStorage.listClubs();
       return (clubs || []).find(c => c.slug === slug) || null;
     }
-    const params = {
-      TableName: getTableName('bookclub-groups'),
-      IndexName: 'SlugIndex',
-      KeyConditionExpression: '#slug = :slug',
-      ExpressionAttributeNames: { '#slug': 'slug' },
-      ExpressionAttributeValues: { ':slug': slug },
-      Limit: 1,
-    };
-    const result = await dynamoDb.query(params);
-    return (result.Items && result.Items[0]) || null;
+    // Try the GSI first; fall back to a full scan if the index doesn't exist yet
+    try {
+      const params = {
+        TableName: getTableName('bookclub-groups'),
+        IndexName: 'SlugIndex',
+        KeyConditionExpression: '#slug = :slug',
+        ExpressionAttributeNames: { '#slug': 'slug' },
+        ExpressionAttributeValues: { ':slug': slug },
+        Limit: 1,
+      };
+      const result = await dynamoDb.query(params);
+      return (result.Items && result.Items[0]) || null;
+    } catch (err) {
+      if (err.code === 'ValidationException' || (err.message && err.message.includes('SlugIndex'))) {
+        // Index not yet deployed — fall back to scan
+        const scanParams = {
+          TableName: getTableName('bookclub-groups'),
+          FilterExpression: '#slug = :slug',
+          ExpressionAttributeNames: { '#slug': 'slug' },
+          ExpressionAttributeValues: { ':slug': slug },
+        };
+        const scanResult = await dynamoDb.scan(scanParams);
+        return (scanResult.Items && scanResult.Items[0]) || null;
+      }
+      throw err;
+    }
   }
 
   static async update(clubId, updates) {
