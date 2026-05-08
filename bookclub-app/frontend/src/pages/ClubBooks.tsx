@@ -24,11 +24,27 @@ const ClubBooks: React.FC = () => {
   const scrollRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Resolve slug → clubId on mount
+  // If the param is already a UUID (legacy links), use it directly
   useEffect(() => {
     if (!slug) return;
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (UUID_RE.test(slug)) {
+      setClubId(slug);
+      return;
+    }
     apiService.resolveClubSlug(slug)
-      .then(resolved => { if (resolved?.clubId) setClubId(resolved.clubId); })
-      .catch(() => setError('Club not found'));
+      .then(resolved => {
+        if (resolved?.clubId) {
+          setClubId(resolved.clubId);
+        } else {
+          setError('Club not found');
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        setError('Club not found');
+        setLoading(false);
+      });
   }, [slug]);
 
   const fetchClub = useCallback(async () => {
