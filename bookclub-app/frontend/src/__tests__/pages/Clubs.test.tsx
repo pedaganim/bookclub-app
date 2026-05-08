@@ -142,9 +142,9 @@ describe('Clubs page', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => expect(screen.getByText('My Club')).toBeInTheDocument());
+    expect(await screen.findByText('My Club')).toBeInTheDocument();
     fireEvent.click(screen.getByTitle('Invite by Email'));
-    await waitFor(() => expect(screen.getByText('Invite Members by Email')).toBeInTheDocument());
+    expect(await screen.findByText('Invite Members by Email')).toBeInTheDocument();
   });
 
   it('opens join modal when Join with Code is clicked', async () => {

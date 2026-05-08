@@ -1,5 +1,6 @@
+/* eslint-disable testing-library/no-node-access */
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import InviteByEmailModal from '../../components/InviteByEmailModal';
 import { NotificationProvider } from '../../contexts/NotificationContext';
@@ -132,13 +133,11 @@ describe('InviteByEmailModal', () => {
     fireEvent.change(textarea, { target: { value: 'a@example.com, b@example.com' } });
     fireEvent.blur(textarea);
 
-    await act(async () => {
-      fireEvent.click(screen.getByText(/Send/));
-    });
+    fireEvent.click(screen.getByText(/Send/));
 
     expect(apiService.inviteClubMembers).toHaveBeenCalledWith('club-1', ['a@example.com', 'b@example.com']);
     await waitFor(() => expect(apiService.listClubInvites).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(screen.getByText('a@example.com')).toBeInTheDocument());
+    expect(await screen.findByText('a@example.com')).toBeInTheDocument();
   });
 
   it('shows pending invites and allows revoking', async () => {
@@ -150,12 +149,10 @@ describe('InviteByEmailModal', () => {
     (apiService.revokeClubInvite as jest.Mock).mockResolvedValue({});
 
     renderModal();
-    await waitFor(() => expect(screen.getByText('pending@example.com')).toBeInTheDocument());
+    expect(await screen.findByText('pending@example.com')).toBeInTheDocument();
     expect(screen.getByText('Pending Invites (1)')).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.click(screen.getByText('Revoke'));
-    });
+    fireEvent.click(screen.getByText('Revoke'));
 
     expect(apiService.revokeClubInvite).toHaveBeenCalledWith('club-1', 'pending@example.com');
     await waitFor(() => expect(screen.queryByText('pending@example.com')).not.toBeInTheDocument());
