@@ -11,24 +11,41 @@ interface CreateClubModalProps {
 const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreated }) => {
   const [formData, setFormData] = useState({
     name: '',
+    slug: '',
     description: '',
     location: '',
     isPrivate: false,
     memberLimit: '',
   });
+  const [slugEdited, setSlugEdited] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
 
+  const toSlug = (str: string) =>
+    str.toLowerCase().trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: type === 'checkbox' ? checked : value };
+      if (name === 'name' && !slugEdited) {
+        next.slug = toSlug(value);
+      }
+      return next;
+    });
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+    setSlugEdited(true);
+    setFormData(prev => ({ ...prev, slug: val }));
   };
 
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
@@ -153,12 +170,24 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
       return;
     }
 
+    const slug = formData.slug.trim();
+    if (!slug) {
+      setError('URL slug is required');
+      return;
+    }
+    const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!SLUG_RE.test(slug)) {
+      setError('Slug may only contain lowercase letters, numbers, and hyphens');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const clubData = {
         name: formData.name.trim(),
+        slug,
         description: formData.description.trim() || undefined,
         location: formData.location.trim(),
         isPrivate: formData.isPrivate,
@@ -204,6 +233,29 @@ const CreateClubModal: React.FC<CreateClubModalProps> = ({ onClose, onClubCreate
               maxLength={100}
               required
             />
+          </div>
+
+          <div>
+            <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+              URL Slug *
+            </label>
+            <div className="flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent overflow-hidden">
+              <span className="px-3 py-2 bg-gray-50 text-gray-400 text-sm border-r border-gray-300 whitespace-nowrap select-none">
+                clubs/
+              </span>
+              <input
+                type="text"
+                id="slug"
+                name="slug"
+                value={formData.slug}
+                onChange={handleSlugChange}
+                className="flex-1 px-3 py-2 text-sm focus:outline-none"
+                placeholder="my-book-club"
+                maxLength={60}
+                required
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Lowercase letters, numbers and hyphens only. Must be unique.</p>
           </div>
 
           <div>

@@ -6,18 +6,37 @@ const LocalStorage = require('../lib/local-storage');
 const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
 
 class BookClub {
-  static async create(clubData, createdBy) {
-    const clubId = uuidv4();
-    const inviteCode = uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase();
-    const timestamp = new Date().toISOString();
-
-    // Generate slug from name if not provided
-    const slug = clubData.slug || clubData.name
+  static toSlug(str) {
+    return str
       .toLowerCase()
       .trim()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  static async isSlugTaken(slug, excludeClubId = null) {
+    const existing = await this.getBySlug(slug);
+    if (!existing) return false;
+    if (excludeClubId && existing.clubId === excludeClubId) return false;
+    return true;
+  }
+
+  static async create(clubData, createdBy) {
+    const clubId = uuidv4();
+    const inviteCode = uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase();
+    const timestamp = new Date().toISOString();
+
+    // slug is mandatory — derive from name if not provided
+    const slug = clubData.slug ? clubData.slug.trim() : this.toSlug(clubData.name);
+    if (!slug) throw Object.assign(new Error('Slug is required'), { statusCode: 400 });
+
+    if (await this.isSlugTaken(slug)) {
+      throw Object.assign(
+        new Error(`The URL slug "${slug}" is already taken. Please choose a different one.`),
+        { statusCode: 409 }
+      );
+    }
 
     const club = {
       clubId,
@@ -180,6 +199,19 @@ class BookClub {
 
   static async update(clubId, updates) {
     const timestamp = new Date().toISOString();
+
+    if (updates.slug !== undefined) {
+      const slug = updates.slug.trim();
+      if (!slug) throw Object.assign(new Error('Slug cannot be empty'), { statusCode: 400 });
+      if (await this.isSlugTaken(slug, clubId)) {
+        throw Object.assign(
+          new Error(`The URL slug "${slug}" is already taken. Please choose a different one.`),
+          { statusCode: 409 }
+        );
+      }
+      updates.slug = slug;
+    }
+
     if (isOffline()) {
       const existing = await LocalStorage.getClubById(clubId);
       if (!existing) return null;

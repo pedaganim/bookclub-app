@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     return success(club);
   } catch (err) {
     console.error('Error creating club:', err);
-    return error(err.message || 'Failed to create club', 500);
+    return error(err.message || 'Failed to create club', err.statusCode || 500);
   }
 };
 
@@ -29,13 +29,20 @@ const parseBody = (event) => {
   try { return JSON.parse(event.body); } catch { return null; }
 };
 
-const validateBody = ({ name, description, location, memberLimit }) => {
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const validateBody = ({ name, description, location, memberLimit, slug }) => {
   if (!name || name.trim().length === 0) return error('Club name is required', 400);
   if (!location || location.trim().length === 0) return error('Location is required', 400);
   if (location.length > 100) return error('Location must be 100 characters or less', 400);
   if (name.length > 100) return error('Club name must be 100 characters or less', 400);
   if (description && description.length > 500) return error('Club description must be 500 characters or less', 400);
   if (memberLimit && (memberLimit < 2 || memberLimit > 1000)) return error('Member limit must be between 2 and 1000', 400);
+  if (slug !== undefined && slug !== null && slug !== '') {
+    const s = slug.trim();
+    if (s.length > 60) return error('Slug must be 60 characters or less', 400);
+    if (!SLUG_RE.test(s)) return error('Slug may only contain lowercase letters, numbers, and hyphens (e.g. my-book-club)', 400);
+  }
   return null;
 };
 
@@ -54,8 +61,9 @@ const getUserIdFromEventOrToken = async (event) => {
   }
 };
 
-const buildClubData = ({ name, description, location, isPrivate, memberLimit }) => ({
+const buildClubData = ({ name, description, location, isPrivate, memberLimit, slug }) => ({
   name: name.trim(),
+  slug: slug ? slug.trim() : undefined,
   description: description?.trim() || '',
   location: location.trim(),
   isPrivate: !!isPrivate,

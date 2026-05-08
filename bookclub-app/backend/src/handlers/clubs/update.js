@@ -11,7 +11,7 @@ exports.handler = async (event) => {
     const payload = parseBody(event);
     if (!payload) return error('Request body is required', 400);
 
-    const updates = pickAllowedUpdates(payload, ['name', 'description', 'location', 'isPrivate', 'memberLimit']);
+    const updates = pickAllowedUpdates(payload, ['name', 'description', 'location', 'isPrivate', 'memberLimit', 'slug']);
     const validationError = validateUpdates(updates);
     if (validationError) return validationError;
 
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
     return success(updated);
   } catch (err) {
     console.error('Error updating club:', err);
-    return error(err.message || 'Failed to update club', 500);
+    return error(err.message || 'Failed to update club', err.statusCode || 500);
   }
 };
 
@@ -91,6 +91,15 @@ const validateUpdates = (updates) => {
     if (updates.memberLimit !== null && (typeof updates.memberLimit !== 'number' || updates.memberLimit < 2 || updates.memberLimit > 1000)) {
       return error('Member limit must be a number between 2 and 1000 (or null)', 400);
     }
+  }
+
+  if (updates.slug !== undefined) {
+    const s = (updates.slug || '').trim();
+    if (!s) return error('Slug cannot be empty', 400);
+    if (s.length > 60) return error('Slug must be 60 characters or less', 400);
+    const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!SLUG_RE.test(s)) return error('Slug may only contain lowercase letters, numbers, and hyphens', 400);
+    updates.slug = s;
   }
 
   return null;

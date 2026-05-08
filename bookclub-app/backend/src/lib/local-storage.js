@@ -294,6 +294,12 @@ class LocalStorage {
     return clubs[clubId] || null;
   }
 
+  static async getClubBySlug(slug) {
+    if (!OFFLINE) return null;
+    const clubs = this.loadClubs();
+    return Object.values(clubs).find(c => c.slug === slug) || null;
+  }
+
   static async getClubByInviteCode(inviteCode) {
     if (!OFFLINE) return null;
     const clubs = this.loadClubs();

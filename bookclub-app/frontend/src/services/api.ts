@@ -516,7 +516,9 @@ class ApiService {
   // Club methods
   async createClub(clubData: {
     name: string;
+    slug?: string;
     description?: string;
+    location?: string;
     isPrivate?: boolean;
     memberLimit?: number;
   }): Promise<BookClub> {

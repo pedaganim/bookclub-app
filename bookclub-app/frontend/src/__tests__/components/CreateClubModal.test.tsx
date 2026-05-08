@@ -210,6 +210,7 @@ describe('CreateClubModal', () => {
     await waitFor(() => {
       expect(apiService.createClub).toHaveBeenCalledWith({
         name: 'Test Club',
+        slug: 'test-club',
         description: 'Test Description',
         location: 'New York, NY',
         isPrivate: true,
@@ -251,6 +252,7 @@ describe('CreateClubModal', () => {
     await waitFor(() => {
       expect(apiService.createClub).toHaveBeenCalledWith({
         name: 'Test Club',
+        slug: 'test-club',
         description: undefined,
         location: 'New York, NY',
         isPrivate: false,
