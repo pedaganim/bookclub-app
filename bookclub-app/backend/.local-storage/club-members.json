@@ -1,9 +1,16 @@
 {
-  "5892f329-0047-4508-b48a-c024106241fd:test-user-123": {
+  "5892f329-0047-4508-b48a-c024106241fd:local-user": {
     "clubId": "5892f329-0047-4508-b48a-c024106241fd",
-    "userId": "test-user-123",
+    "userId": "local-user",
     "role": "admin",
     "joinedAt": "2026-05-07T13:51:11.469Z",
+    "status": "active"
+  },
+  "5892f329-0047-4508-b48a-c024106241fd:local-user-2": {
+    "clubId": "5892f329-0047-4508-b48a-c024106241fd",
+    "userId": "local-user-2",
+    "role": "member",
+    "joinedAt": "2026-05-07T14:00:00.000Z",
     "status": "active"
   }
 }

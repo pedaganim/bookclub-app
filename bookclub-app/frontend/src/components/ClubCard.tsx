@@ -10,7 +10,8 @@ import {
   InboxArrowDownIcon,
   ClipboardDocumentIcon,
   ArrowRightOnRectangleIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 
 interface ClubCardProps {
@@ -27,6 +28,7 @@ interface ClubCardProps {
   onManageRequests?: () => void;
   onManageMembers?: () => void;
   onCopyInvite?: () => void;
+  onInviteByEmail?: () => void;
 }
 
 const ClubCard: React.FC<ClubCardProps> = ({ 
@@ -42,7 +44,8 @@ const ClubCard: React.FC<ClubCardProps> = ({
   onDelete,
   onManageRequests,
   onManageMembers,
-  onCopyInvite
+  onCopyInvite,
+  onInviteByEmail
 }) => {
   const navigate = useNavigate();
 
@@ -170,6 +173,16 @@ const ClubCard: React.FC<ClubCardProps> = ({
               <UserGroupIcon className="h-3.5 w-3.5" />
               Members
             </button>
+            {onInviteByEmail && (
+              <button
+                onClick={(e) => handleAction(e, onInviteByEmail)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+                title="Invite by Email"
+              >
+                <EnvelopeIcon className="h-3.5 w-3.5" />
+                Invite
+              </button>
+            )}
             <button
               onClick={(e) => handleAction(e, onManageRequests)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -180,11 +193,11 @@ const ClubCard: React.FC<ClubCardProps> = ({
             </button>
             <button
               onClick={(e) => handleAction(e, onCopyInvite)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
               title="Copy Invite Code"
             >
               <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-              Invite
+              Code
             </button>
           </>
         )}

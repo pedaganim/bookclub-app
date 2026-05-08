@@ -4,7 +4,8 @@ import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import { useAuth } from '../contexts/AuthContext';
-import { ArchiveBoxIcon, UserPlusIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import InviteByEmailModal from '../components/InviteByEmailModal';
 
 const ClubBooks: React.FC = () => {
   const { clubId } = useParams<{ clubId: string }>();
@@ -18,6 +19,7 @@ const ClubBooks: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
+  const [showInvite, setShowInvite] = useState(false);
 
   const fetchClub = useCallback(async () => {
     if (!clubId) return;
@@ -164,6 +166,16 @@ const ClubBooks: React.FC = () => {
                   {club.userRole === 'admin' ? 'Manage Members' : 'View Members'}
                 </button>
               )}
+
+              {club && (club.userRole === 'admin' || club.createdBy === user?.userId) && (
+                <button
+                  onClick={() => setShowInvite(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
+                >
+                  <EnvelopeIcon className="h-4 w-4" />
+                  Invite Members
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -244,6 +256,14 @@ const ClubBooks: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showInvite && club && (
+        <InviteByEmailModal
+          clubId={club.clubId}
+          clubName={club.name}
+          onClose={() => setShowInvite(false)}
+        />
+      )}
     </div>
   );
 };

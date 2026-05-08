@@ -4,11 +4,11 @@
     "name": "Test Book Club",
     "slug": "test-book-club",
     "description": "A test club",
-    "createdBy": "test-user-123",
+    "createdBy": "local-user",
     "inviteCode": "9347EB8B",
     "isPrivate": false,
     "memberLimit": null,
-    "memberCount": 1,
+    "memberCount": 2,
     "createdAt": "2026-05-07T13:51:11.469Z",
     "updatedAt": "2026-05-07T13:51:11.470Z"
   }
