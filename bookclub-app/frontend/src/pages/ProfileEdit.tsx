@@ -225,6 +225,23 @@ const ProfileEdit: React.FC = () => {
           </a>
         </div>
       </div>
+
+      {/* Logout Section for Mobile Visibility */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <button
+          onClick={() => {
+            if (window.confirm('Are you sure you want to sign out?')) {
+              logout();
+            }
+          }}
+          className="w-full py-3 rounded-xl border border-red-200 text-red-600 font-bold hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+          </svg>
+          Sign Out
+        </button>
+      </div>
     </div>
   );
 };
