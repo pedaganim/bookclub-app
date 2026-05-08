@@ -67,7 +67,7 @@ const Messages: React.FC = () => {
     } finally {
       setLoadingMsgs(false);
       // Notify others (e.g., Navbar) that DM state may have changed
-      window.dispatchEvent(new Event('dm:updated'));
+      document.dispatchEvent(new Event('dm:updated'));
     }
   };
 
@@ -78,7 +78,7 @@ const Messages: React.FC = () => {
       // Mark as read when opening thread
       try {
         await apiService.dmMarkRead(routeConversationId);
-        window.dispatchEvent(new Event('dm:updated'));
+        document.dispatchEvent(new Event('dm:updated'));
       } catch {}
     })();
 

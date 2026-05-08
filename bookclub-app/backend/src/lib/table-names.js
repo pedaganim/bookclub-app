@@ -11,7 +11,6 @@ const tableNames = {
   'dm-messages': `${SERVICE_NAME}-dm-messages-${STAGE}`,
   'toy-listings': `${SERVICE_NAME}-toy-listings-${STAGE}`,
   'lost-found': `${SERVICE_NAME}-lost-found-${STAGE}`,
-  'club-email-invites': `${SERVICE_NAME}-club-email-invites-${STAGE}`,
 };
 
 function getTableName(key) {

@@ -12,9 +12,6 @@ jest.mock('../../services/api', () => ({
     getUserClubs: jest.fn(),
     updateClub: jest.fn(),
     deleteClub: jest.fn(),
-    inviteClubMembers: jest.fn(),
-    listClubInvites: jest.fn(),
-    revokeClubInvite: jest.fn(),
   },
 }));
 
@@ -116,35 +113,6 @@ describe('Clubs page', () => {
 
     expect(screen.queryByText('Create Club')).not.toBeInTheDocument();
     expect(screen.getByText('Contact Us →')).toBeInTheDocument();
-  });
-
-  it('opens invite modal when Invite by Email button is clicked for admin club', async () => {
-    (apiService.getUserClubs as jest.Mock).mockResolvedValue({
-      items: [
-        {
-          clubId: 'c1',
-          name: 'My Club',
-          description: 'Desc',
-          location: 'City',
-          createdBy: 'user-1',
-          userRole: 'admin',
-          isPrivate: false,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-      ],
-    });
-    (apiService.listClubInvites as jest.Mock).mockResolvedValue({ items: [] });
-
-    render(
-      <TestWrapper>
-        <Clubs />
-      </TestWrapper>
-    );
-
-    expect(await screen.findByText('My Club')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Invite by Email'));
-    expect(await screen.findByText('Invite Members by Email')).toBeInTheDocument();
   });
 
   it('opens join modal when Join with Code is clicked', async () => {

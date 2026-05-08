@@ -1095,57 +1095,6 @@ functions:
             authorizerId:
               Ref: ApiGatewayAuthorizer
 
-  inviteClubMembers:
-    handler: src/handlers/clubs/inviteMembers.handler
-    events:
-      - http:
-          method: POST
-          path: clubs/{clubId}/invites
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
-  listClubInvites:
-    handler: src/handlers/clubs/listInvites.handler
-    events:
-      - http:
-          method: GET
-          path: clubs/{clubId}/invites
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
-  revokeClubInvite:
-    handler: src/handlers/clubs/revokeInvite.handler
-    events:
-      - http:
-          method: DELETE
-          path: clubs/{clubId}/invites/{email}
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
   # Request to join a club (member action)
   requestJoinClub:
     handler: src/handlers/clubs/request.handler
