@@ -49,6 +49,8 @@ const ClubCard: React.FC<ClubCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  const exploreUrl = `/clubs/${club.slug || club.clubId}/explore`;
+
   const handleAction = (e: React.MouseEvent, callback?: () => void) => {
     e.stopPropagation();
     if (callback) callback();
@@ -57,7 +59,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
   return (
     <div 
       className="bg-white rounded-lg shadow-sm p-5 border border-gray-200 hover:shadow-md transition-all cursor-pointer flex flex-col h-full"
-      onClick={() => navigate(`/clubs/${club.slug}/explore`)}
+      onClick={() => navigate(exploreUrl)}
     >
       <div className="flex-1">
         <div className="flex items-start justify-between mb-3">
@@ -114,7 +116,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
       
       <div className="flex flex-wrap items-center gap-2 mt-auto pt-4 border-t border-gray-50">
         <button
-          onClick={(e) => handleAction(e, () => navigate(`/clubs/${club.slug}/explore`))}
+          onClick={(e) => handleAction(e, () => navigate(exploreUrl))}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
           title="Explore Club"
         >
