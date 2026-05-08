@@ -8,9 +8,10 @@ import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon } from '@heroicon
 import InviteByEmailModal from '../components/InviteByEmailModal';
 
 const ClubBooks: React.FC = () => {
-  const { clubId } = useParams<{ clubId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const [clubId, setClubId] = useState<string | null>(null);
   const [club, setClub] = useState<BookClub | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,14 @@ const ClubBooks: React.FC = () => {
   const [joinError, setJoinError] = useState('');
   const [showInvite, setShowInvite] = useState(false);
   const scrollRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Resolve slug → clubId on mount
+  useEffect(() => {
+    if (!slug) return;
+    apiService.resolveClubSlug(slug)
+      .then(resolved => { if (resolved?.clubId) setClubId(resolved.clubId); })
+      .catch(() => setError('Club not found'));
+  }, [slug]);
 
   const fetchClub = useCallback(async () => {
     if (!clubId) return;
@@ -69,13 +78,14 @@ const ClubBooks: React.FC = () => {
   }, [clubId]);
 
   useEffect(() => {
+    if (!clubId) return;
     const init = async () => {
       setLoading(true);
       await Promise.all([fetchClub(), fetchBooks(null)]);
       setLoading(false);
     };
     init();
-  }, [fetchClub, fetchBooks]);
+  }, [clubId, fetchClub, fetchBooks]);
 
   const handleLoadMore = async () => {
     if (!nextToken || loadingMore) return;
