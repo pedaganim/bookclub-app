@@ -10,8 +10,7 @@ import {
   InboxArrowDownIcon,
   ClipboardDocumentIcon,
   ArrowRightOnRectangleIcon,
-  MagnifyingGlassIcon,
-  EnvelopeIcon
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 
 interface ClubCardProps {
@@ -28,7 +27,6 @@ interface ClubCardProps {
   onManageRequests?: () => void;
   onManageMembers?: () => void;
   onCopyInvite?: () => void;
-  onInviteByEmail?: () => void;
 }
 
 const ClubCard: React.FC<ClubCardProps> = ({ 
@@ -44,8 +42,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
   onDelete,
   onManageRequests,
   onManageMembers,
-  onCopyInvite,
-  onInviteByEmail
+  onCopyInvite
 }) => {
   const navigate = useNavigate();
 
@@ -57,7 +54,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
   return (
     <div 
       className="bg-white rounded-lg shadow-sm p-5 border border-gray-200 hover:shadow-md transition-all cursor-pointer flex flex-col h-full"
-      onClick={() => navigate(`/clubs/${club.slug}/explore`)}
+      onClick={() => navigate(`/clubs/${club.clubId}/explore`)}
     >
       <div className="flex-1">
         <div className="flex items-start justify-between mb-3">
@@ -114,7 +111,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
       
       <div className="flex flex-wrap items-center gap-2 mt-auto pt-4 border-t border-gray-50">
         <button
-          onClick={(e) => handleAction(e, () => navigate(`/clubs/${club.slug}/explore`))}
+          onClick={(e) => handleAction(e, () => navigate(`/clubs/${club.clubId}/explore`))}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
           title="Explore Club"
         >
@@ -173,16 +170,6 @@ const ClubCard: React.FC<ClubCardProps> = ({
               <UserGroupIcon className="h-3.5 w-3.5" />
               Members
             </button>
-            {onInviteByEmail && (
-              <button
-                onClick={(e) => handleAction(e, onInviteByEmail)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
-                title="Invite by Email"
-              >
-                <EnvelopeIcon className="h-3.5 w-3.5" />
-                Invite
-              </button>
-            )}
             <button
               onClick={(e) => handleAction(e, onManageRequests)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -193,11 +180,11 @@ const ClubCard: React.FC<ClubCardProps> = ({
             </button>
             <button
               onClick={(e) => handleAction(e, onCopyInvite)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
               title="Copy Invite Code"
             >
               <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-              Code
+              Invite
             </button>
           </>
         )}

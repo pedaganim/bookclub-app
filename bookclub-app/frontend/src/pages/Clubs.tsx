@@ -6,7 +6,6 @@ import { UserGroupIcon } from '@heroicons/react/24/outline';
 import EditClubModal from '../components/EditClubModal';
 import JoinClubModal from '../components/JoinClubModal';
 import ConfirmationModal from '../components/ConfirmationModal';
-import InviteByEmailModal from '../components/InviteByEmailModal';
 import ClubCard from '../components/ClubCard';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -20,7 +19,6 @@ const Clubs: React.FC = () => {
   const [editingClub, setEditingClub] = useState<BookClub | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [clubToDelete, setClubToDelete] = useState<BookClub | null>(null);
-  const [invitingClub, setInvitingClub] = useState<BookClub | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -165,7 +163,6 @@ const Clubs: React.FC = () => {
                 onDelete={() => setClubToDelete(club)}
                 onManageRequests={() => navigate(`/clubs/${club.clubId}/requests`)}
                 onManageMembers={() => navigate(`/clubs/${club.clubId}/members`)}
-                onInviteByEmail={isAdmin(club) ? () => setInvitingClub(club) : undefined}
                 onCopyInvite={() => handleCopyInvite(club.inviteCode)}
                 onLeave={async () => {
                   if (window.confirm(`Are you sure you want to leave "${club.name}"?`)) {
@@ -196,14 +193,6 @@ const Clubs: React.FC = () => {
             Contact Us →
           </a>
         </div>
-
-        {invitingClub && (
-          <InviteByEmailModal
-            clubId={invitingClub.clubId}
-            clubName={invitingClub.name}
-            onClose={() => setInvitingClub(null)}
-          />
-        )}
 
         {showJoin && (
           <JoinClubModal

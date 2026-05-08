@@ -75,11 +75,6 @@ const Navbar: React.FC = () => {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/');
 
-  const isLostFoundPath = location.pathname === '/library/lost-found'
-    || location.pathname.startsWith('/library/lost-found/')
-    || location.pathname === '/my-library/lost-found'
-    || location.pathname === '/my-lost-and-found';
-
   return (
     <>
       <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-30">
@@ -112,7 +107,7 @@ const Navbar: React.FC = () => {
               <Link
                 to="/library"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/library') && !isLostFoundPath
+                  isActive('/library') && location.pathname !== '/library/lost-found'
                     ? 'text-indigo-700 bg-indigo-50'
                     : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
@@ -124,7 +119,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/my-library"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/my-library') && !isLostFoundPath ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    isActive('/my-library') && location.pathname !== '/my-library/lost-found' && location.pathname !== '/my-lost-and-found' ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   My Library
@@ -134,7 +129,7 @@ const Navbar: React.FC = () => {
               <Link
                 to="/library/lost-found"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isLostFoundPath ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  location.pathname === '/library/lost-found' || location.pathname === '/my-library/lost-found' || location.pathname === '/my-lost-and-found' ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 🧾 Lost & Found

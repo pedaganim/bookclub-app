@@ -13,7 +13,6 @@ const CLUBS_FILE = path.join(STORAGE_DIR, 'clubs.json');
 const CLUB_MEMBERS_FILE = path.join(STORAGE_DIR, 'club-members.json');
 const TOY_LISTINGS_FILE = path.join(STORAGE_DIR, 'toy-listings.json');
 const LOST_FOUND_FILE = path.join(STORAGE_DIR, 'lost-found.json');
-const CLUB_EMAIL_INVITES_FILE = path.join(STORAGE_DIR, 'club-email-invites.json');
 
 if (OFFLINE) {
   // Ensure storage directory exists (local only)
@@ -537,74 +536,6 @@ class LocalStorage {
       return true;
     }
     return false;
-  }
-
-  // Club email invite operations
-  static loadEmailInvites() {
-    if (!OFFLINE) return {};
-    try {
-      if (fs.existsSync(CLUB_EMAIL_INVITES_FILE)) {
-        return JSON.parse(fs.readFileSync(CLUB_EMAIL_INVITES_FILE, 'utf8'));
-      }
-    } catch (error) {
-      console.error('[LocalStorage] Error loading club-email-invites:', error);
-    }
-    return {};
-  }
-
-  static saveEmailInvites(invites) {
-    if (!OFFLINE) return;
-    try {
-      fs.writeFileSync(CLUB_EMAIL_INVITES_FILE, JSON.stringify(invites, null, 2));
-    } catch (error) {
-      console.error('[LocalStorage] Error saving club-email-invites:', error);
-    }
-  }
-
-  static async createEmailInvite(invite) {
-    if (!OFFLINE) return invite;
-    const invites = this.loadEmailInvites();
-    const key = `${invite.clubId}:${invite.email.toLowerCase()}`;
-    invites[key] = invite;
-    this.saveEmailInvites(invites);
-    return invite;
-  }
-
-  static async listEmailInvitesByClub(clubId) {
-    if (!OFFLINE) return [];
-    const invites = this.loadEmailInvites();
-    return Object.values(invites)
-      .filter(i => i.clubId === clubId)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  static async getEmailInviteByEmail(email) {
-    if (!OFFLINE) return [];
-    const invites = this.loadEmailInvites();
-    const norm = email.toLowerCase();
-    return Object.values(invites).filter(i => i.email.toLowerCase() === norm && i.status === 'pending');
-  }
-
-  static async deleteEmailInvite(clubId, email) {
-    if (!OFFLINE) return false;
-    const invites = this.loadEmailInvites();
-    const key = `${clubId}:${email.toLowerCase()}`;
-    if (invites[key]) {
-      delete invites[key];
-      this.saveEmailInvites(invites);
-      return true;
-    }
-    return false;
-  }
-
-  static async markEmailInviteAccepted(clubId, email) {
-    if (!OFFLINE) return;
-    const invites = this.loadEmailInvites();
-    const key = `${clubId}:${email.toLowerCase()}`;
-    if (invites[key]) {
-      invites[key] = { ...invites[key], status: 'accepted', acceptedAt: new Date().toISOString() };
-      this.saveEmailInvites(invites);
-    }
   }
 }
 

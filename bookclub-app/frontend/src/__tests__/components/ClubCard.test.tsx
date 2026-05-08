@@ -29,7 +29,6 @@ jest.mock('@heroicons/react/24/outline', () => ({
   ClipboardDocumentIcon: () => <div data-testid="icon-clipboard" />,
   ArrowRightOnRectangleIcon: () => <div data-testid="icon-logout" />,
   MagnifyingGlassIcon: () => <div data-testid="icon-search" />,
-  EnvelopeIcon: () => <div data-testid="icon-envelope" />,
 }));
 
 describe('ClubCard', () => {
@@ -183,33 +182,6 @@ describe('ClubCard', () => {
 
     expect(screen.getByTitle('Manage Requests')).toBeInTheDocument();
     expect(screen.getByTitle('Copy Invite Code')).toBeInTheDocument();
-  });
-
-  it('should show Invite by Email button for admin when onInviteByEmail is provided', () => {
-    const mockOnInviteByEmail = jest.fn();
-    renderWithRouter(
-      <ClubCard
-        club={mockClub}
-        isAdmin={true}
-        onInviteByEmail={mockOnInviteByEmail}
-      />
-    );
-
-    const btn = screen.getByTitle('Invite by Email');
-    expect(btn).toBeInTheDocument();
-    fireEvent.click(btn);
-    expect(mockOnInviteByEmail).toHaveBeenCalled();
-  });
-
-  it('should not show Invite by Email button when onInviteByEmail is not provided', () => {
-    renderWithRouter(
-      <ClubCard
-        club={mockClub}
-        isAdmin={true}
-      />
-    );
-
-    expect(screen.queryByTitle('Invite by Email')).not.toBeInTheDocument();
   });
 
   it('should handle button clicks correctly', () => {

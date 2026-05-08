@@ -391,30 +391,6 @@ functions:
           path: /clubs/{clubId}/requests/{userId}/reject
           cors: true
 
-  inviteClubMembers:
-    handler: src/handlers/clubs/inviteMembers.handler
-    events:
-      - http:
-          method: POST
-          path: /clubs/{clubId}/invites
-          cors: true
-
-  listClubInvites:
-    handler: src/handlers/clubs/listInvites.handler
-    events:
-      - http:
-          method: GET
-          path: /clubs/{clubId}/invites
-          cors: true
-
-  revokeClubInvite:
-    handler: src/handlers/clubs/revokeInvite.handler
-    events:
-      - http:
-          method: DELETE
-          path: /clubs/{clubId}/invites/{email}
-          cors: true
-
   # Direct Messages (DM)
   dmCreateConversation:
     handler: src/handlers/dm/createConversation.handler
