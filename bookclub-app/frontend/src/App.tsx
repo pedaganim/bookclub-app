@@ -200,7 +200,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/clubs/:clubId/explore"
+                  path="/clubs/:slug/explore"
                   element={<ClubBooks />}
                 />
                 <Route

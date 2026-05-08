@@ -1,65 +1,16 @@
 {
-  "ceaa2879-5d2b-4611-99e1-3a782bee5275:test-user-123": {
-    "clubId": "ceaa2879-5d2b-4611-99e1-3a782bee5275",
-    "userId": "test-user-123",
-    "role": "admin",
-    "joinedAt": "2026-05-05T01:22:46.182Z",
-    "status": "active"
-  },
-  "club-fiction-001:local-user": {
-    "clubId": "club-fiction-001",
+  "5892f329-0047-4508-b48a-c024106241fd:local-user": {
+    "clubId": "5892f329-0047-4508-b48a-c024106241fd",
     "userId": "local-user",
     "role": "admin",
-    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "joinedAt": "2026-05-07T13:51:11.469Z",
     "status": "active"
   },
-  "club-fiction-001:local-user-2": {
-    "clubId": "club-fiction-001",
+  "5892f329-0047-4508-b48a-c024106241fd:local-user-2": {
+    "clubId": "5892f329-0047-4508-b48a-c024106241fd",
     "userId": "local-user-2",
     "role": "member",
-    "joinedAt": "2026-01-02T00:00:00.000Z",
-    "status": "active"
-  },
-  "club-fiction-001:user-2": {
-    "clubId": "club-fiction-001",
-    "userId": "user-2",
-    "role": "member",
-    "joinedAt": "2026-01-03T00:00:00.000Z",
-    "status": "active"
-  },
-  "club-scifi-002:local-user": {
-    "clubId": "club-scifi-002",
-    "userId": "local-user",
-    "role": "member",
-    "joinedAt": "2026-01-01T00:00:00.000Z",
-    "status": "active"
-  },
-  "club-scifi-002:user-3": {
-    "clubId": "club-scifi-002",
-    "userId": "user-3",
-    "role": "admin",
-    "joinedAt": "2026-01-01T00:00:00.000Z",
-    "status": "active"
-  },
-  "club-scifi-002:user-2": {
-    "clubId": "club-scifi-002",
-    "userId": "user-2",
-    "role": "member",
-    "joinedAt": "2026-01-05T00:00:00.000Z",
-    "status": "active"
-  },
-  "club-nonfiction-003:user-4": {
-    "clubId": "club-nonfiction-003",
-    "userId": "user-4",
-    "role": "admin",
-    "joinedAt": "2026-01-01T00:00:00.000Z",
-    "status": "active"
-  },
-  "club-nonfiction-003:user-5": {
-    "clubId": "club-nonfiction-003",
-    "userId": "user-5",
-    "role": "member",
-    "joinedAt": "2026-01-01T00:00:00.000Z",
+    "joinedAt": "2026-05-07T14:00:00.000Z",
     "status": "active"
   }
 }

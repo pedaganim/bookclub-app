@@ -1,54 +1,15 @@
 {
-  "ceaa2879-5d2b-4611-99e1-3a782bee5275": {
-    "clubId": "ceaa2879-5d2b-4611-99e1-3a782bee5275",
+  "5892f329-0047-4508-b48a-c024106241fd": {
+    "clubId": "5892f329-0047-4508-b48a-c024106241fd",
     "name": "Test Book Club",
     "slug": "test-book-club",
     "description": "A test club",
-    "createdBy": "test-user-123",
-    "inviteCode": "993CF87A",
-    "isPrivate": false,
-    "memberLimit": null,
-    "memberCount": 1,
-    "createdAt": "2026-05-05T01:22:46.182Z",
-    "updatedAt": "2026-05-05T01:22:46.183Z"
-  },
-  "club-fiction-001": {
-    "clubId": "club-fiction-001",
-    "name": "Fiction Lovers",
-    "slug": "fiction-lovers",
-    "description": "A club for fiction book enthusiasts.",
     "createdBy": "local-user",
-    "inviteCode": "FICTION1",
-    "isPrivate": false,
-    "memberLimit": null,
-    "memberCount": 3,
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  },
-  "club-scifi-002": {
-    "clubId": "club-scifi-002",
-    "name": "Sci-Fi Readers",
-    "slug": "sci-fi-readers",
-    "description": "Exploring the universe one book at a time.",
-    "createdBy": "user-2",
-    "inviteCode": "SCIFI002",
+    "inviteCode": "9347EB8B",
     "isPrivate": false,
     "memberLimit": null,
     "memberCount": 2,
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  },
-  "club-nonfiction-003": {
-    "clubId": "club-nonfiction-003",
-    "name": "Non-Fiction Club",
-    "slug": "non-fiction-club",
-    "description": "Real stories, real insights.",
-    "createdBy": "user-3",
-    "inviteCode": "NONFIC3",
-    "isPrivate": false,
-    "memberLimit": null,
-    "memberCount": 2,
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
+    "createdAt": "2026-05-07T13:51:11.469Z",
+    "updatedAt": "2026-05-07T13:51:11.470Z"
   }
 }

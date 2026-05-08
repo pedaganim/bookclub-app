@@ -1,4 +1,5 @@
 const User = require('../../models/user');
+const BookClub = require('../../models/bookclub');
 const response = require('../../lib/response');
 
 module.exports.handler = async (event) => {
@@ -74,6 +75,11 @@ module.exports.handler = async (event) => {
         return response.notFound('User not found');
       }
     }
+
+    // Fire-and-forget: auto-approve any pending email invites for this user
+    BookClub.checkAndApplyEmailInvites(user.userId, user.email).catch(e =>
+      console.warn('[getUserProfile] checkAndApplyEmailInvites failed:', e.message)
+    );
 
     console.log('[getUserProfile] Returning success for user:', user.email);
     // Return only necessary user data

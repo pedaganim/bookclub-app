@@ -4,12 +4,14 @@ import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import { useAuth } from '../contexts/AuthContext';
-import { ArchiveBoxIcon, UserPlusIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import InviteByEmailModal from '../components/InviteByEmailModal';
 
 const ClubBooks: React.FC = () => {
-  const { clubId } = useParams<{ clubId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const [clubId, setClubId] = useState<string | null>(null);
   const [club, setClub] = useState<BookClub | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,16 @@ const ClubBooks: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
+  const [showInvite, setShowInvite] = useState(false);
   const scrollRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Resolve slug → clubId on mount
+  useEffect(() => {
+    if (!slug) return;
+    apiService.resolveClubSlug(slug)
+      .then(resolved => { if (resolved?.clubId) setClubId(resolved.clubId); })
+      .catch(() => setError('Club not found'));
+  }, [slug]);
 
   const fetchClub = useCallback(async () => {
     if (!clubId) return;
@@ -67,13 +78,14 @@ const ClubBooks: React.FC = () => {
   }, [clubId]);
 
   useEffect(() => {
+    if (!clubId) return;
     const init = async () => {
       setLoading(true);
       await Promise.all([fetchClub(), fetchBooks(null)]);
       setLoading(false);
     };
     init();
-  }, [fetchClub, fetchBooks]);
+  }, [clubId, fetchClub, fetchBooks]);
 
   const handleLoadMore = async () => {
     if (!nextToken || loadingMore) return;
@@ -178,6 +190,16 @@ const ClubBooks: React.FC = () => {
                 >
                   <UsersIcon className="h-4 w-4 text-gray-400" />
                   {club.userRole === 'admin' ? 'Manage Members' : 'View Members'}
+                </button>
+              )}
+
+              {club && (club.userRole === 'admin' || club.createdBy === user?.userId) && (
+                <button
+                  onClick={() => setShowInvite(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
+                >
+                  <EnvelopeIcon className="h-4 w-4" />
+                  Invite Members
                 </button>
               )}
             </div>
@@ -289,6 +311,14 @@ const ClubBooks: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showInvite && club && (
+        <InviteByEmailModal
+          clubId={club.clubId}
+          clubName={club.name}
+          onClose={() => setShowInvite(false)}
+        />
+      )}
     </div>
   );
 };
