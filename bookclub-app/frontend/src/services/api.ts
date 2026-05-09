@@ -608,14 +608,7 @@ class ApiService {
   }
 
   async resolveClubSlug(slug: string): Promise<BookClub | null> {
-    const response: AxiosResponse<ApiResponse<{ club: BookClub | null }>> = await axios.get(
-      `${this.baseURL}/clubs/resolve/${slug}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const response: AxiosResponse<ApiResponse<{ club: BookClub | null }>> = await this.api.get(`/clubs/resolve/${slug}`);
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to resolve club');
     }

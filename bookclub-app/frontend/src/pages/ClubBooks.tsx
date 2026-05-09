@@ -27,6 +27,13 @@ const ClubBooks: React.FC = () => {
   // If the param is already a UUID (legacy links), use it directly
   useEffect(() => {
     if (!slug) return;
+    
+    // Clear state when slug changes to avoid stale UI
+    setClub(null);
+    setBooks([]);
+    setClubId(null);
+    setError('');
+
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (UUID_RE.test(slug)) {
       setClubId(slug);
@@ -182,7 +189,7 @@ const ClubBooks: React.FC = () => {
               </div>
 
               {/* Join / pending for non-members */}
-              {club && !club.isMember && club.userRole !== 'admin' && club.createdBy !== user?.userId && club.userStatus !== 'active' && (
+              {club && !club.isMember && club.userStatus !== 'active' && club.userRole !== 'admin' && club.createdBy !== user?.userId && (
                 club.userStatus === 'pending' ? (
                   <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                     Request Sent

@@ -160,17 +160,35 @@ class User {
     return result.Attributes;
   }
 
-  static async getCurrentUser(accessToken) {
+  static async getCurrentUser(token) {
     if (isOffline()) {
-      const user = await LocalStorage.verifyToken(accessToken);
+      const user = await LocalStorage.verifyToken(token);
       if (!user) throw new Error('Invalid or expired token');
       return user;
     }
+    
+    // Try as Access Token first (standard)
     try {
-      const userData = await cognito.getUser({ AccessToken: accessToken }).promise();
+      const userData = await cognito.getUser({ AccessToken: token }).promise();
       const email = userData.UserAttributes.find(attr => attr.Name === 'email').Value;
       return this.getByEmail(email);
     } catch (error) {
+      // If it failed, check if it looks like an ID Token (JWT)
+      if (token && token.includes('.') && token.length > 20) {
+        try {
+          const payloadBase64 = token.split('.')[1];
+          const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString());
+          
+          if (payload.email) {
+            return await this.getByEmail(payload.email);
+          }
+          if (payload.sub) {
+            return await this.getById(payload.sub);
+          }
+        } catch (jwtErr) {
+          console.warn('[User.getCurrentUser] Failed to parse token as JWT:', jwtErr.message);
+        }
+      }
       throw new Error('Invalid or expired token');
     }
   }
