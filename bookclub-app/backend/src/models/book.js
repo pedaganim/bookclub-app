@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
+const Cache = require('../lib/cache');
 
 const isOffline = () => process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test';
 
@@ -63,7 +64,10 @@ class Book {
     if (isOffline()) {
       return LocalStorage().getBook(bookId);
     }
-    return dynamoDb.get(getTableName('books'), { bookId });
+    
+    return Cache.smartFetch(`book:${bookId}`, async () => {
+      return dynamoDb.get(getTableName('books'), { bookId });
+    }, { l1TtlMs: 60000 }); // 1 minute L1 cache
   }
 
   static async listByUser(userId, limit = 10, nextToken = null, category = null) {
@@ -105,14 +109,16 @@ class Book {
       params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
     }
 
-    const result = await dynamoDb.query(params);
-
-    return {
-      items: result.Items || [],
-      nextToken: result.LastEvaluatedKey 
-        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
-        : null,
-    };
+    const cacheKey = `books:user:${userId}:${category || 'all'}:${limit}:${nextToken || 'none'}`;
+    return Cache.smartFetch(cacheKey, async () => {
+      const result = await dynamoDb.query(params);
+      return {
+        items: result.Items || [],
+        nextToken: result.LastEvaluatedKey 
+          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+          : null,
+      };
+    }, { l1TtlMs: 30000 }); // 30 seconds L1 cache for user lists
   }
 
   static async listByLentToUser(lentToUserId, limit = 10, nextToken = null) {
@@ -382,6 +388,7 @@ class Book {
 
     try {
       const result = await dynamoDb.update(params);
+      Cache.invalidateL1(`book:${bookId}`);
       return result.Attributes;
     } catch (error) {
       if (error.code === 'ConditionalCheckFailedException') {
@@ -407,6 +414,7 @@ class Book {
 
     try {
       await dynamoDb.delete(params);
+      Cache.invalidateL1(`book:${bookId}`);
       return { success: true };
     } catch (error) {
       if (error.code === 'ConditionalCheckFailedException') {

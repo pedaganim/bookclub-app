@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { getTableName } = require('../lib/table-names');
 const dynamoDb = require('../lib/dynamodb');
+const Cache = require('../lib/cache');
 
 const isOffline = () =>
   process.env.IS_OFFLINE === 'true' || process.env.NODE_ENV === 'development';
@@ -60,7 +61,10 @@ class ToyListing {
     if (isOffline()) {
       return LocalStorage().getToyListing(listingId);
     }
-    return dynamoDb.get(getTableName('toy-listings'), { listingId });
+    
+    return Cache.smartFetch(`toy:${listingId}`, async () => {
+      return dynamoDb.get(getTableName('toy-listings'), { listingId });
+    }, { l1TtlMs: 60000 });
   }
 
   /**
@@ -184,6 +188,7 @@ class ToyListing {
 
     try {
       const result = await dynamoDb.update(params);
+      Cache.invalidateL1(`toy:${listingId}`);
       return result.Attributes;
     } catch (err) {
       if (err.code === 'ConditionalCheckFailedException') {
@@ -215,6 +220,7 @@ class ToyListing {
 
     try {
       await dynamoDb.delete(params);
+      Cache.invalidateL1(`toy:${listingId}`);
       return { success: true };
     } catch (err) {
       if (err.code === 'ConditionalCheckFailedException') {

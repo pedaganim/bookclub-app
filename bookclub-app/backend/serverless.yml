@@ -4,6 +4,7 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
+  architecture: arm64
   stage: ${opt:stage, 'dev'}
   region: ${self:custom.appConfig.region}
   ecr:
@@ -2211,3 +2212,15 @@ resources:
       Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
     BookCoversBucketName:
       Value: ${self:service}-${self:provider.stage}-book-covers
+    # S3 Lifecycle for book covers
+    BookCoversLifecycle:
+      Type: AWS::S3::BucketLifecycleConfiguration
+      Properties:
+        Bucket: !Ref BookCoversBucket
+        LifecycleConfiguration:
+          Rules:
+            - Id: IntelligentTiering
+              Status: Enabled
+              Transitions:
+                - TransitionInDays: 30
+                  StorageClass: INTELLIGENT_TIERING

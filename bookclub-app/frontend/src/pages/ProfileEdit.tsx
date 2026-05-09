@@ -5,7 +5,7 @@ import { ProfileUpdateData } from '../types';
 import { TIMEZONE_OPTIONS } from '../constants/timezones';
 
 const ProfileEdit: React.FC = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const [formData, setFormData] = useState({
     name: user?.name || '',
     bio: user?.bio || '',

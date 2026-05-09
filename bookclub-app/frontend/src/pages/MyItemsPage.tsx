@@ -119,10 +119,27 @@ const MyItemsPage: React.FC<MyItemsPageProps> = ({ categorySlugOverride }) => {
   };
 
   const handleItemDeleted = async (id: string) => {
+    const itemToDelete = items.find(i => ((i as any).bookId || (i as any).listingId) === id);
+    if (!itemToDelete) return;
+
     try {
-      await apiService.deleteBook(id);
+      // Determine if it's a lost & found item (stored in separate table)
+      const isLostFound = itemToDelete.category === 'lost_found' || (itemToDelete as any).lostFoundId;
+      
+      if (isLostFound) {
+        await apiService.deleteLostFoundItem(id);
+      } else {
+        // Books and Toys/Tools (now unified) hit the same /books/{id} endpoint
+        await apiService.deleteBook(id);
+      }
+      
+      // Update local state immediately for snappy UI
       setItems(prev => prev.filter(i => ((i as any).bookId || (i as any).listingId) !== id));
+      
+      // Optional: if pagination is being used, you might want to re-check counts
+      // but usually filtering is enough until next refresh.
     } catch (err: any) {
+      console.error('[Delete] Failed:', err);
       alert(err?.message || 'Failed to delete item. Please try again.');
     }
   };

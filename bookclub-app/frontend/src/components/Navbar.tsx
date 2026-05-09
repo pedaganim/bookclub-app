@@ -274,6 +274,19 @@ const Navbar: React.FC = () => {
                   Sign In
                 </a>
               )}
+              {isAuthenticated && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Sign out?')) logout();
+                  }}
+                  className="md:hidden p-2 text-gray-500 hover:text-red-600 transition-colors"
+                  aria-label="Sign Out"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
