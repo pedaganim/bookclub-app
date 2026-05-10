@@ -20,8 +20,8 @@ class ApiService {
 
     // Add request interceptor to include auth token
     this.api.interceptors.request.use((config) => {
-      // Use ID Token for API Gateway Cognito Authorizers.
-      // Fall back to Access Token if ID token is missing.
+      // Prefer Access Token for standard API authorization and backend verification
+      // Fall back to ID Token if Access Token is missing
       let idToken = localStorage.getItem('idToken');
       let accessToken = localStorage.getItem('accessToken');
       
@@ -29,7 +29,7 @@ class ApiService {
       if (!idToken) idToken = getCookie('idToken');
       if (!accessToken) accessToken = getCookie('accessToken');
       
-      const token = idToken || accessToken;
+      const token = accessToken || idToken;
       
       if (token) {
         // Most API Gateway configurations (including custom authorizers or certain 
