@@ -328,7 +328,7 @@ const BookDetails: React.FC = () => {
   };
 
   const itemLabel = getItemLabel(book.category || 'book');
-  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on NearBorrow.`;
+  const desc = (book as any).google_metadata?.volumeInfo?.description || (book as any).description || `Discover this ${itemLabel.toLowerCase()} on TownWink.`;
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'Book',
@@ -360,7 +360,6 @@ const BookDetails: React.FC = () => {
                 if (c === 'toy') p = 'toys';
                 if (c === 'game') p = 'games';
                 if (c === 'tool') p = 'tools';
-                if (c === 'event_hire' || c === 'event') p = 'events';
                 if (c === 'other' || c === 'misc') p = 'misc';
                 navigate(`/library/${p}`);
               }

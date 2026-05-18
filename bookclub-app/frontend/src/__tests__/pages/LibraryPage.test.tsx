@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import LibraryPage from '../../pages/LibraryPage';
 import { apiService } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSubdomain } from '../../hooks/useSubdomain';
 
 // Mock the API service
 jest.mock('../../services/api', () => ({
@@ -22,9 +21,6 @@ jest.mock('../../contexts/AuthContext', () => ({
 }));
 jest.mock('../../contexts/NotificationContext', () => ({
   useNotification: () => ({ addNotification: jest.fn() }),
-}));
-jest.mock('../../hooks/useSubdomain', () => ({
-  useSubdomain: jest.fn(),
 }));
 
 // Mock react-router-dom
@@ -52,7 +48,7 @@ describe('LibraryPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useAuth as jest.Mock).mockReturnValue({ isAuthenticated: false, user: null });
-    (useSubdomain as jest.Mock).mockReturnValue({ isSubdomain: false, club: null });
+    (useAuth as jest.Mock).mockReturnValue({ isAuthenticated: false, user: null });
   });
 
   it('should render loading state initially', () => {
@@ -143,21 +139,6 @@ describe('LibraryPage', () => {
     });
   });
 
-  it('should filter by club when in subdomain mode', async () => {
-    (useSubdomain as jest.Mock).mockReturnValue({ 
-      isSubdomain: true, 
-      club: { clubId: 'club-123', name: 'Test Club' } 
-    });
-    (apiService.listBooksPublic as jest.Mock).mockResolvedValue({ items: [] });
-
-    render(<LibraryPage />);
-
-    await waitFor(() => {
-      expect(apiService.listBooksPublic).toHaveBeenCalledWith(expect.objectContaining({
-        clubId: 'club-123'
-      }));
-    });
-  });
 
   it('should determine club membership status for items', async () => {
     (useAuth as jest.Mock).mockReturnValue({ 

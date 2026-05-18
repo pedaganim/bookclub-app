@@ -2,9 +2,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, release ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, release ]
     # Run tests on PR creation and whenever code updates happen, as well as key review lifecycle events
     types:
       - opened

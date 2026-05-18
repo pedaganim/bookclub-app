@@ -12,7 +12,6 @@ const FILTER_TYPES = [
   { key: 'toy',   label: 'Toys',      emoji: '🧸' },
   { key: 'tool',  label: 'Tools',     emoji: '🔧' },
   { key: 'game',  label: 'Games',     emoji: '🎮' },
-  { key: 'event', label: 'Events',    emoji: '🎉' },
   { key: 'other', label: 'Misc',      emoji: '📦' },
 ];
 

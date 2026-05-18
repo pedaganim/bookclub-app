@@ -13,6 +13,12 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Explicit provider for us-east-1 (required for ACM certificates used with Edge-optimized API Gateways/CloudFront)
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 # Frontend hosting S3 bucket (private; served via CloudFront)
 resource "aws_s3_bucket" "frontend" {
   count  = var.manage_frontend_bucket ? 1 : 0

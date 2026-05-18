@@ -23,7 +23,7 @@ async function listRecentBooks(limit = 200) {
 
 module.exports.handler = async () => {
   try {
-    const base = process.env.SITE_BASE_URL || 'https://booklub.shop';
+    const base = process.env.SITE_BASE_URL;
     const urls = [
       { loc: `${base}/`, changefreq: 'daily', priority: '0.8' },
       { loc: `${base}/library`, changefreq: 'daily', priority: '0.7' },

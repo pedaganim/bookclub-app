@@ -1,70 +1,63 @@
-const { handler } = require('../../../../src/handlers/images/processUpload');
-const Book = require('../../../../src/models/book');
-const textractService = require('../../../../src/lib/textract-service');
-const { DynamoDB } = require('../../../../src/lib/aws-config');
-const { publishEvent } = require('../../../../src/lib/event-bus');
+// Mock the dependencies FIRST
+jest.mock('../../../../src/services/book-service');
+jest.mock('../../../../src/lib/event-bus', () => ({
+  publishEvent: jest.fn().mockResolvedValue({}),
+}));
+jest.mock('aws-sdk', () => {
+  const mSQS = {
+    sendMessage: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({}),
+  };
+  const mDocumentClient = {
+    put: jest.fn().mockReturnThis(),
+    get: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({}),
+  };
+  return {
+    SQS: jest.fn(() => mSQS),
+    Textract: jest.fn(() => ({})),
+    DynamoDB: {
+      DocumentClient: jest.fn(() => mDocumentClient),
+    },
+    config: {
+      update: jest.fn(),
+    },
+  };
+});
+jest.mock('../../../../src/lib/logger', () => ({
+  info: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+}));
 
-// Mock the dependencies
-jest.mock('../../../../src/models/book');
-jest.mock('../../../../src/lib/textract-service');
-jest.mock('../../../../src/lib/aws-config');
-jest.mock('../../../../src/lib/event-bus');
+const { handler } = require('../../../../src/handlers/images/processUpload');
+const BookService = require('../../../../src/services/book-service');
+const AWS = require('aws-sdk');
+const config = require('../../../../src/lib/config');
 
 describe('processUpload handler', () => {
-  let mockDynamoDBPut;
-  let mockDocumentClient;
+  let sqs;
+
+  beforeAll(() => {
+    config.BEDROCK_ANALYZE_QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789012/bedrock-analyze-queue';
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    sqs = new AWS.SQS();
     
-    // Mock Book model
-    Book.create = jest.fn().mockResolvedValue({
+    // Mock BookService
+    BookService.create.mockResolvedValue({
       bookId: 'test-book-id',
       title: 'Uploaded Book',
       author: 'Unknown Author',
       userId: 'user123'
     });
-
-    Book.update = jest.fn().mockResolvedValue({
-      bookId: 'test-book-id',
-      title: 'Updated Book',
-      author: 'Sample Author',
-      userId: 'user123'
-    });
-
-    // Mock event bus
-    publishEvent.mockResolvedValue({});
-
-    // Mock textract service (not needed for new EventBridge flow but keeping for compatibility)
-    textractService.extractTextFromImage = jest.fn().mockResolvedValue({
-      extractedText: {
-        fullText: 'Sample Book Title by Sample Author',
-        lines: [],
-        words: [],
-        blocks: 0
-      },
-      bookMetadata: {
-        title: 'Sample Book Title',
-        author: 'Sample Author',
-        description: 'Sample description',
-        extractionSource: 'textract'
-      },
-      confidence: 85
-    });
-
-    // Mock DynamoDB
-    mockDynamoDBPut = jest.fn().mockReturnValue({
-      promise: jest.fn().mockResolvedValue({})
-    });
-    
-    mockDocumentClient = {
-      put: mockDynamoDBPut
-    };
-    
-    DynamoDB.DocumentClient = jest.fn().mockImplementation(() => mockDocumentClient);
   });
 
-  it('should create book entry and publish EventBridge event for uploaded image', async () => {
+  it('should create book entry and enqueue SQS message for uploaded image', async () => {
     const event = {
       Records: [
         {
@@ -81,35 +74,26 @@ describe('processUpload handler', () => {
 
     expect(result).toEqual({
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Processed 1 image(s)'
-      })
+      body: 'OK'
     });
 
     // Should create book with minimal data first
-    expect(Book.create).toHaveBeenCalledWith(
+    expect(BookService.create).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Test Image', // Derived from filename
-        author: 'Unknown Author',
-        description: 'Book uploaded via image - metadata processing in progress',
+        status: 'available',
         coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user123/test-image.jpg',
-        metadataSource: 'image-upload-pending'
+        extractFromImage: false
       }),
       'user123'
     );
 
-    // Should publish EventBridge event instead of direct metadata extraction
-    expect(publishEvent).toHaveBeenCalledWith('S3.ObjectCreated', {
-      bucket: 'test-bucket',
-      key: 'book-covers/user123/test-image.jpg',
-      userId: 'user123',
-      bookId: 'test-book-id',
-      eventType: 'book-cover-uploaded'
-    });
-
-    // Should NOT extract metadata directly (this is now EventBridge-triggered)
-    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
-    expect(Book.update).not.toHaveBeenCalled();
+    // Should send SQS message
+    expect(sqs.sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        MessageBody: expect.stringContaining('"bookId":"test-book-id"'),
+      })
+    );
   });
 
   it('should handle non-S3 events gracefully', async () => {
@@ -125,13 +109,11 @@ describe('processUpload handler', () => {
 
     expect(result).toEqual({
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Processed 1 image(s)'
-      })
+      body: 'OK'
     });
     
     // Should not create book for non-S3 events
-    expect(Book.create).not.toHaveBeenCalled();
+    expect(BookService.create).not.toHaveBeenCalled();
   });
 
   it('should handle non-book-cover images gracefully', async () => {
@@ -151,56 +133,16 @@ describe('processUpload handler', () => {
 
     expect(result).toEqual({
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Processed 1 image(s)'
-      })
+      body: 'OK'
     });
     
     // Should not create book for non-book-cover images
-    expect(Book.create).not.toHaveBeenCalled();
-  });
-
-  it('should handle metadata extraction failure gracefully', async () => {
-    // Mock textract service to fail
-    textractService.extractTextFromImage.mockRejectedValue(new Error('Textract failed'));
-
-    const event = {
-      Records: [
-        {
-          eventSource: 'aws:s3',
-          s3: {
-            bucket: { name: 'test-bucket' },
-            object: { key: 'book-covers/user123/test-image.jpg' }
-          }
-        }
-      ]
-    };
-
-    const result = await handler(event);
-
-    expect(result).toEqual({
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Processed 1 image(s)'
-      })
-    });
-
-    // Should create book
-    expect(Book.create).toHaveBeenCalled();
-    
-    // Should publish EventBridge event even if textract would fail (new architecture)
-    expect(publishEvent).toHaveBeenCalled();
-    
-    // Should NOT attempt direct metadata extraction (now EventBridge-triggered)
-    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
-    
-    // Should not update book during upload (now done by EventBridge handler)
-    expect(Book.update).not.toHaveBeenCalled();
+    expect(BookService.create).not.toHaveBeenCalled();
   });
 
   it('should handle book creation failure gracefully', async () => {
-    // Mock Book.create to fail
-    Book.create.mockRejectedValue(new Error('Book creation failed'));
+    // Mock BookService.create to fail
+    BookService.create.mockRejectedValue(new Error('Book creation failed'));
 
     const event = {
       Records: [
@@ -219,17 +161,11 @@ describe('processUpload handler', () => {
 
     expect(result).toEqual({
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Processed 1 image(s)'
-      })
+      body: 'OK'
     });
 
     // Should attempt to create book
-    expect(Book.create).toHaveBeenCalled();
-
-    // Should not extract metadata or update book if creation fails
-    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
-    expect(Book.update).not.toHaveBeenCalled();
+    expect(BookService.create).toHaveBeenCalled();
   });
 
   it('should process multiple images in batch', async () => {
@@ -255,22 +191,16 @@ describe('processUpload handler', () => {
     await handler(event);
 
     // Should create books for both images
-    expect(Book.create).toHaveBeenCalledTimes(2);
-    expect(Book.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
+    expect(BookService.create).toHaveBeenCalledTimes(2);
+    expect(BookService.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
       coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user123/test-image1.jpg'
     }), 'user123');
-    expect(Book.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
+    expect(BookService.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
       coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user456/test-image2.jpg'
     }), 'user456');
     
-    // Should publish EventBridge events for both images
-    expect(publishEvent).toHaveBeenCalledTimes(2);
-    
-    // Should NOT extract metadata directly for either image (now EventBridge-triggered)
-    expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
-    
-    // Should not update books during upload (now done by EventBridge handler)
-    expect(Book.update).not.toHaveBeenCalled();
+    // Should send SQS messages for both images
+    expect(sqs.sendMessage).toHaveBeenCalledTimes(2);
   });
 
   it('should derive meaningful titles from various filename formats', async () => {
@@ -297,7 +227,7 @@ describe('processUpload handler', () => {
 
       await handler(event);
 
-      expect(Book.create).toHaveBeenCalledWith(
+      expect(BookService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           title: testCase.expected
         }),

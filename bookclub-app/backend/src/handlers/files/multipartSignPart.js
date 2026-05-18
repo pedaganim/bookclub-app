@@ -1,21 +1,22 @@
 const AWS = require('../../lib/aws-config');
 const response = require('../../lib/response');
+const { withAuth } = require('../../lib/middleware');
 
 const s3 = new AWS.S3();
 const BUCKET_NAME = process.env.BOOK_COVERS_BUCKET;
 
-module.exports.handler = async (event) => {
+const handler = async (event) => {
   try {
-    const userId = event.requestContext?.authorizer?.claims?.sub;
-    if (!userId) {
-      return response.unauthorized('Missing user context');
-    }
+    const { userId } = event;
     const { key, uploadId, partNumber, contentType } = JSON.parse(event.body || '{}');
 
     if (!key || !uploadId || !partNumber) {
       return response.validationError({ message: 'key, uploadId and partNumber are required' });
     }
-    if (!key.startsWith(`book-covers/${userId}/`)) {
+
+    // Validation check: key must belong to user
+    const isOwner = key.includes(`/${userId}/`);
+    if (!isOwner) {
       return response.forbidden('Invalid key for user');
     }
 
@@ -35,3 +36,5 @@ module.exports.handler = async (event) => {
     return response.error(err);
   }
 };
+
+module.exports.handler = withAuth(handler);

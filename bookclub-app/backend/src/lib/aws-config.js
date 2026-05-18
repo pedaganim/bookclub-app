@@ -1,19 +1,22 @@
 const AWS = require('aws-sdk');
 const path = require('path');
 const fs = require('fs');
+const config = require('./config');
 
 // Configure AWS for local development from centralized config
-if (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.NODE_ENV === 'test') {
+if (config.IS_OFFLINE || process.env.NODE_ENV === 'test') {
   const configPath = path.join(__dirname, '..', '..', 'config', 'app.json');
   let cfg = {};
   try {
-    const raw = fs.readFileSync(configPath, 'utf8');
-    cfg = JSON.parse(raw);
+    if (fs.existsSync(configPath)) {
+      const raw = fs.readFileSync(configPath, 'utf8');
+      cfg = JSON.parse(raw);
+    }
   } catch (e) {
     console.warn(`[aws-config] Could not read config at ${configPath}:`, e.message);
   }
 
-  const region = cfg.region || 'us-east-1';
+  const region = config.REGION || cfg.region || 'us-east-1';
   const local = cfg.local || {};
 
   AWS.config.update({

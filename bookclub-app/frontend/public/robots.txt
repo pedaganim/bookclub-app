@@ -1,4 +1,4 @@
-# robots.txt for https://booklub.shop/
+# robots.txt for https://townwink.com/
 User-agent: *
 
 # Public pages are allowed by default, 
@@ -20,4 +20,4 @@ Disallow: /register
 Disallow: /books/*/edit
 
 # Sitemaps
-Sitemap: https://booklub.shop/sitemap.xml
+Sitemap: https://townwink.com/sitemap.xml

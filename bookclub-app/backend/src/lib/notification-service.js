@@ -54,13 +54,15 @@ function renderTemplate(templateId, templateData) {
     }
     case 'dm_message_received': {
       const { fromName = 'A user', snippet = '', conversationUrl = '' } = templateData || {};
+      const brand = process.env.BRAND_NAME || 'BookClub';
       const subject = `New message from ${fromName}`;
-      const text = `You have a new message from ${fromName} in BookClub.\n\n${snippet}\n\nOpen conversation: ${conversationUrl}`;
-      const html = `<p>You have a new message from <strong>${fromName}</strong> in BookClub.</p><p>${snippet}</p><p><a href="${conversationUrl}">Open conversation</a></p>`;
+      const text = `You have a new message from ${fromName} in ${brand}.\n\n${snippet}\n\nOpen conversation: ${conversationUrl}`;
+      const html = `<p>You have a new message from <strong>${fromName}</strong> in ${brand}.</p><p>${snippet}</p><p><a href="${conversationUrl}">Open conversation</a></p>`;
       return { subject, text, html };
     }
     default: {
-      const subject = 'BookClub notification';
+      const brand = process.env.BRAND_NAME || 'BookClub';
+      const subject = `${brand} notification`;
       const text = 'You have a new notification.';
       const html = '<p>You have a new notification.</p>';
       return { subject, text, html };
@@ -77,7 +79,7 @@ async function sendEmail(to, subject, text, html) {
     return { MessageId: 'offline-mock-id' };
   }
 
-  const from = process.env.NOTIFY_FROM_EMAIL || 'notify@booklub.shop';
+  const from = process.env.NOTIFY_FROM_EMAIL;
   const params = {
     Source: from,
     Destination: { ToAddresses: [to] },
@@ -141,8 +143,9 @@ async function sendAdminNewUserNotification(user) {
     `Email: ${user?.email || ''}`,
     `Created At: ${user?.createdAt || new Date().toISOString()}`,
   ].join('\n');
-  const text = `A new user has signed up on BookClub.\n\n${lines}`;
-  const html = `<p>A new user has signed up on BookClub.</p><pre>${lines}</pre>`;
+  const brand = process.env.BRAND_NAME || 'BookClub';
+  const text = `A new user has signed up on ${brand}.\n\n${lines}`;
+  const html = `<p>A new user has signed up on ${brand}.</p><pre>${lines}</pre>`;
   await sendEmail(to, subject, text, html);
   return { sent: true };
 }

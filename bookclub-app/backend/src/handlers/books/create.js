@@ -1,270 +1,38 @@
+const { z } = require('zod');
 const response = require('../../lib/response');
-const Book = require('../../models/book');
-const { getAuthenticatedUserId } = require('../../lib/get-user-id');
-const bookMetadataService = require('../../lib/book-metadata');
-const textractService = require('../../lib/textract-service');
-const imageMetadataService = require('../../lib/image-metadata-service');
-const { DynamoDB } = require('../../lib/aws-config');
-const { getTableName } = require('../../lib/table-names');
-const BookClub = require('../../models/bookclub');
+const BookService = require('../../services/book-service');
+const { withAuth } = require('../../lib/middleware');
 
-/**
- * Helper function to assign ISBN based on extracted metadata
- * @param {string} existingIsbn10 - Existing ISBN-10 value
- * @param {string} existingIsbn13 - Existing ISBN-13 value
- * @param {string} extractedIsbn - ISBN extracted from image
- * @returns {Object} Object with isbn10 and isbn13 properties
- */
-function assignIsbnFromMetadata(existingIsbn10, existingIsbn13, extractedIsbn) {
-  const result = {
-    isbn10: existingIsbn10,
-    isbn13: existingIsbn13
-  };
-
-  if (!extractedIsbn) {
-    return result;
-  }
-
-  if (!existingIsbn10 && extractedIsbn.length === 10) {
-    result.isbn10 = extractedIsbn;
-  }
-  
-  if (!existingIsbn13 && extractedIsbn.length === 13) {
-    result.isbn13 = extractedIsbn;
-  }
-
-  return result;
-}
-
-// --- Handler (moved to top for readability) ---
-module.exports.handler = async (event) => {
-  try {
-    const userId = await getAuthenticatedUserId(event);
-    if (!userId) return response.unauthorized('Missing or invalid authentication');
-
-    const data = parseBody(event);
-    console.log('[BookCreate] Request received:', JSON.stringify(data, null, 2));
-    const isExtractingFromImage = isTextractFlow(data);
-    // Idempotency: if using extractFromImage with s3 info, reuse existing mapping
-    if (isExtractingFromImage && process.env.NODE_ENV !== 'test') {
-      const existingId = await getMappedBookId(data.s3Bucket, data.s3Key);
-      if (existingId) {
-        try {
-          const existing = await Book.getById(existingId);
-          if (existing) {
-            return response.success(existing, 200);
-          }
-        } catch (_) {}
-      }
-    }
-    const initialValidationError = validateInitialInput(data, isExtractingFromImage);
-    if (initialValidationError) return initialValidationError;
-
-    const clubAccessError = await validateClubLostAndFoundAccess(data, userId);
-    if (clubAccessError) return clubAccessError;
-
-    // Build minimal book data, then optionally enrich (gated for prod; on in tests)
-    let bookData = buildInitialBookData(data);
-    // Ensure a clear metadataSource is present for image-based flows
-    if (isExtractingFromImage && !bookData.metadataSource) {
-      bookData.metadataSource = 'image-upload-pending';
-    }
-    bookData = await maybeEnrichWithMetadata(data, bookData);
-    bookData = await maybeApplyTextractExtraction(data, bookData);
-
-    const finalValidationError = validateFinalBookData(bookData, isExtractingFromImage);
-    if (finalValidationError) return finalValidationError;
-
-    const created = await Book.create(bookData, userId);
-    if (isExtractingFromImage && data.s3Bucket && data.s3Key && process.env.NODE_ENV !== 'test') {
-      await setMappedBookId(data.s3Bucket, data.s3Key, created.bookId, userId);
-    }
-    return response.success(created, 201);
-  } catch (error) {
-    return response.error(error);
-  }
-};
-
-// --- Helpers ---
-const parseBody = (event) => {
-  try {
-    return JSON.parse(event.body || '{}');
-  } catch (e) {
-    return {};
-  }
-};
-
-const isTextractFlow = (data) => Boolean(data.extractFromImage && data.s3Bucket && data.s3Key);
-
-// --- Idempotency helpers (shared pattern with image processor) ---
-const getMappedBookId = async (bucket, key) => {
-  try {
-    const dynamodb = new DynamoDB.DocumentClient();
-    const cacheKey = `bookForS3:${bucket}:${key}`;
-    const res = await dynamodb.get({ TableName: getTableName('metadata-cache'), Key: { cacheKey } }).promise();
-    return res.Item?.bookId || null;
-  } catch (e) {
-    console.warn('[BookCreate] getMappedBookId failed:', e.message);
-    return null;
-  }
-};
-
-const setMappedBookId = async (bucket, key, bookId, userId) => {
-  try {
-    const dynamodb = new DynamoDB.DocumentClient();
-    const cacheKey = `bookForS3:${bucket}:${key}`;
-    const timestamp = new Date().toISOString();
-    const ttl = Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000);
-    await dynamodb.put({
-      TableName: getTableName('metadata-cache'),
-      Item: { cacheKey, bookId, userId, s3Bucket: bucket, s3Key: key, mappedAt: timestamp, ttl },
-      ConditionExpression: 'attribute_not_exists(cacheKey)'
-    }).promise().catch(() => {});
-  } catch (e) {
-    console.warn('[BookCreate] setMappedBookId failed:', e.message);
-  }
-};
-
-const validateInitialInput = (data, isExtracting) => {
-  if (isExtracting) return null;
-
-  const category = data.category || data.libraryType || 'book';
-  const isBook = category === 'book';
-  
-  if (!data.title || (isBook && !data.author)) {
-    const err = {
-      title: data.title ? undefined : 'Title is required',
-      author: (isBook && !data.author) ? 'Author is required' : undefined,
-    };
-    console.warn('[BookCreate] Initial validation failed:', JSON.stringify(err));
-    return response.validationError(err);
-  }
-  return null;
-};
-
-const buildInitialBookData = (data) => ({
-  title: data.title,
-  author: data.author,
-  description: data.description,
-  category: data.category || data.libraryType || 'book',
-  coverImage: data.coverImage,
-  images: data.images, // Support for additional images
-  status: data.status,
-  // Persist original upload location for downstream processors
-  s3Bucket: data.s3Bucket,
-  s3Key: data.s3Key,
-  clubId: data.clubId || null,
+const CreateBookSchema = z.object({
+  title: z.string().min(1, 'Title is required').optional(), // Optional if extracting from image
+  author: z.string().min(1, 'Author is required').optional(),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  libraryType: z.string().optional(),
+  coverImage: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  status: z.string().optional(),
+  s3Bucket: z.string().optional(),
+  s3Key: z.string().optional(),
+  clubId: z.string().optional(),
+  enrichWithMetadata: z.boolean().optional(),
+  extractFromImage: z.boolean().optional(),
+  isbn: z.string().optional(),
 });
 
-const validateClubLostAndFoundAccess = async (data, userId) => {
-  const category = data.category || data.libraryType || 'book';
-  if (category !== 'lost_found') return null;
-
-  if (!data.clubId) {
-    return response.validationError({ clubId: 'clubId is required for Lost & Found posts' });
-  }
-
-  const club = await BookClub.getById(data.clubId);
-  if (!club) return response.notFound('Club not found');
-
-  const isMember = await BookClub.isMember(data.clubId, userId);
-  if (!isMember) return response.forbidden('You must be an active club member to post Lost & Found items');
-
-  return null;
+/**
+ * Handler for creating a new book or library item.
+ */
+const handler = async (event) => {
+  const body = JSON.parse(event.body || '{}');
+  
+  // Validate input schema
+  const data = CreateBookSchema.parse(body);
+  
+  // Delegate all business logic to the Service
+  const created = await BookService.create(data, event.userId);
+  
+  return response.success(created, 201);
 };
 
-// Enrichment is gated to preserve minimal creation in production. Enabled in tests or when explicitly allowed.
-const maybeEnrichWithMetadata = async (data, bookData) => {
-  const enabled = process.env.NODE_ENV === 'test' || String(process.env.ENABLE_CREATE_ENRICHMENT || 'false') === 'true';
-  if (!enabled) return bookData;
-  if (!(data.enrichWithMetadata || data.isbn || (data.title && data.author))) return bookData;
-  try {
-    console.log('[BookCreate] Attempting metadata enrichment...');
-    const metadata = await bookMetadataService.searchBookMetadata({
-      isbn: data.isbn,
-      title: data.title,
-      author: data.author,
-    });
-    if (!metadata) return bookData;
-    console.log('[BookCreate] Metadata found, enriching book data');
-    return {
-      ...bookData,
-      description: bookData.description || metadata.description,
-      coverImage: bookData.coverImage || metadata.thumbnail,
-      isbn10: metadata.isbn10,
-      isbn13: metadata.isbn13,
-      publishedDate: metadata.publishedDate,
-      pageCount: metadata.pageCount,
-      categories: metadata.categories,
-      language: metadata.language,
-      publisher: metadata.publisher,
-      metadataSource: metadata.source,
-    };
-  } catch (error) {
-    console.error('[BookCreate] Metadata enrichment failed:', error);
-    return bookData;
-  }
-};
-
-// Textract extraction is gated; enabled in tests or when explicitly allowed.
-const maybeApplyTextractExtraction = async (data, bookData) => {
-  const enabled = process.env.NODE_ENV === 'test' || String(process.env.ENABLE_CREATE_ENRICHMENT || 'false') === 'true';
-  if (!enabled || !isTextractFlow(data)) return bookData;
-  try {
-    console.log('[BookCreate] Attempting to retrieve pre-extracted metadata...');
-    let extractionResult = await imageMetadataService.getExtractedMetadata(data.s3Bucket, data.s3Key);
-    if (!extractionResult) {
-      console.log('[BookCreate] No pre-extracted metadata found, running Textract extraction...');
-      extractionResult = await textractService.extractTextFromImage(data.s3Bucket, data.s3Key);
-    } else {
-      console.log('[BookCreate] Using pre-extracted metadata from automatic processing');
-    }
-    if (extractionResult && extractionResult.bookMetadata) {
-      const { bookMetadata, extractedText } = extractionResult;
-      console.log('[BookCreate] Textract extraction successful');
-      const isbnAssignment = assignIsbnFromMetadata(
-        bookData.isbn10,
-        bookData.isbn13,
-        bookMetadata.isbn
-      );
-      return {
-        ...bookData,
-        title: bookData.title || bookMetadata.title,
-        author: bookData.author || bookMetadata.author,
-        description: bookData.description || bookMetadata.description || extractedText.fullText || extractedText,
-        isbn10: isbnAssignment.isbn10,
-        isbn13: isbnAssignment.isbn13,
-        publisher: bookData.publisher || bookMetadata.publisher,
-        publishedDate: bookData.publishedDate || bookMetadata.publishedDate,
-        textractExtractedText: extractedText?.fullText || extractedText,
-        textractExtractedAt: extractionResult.extractedAt,
-      };
-    }
-    return bookData;
-  } catch (error) {
-    console.error('[BookCreate] Textract extraction failed:', error);
-    return bookData;
-  }
-};
-
-const validateFinalBookData = (bookData, isExtracting) => {
-  // When extracting from image in production, allow minimal creation without title/author.
-  if (isExtracting && process.env.NODE_ENV !== 'test') return null;
-  
-  const isBook = !bookData.category || bookData.category === 'book';
-  
-  // If it's a book, we require title and author.
-  // If it's not a book, we only require title.
-  if (bookData.title && (!isBook || bookData.author)) return null;
-  
-  const missingFields = [];
-  if (!bookData.title) missingFields.push('title');
-  if (isBook && !bookData.author) missingFields.push('author');
-  
-  console.warn('[BookCreate] Final validation failed:', JSON.stringify({ missingFields, bookData }));
-  return response.validationError({
-    extraction: `Could not extract required fields: ${missingFields.join(', ')}. Please provide them manually or try a different image.`
-  });
-};
-
-// end handlers
+module.exports.handler = withAuth(handler);

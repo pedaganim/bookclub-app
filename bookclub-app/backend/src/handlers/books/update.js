@@ -1,76 +1,35 @@
-const Book = require('../../models/book');
-const User = require('../../models/user');
-const BookClub = require('../../models/bookclub');
+const { z } = require('zod');
 const response = require('../../lib/response');
-const { getAuthenticatedUserId } = require('../../lib/get-user-id');
+const BookService = require('../../services/book-service');
+const { withAuth } = require('../../lib/middleware');
 
-// --- Handler (top) ---
-module.exports.handler = async (event) => {
-  try {
-    const { bookId } = event.pathParameters || {};
-    const userId = await getAuthenticatedUserId(event);
-    if (!userId) return response.unauthorized('Unauthorized');
-    const data = parseBody(event);
+const UpdateBookSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  author: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).optional(),
+  coverImage: z.string().url().nullable().optional(),
+  status: z.enum(['available', 'borrowed', 'reading', 'given_back', 'disposed', 'lent']).optional(),
+  lentToUserId: z.string().nullable().optional(),
+  lentToUserName: z.string().nullable().optional(),
+}).strict();
 
-    if (!bookId) {
-      return response.validationError({ bookId: 'Book ID is required' });
-    }
-    if (!data) {
-      return response.validationError({ message: 'Request body is required' });
-    }
+/**
+ * Handler for updating an existing book or library item.
+ */
+const handler = async (event) => {
+  const { bookId } = event.pathParameters || {};
+  if (!bookId) return response.validationError({ message: 'Book ID is required' });
 
-    const updates = pickAllowed(data, ['title', 'author', 'description', 'coverImage', 'status', 'lentToUserId', 'lentToUserName']);
-    const validationErr = validateUpdates(updates);
-    if (validationErr) return validationErr;
+  const body = JSON.parse(event.body || '{}');
+  const updates = UpdateBookSchema.parse(body);
 
-    // Determine the effective owner for the update call.
-    // Club admins can edit items in their club; superadmins can edit any item.
-    let effectiveUserId = userId;
-    if (userId) {
-      const book = await Book.getById(bookId);
-      if (book && book.userId !== userId) {
-        const reqUser = await User.getById(userId);
-        const isSuperAdmin = reqUser?.role === 'superadmin';
-        let isClubAdmin = false;
-        if (book.clubId) {
-          try {
-            const role = await BookClub.getMemberRole(book.clubId, userId);
-            isClubAdmin = role === 'admin';
-          } catch (_) {}
-        }
-        if (isSuperAdmin || isClubAdmin) {
-          effectiveUserId = book.userId;
-        }
-      }
-    }
-
-    const updatedBook = await Book.update(bookId, effectiveUserId, updates);
-    if (!updatedBook) {
-      return response.notFound('Book not found or you do not have permission to update it');
-    }
-    return response.success(updatedBook);
-  } catch (error) {
-    return response.error(error);
-  }
-};
-
-// --- Helpers ---
-const parseBody = (event) => {
-  if (!event?.body) return null;
-  try { return JSON.parse(event.body); } catch { return null; }
-};
-
-const pickAllowed = (data, allowed) => {
-  const updates = {};
-  Object.keys(data).forEach((key) => {
-    if (allowed.includes(key)) updates[key] = data[key];
-  });
-  return updates;
-};
-
-const validateUpdates = (updates) => {
-  if (!updates || Object.keys(updates).length === 0) {
+  if (Object.keys(updates).length === 0) {
     return response.validationError({ message: 'No valid fields to update' });
   }
-  return null;
+
+  const updated = await BookService.update(bookId, updates, event.userId);
+  
+  return response.success(updated);
 };
+
+module.exports.handler = withAuth(handler);

@@ -28,9 +28,9 @@ async function createPkcePair() {
 // Mock config object similar to what the frontend would have
 const mockConfig = {
   cognito: {
-    domain: 'booklub-prod.auth.us-east-1.amazoncognito.com',
+    domain: 'townwink-prod.auth.us-east-1.amazoncognito.com',
     userPoolClientId: '4705h2kn7jfps4k2r9j2h8ch9n',
-    redirectSignIn: 'https://booklub.shop/auth/callback',
+    redirectSignIn: 'https://townwink.com/auth/callback',
     scopes: ['openid', 'email', 'profile'],
     responseType: 'code'
   }
@@ -52,11 +52,11 @@ describe('OAuth URL Construction', () => {
     const url = `https://${mockConfig.cognito.domain}/oauth2/authorize?${params.toString()}`;
     
     // Validate URL structure
-    expect(url).toContain('booklub-prod.auth.us-east-1.amazoncognito.com/oauth2/authorize');
+    expect(url).toContain('townwink-prod.auth.us-east-1.amazoncognito.com/oauth2/authorize');
     expect(url).toContain('client_id=4705h2kn7jfps4k2r9j2h8ch9n');
     expect(url).toContain('response_type=code');
     expect(url).toContain('scope=openid+email+profile'); // URLSearchParams uses + for spaces
-    expect(url).toContain('redirect_uri=https%3A%2F%2Fbooklub.shop%2Fauth%2Fcallback');
+    expect(url).toContain('redirect_uri=https%3A%2F%2Ftownwink.com%2Fauth%2Fcallback');
     expect(url).toContain('code_challenge_method=S256');
     expect(url).toContain('code_challenge=');
     

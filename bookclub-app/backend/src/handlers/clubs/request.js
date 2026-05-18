@@ -2,28 +2,25 @@ const { success, error } = require('../../lib/response');
 const User = require('../../models/user');
 const BookClub = require('../../models/bookclub');
 const { sendEmailIfEnabled } = require('../../lib/notification-service');
+const { withAuth } = require('../../lib/middleware');
 
-// --- Handler (top) ---
-exports.handler = async (event) => {
+const handler = async (event) => {
   try {
-    const clubId = getClubId(event);
+    const clubId = event?.pathParameters?.clubId;
     if (!clubId) return error('clubId is required', 400);
 
-    const userId = await getUserIdFromEventOrToken(event);
-    if (!userId) return error('Authorization token is required', 401);
+    const { userId } = event;
 
     const club = await BookClub.getById(clubId);
     if (!club) return error('Club not found', 404);
-    // Always require approval: create a pending request (even for public clubs)
 
     const reqRecord = await BookClub.createJoinRequest(clubId, userId);
 
-    // Fire-and-forget email to club owner (creator) to review request
     try {
       const ownerId = club.createdBy;
       if (ownerId && ownerId !== userId) {
         const requester = await User.getById(userId).catch(() => null);
-        const baseUrl = process.env.FRONTEND_BASE_URL || process.env.APP_BASE_URL || process.env.WEBSITE_URL || 'https://booklub.shop';
+        const baseUrl = process.env.SITE_BASE_URL;
         const reviewUrl = `${baseUrl}/clubs/${clubId}/requests`;
         await sendEmailIfEnabled(ownerId, 'new_member_in_your_club', 'club_join_request', {
           requesterName: requester?.name || 'A user',
@@ -45,24 +42,4 @@ exports.handler = async (event) => {
   }
 };
 
-// --- Helpers ---
-const getClubId = (event) => event?.pathParameters?.clubId || null;
-
-const getUserIdFromEventOrToken = async (event) => {
-  const claims = event?.requestContext?.authorizer?.claims;
-  let userId = claims?.sub;
-  if (userId) return userId;
-  
-  const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
-  const accessTokenHeader = (event.headers && (event.headers['X-Access-Token'] || event.headers['x-access-token'])) || '';
-  
-  const token = accessTokenHeader || (authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader || null);
-  
-  if (!token) return null;
-  try {
-    const currentUser = await User.getCurrentUser(token);
-    return currentUser?.userId || null;
-  } catch {
-    return null;
-  }
-};
+module.exports.handler = withAuth(handler);

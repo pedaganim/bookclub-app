@@ -17,9 +17,11 @@ jest.mock('../../../src/models/user', () => ({
   getCurrentUser: jest.fn(),
 }));
 
-// Mock ToyListing so we control what create() returns
-jest.mock('../../../src/models/toyListing');
-const MockToyListing = require('../../../src/models/toyListing');
+// Mock BookService
+jest.mock('../../../src/services/book-service', () => ({
+  create: jest.fn(),
+}));
+const BookService = require('../../../src/services/book-service');
 
 describe('generateUploadUrl handler', () => {
   let handler;
@@ -27,14 +29,14 @@ describe('generateUploadUrl handler', () => {
 
   beforeAll(() => {
     process.env.BOOK_COVERS_BUCKET = 'test-book-covers-bucket';
-    MockToyListing.create = jest.fn().mockResolvedValue({ listingId: 'mock-listing-id' });
+    BookService.create.mockResolvedValue({ bookId: 'mock-book-id' });
     delete require.cache[require.resolve('../../../src/handlers/files/generateUploadUrl')];
     handler = require('../../../src/handlers/files/generateUploadUrl').handler;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    MockToyListing.create = jest.fn().mockResolvedValue({ listingId: 'mock-listing-id' });
+    BookService.create.mockResolvedValue({ bookId: 'mock-book-id' });
   });
 
   afterAll(() => {
@@ -59,7 +61,7 @@ describe('generateUploadUrl handler', () => {
     expect(body.data.fileKey).toMatch(/^book-covers\/test-user-id\/.*\.jpeg$/);
   });
 
-  test('should generate library upload URL and return listingId for library context', async () => {
+  test('should generate library upload URL and return bookId/listingId for library context', async () => {
     const event = {
       ...mockEvent,
       body: JSON.stringify({ fileType: 'image/jpeg', fileName: 'toy.jpg', context: 'library', libraryType: 'toy' }),
@@ -70,9 +72,9 @@ describe('generateUploadUrl handler', () => {
     const body = JSON.parse(result.body);
     expect(body.success).toBe(true);
     expect(body.data.fileKey).toMatch(/^library-images\/toy\/test-user-id\/.*\.jpeg$/);
-    expect(body.data.listingId).toBe('mock-listing-id');
-    expect(MockToyListing.create).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'draft', libraryType: 'toy' }),
+    expect(body.data.listingId).toBe('mock-book-id');
+    expect(BookService.create).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'draft', category: 'toy' }),
       'test-user-id'
     );
   });
@@ -81,14 +83,14 @@ describe('generateUploadUrl handler', () => {
     const result = await handler({ ...mockEvent, body: JSON.stringify({ fileType: 'text/plain', fileName: 'test.txt' }) });
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
-    expect(body.error.errors.fileType).toContain('Invalid file type');
+    expect(body.error.errors.message).toContain('Invalid file type');
   });
 
   test('should reject missing file type', async () => {
     const result = await handler({ ...mockEvent, body: JSON.stringify({ fileName: 'test.jpg' }) });
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
-    expect(body.error.errors.fileType).toContain('File type is required');
+    expect(body.error.errors.fileType).toMatch(/fileType is required|expected string, received undefined/i);
   });
 
   test('should accept all valid image types', async () => {

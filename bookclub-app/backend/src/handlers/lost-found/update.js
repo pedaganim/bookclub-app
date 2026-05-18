@@ -2,24 +2,11 @@ const LostFound = require('../../models/lost-found');
 const BookClub = require('../../models/bookclub');
 const response = require('../../lib/response');
 const { publishEvent } = require('../../lib/event-bus');
+const { withAuth } = require('../../lib/middleware');
 
-const deriveUserId = async (event) => {
-  if (event?.requestContext?.authorizer?.claims?.sub) return event.requestContext.authorizer.claims.sub;
-  const LocalStorage = require('../../lib/local-storage');
-  const authHeader = (event?.headers && (event.headers.Authorization || event.headers.authorization)) || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  if (token && (process.env.IS_OFFLINE === 'true' || process.env.SERVERLESS_OFFLINE === 'true' || process.env.APP_ENV === 'local')) {
-    const user = await LocalStorage.verifyToken(token).catch(() => null);
-    if (user) return user.userId;
-  }
-  return null;
-};
-
-exports.handler = async (event) => {
+const handler = async (event) => {
   try {
-    const userId = await deriveUserId(event);
-    if (!userId) return response.unauthorized('Unauthorized');
-
+    const { userId } = event;
     const { lostFoundId } = event.pathParameters || {};
     if (!lostFoundId) return response.error('lostFoundId is required', 400);
 
@@ -57,3 +44,5 @@ exports.handler = async (event) => {
     return response.error(err.message || 'Failed to update item', 500);
   }
 };
+
+module.exports.handler = withAuth(handler);

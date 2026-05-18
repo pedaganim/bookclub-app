@@ -34,7 +34,7 @@ describe('Serverless Configuration', () => {
   test('should have S3 bucket for book covers defined', () => {
     expect(serverlessConfigContent).toContain('BookCoversBucket:');
     expect(serverlessConfigContent).toContain('Type: AWS::CloudFormation::CustomResource');
-    expect(serverlessConfigContent).toContain('BucketName: ${self:service}-${self:provider.stage}-book-covers');
+    expect(serverlessConfigContent).toContain('BucketName: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}');
     // Check for retention policies
     expect(serverlessConfigContent).toContain('DeletionPolicy: Retain');
     // Check for custom resource configuration
@@ -74,7 +74,7 @@ describe('Serverless Configuration', () => {
     expect(serverlessConfigContent).toContain('s3:PutObject');
     expect(serverlessConfigContent).toContain('s3:GetObject');
     expect(serverlessConfigContent).toContain('s3:DeleteObject');
-    expect(serverlessConfigContent).toContain('arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*');
+    expect(serverlessConfigContent).toContain('arn:aws:s3:::${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}/*');
   });
 
   test('should have Cognito resources defined', () => {

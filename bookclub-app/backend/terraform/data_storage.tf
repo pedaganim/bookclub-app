@@ -140,7 +140,7 @@ resource "aws_dynamodb_table" "bookclub_members" {
 
 # S3 bucket for book covers
 resource "aws_s3_bucket" "book_covers" {
-  bucket = "${var.service_name}-${var.stage}-book-covers"
+  bucket = var.book_covers_bucket_name != "" ? var.book_covers_bucket_name : "${var.service_name}-${var.stage}-book-covers"
 
   lifecycle {
     prevent_destroy = true

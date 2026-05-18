@@ -23,13 +23,13 @@ const Login: React.FC = () => {
         <div>
           <div className="flex justify-center mb-4 sm:mb-6">
             <img 
-              src="/logo.png" 
-              alt="NearBorrow" 
+              src="/townwink-logo.png" 
+              alt="TownWink" 
               className="h-16 w-auto sm:h-24"
             />
           </div>
           <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
-            Sign in to NearBorrow
+            Sign in to TownWink
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             More login options will be added in the future

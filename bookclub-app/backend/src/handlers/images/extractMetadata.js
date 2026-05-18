@@ -1,16 +1,11 @@
 const response = require('../../lib/response');
 const textractService = require('../../lib/textract-service');
+const { withAuth } = require('../../lib/middleware');
 
-module.exports.handler = async (event) => {
+const handler = async (event) => {
   try {
-    // Derive userId from Cognito authorizer claims (configured in API Gateway)
-    const claims = event?.requestContext?.authorizer?.claims;
-    const userId = claims?.sub || null;
-    if (!userId) {
-      return response.unauthorized('Missing or invalid authentication');
-    }
-
-    const data = JSON.parse(event.body);
+    const { userId } = event;
+    const data = JSON.parse(event.body || '{}');
 
     // Validate input
     if (!data.s3Bucket || !data.s3Key) {
@@ -58,3 +53,5 @@ module.exports.handler = async (event) => {
     return response.error(error);
   }
 };
+
+module.exports.handler = withAuth(handler);

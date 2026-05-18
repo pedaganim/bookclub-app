@@ -1,35 +1,33 @@
 const AWS = require('../../lib/aws-config');
 const { v4: uuidv4 } = require('uuid');
 const response = require('../../lib/response');
-const ToyListing = require('../../models/toyListing');
+const Book = require('../../models/book');
 const { getTableName } = require('../../lib/table-names');
+const { withAuth } = require('../../lib/middleware');
 
 const s3 = new AWS.S3();
 const BUCKET_NAME = process.env.BOOK_COVERS_BUCKET;
 
-// Store listingId → s3Key mapping so processUpload can find the draft listing
-async function storeListingMapping(bucket, key, listingId, userId) {
+// Store bookId → s3Key mapping so processUpload can find the draft book
+async function storeBookMapping(bucket, key, bookId, userId) {
   try {
     const dynamo = new AWS.DynamoDB.DocumentClient();
-    const cacheKey = `listingForS3:${bucket}:${key}`;
+    const cacheKey = `bookForS3:${bucket}:${key}`;
     const ttl = Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000); // 7 days
     await dynamo.put({
       TableName: getTableName('metadata-cache'),
-      Item: { cacheKey, listingId, userId, s3Bucket: bucket, s3Key: key, mappedAt: new Date().toISOString(), ttl },
+      Item: { cacheKey, bookId, userId, s3Bucket: bucket, s3Key: key, mappedAt: new Date().toISOString(), ttl },
       ConditionExpression: 'attribute_not_exists(cacheKey)',
     }).promise().catch(() => {}); // ignore duplicate
   } catch (e) {
-    console.warn('[multipartStart] storeListingMapping failed:', e.message);
+    console.warn('[multipartStart] storeBookMapping failed:', e.message);
   }
 }
 
-module.exports.handler = async (event) => {
+const handler = async (event) => {
   try {
-    const userId = event.requestContext?.authorizer?.claims?.sub;
-    if (!userId) {
-      return response.unauthorized('Missing user context');
-    }
-    const { fileType, fileName, context = 'book', libraryType = 'toy' } = JSON.parse(event.body || '{}');
+    const { userId } = event;
+    const { fileType, fileName, context = 'book', libraryType = 'book' } = JSON.parse(event.body || '{}');
 
     if (!fileType) {
       return response.validationError({ fileType: 'File type is required' });
@@ -62,23 +60,21 @@ module.exports.handler = async (event) => {
 
     const { UploadId } = await s3.createMultipartUpload(params).promise();
 
-    // For library uploads: pre-create a draft listing
-    let listingId = null;
+    // For library uploads: pre-create a draft book
+    let bookId = null;
     if (isLibrary) {
-      const PINNED_CATEGORY_TYPES = ['lost_found'];
       const fileUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
-      const draft = await ToyListing.create({
+      const draft = await Book.create({
         title: 'Processing…',
         description: '',
-        condition: 'good',
         status: 'draft',
-        images: [fileUrl],
-        libraryType,
-        category: PINNED_CATEGORY_TYPES.includes(libraryType) ? libraryType : null,
-        userName: null,
+        coverImage: fileUrl,
+        category: libraryType,
+        s3Bucket: BUCKET_NAME,
+        s3Key: key,
       }, userId);
-      listingId = draft.listingId;
-      await storeListingMapping(BUCKET_NAME, key, listingId, userId);
+      bookId = draft.bookId;
+      await storeBookMapping(BUCKET_NAME, key, bookId, userId);
     }
 
     return response.success({
@@ -86,10 +82,13 @@ module.exports.handler = async (event) => {
       key,
       uploadId: UploadId,
       userId,
-      listingId
+      bookId,
+      listingId: bookId // for backward compatibility
     });
   } catch (err) {
     console.error('[multipartStart] error', err);
     return response.error(err);
   }
 };
+
+module.exports.handler = withAuth(handler);

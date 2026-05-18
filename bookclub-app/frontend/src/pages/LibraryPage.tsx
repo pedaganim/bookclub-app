@@ -5,7 +5,6 @@ import { apiService } from '../services/api';
 import { Book } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { useSubdomain } from '../hooks/useSubdomain';
 import PublicBookCard from '../components/PublicBookCard';
 import CreateListingModal from '../components/CreateListingModal';
 import SearchBar from '../components/SearchBar';
@@ -23,7 +22,6 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { addNotification } = useNotification();
-  const { isSubdomain, club } = useSubdomain();
 
   const location = useLocation();
   const config = propConfig || getLibraryConfig(categorySlug || 'books');
@@ -53,8 +51,6 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
         limit: currentPageSize || PAGE_SIZE,
         nextToken: token || undefined,
         search: search || undefined,
-        // If it's a subdomain, filter by club
-        clubId: (isSubdomain && club) ? club.clubId : undefined,
         // Filter by category
         bare: true as const,
       };
@@ -82,7 +78,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ config: propConfig }) => {
     } finally {
       setLoading(false);
     }
-  }, [config, isSubdomain, club, isAuthenticated, user?.userId]);
+  }, [config, isAuthenticated, user?.userId]);
 
   useEffect(() => {
     fetchItems();

@@ -78,13 +78,6 @@ const AuthCallback: React.FC = () => {
       };
       localStorage.setItem('user', JSON.stringify(userObj));
 
-      // Persist tokens in cookies for cross-subdomain support
-      const domain = getBaseDomain();
-      setCookie('accessToken', accessToken, { domain });
-      setCookie('idToken', idToken, { domain });
-      if (refreshToken) setCookie('refreshToken', refreshToken, { domain });
-      setCookie('user', JSON.stringify(userObj), { domain });
-
       setStatus('success');
 
       // Restore pending club join intent if the user clicked "Join" before logging in

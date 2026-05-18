@@ -72,6 +72,7 @@ class Book {
       if (category) {
         result = result.filter(b => b.category === category);
       }
+      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       // For offline mode, we'll implement simple pagination later if needed
       return {
         items: result.slice(0, limit),
@@ -119,6 +120,7 @@ class Book {
     if (isOffline()) {
       const result = await LocalStorage().listBooks();
       const filtered = result.filter(b => b.lentToUserId === lentToUserId);
+      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       return {
         items: filtered.slice(0, limit),
         nextToken: filtered.length > limit ? 'has-more' : null,
@@ -176,11 +178,15 @@ class Book {
 
     result = this._applyInMemoryFilters(result, searchQuery, ageGroupFine, options);
 
+    // Sort by createdAt descending to mimic DynamoDB ScanIndexForward: false
+    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     return {
       items: result.slice(0, limit),
       nextToken: result.length > limit ? 'has-more' : null,
     };
   }
+
 
   static async _listAllDynamo(limit, nextToken, searchQuery, ageGroupFine, options, categoryFilter) {
     const params = {

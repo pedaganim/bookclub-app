@@ -23,65 +23,58 @@ exports.handler = async (event) => {
 
       const bucket = payload.bucket || payload.s3Bucket;
       const key = payload.key || payload.s3Key;
-      // listingId means it's a library item (toy-listings table); bookId means it's a book
-      const isLibraryItem = !!payload.listingId;
-      const itemId = payload.listingId || payload.bookId;
+      // Standardize on bookId (even if listingId is provided)
+      const bookId = payload.bookId || payload.listingId;
       const libraryType = payload.libraryType || null;
+      const isLibraryItem = !!libraryType && libraryType !== 'book';
+      
       // Library types whose category must never be overwritten by AI analysis
       const PINNED_CATEGORY_TYPES = ['lost_found'];
       const isCategoryPinned = isLibraryItem && PINNED_CATEGORY_TYPES.includes(libraryType);
+      
       const modelId = payload.modelId;
       const contentType = payload.contentType || 'image/jpeg';
 
-      if (!bucket || !key || !itemId) {
-        console.warn('[BedrockAnalyzeWorker] Missing required fields in message (bucket/key/id)');
+      if (!bucket || !key || !bookId) {
+        console.warn('[BedrockAnalyzeWorker] Missing required fields in message (bucket/key/bookId)');
         continue;
       }
 
-      // Route to the correct DynamoDB table and primary key
-      const tableName = isLibraryItem ? getTableName('toy-listings') : getTableName('books');
-      const tableKey = isLibraryItem ? { listingId: itemId } : { bookId: itemId };
+      // All items (books, lost_found, etc.) are now in the books table
+      const tableName = getTableName('books');
+      const tableKey = { bookId };
 
       // Add small delay to avoid overwhelming Bedrock
       const baseDelayMs = parseInt(process.env.BEDROCK_PRE_DELAY_MS || '400', 10);
       const jitterMs = Math.floor(Math.random() * (parseInt(process.env.BEDROCK_PRE_DELAY_JITTER_MS || '400', 10)));
       await new Promise(r => setTimeout(r, baseDelayMs + jitterMs));
 
-      console.log(`[BedrockAnalyzeWorker] Analyzing item image for id=${itemId} table=${tableName}`);
+      console.log(`[BedrockAnalyzeWorker] Analyzing item image for id=${bookId} table=${tableName}`);
       
       try {
         const metadata = await analyzeUniversalItemImage({ bucket, key, contentType, modelId });
 
         if (metadata.category === 'person_error') {
-          console.warn(`[BedrockAnalyzeWorker] PERSON DETECTED for item ${itemId}. Deleting from DB and S3.`);
+          console.warn(`[BedrockAnalyzeWorker] PERSON DETECTED for item ${bookId}. Deleting from DB and S3.`);
           
-          // 1. Delete from DynamoDB
-          await dynamo.delete({
-            TableName: tableName,
-            Key: tableKey,
-          }).promise();
+          await dynamo.delete({ TableName: tableName, Key: tableKey }).promise();
 
-          // 2. Delete from S3
           const s3 = new AWS.S3();
-          await s3.deleteObject({
-            Bucket: bucket,
-            Key: key,
-          }).promise();
+          await s3.deleteObject({ Bucket: bucket, Key: key }).promise();
 
-          console.log(`[BedrockAnalyzeWorker] Successfully purged personal image item ${itemId}`);
+          console.log(`[BedrockAnalyzeWorker] Successfully purged personal image item ${bookId}`);
           
-          // Notify downstream of the deletion/violation
           if (process.env.EVENT_BUS_NAME && process.env.EVENT_BUS_SOURCE) {
             await eventBridge.putEvents({
               Entries: [{
                 EventBusName: process.env.EVENT_BUS_NAME,
                 Source: process.env.EVENT_BUS_SOURCE,
-                DetailType: isLibraryItem ? 'Library.ItemPurgedPrivacyViolation' : 'Book.ItemPurgedPrivacyViolation',
-                Detail: JSON.stringify({ itemId, bucket, key, reason: 'person_detected' }),
+                DetailType: 'Book.ItemPurgedPrivacyViolation',
+                Detail: JSON.stringify({ bookId, itemId: bookId, bucket, key, reason: 'person_detected' }),
               }],
             }).promise();
           }
-          continue; // Move to next record
+          continue;
         }
 
         const names = { '#meta': 'advancedMetadata' };
@@ -101,10 +94,9 @@ exports.handler = async (event) => {
         if (metadata.description) {
           names['#d'] = 'description';
           vals[':d'] = metadata.description;
-          sets.push('#d = :d'); // always write — items are created with description='' which blocks if_not_exists
+          sets.push('#d = :d');
         }
         if (isCategoryPinned) {
-          // Keep category pinned to the libraryType — do not let AI overwrite it
           names['#c'] = 'category';
           vals[':c'] = libraryType;
           sets.push('#c = :c');
@@ -127,25 +119,20 @@ exports.handler = async (event) => {
           ExpressionAttributeValues: vals,
         }).promise();
 
-        console.log(`[BedrockAnalyzeWorker] Successfully analyzed and updated item ${itemId} (Category: ${metadata.category})`);
-
-        // Notify downstream systems
-        const eventDetail = isLibraryItem
-          ? { listingId: itemId, bucket, key, metadata, modelId }
-          : { bookId: itemId, bucket, key, metadata, modelId };
+        console.log(`[BedrockAnalyzeWorker] Successfully analyzed and updated item ${bookId} (Category: ${metadata.category})`);
 
         if (process.env.EVENT_BUS_NAME && process.env.EVENT_BUS_SOURCE) {
           await eventBridge.putEvents({
             Entries: [{
               EventBusName: process.env.EVENT_BUS_NAME,
               Source: process.env.EVENT_BUS_SOURCE,
-              DetailType: isLibraryItem ? 'Library.StrandsAnalyzedCompleted' : 'Book.StrandsAnalyzedCompleted',
-              Detail: JSON.stringify(eventDetail),
+              DetailType: 'Book.StrandsAnalyzedCompleted',
+              Detail: JSON.stringify({ bookId, itemId: bookId, bucket, key, metadata, modelId }),
             }],
           }).promise();
         }
       } catch (e) {
-        console.warn(`[BedrockAnalyzeWorker] Failed to analyze item ${itemId}:`, e.message);
+        console.warn(`[BedrockAnalyzeWorker] Failed to analyze item ${bookId}:`, e.message);
       }
     }
 

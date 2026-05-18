@@ -58,7 +58,7 @@ export const eraseCookie = (name: string, domain = '') => {
 };
 
 /**
- * Returns the base domain for cookies (e.g., .booklub.shop)
+ * Returns the base domain for cookies (e.g., .townwink.com)
  */
 export const getBaseDomain = (): string => {
   const hostname = window.location.hostname;
@@ -68,7 +68,7 @@ export const getBaseDomain = (): string => {
   
   const parts = hostname.split('.');
   if (parts.length >= 2) {
-    // Return the last two parts for .booklub.shop
+    // Return the last two parts for .townwink.com
     return `.${parts[parts.length - 2]}.${parts[parts.length - 1]}`;
   }
   

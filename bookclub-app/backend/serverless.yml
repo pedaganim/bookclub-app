@@ -15,12 +15,13 @@ provider:
     STAGE: ${self:provider.stage}
     COGNITO_USER_POOL_ID: !Ref UserPool
     COGNITO_CLIENT_ID: !Ref UserPoolClient
-    BOOK_COVERS_BUCKET: ${self:service}-${self:provider.stage}-book-covers
-    NOTIFY_FROM_EMAIL: ${env:NOTIFY_FROM_EMAIL, 'notify@booklub.shop'}
+    BOOK_COVERS_BUCKET: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}
+    NOTIFY_FROM_EMAIL: ${self:custom.appConfig.NOTIFY_FROM_EMAIL}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com,kalyan.kaykk@gmail.com,puneet.khanna0404@gmail.com'}
     CONTACT_RECIPIENTS: ${env:CONTACT_RECIPIENTS, 'madhukar.goud@gmail.com,madhukar.pedagani@gmail.com,kalyan.kaykk@gmail.com,puneet.khanna0404@gmail.com'}
     EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'default'}
     EVENT_BUS_SOURCE: ${env:EVENT_BUS_SOURCE, 'bookclub.app'}
+    BRAND_NAME: ${self:custom.appConfig.BRAND}
     ENABLE_IMAGE_ENRICHMENT: ${env:ENABLE_IMAGE_ENRICHMENT, 'false'}
     ENABLE_STREAM_ENRICHMENT: ${env:ENABLE_STREAM_ENRICHMENT, 'true'}
     # Vision LLM API Configuration (Optional - services gracefully fallback to mocks)
@@ -36,7 +37,7 @@ provider:
     # SQS queue for Bedrock analyzer worker
     BEDROCK_ANALYZE_QUEUE_URL: !Ref BedrockAnalyzeQueue
     # Base URL for generating absolute links in sitemap
-    SITE_BASE_URL: ${env:SITE_BASE_URL, 'https://booklub.shop'}
+    SITE_BASE_URL: ${self:custom.appConfig.oauth.redirectSignOut}
     # Bedrock throttle tuning
     BEDROCK_MAX_ATTEMPTS: ${env:BEDROCK_MAX_ATTEMPTS, '8'}
     BEDROCK_BACKOFF_BASE_MS: ${env:BEDROCK_BACKOFF_BASE_MS, '2000'} # start at 2s
@@ -74,9 +75,6 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-bookclub-members-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-conversations-${self:provider.stage}/index/*
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-dm-messages-${self:provider.stage}/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-toy-listings-${self:provider.stage}/index/*
-            - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-lost-found-${self:provider.stage}
             - arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/${self:service}-lost-found-${self:provider.stage}/index/*
         - Effect: Allow
           Action:
@@ -88,7 +86,7 @@ provider:
             - s3:CompleteMultipartUpload
             - s3:AbortMultipartUpload
           Resource: 
-            - "arn:aws:s3:::${self:service}-${self:provider.stage}-book-covers/*"
+            - "arn:aws:s3:::${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}/*"
         - Effect: Allow
           Action:
             - ses:SendEmail
@@ -140,7 +138,7 @@ provider:
           Resource: "*"
 
 custom:
-  appConfig: ${file(./config/app.${self:provider.stage}.json)}
+  appConfig: ${file(./config/app.${env:DEPLOY_TARGET, 'prod'}.json)}
   serverless-offline:
     httpPort: 4000
     resourceRoutes: true
@@ -164,6 +162,14 @@ plugins:
   - serverless-offline
   - serverless-plugin-existing-s3
   - serverless-prune-plugin
+package:
+  patterns:
+    - '!terraform/**'
+    - '!__tests__/**'
+    - '!coverage/**'
+    - '!test_output*.txt'
+    - '!.git/**'
+
 functions:
   # Book-related functions
   createBook:
@@ -173,7 +179,7 @@ functions:
           method: POST
           path: /books
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -197,7 +203,7 @@ functions:
           method: POST
           path: /strands/analyze-cover
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -245,7 +251,7 @@ functions:
           method: GET
           path: /users/{userId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -266,7 +272,7 @@ functions:
           method: GET
           path: /users/query
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -287,7 +293,7 @@ functions:
           method: PATCH
           path: /dm/conversations/{conversationId}/read
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -309,7 +315,7 @@ functions:
           method: POST
           path: /dm/conversations
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -330,7 +336,7 @@ functions:
           method: GET
           path: /dm/conversations
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -351,7 +357,7 @@ functions:
           method: POST
           path: /dm/conversations/{conversationId}/messages
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -372,7 +378,7 @@ functions:
           method: GET
           path: /dm/conversations/{conversationId}/messages
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -393,7 +399,7 @@ functions:
           method: GET
           path: /books/summary
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -414,7 +420,7 @@ functions:
           method: GET
           path: /books/metadata
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -435,7 +441,7 @@ functions:
           method: GET
           path: /books/{bookId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -452,7 +458,7 @@ functions:
           method: GET
           path: /books
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -469,7 +475,7 @@ functions:
           method: PUT
           path: /books/{bookId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -490,7 +496,7 @@ functions:
           method: DELETE
           path: /books/{bookId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -512,7 +518,7 @@ functions:
           method: POST
           path: /books/{bookId}/extract-metadata
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -534,7 +540,7 @@ functions:
           method: POST
           path: /auth/register
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -551,7 +557,7 @@ functions:
           method: POST
           path: /auth/login
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -568,7 +574,7 @@ functions:
           method: GET
           path: /users/me
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -589,7 +595,7 @@ functions:
           method: PUT
           path: /users/me
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -676,7 +682,7 @@ functions:
           method: POST
           path: /upload/multipart/start
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -697,7 +703,7 @@ functions:
           method: POST
           path: /upload/multipart/sign-part
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -718,7 +724,7 @@ functions:
           method: POST
           path: /upload/multipart/complete
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -740,7 +746,7 @@ functions:
           method: POST
           path: /images/extract-metadata
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -762,7 +768,7 @@ functions:
           method: GET
           path: /images/metadata
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -782,13 +788,13 @@ functions:
     timeout: 900
     events:
       - s3:
-          bucket: ${self:service}-${self:provider.stage}-book-covers
+          bucket: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}
           event: s3:ObjectCreated:*
           rules:
             - prefix: book-covers/
           existing: true
       - s3:
-          bucket: ${self:service}-${self:provider.stage}-book-covers
+          bucket: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}
           event: s3:ObjectCreated:*
           rules:
             - prefix: library-images/
@@ -873,7 +879,7 @@ functions:
           method: POST
           path: /clubs
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -910,7 +916,7 @@ functions:
           method: GET
           path: /clubs/{clubId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -927,7 +933,7 @@ functions:
           method: GET
           path: /clubs
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -948,7 +954,7 @@ functions:
           method: POST
           path: /clubs/join
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -969,7 +975,7 @@ functions:
           method: DELETE
           path: /clubs/{clubId}/leave
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -990,7 +996,7 @@ functions:
           method: PATCH
           path: /clubs/{clubId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1011,7 +1017,7 @@ functions:
           method: DELETE
           path: /clubs/{clubId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1033,7 +1039,7 @@ functions:
           method: GET
           path: /clubs/browse
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1051,7 +1057,7 @@ functions:
           method: GET
           path: /clubs/{clubId}/requests
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1072,7 +1078,7 @@ functions:
           method: GET
           path: clubs/{clubId}/members
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1093,7 +1099,7 @@ functions:
           method: DELETE
           path: clubs/{clubId}/members/{userId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1114,7 +1120,7 @@ functions:
           method: PATCH
           path: clubs/{clubId}/members/{userId}/role
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1135,7 +1141,7 @@ functions:
           method: POST
           path: clubs/{clubId}/requests/{userId}/approve
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1156,7 +1162,7 @@ functions:
           method: POST
           path: clubs/{clubId}/requests/{userId}/reject
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1177,7 +1183,7 @@ functions:
           method: POST
           path: clubs/{clubId}/invites
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1195,7 +1201,7 @@ functions:
           method: GET
           path: clubs/{clubId}/invites
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1213,7 +1219,7 @@ functions:
           method: DELETE
           path: clubs/{clubId}/invites/{email}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1232,7 +1238,7 @@ functions:
           method: POST
           path: /clubs/{clubId}/request
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1254,7 +1260,7 @@ functions:
           method: GET
           path: /lost-found
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1271,7 +1277,7 @@ functions:
           method: GET
           path: /lost-found/{lostFoundId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1284,7 +1290,7 @@ functions:
           method: POST
           path: /lost-found
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1305,7 +1311,7 @@ functions:
           method: GET
           path: /lost-found/mine
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1326,7 +1332,7 @@ functions:
           method: PATCH
           path: /lost-found/{lostFoundId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1347,7 +1353,7 @@ functions:
           method: DELETE
           path: /lost-found/{lostFoundId}
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1366,24 +1372,32 @@ functions:
     handler: src/custom-resources/dynamodb-table-manager.handler
     timeout: 600
     role: DynamoTableManagerRole
+    environment:
+      COGNITO_CLIENT_ID: ''
 
   # Custom resource to ensure Event Source Mapping is enabled post-deploy
   eventSourceMappingManager:
     handler: src/custom-resources/event-source-mapping-manager.handler
     timeout: 120
     role: EventSourceMappingManagerRole
+    environment:
+      COGNITO_CLIENT_ID: ''
 
   # Custom resource function for Cognito IdP create-or-update
   cognitoResourceManager:
     handler: src/custom-resources/cognito-resource-manager.handler
     timeout: 300
     role: CognitoResourceManagerRole
+    environment:
+      COGNITO_CLIENT_ID: ''
 
   # Custom resource function for S3 bucket management
   s3BucketManager:
     handler: src/custom-resources/s3-bucket-manager.handler
     timeout: 300
     role: S3BucketManagerRole
+    environment:
+      COGNITO_CLIENT_ID: ''
 
   # Voice search transcription function
   voiceTranscribe:
@@ -1393,7 +1407,7 @@ functions:
           method: POST
           path: /voice/transcribe
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1410,7 +1424,7 @@ functions:
           method: OPTIONS
           path: /voice/transcribe
           cors:
-            origin: '*'
+            origin: '${self:custom.appConfig.corsOrigin}'
             headers:
               - Content-Type
               - Authorization
@@ -1420,103 +1434,6 @@ functions:
               - X-Amz-Security-Token
             allowCredentials: true
 
-  # Swap Toys marketplace functions
-  listToyListings:
-    handler: src/handlers/swaptoys/list.handler
-    events:
-      - http:
-          method: GET
-          path: /swap-toys
-          cors:
-            origin: "*"
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Access-Token
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-
-  createToyListing:
-    handler: src/handlers/swaptoys/create.handler
-    events:
-      - http:
-          method: POST
-          path: /swap-toys
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Access-Token
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
-  getToyListing:
-    handler: src/handlers/swaptoys/get.handler
-    events:
-      - http:
-          method: GET
-          path: /swap-toys/{listingId}
-          cors:
-            origin: "*"
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Access-Token
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-
-  updateToyListing:
-    handler: src/handlers/swaptoys/update.handler
-    events:
-      - http:
-          method: PUT
-          path: /swap-toys/{listingId}
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Access-Token
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
-
-  deleteToyListing:
-    handler: src/handlers/swaptoys/delete.handler
-    events:
-      - http:
-          method: DELETE
-          path: /swap-toys/{listingId}
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Access-Token
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-            allowCredentials: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiGatewayAuthorizer
 
   # Contact form (public, no auth)
   contactSubmit:
@@ -1585,7 +1502,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-bedrock-analyze-queue
-        VisibilityTimeout: 120
+        VisibilityTimeout: 900
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt BedrockAnalyzeDLQ.Arn
           maxReceiveCount: 5
@@ -1774,8 +1691,7 @@ resources:
                     - s3:GetBucketAcl
                     - s3:PutBucketAcl
                   Resource: 
-                    - arn:aws:s3:::${self:service}-${self:provider.stage}-*
-
+                    - "*"
     # Permission for CloudFormation to invoke S3 bucket manager
     S3BucketManagerInvokePermission:
       Type: AWS::Lambda::Permission
@@ -1806,6 +1722,7 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
+      DependsOn: GoogleIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -1834,10 +1751,8 @@ resources:
           RefreshToken: days
         CallbackURLs:
           - ${self:custom.appConfig.oauth.redirectSignIn}
-          - https://nearborrow.com.au/auth/callback
         LogoutURLs:
           - ${self:custom.appConfig.oauth.redirectSignOut}
-          - https://nearborrow.com.au
 
     GoogleIdentityProvider:
       Type: AWS::CloudFormation::CustomResource
@@ -1850,8 +1765,8 @@ resources:
         ProviderName: Google
         ProviderType: Google
         ProviderDetails:
-          client_id: ${ssm:/bookclub/oauth/google_client_id}
-          client_secret: ${ssm:/bookclub/oauth/google_client_secret}
+          client_id: ${env:GOOGLE_CLIENT_ID, ''}
+          client_secret: ${env:GOOGLE_CLIENT_SECRET, ''}
           authorize_scopes: "openid email profile"
         AttributeMapping:
           email: email
@@ -1941,9 +1856,6 @@ resources:
         KeySchema:
           - AttributeName: bookId
             KeyType: HASH
-        StreamSpecification:
-          StreamEnabled: true
-          StreamViewType: NEW_AND_OLD_IMAGES
         GlobalSecondaryIndexes:
           - IndexName: UserIdIndex
             KeySchema:
@@ -1977,36 +1889,7 @@ resources:
               ReadCapacityUnits: 5
               WriteCapacityUnits: 5
 
-    # Explicit EventSourceMapping to wire DynamoDB Stream to the stream processor Lambda
-    BooksTableStreamToProcessor:
-      Type: AWS::Lambda::EventSourceMapping
-      Properties:
-        EventSourceArn: !GetAtt BooksTable.StreamArn
-        FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
-        BatchSize: 10
-        MaximumBatchingWindowInSeconds: 5
-        StartingPosition: LATEST
-        Enabled: true
 
-    # FINAL safeguard: re-enable the Event Source Mapping at the end of the stack update.
-    # This addresses cases where later resources (e.g., table updates or other custom resources)
-    # might toggle/replace streams after the initial Ensure step.
-    EnsureBooksStreamMappingEnabledFinal:
-      Type: AWS::CloudFormation::CustomResource
-      Properties:
-        ServiceToken: !GetAtt EventSourceMappingManagerLambdaFunction.Arn
-        FunctionName: !GetAtt BooksStreamProcessorLambdaFunction.Arn
-        EventSourceArn: !GetAtt BooksTable.StreamArn
-      DependsOn:
-        - BooksTableStreamToProcessor
-        - BooksTable
-        - UsersTable
-        - MetadataCacheTable
-        - DmConversationsTable
-        - DmMessagesTable
-        - BookclubGroupsTable
-        - BookclubMembersTable
-        - BookCoversBucket
 
     DmConversationsTable:
       Type: AWS::CloudFormation::CustomResource
@@ -2089,38 +1972,6 @@ resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
-    ToyListingsTable:
-      Type: AWS::CloudFormation::CustomResource
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
-      Properties:
-        ServiceToken: !GetAtt DynamoTableManagerLambdaFunction.Arn
-        TableName: ${self:service}-toy-listings-${self:provider.stage}
-        AttributeDefinitions:
-          - AttributeName: listingId
-            AttributeType: S
-          - AttributeName: userId
-            AttributeType: S
-          - AttributeName: createdAt
-            AttributeType: S
-        KeySchema:
-          - AttributeName: listingId
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: UserIdIndex
-            KeySchema:
-              - AttributeName: userId
-                KeyType: HASH
-              - AttributeName: createdAt
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
 
     UsersTable:
       Type: AWS::CloudFormation::CustomResource
@@ -2296,7 +2147,7 @@ resources:
       Properties:
         ServiceToken: !GetAtt S3BucketManagerLambdaFunction.Arn
         CustomResourceVersion: "6"
-        BucketName: ${self:service}-${self:provider.stage}-book-covers
+        BucketName: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           BlockPublicPolicy: false
@@ -2343,4 +2194,4 @@ resources:
     ApiUrl:
       Value: !Join ["", ["https://", !Ref ApiGatewayRestApi, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"]]
     BookCoversBucketName:
-      Value: ${self:service}-${self:provider.stage}-book-covers
+      Value: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}

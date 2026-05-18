@@ -1,9 +1,12 @@
 {
   "region": "us-east-1",
   "apiCustomDomain": "api.booklub.shop",
-  "userPoolDomainPrefix": "booklub",
+  "userPoolDomainPrefix": "booklub-au",
+  "corsOrigin": "https://booklub.shop",
   "oauth": {
     "redirectSignIn": "https://booklub.shop/auth/callback",
     "redirectSignOut": "https://booklub.shop/"
-  }
+  },
+  "BRAND": "NearBorrow",
+  "NOTIFY_FROM_EMAIL": "notify@booklub.shop"
 }

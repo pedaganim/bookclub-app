@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import { useNotification } from '../contexts/NotificationContext';
 import { ChatBubbleLeftRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import SEO from '../components/SEO';
+import { useBrand } from '../contexts/BrandContext';
 
 type FormType = 'feedback' | 'feature_request' | 'bug_report' | 'general';
 
@@ -17,6 +18,7 @@ const TYPE_OPTIONS: { value: FormType; label: string; description: string }[] = 
 const ContactPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { addNotification } = useNotification();
+  const { name: brandName } = useBrand();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -49,7 +51,7 @@ const ContactPage: React.FC = () => {
   if (submitted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <SEO title="Contact Us — BookClub" description="Get in touch with the BookClub team" />
+        <SEO title={`Contact Us — ${brandName}`} description={`Get in touch with the ${brandName} team`} />
         <div className="max-w-md w-full text-center">
           <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Message Sent!</h1>
@@ -67,7 +69,7 @@ const ContactPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SEO title="Contact Us — BookClub" description="Get in touch with the BookClub team" />
+      <SEO title={`Contact Us — ${brandName}`} description={`Get in touch with the ${brandName} team`} />
 
       {/* Header */}
       <div className="bg-white border-b border-gray-100">

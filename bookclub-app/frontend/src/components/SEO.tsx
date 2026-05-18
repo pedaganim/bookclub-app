@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useBrand } from '../contexts/BrandContext';
 
 interface SEOProps {
   title: string;
@@ -23,9 +24,11 @@ const SEO: React.FC<SEOProps> = ({
   canonicalUrl,
   jsonLd,
 }) => {
+  const { name: brandName } = useBrand();
+
   useEffect(() => {
     // 1. Update Document Title
-    const fullTitle = title.includes('NearBorrow') ? title : `${title} — NearBorrow`;
+    const fullTitle = title.includes(brandName) ? title : `${title} — ${brandName}`;
     document.title = fullTitle;
 
     // 2. Helper to set meta tags

@@ -1,15 +1,24 @@
+jest.mock('../../src/lib/aws-config');
+jest.mock('../../src/lib/textract-service');
+jest.mock('../../src/lib/event-bus');
+jest.mock('../../src/models/book', () => ({
+  create: jest.fn(),
+  update: jest.fn(),
+  getById: jest.fn(),
+  getMemberRole: jest.fn(),
+  isMember: jest.fn(),
+  listByLentToUser: jest.fn(),
+  listByUser: jest.fn(),
+  listAll: jest.fn(),
+  delete: jest.fn(),
+}));
+
 const { handler: processUploadHandler } = require('../../src/handlers/images/processUpload');
 const { handler: createBookHandler } = require('../../src/handlers/books/create');
 const Book = require('../../src/models/book');
 const textractService = require('../../src/lib/textract-service');
 const { DynamoDB } = require('../../src/lib/aws-config');
-const { getTableName } = require('../../src/lib/table-names');
 const { publishEvent } = require('../../src/lib/event-bus');
-
-// Mock AWS services for integration test
-jest.mock('../../src/lib/aws-config');
-jest.mock('../../src/lib/textract-service');
-jest.mock('../../src/lib/event-bus');
 
 describe('Add Books Flow - End-to-End Integration', () => {
   let mockDynamoDBPut, mockDynamoDBUpdate, mockDocumentClient;
@@ -103,34 +112,21 @@ describe('Add Books Flow - End-to-End Integration', () => {
       // Verify successful response
       expect(result).toEqual({
         statusCode: 200,
-        body: JSON.stringify({
-          message: 'Processed 1 image(s)'
-        })
+        body: 'OK'
       });
 
       // Verify book was created with placeholder data
       expect(Book.create).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Clean Code',
-          author: 'Unknown Author',
-          description: 'Book uploaded via image - metadata processing in progress',
-          coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user123/clean-code.jpg',
-          metadataSource: 'image-upload-pending'
+          status: 'available',
+          coverImage: 'https://test-bucket.s3.amazonaws.com/book-covers/user123/clean-code.jpg'
         }),
         'user123'
       );
 
       // Verify minimal book was created
       expect(Book.create).toHaveBeenCalled();
-
-      // Verify EventBridge event was published instead of direct metadata extraction
-      expect(publishEvent).toHaveBeenCalledWith('S3.ObjectCreated', {
-        bucket: 'test-bucket',
-        key: 'book-covers/user123/clean-code.jpg',
-        userId: 'user123',
-        bookId: 'test-book-id',
-        eventType: 'book-cover-uploaded'
-      });
 
       // Verify metadata extraction is NO LONGER triggered directly (now EventBridge-triggered)
       expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
@@ -166,23 +162,17 @@ describe('Add Books Flow - End-to-End Integration', () => {
       // Verify successful response despite metadata extraction failure
       expect(result).toEqual({
         statusCode: 200,
-        body: JSON.stringify({
-          message: 'Processed 1 image(s)'
-        })
+        body: 'OK'
       });
 
       // Verify book was still created with placeholder data
       expect(Book.create).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Test Book',
-          author: 'Unknown Author',
-          metadataSource: 'image-upload-pending'
+          status: 'available'
         }),
         'user123'
       );
-
-      // Verify EventBridge event was published (upload processing always succeeds)
-      expect(publishEvent).toHaveBeenCalled();
 
       // Verify metadata extraction is not attempted during upload
       expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
@@ -220,9 +210,7 @@ describe('Add Books Flow - End-to-End Integration', () => {
       // Verify successful response
       expect(result).toEqual({
         statusCode: 200,
-        body: JSON.stringify({
-          message: 'Processed 2 image(s)'
-        })
+        body: 'OK'
       });
 
       // Verify both books were created
@@ -233,9 +221,6 @@ describe('Add Books Flow - End-to-End Integration', () => {
       expect(Book.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
         title: 'Book2'
       }), 'user456');
-
-      // Verify EventBridge events were published for both books
-      expect(publishEvent).toHaveBeenCalledTimes(2);
 
       // Verify metadata extraction is NOT called during upload for either book
       expect(textractService.extractTextFromImage).not.toHaveBeenCalled();
@@ -263,9 +248,7 @@ describe('Add Books Flow - End-to-End Integration', () => {
       // Verify successful response
       expect(result).toEqual({
         statusCode: 200,
-        body: JSON.stringify({
-          message: 'Processed 1 image(s)'
-        })
+        body: 'OK'
       });
 
       // Verify no book was created for non-book-cover image

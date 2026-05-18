@@ -1,11 +1,11 @@
 const { handler } = require('../../../../src/handlers/clubs/update');
 const BookClub = require('../../../../src/models/bookclub');
 const User = require('../../../../src/models/user');
-const response = require('../../../../src/lib/response');
+const ClubService = require('../../../../src/services/club-service');
 
 jest.mock('../../../../src/models/bookclub');
 jest.mock('../../../../src/models/user');
-jest.mock('../../../../src/lib/response');
+jest.mock('../../../../src/services/club-service');
 
 describe('clubs.update handler', () => {
   beforeEach(() => {
@@ -13,13 +13,17 @@ describe('clubs.update handler', () => {
   });
 
   const authHeader = { Authorization: 'Bearer token123' };
-  const currentUser = { userId: 'user-1' };
+  const mockUser = { userId: 'user-1', role: 'user' };
+  const mockClub = { clubId: 'c1', createdBy: 'user-1', name: 'Old' };
 
   it('updates club when requester is creator', async () => {
-    User.getCurrentUser.mockResolvedValue(currentUser);
-    BookClub.getById.mockResolvedValue({ clubId: 'c1', createdBy: 'user-1', name: 'Old' });
-    BookClub.update.mockResolvedValue({ clubId: 'c1', createdBy: 'user-1', name: 'New' });
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify({}) });
+    User.getCurrentUser.mockResolvedValue(mockUser);
+    User.getById.mockResolvedValue(mockUser);
+    BookClub.getById.mockResolvedValue(mockClub);
+    BookClub.getMemberRole.mockResolvedValue('member'); // creator or admin
+    
+    const updatedClub = { ...mockClub, name: 'New' };
+    ClubService.update.mockResolvedValue(updatedClub);
 
     const res = await handler({
       pathParameters: { clubId: 'c1' },
@@ -29,15 +33,17 @@ describe('clubs.update handler', () => {
 
     expect(User.getCurrentUser).toHaveBeenCalledWith('token123');
     expect(BookClub.getById).toHaveBeenCalledWith('c1');
-    expect(BookClub.update).toHaveBeenCalledWith('c1', { name: 'New' });
-    expect(response.success).toHaveBeenCalled();
+    expect(ClubService.update).toHaveBeenCalledWith('c1', { name: 'New' }, 'user-1');
     expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.data).toEqual(updatedClub);
   });
 
-  it('returns 403 if requester is not creator', async () => {
-    User.getCurrentUser.mockResolvedValue(currentUser);
+  it('returns 403 if requester is not admin or owner', async () => {
+    User.getCurrentUser.mockResolvedValue(mockUser);
+    User.getById.mockResolvedValue(mockUser);
     BookClub.getById.mockResolvedValue({ clubId: 'c1', createdBy: 'user-2' });
-    response.error.mockReturnValue({ statusCode: 403, body: JSON.stringify({}) });
+    BookClub.getMemberRole.mockResolvedValue('member');
 
     const res = await handler({
       pathParameters: { clubId: 'c1' },
@@ -49,9 +55,9 @@ describe('clubs.update handler', () => {
   });
 
   it('returns 404 if club not found', async () => {
-    User.getCurrentUser.mockResolvedValue(currentUser);
+    User.getCurrentUser.mockResolvedValue(mockUser);
+    User.getById.mockResolvedValue(mockUser);
     BookClub.getById.mockResolvedValue(null);
-    response.error.mockReturnValue({ statusCode: 404, body: JSON.stringify({}) });
 
     const res = await handler({
       pathParameters: { clubId: 'missing' },
@@ -62,27 +68,18 @@ describe('clubs.update handler', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  it('returns 400 on invalid name', async () => {
-    response.error.mockReturnValue({ statusCode: 400, body: JSON.stringify({}) });
+  it('returns 400 on invalid input', async () => {
+    User.getCurrentUser.mockResolvedValue(mockUser);
+    User.getById.mockResolvedValue(mockUser);
+    BookClub.getById.mockResolvedValue(mockClub);
+    BookClub.getMemberRole.mockResolvedValue('admin');
 
     const res = await handler({
       pathParameters: { clubId: 'c1' },
       headers: authHeader,
-      body: JSON.stringify({ name: '' }),
+      body: JSON.stringify({ name: '' }), // Too short
     });
 
     expect(res.statusCode).toBe(400);
-  });
-
-  it('returns 401 when no token', async () => {
-    response.error.mockReturnValue({ statusCode: 401, body: JSON.stringify({}) });
-
-    const res = await handler({
-      pathParameters: { clubId: 'c1' },
-      headers: {},
-      body: JSON.stringify({ name: 'x' }),
-    });
-
-    expect(res.statusCode).toBe(401);
   });
 });

@@ -18,8 +18,8 @@ describe('OAuth Configuration', () => {
     });
 
     test('should have correct provider details', () => {
-      expect(yamlContent).toContain('client_id: ${ssm:/bookclub/oauth/google_client_id}');
-      expect(yamlContent).toContain('client_secret: ${ssm:/bookclub/oauth/google_client_secret}');
+      expect(yamlContent).toContain("client_id: ${env:GOOGLE_CLIENT_ID, ''}");
+      expect(yamlContent).toContain("client_secret: ${env:GOOGLE_CLIENT_SECRET, ''}");
       expect(yamlContent).toContain('authorize_scopes: "openid email profile"');
     });
 

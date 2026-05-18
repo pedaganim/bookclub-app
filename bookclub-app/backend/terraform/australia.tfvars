@@ -1,0 +1,10 @@
+aws_region           = "us-east-1"
+stage                = "prod"
+api_fqdn             = "api.booklub.shop"
+hosted_zone_name     = "booklub.shop"
+frontend_bucket_name = "booklub-au-frontend"
+manage_dns           = true
+enable_api_mapping   = false
+book_covers_bucket_name = "bookclub-app-prod-book-covers"
+create_certificate   = false
+existing_certificate_arn = "arn:aws:acm:us-east-1:967438331002:certificate/02b0c8a8-eb5f-4289-81f8-0d2b575795a5"

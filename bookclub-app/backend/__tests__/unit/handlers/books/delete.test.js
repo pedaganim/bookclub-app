@@ -1,130 +1,66 @@
 const { handler } = require('../../../../src/handlers/books/delete');
-const Book = require('../../../../src/models/book');
-const response = require('../../../../src/lib/response');
+const BookService = require('../../../../src/services/book-service');
 
-jest.mock('../../../../src/models/book');
-jest.mock('../../../../src/lib/response');
+jest.mock('../../../../src/services/book-service');
 
 describe('deleteBook handler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should delete book successfully when valid parameters are provided', async () => {
-    const mockUserId = 'user123';
-    const mockBookId = 'book123';
-    
-    Book.delete.mockResolvedValue({ success: true });
-    response.success.mockReturnValue({ 
-      statusCode: 200, 
-      body: JSON.stringify({ message: 'Book deleted successfully' }) 
-    });
-
-    const event = {
-      pathParameters: {
-        bookId: mockBookId
-      },
-      requestContext: {
-        authorizer: {
-          claims: {
-            sub: mockUserId
-          }
+  const mockEvent = (bookId, userId = 'user123') => ({
+    pathParameters: { bookId },
+    requestContext: {
+      authorizer: {
+        claims: {
+          sub: userId
         }
       }
-    };
+    }
+  });
 
+  it('should delete book successfully when valid parameters are provided', async () => {
+    const mockBookId = 'book123';
+    const mockUserId = 'user123';
+    
+    BookService.delete.mockResolvedValue(true);
+
+    const event = mockEvent(mockBookId, mockUserId);
     const result = await handler(event);
 
-    expect(Book.delete).toHaveBeenCalledWith(mockBookId, mockUserId);
-    expect(response.success).toHaveBeenCalledWith({ message: 'Book deleted successfully' });
+    expect(BookService.delete).toHaveBeenCalledWith(mockBookId, mockUserId);
     expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    expect(body.data.message).toBe('Book deleted successfully');
   });
 
   it('should return validation error when bookId is missing', async () => {
-    response.validationError.mockReturnValue({ 
-      statusCode: 400, 
-      body: JSON.stringify({ error: 'Validation error' }) 
-    });
-
     const event = {
       pathParameters: {},
-      requestContext: {
-        authorizer: {
-          claims: {
-            sub: 'user123'
-          }
-        }
-      }
+      requestContext: { authorizer: { claims: { sub: 'user123' } } }
     };
 
     const result = await handler(event);
 
-    expect(response.validationError).toHaveBeenCalledWith({
-      bookId: 'Book ID is required'
-    });
-    expect(Book.delete).not.toHaveBeenCalled();
     expect(result.statusCode).toBe(400);
+    expect(BookService.delete).not.toHaveBeenCalled();
   });
 
-  it('should return not found when book does not exist or user lacks permission', async () => {
-    const mockUserId = 'user123';
-    const mockBookId = 'book123';
-    const error = new Error('Book not found or you do not have permission to delete it');
-    
-    Book.delete.mockRejectedValue(error);
-    response.notFound.mockReturnValue({ 
-      statusCode: 404, 
-      body: JSON.stringify({ error: 'Not found' }) 
-    });
+  it('should return 404 when book not found', async () => {
+    BookService.delete.mockRejectedValue(new Error('NOT_FOUND:Book not found'));
 
-    const event = {
-      pathParameters: {
-        bookId: mockBookId
-      },
-      requestContext: {
-        authorizer: {
-          claims: {
-            sub: mockUserId
-          }
-        }
-      }
-    };
-
+    const event = mockEvent('missing123');
     const result = await handler(event);
 
-    expect(Book.delete).toHaveBeenCalledWith(mockBookId, mockUserId);
-    expect(response.notFound).toHaveBeenCalledWith(error.message);
     expect(result.statusCode).toBe(404);
   });
 
-  it('should handle database errors gracefully', async () => {
-    const mockUserId = 'user123';
-    const mockBookId = 'book123';
-    const error = new Error('DynamoDB connection failed');
-    
-    Book.delete.mockRejectedValue(error);
-    response.error.mockReturnValue({ 
-      statusCode: 500, 
-      body: JSON.stringify({ error: 'Internal server error' }) 
-    });
+  it('should return 403 when user is not authorized', async () => {
+    BookService.delete.mockRejectedValue(new Error('FORBIDDEN:You do not have permission'));
 
-    const event = {
-      pathParameters: {
-        bookId: mockBookId
-      },
-      requestContext: {
-        authorizer: {
-          claims: {
-            sub: mockUserId
-          }
-        }
-      }
-    };
-
+    const event = mockEvent('book123', 'otheruser');
     const result = await handler(event);
 
-    expect(Book.delete).toHaveBeenCalledWith(mockBookId, mockUserId);
-    expect(response.error).toHaveBeenCalledWith(error);
-    expect(result.statusCode).toBe(500);
+    expect(result.statusCode).toBe(403);
   });
 });

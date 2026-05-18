@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { BrandProvider } from './contexts/BrandContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { UploadModalProvider, useUploadModal, GENERIC_UPLOAD_CONFIG } from './contexts/UploadModalContext';
 import CreateListingModal from './components/CreateListingModal';
@@ -38,7 +39,6 @@ import LostFoundHub from './pages/LostFoundHub';
 import LostFoundDetails from './pages/LostFoundDetails';
 import MyLostFound from './pages/MyLostFound';
 import { LIBRARY_CONFIGS } from './config/libraryConfig';
-import { useSubdomain } from './hooks/useSubdomain';
 
 function GlobalUploadModal() {
   const { isOpen, closeModal } = useUploadModal();
@@ -47,21 +47,13 @@ function GlobalUploadModal() {
 }
 
 function App() {
-  const { isSubdomain, isLoading } = useSubdomain();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
 
   return (
     <Router>
       <ScrollToTop />
       <NotificationProvider>
-        <AuthProvider>
+        <BrandProvider>
+          <AuthProvider>
           <UploadModalProvider>
           <div className="App">
             <GlobalUploadModal />
@@ -181,7 +173,7 @@ function App() {
                 />
                 <Route
                   path="/"
-                  element={<Navigate to={isSubdomain ? "/library/books" : "/library"} replace />}
+                  element={<Navigate to="/library" replace />}
                 />
                 <Route
                   path="/clubs/browse"
@@ -237,7 +229,8 @@ function App() {
           </div>
           </UploadModalProvider>
         </AuthProvider>
-      </NotificationProvider>
+      </BrandProvider>
+    </NotificationProvider>
     </Router>
   );
 }

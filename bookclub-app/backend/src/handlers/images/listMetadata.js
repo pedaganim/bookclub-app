@@ -1,14 +1,10 @@
 const response = require('../../lib/response');
 const imageMetadataService = require('../../lib/image-metadata-service');
+const { withAuth } = require('../../lib/middleware');
 
-module.exports.handler = async (event) => {
+const handler = async (event) => {
   try {
-    // Derive userId from Cognito authorizer claims (configured in API Gateway)
-    const claims = event?.requestContext?.authorizer?.claims;
-    const userId = claims?.sub || null;
-    if (!userId) {
-      return response.unauthorized('Missing or invalid authentication');
-    }
+    const { userId } = event;
 
     // Check if specific s3Bucket and s3Key are provided as query parameters
     const queryParams = event.queryStringParameters || {};
@@ -55,3 +51,5 @@ module.exports.handler = async (event) => {
     return response.error(error);
   }
 };
+
+module.exports.handler = withAuth(handler);

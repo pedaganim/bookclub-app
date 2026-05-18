@@ -45,3 +45,7 @@ Thumbs.db
 *.local
 *.tmp
 /tmp/
+
+# Local Storage
+**/.local-storage/
+**/.local-storage-test/

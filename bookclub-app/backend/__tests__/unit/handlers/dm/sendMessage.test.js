@@ -1,60 +1,72 @@
+const { handler } = require('../../../../src/handlers/dm/sendMessage');
+const DMService = require('../../../../src/services/dm-service');
+const User = require('../../../../src/models/user');
+
+jest.mock('../../../../src/services/dm-service');
+jest.mock('../../../../src/models/user');
 jest.mock('../../../../src/lib/notification-service', () => ({
   sendEmailIfEnabled: jest.fn().mockResolvedValue({ sent: true }),
 }));
-const { handler } = require('../../../../src/handlers/dm/sendMessage');
-const DM = require('../../../../src/models/dm');
-const User = require('../../../../src/models/user');
-const response = require('../../../../src/lib/response');
-
-jest.mock('../../../../src/models/dm');
-jest.mock('../../../../src/models/user');
-jest.mock('../../../../src/lib/response');
 
 describe('dm.sendMessage handler', () => {
-  jest.setTimeout(15000);
   beforeEach(() => jest.clearAllMocks());
 
-  it('sends message in existing conversation (idempotent ensure)', async () => {
+  it('sends message successfully', async () => {
     const currentUser = { userId: 'u1' };
-    const conv = { conversationId: 'conv1', userAId: 'u1', userBId: 'u2' };
     const msg = { conversationId: 'conv1', messageId: 'm1', fromUserId: 'u1', toUserId: 'u2', content: 'hi' };
+    
     User.getCurrentUser.mockResolvedValue(currentUser);
-    DM.ensureConversation.mockResolvedValue(conv);
-    DM.sendMessage.mockResolvedValue(msg);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify({}) });
+    DMService.sendMessage.mockResolvedValue(msg);
 
-    const res = await handler({
-      headers: { Authorization: 'Bearer t' },
+    const event = {
+      headers: { Authorization: 'Bearer test-token' },
       pathParameters: { conversationId: 'conv1' },
       body: JSON.stringify({ toUserId: 'u2', content: 'hi' }),
-    });
+    };
 
-    expect(User.getCurrentUser).toHaveBeenCalledWith('t');
-    expect(DM.ensureConversation).toHaveBeenCalledWith('u1', 'u2');
-    expect(DM.sendMessage).toHaveBeenCalled();
+    const res = await handler(event);
+
+    expect(User.getCurrentUser).toHaveBeenCalledWith('test-token');
+    expect(DMService.sendMessage).toHaveBeenCalledWith({
+      conversationId: 'conv1',
+      fromUserId: 'u1',
+      toUserId: 'u2',
+      content: 'hi',
+    });
     expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual(msg);
   });
 
-  it('rejects when conversationId mismatch', async () => {
-    const currentUser = { userId: 'u1' };
-    const conv = { conversationId: 'convX', userAId: 'u1', userBId: 'u2' };
-    User.getCurrentUser.mockResolvedValue(currentUser);
-    DM.ensureConversation.mockResolvedValue(conv);
-    response.error.mockReturnValue({ statusCode: 403 });
+  it('returns 403 when forbidden error occurs in service', async () => {
+    User.getCurrentUser.mockResolvedValue({ userId: 'u1' });
+    DMService.sendMessage.mockRejectedValue(new Error('FORBIDDEN:Not your conversation'));
 
-    const res = await handler({
+    const event = {
       headers: { Authorization: 'Bearer t' },
       pathParameters: { conversationId: 'conv1' },
       body: JSON.stringify({ toUserId: 'u2', content: 'hi' }),
-    });
+    };
+
+    const res = await handler(event);
 
     expect(res.statusCode).toBe(403);
+    const body = JSON.parse(res.body);
+    expect(body.success).toBe(false);
+    expect(body.error.message).toBe('Not your conversation');
   });
 
-  it('400 when missing content', async () => {
+  it('returns 400 when missing content', async () => {
     User.getCurrentUser.mockResolvedValue({ userId: 'u1' });
-    response.error.mockReturnValue({ statusCode: 400 });
-    const res = await handler({ headers: { Authorization: 'Bearer t' }, pathParameters: { conversationId: 'c' }, body: JSON.stringify({ toUserId: 'u2' }) });
+    
+    const event = {
+      headers: { Authorization: 'Bearer t' },
+      pathParameters: { conversationId: 'c' },
+      body: JSON.stringify({ toUserId: 'u2' })
+    };
+
+    const res = await handler(event);
     expect(res.statusCode).toBe(400);
   });
 });

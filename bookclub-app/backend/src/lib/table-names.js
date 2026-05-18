@@ -9,7 +9,6 @@ const tableNames = {
   'bookclub-members': `${SERVICE_NAME}-bookclub-members-${STAGE}`,
   'dm-conversations': `${SERVICE_NAME}-dm-conversations-${STAGE}`,
   'dm-messages': `${SERVICE_NAME}-dm-messages-${STAGE}`,
-  'toy-listings': `${SERVICE_NAME}-toy-listings-${STAGE}`,
   'lost-found': `${SERVICE_NAME}-lost-found-${STAGE}`,
   'club-email-invites': `${SERVICE_NAME}-club-email-invites-${STAGE}`,
 };

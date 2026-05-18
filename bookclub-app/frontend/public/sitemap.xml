@@ -1,77 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://booklub.shop/</loc>
+    <loc>https://townwink.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/library</loc>
+    <loc>https://townwink.com/library</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/library/books</loc>
+    <loc>https://townwink.com/library/books</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/library/toys</loc>
+    <loc>https://townwink.com/library/toys</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/library/tools</loc>
+    <loc>https://townwink.com/library/tools</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/library/games</loc>
+    <loc>https://townwink.com/library/games</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/library/events</loc>
+    <loc>https://townwink.com/library/events</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/clubs/browse</loc>
+    <loc>https://townwink.com/clubs/browse</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/about/blogs</loc>
+    <loc>https://townwink.com/about/blogs</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/about/blogs/how-to-host-a-no-cost-book-swap</loc>
+    <loc>https://townwink.com/about/blogs/how-to-host-a-no-cost-book-swap</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/about/blogs/starter-rules-for-club-swaps</loc>
+    <loc>https://townwink.com/about/blogs/starter-rules-for-club-swaps</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/about/blogs/declutter-your-shelf-10-tips</loc>
+    <loc>https://townwink.com/about/blogs/declutter-your-shelf-10-tips</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/about</loc>
+    <loc>https://townwink.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/privacy-policy</loc>
+    <loc>https://townwink.com/privacy-policy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://booklub.shop/terms-of-service</loc>
+    <loc>https://townwink.com/terms-of-service</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

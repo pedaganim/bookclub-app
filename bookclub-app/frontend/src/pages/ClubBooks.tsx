@@ -124,7 +124,6 @@ const ClubBooks: React.FC = () => {
     toy: '🧸 Toys',
     tool: '🛠️ Tools',
     game: '🎲 Games',
-    event_hire: '🎉 Event Hire',
     other: '✨ Other Items'
   };
 

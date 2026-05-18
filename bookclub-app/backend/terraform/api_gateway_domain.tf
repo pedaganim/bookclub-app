@@ -18,9 +18,19 @@ data "aws_cloudformation_export" "user_pool_client_id" {
   name  = "${var.service_name}-${var.stage}-UserPoolClientId"
 }
 
+# Existing ACM certificate data lookup
+data "aws_acm_certificate" "existing_api_cert" {
+  provider    = aws.us_east_1
+  count       = var.manage_dns && !var.create_certificate && var.existing_certificate_arn == "" ? 1 : 0
+  domain      = var.api_fqdn
+  statuses    = ["ISSUED"]
+  most_recent = true
+}
+
 # ACM certificate for the API custom domain (must be in us-east-1 for EDGE)
-resource "aws_acm_certificate" "api_cert" {
-  count             = var.manage_dns ? 1 : 0
+resource "aws_acm_certificate" "api_cert_edge" {
+  provider          = aws.us_east_1
+  count             = var.manage_dns && var.create_certificate ? 1 : 0
   domain_name       = var.api_fqdn
   validation_method = "DNS"
 }
@@ -36,9 +46,9 @@ locals {
 }
 
 # Create DNS validation records in Route53
-resource "aws_route53_record" "api_cert_validation" {
-  for_each = var.manage_dns ? {
-    for dvo in aws_acm_certificate.api_cert[0].domain_validation_options : dvo.domain_name => {
+resource "aws_route53_record" "api_cert_validation_edge" {
+  for_each = var.manage_dns && var.create_certificate ? {
+    for dvo in aws_acm_certificate.api_cert_edge[0].domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       type   = dvo.resource_record_type
       record = dvo.resource_record_value
@@ -52,17 +62,18 @@ resource "aws_route53_record" "api_cert_validation" {
 }
 
 # Validate the certificate
-resource "aws_acm_certificate_validation" "api_cert_validation" {
-  count                   = var.manage_dns ? 1 : 0
-  certificate_arn         = aws_acm_certificate.api_cert[0].arn
-  validation_record_fqdns = [for r in aws_route53_record.api_cert_validation : r.fqdn]
+resource "aws_acm_certificate_validation" "api_cert_validation_edge" {
+  provider                = aws.us_east_1
+  count                   = var.manage_dns && var.create_certificate ? 1 : 0
+  certificate_arn         = aws_acm_certificate.api_cert_edge[0].arn
+  validation_record_fqdns = [for r in aws_route53_record.api_cert_validation_edge : r.fqdn]
 }
 
 # API Gateway custom domain (edge-optimized)
 resource "aws_api_gateway_domain_name" "api_domain" {
   count           = var.manage_dns ? 1 : 0
   domain_name     = var.api_fqdn
-  certificate_arn = aws_acm_certificate_validation.api_cert_validation[0].certificate_arn
+  certificate_arn = var.create_certificate ? aws_acm_certificate_validation.api_cert_validation_edge[0].certificate_arn : (var.existing_certificate_arn != "" ? var.existing_certificate_arn : data.aws_acm_certificate.existing_api_cert[0].arn)
   endpoint_configuration {
     types = ["EDGE"]
   }

@@ -15,7 +15,7 @@ describe('BookClub Model', () => {
     // Clear the local storage files
     const path = require('path');
     const fs = require('fs');
-    const storageDir = path.join(__dirname, '../../../.local-storage');
+    const storageDir = path.join(__dirname, '../../../.local-storage-test');
     const clubsFile = path.join(storageDir, 'clubs.json');
     const membersFile = path.join(storageDir, 'club-members.json');
     

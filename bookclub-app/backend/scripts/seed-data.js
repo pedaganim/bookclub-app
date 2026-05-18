@@ -41,92 +41,157 @@ const SAMPLE_USERS = [
   }
 ];
 
+const SAMPLE_CLUBS = [
+  {
+    clubId: 'club-fiction-001',
+    name: 'Fiction Lovers',
+    slug: 'fiction-lovers',
+    description: 'A club for people who love reading fiction.',
+    location: 'New York, NY',
+    createdBy: 'user-1',
+    inviteCode: 'FICT1234',
+    isPrivate: false,
+    memberLimit: 50,
+    memberCount: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    clubId: 'club-scifi-002',
+    name: 'Sci-Fi Enthusiasts',
+    slug: 'sci-fi-enthusiasts',
+    description: 'Exploring the universe through science fiction.',
+    location: 'San Francisco, CA',
+    createdBy: 'user-2',
+    inviteCode: 'SCFI1234',
+    isPrivate: false,
+    memberLimit: 20,
+    memberCount: 2,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+const SAMPLE_MEMBERSHIPS = [
+  { clubId: 'club-fiction-001', userId: 'user-1', role: 'admin', status: 'active', joinedAt: new Date().toISOString() },
+  { clubId: 'club-fiction-001', userId: 'user-2', role: 'member', status: 'active', joinedAt: new Date().toISOString() },
+  { clubId: 'club-fiction-001', userId: 'user-3', role: 'member', status: 'active', joinedAt: new Date().toISOString() },
+  { clubId: 'club-scifi-002', userId: 'user-2', role: 'admin', status: 'active', joinedAt: new Date().toISOString() },
+  { clubId: 'club-scifi-002', userId: 'user-3', role: 'member', status: 'active', joinedAt: new Date().toISOString() },
+  
+  // Explicitly add 'local-user' to clubs so the default local login can see the gated items
+  { clubId: 'club-fiction-001', userId: 'local-user', role: 'admin', status: 'active', joinedAt: new Date().toISOString() },
+  { clubId: 'club-scifi-002', userId: 'local-user', role: 'member', status: 'active', joinedAt: new Date().toISOString() }
+];
+
 const SAMPLE_BOOKS = [
   {
     bookId: uuidv4(),
     userId: 'user-1',
+    title: 'The Pragmatic Programmer',
+    author: 'David Thomas, Andrew Hunt',
+    category: 'book',
+    clubId: null, // Global item
+    description: 'A classic book on software craftsmanship.',
+    status: 'available',
+    createdAt: new Date().toISOString()
+  },
+  {
+    bookId: uuidv4(),
+    userId: 'local-user',
     title: 'The Great Gatsby',
     author: 'F. Scott Fitzgerald',
-    isbn: '978-0-7432-7356-5',
+    category: 'book',
+    clubId: 'club-fiction-001',
     description: 'A classic American novel set in the Jazz Age.',
-    genre: 'Classic Literature',
-    condition: 'Good',
-    availability: 'available',
-    coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780743273565-L.jpg',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    status: 'available',
+    createdAt: new Date().toISOString()
   },
   {
     bookId: uuidv4(),
-    userId: 'user-1',
+    userId: 'local-user',
     title: 'To Kill a Mockingbird',
     author: 'Harper Lee',
-    isbn: '978-0-06-112008-4',
-    description: 'A gripping tale of racial injustice and childhood innocence.',
-    genre: 'Classic Literature',
-    condition: 'Excellent',
-    availability: 'available',
-    coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780061120084-L.jpg',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    bookId: uuidv4(),
-    userId: 'user-2',
-    title: 'The Catcher in the Rye',
-    author: 'J.D. Salinger',
-    isbn: '978-0-316-76948-0',
-    description: 'A coming-of-age story in New York City.',
-    genre: 'Classic Literature',
-    condition: 'Fair',
-    availability: 'available',
-    coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780316769488-L.jpg',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    category: 'book',
+    clubId: 'club-fiction-001',
+    description: 'A gripping tale of racial injustice.',
+    status: 'available',
+    createdAt: new Date().toISOString()
   },
   {
     bookId: uuidv4(),
     userId: 'user-2',
     title: 'Dune',
+
     author: 'Frank Herbert',
-    isbn: '978-0-441-17271-9',
-    description: 'Epic science fiction novel set on the desert planet Arrakis.',
-    genre: 'Science Fiction',
-    condition: 'Good',
-    availability: 'borrowed',
-    borrowedBy: 'user-3',
-    borrowedAt: new Date().toISOString(),
-    coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    category: 'book',
+    clubId: 'club-scifi-002',
+    description: 'Epic science fiction novel.',
+    status: 'available',
+    createdAt: new Date().toISOString()
+  },
+  {
+    bookId: uuidv4(),
+    userId: 'user-2',
+    title: 'LEGO Star Wars X-Wing',
+    category: 'toy',
+    clubId: 'club-scifi-002',
+    description: 'Building set for Star Wars fans.',
+    status: 'available',
+    createdAt: new Date().toISOString()
   },
   {
     bookId: uuidv4(),
     userId: 'user-3',
-    title: 'The Hobbit',
-    author: 'J.R.R. Tolkien',
-    isbn: '978-0-547-92822-7',
-    description: 'A fantasy adventure about Bilbo Baggins\' unexpected journey.',
-    genre: 'Fantasy',
-    condition: 'Excellent',
-    availability: 'available',
-    coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    title: 'Cordless Power Drill',
+    category: 'tool',
+    clubId: 'club-fiction-001',
+    description: 'High performance 18V drill.',
+    status: 'available',
+    createdAt: new Date().toISOString()
   },
   {
     bookId: uuidv4(),
-    userId: 'user-3',
-    title: 'Atomic Habits',
-    author: 'James Clear',
-    isbn: '978-0-7352-1129-2',
-    description: 'An easy & proven way to build good habits & break bad ones.',
-    genre: 'Self-Help',
-    condition: 'Like New',
-    availability: 'available',
-    coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    userId: 'user-2',
+    title: 'Settlers of Catan',
+    category: 'game',
+    clubId: 'club-scifi-002',
+    description: 'The classic board game.',
+    status: 'available',
+    createdAt: new Date().toISOString()
+  },
+  {
+    bookId: uuidv4(),
+    userId: 'user-1',
+    title: 'Professional Tripod',
+    category: 'other',
+    clubId: 'club-fiction-001',
+    description: 'Sturdy aluminum tripod.',
+    status: 'available',
+    createdAt: new Date().toISOString()
+  }
+];
+
+const SAMPLE_LOST_FOUND_ITEMS = [
+  {
+    lostFoundId: uuidv4(),
+    reporterId: 'user-3',
+    title: 'Found Keys at Park',
+    type: 'found',
+    clubId: 'club-fiction-001',
+    description: 'Found a set of keys near the swing set.',
+    status: 'active',
+    createdAt: new Date().toISOString()
+  },
+  {
+    lostFoundId: uuidv4(),
+    reporterId: 'user-1',
+    title: 'Lost Golden Retriever',
+    type: 'lost',
+    clubId: 'club-fiction-001',
+    description: 'Missing dog answers to Buddy. Has a blue collar.',
+    status: 'active',
+    createdAt: new Date().toISOString()
   }
 ];
 
@@ -138,27 +203,36 @@ async function seedData() {
     console.log('Creating sample users...');
     for (const user of SAMPLE_USERS) {
       await LocalStorage.createUser(user);
-      console.log(`  ✓ Created user: ${user.name} (${user.email})`);
     }
     
-    // Seed books
-    console.log('Creating sample books...');
+    // Seed clubs
+    console.log('Creating sample clubs...');
+    for (const club of SAMPLE_CLUBS) {
+      await LocalStorage.createClub(club);
+    }
+    
+    // Seed memberships
+    console.log('Creating sample memberships...');
+    for (const membership of SAMPLE_MEMBERSHIPS) {
+      await LocalStorage.createClubMember(membership);
+    }
+    
+    // Seed items
+    console.log('Creating sample items...');
     for (const book of SAMPLE_BOOKS) {
       await LocalStorage.createBook(book);
-      console.log(`  ✓ Created book: "${book.title}" by ${book.author}`);
+    }
+    
+    // Seed lost and found
+    console.log('Creating sample lost & found items...');
+    for (const item of SAMPLE_LOST_FOUND_ITEMS) {
+      await LocalStorage.createLostFoundItem(item);
     }
     
     console.log('\n🎉 Sample data seeded successfully!');
-    console.log('\nSample users for testing:');
-    SAMPLE_USERS.forEach(user => {
-      console.log(`  • ${user.email} (password: password123)`);
-    });
-    
-    console.log('\nSample books created:');
-    SAMPLE_BOOKS.forEach(book => {
-      console.log(`  • "${book.title}" by ${book.author} - Owner: ${book.userId}`);
-    });
-    
+    console.log('Available items: Books, Toys, Tools, Games, Other');
+    console.log('Available lost & found: Keys, Dog');
+    console.log('Available clubs: Fiction Lovers, Sci-Fi Enthusiasts');
   } catch (error) {
     console.error('❌ Error seeding data:', error);
     process.exit(1);

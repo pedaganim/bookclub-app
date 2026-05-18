@@ -1,13 +1,13 @@
 # Development Environment Setup Guide
 
-This guide helps you set up a complete development environment for **booklub.shop** on AWS, including both backend (Serverless) and frontend (S3 + CloudFront).
+This guide helps you set up a complete development environment for **townwink.com** on AWS, including both backend (Serverless) and frontend (S3 + CloudFront).
 
 ## Overview
 
 The development environment uses:
 - **Backend**: AWS Lambda, API Gateway, DynamoDB, Cognito (deployed via Serverless Framework)
 - **Frontend**: S3 static website hosting + CloudFront CDN
-- **Domain**: `dev.booklub.shop` (subdomain of production)
+- **Domain**: `dev.townwink.com` (subdomain of production)
 
 ## Prerequisites
 
@@ -108,8 +108,8 @@ REACT_APP_COGNITO_REGION=us-east-1
 REACT_APP_COGNITO_USER_POOL_ID=us-east-1_xxxxx
 REACT_APP_COGNITO_CLIENT_ID=xxxxxxxx
 REACT_APP_COGNITO_DOMAIN=bookclub-app-dev-dev.auth.us-east-1.amazoncognito.com
-REACT_APP_OAUTH_REDIRECT_SIGNIN=https://dev.booklub.shop/auth/callback
-REACT_APP_OAUTH_REDIRECT_SIGNOUT=https://dev.booklub.shop/
+REACT_APP_OAUTH_REDIRECT_SIGNIN=https://dev.townwink.com/auth/callback
+REACT_APP_OAUTH_REDIRECT_SIGNOUT=https://dev.townwink.com/
 REACT_APP_OAUTH_SCOPES=openid email profile
 REACT_APP_OAUTH_RESPONSE_TYPE=code
 EOF
@@ -142,7 +142,7 @@ Or use the AWS Console to create a CloudFront distribution with:
 ### 6. Configure DNS (Route 53 or External DNS)
 
 Create a CNAME record:
-- **Name**: `dev.booklub.shop`
+- **Name**: `dev.townwink.com`
 - **Value**: `<cloudfront-domain>.cloudfront.net`
 
 Or use Route 53 Alias record pointing to the CloudFront distribution.
@@ -150,8 +150,8 @@ Or use Route 53 Alias record pointing to the CloudFront distribution.
 ### 7. Configure Cognito Callback URLs
 
 In AWS Console → Cognito → User Pools → App Integration:
-- Add `https://dev.booklub.shop/auth/callback` to Callback URL(s)
-- Add `https://dev.booklub.shop/` to Sign out URL(s)
+- Add `https://dev.townwink.com/auth/callback` to Callback URL(s)
+- Add `https://dev.townwink.com/` to Sign out URL(s)
 
 ### 8. Configure Google OAuth (if using Google sign-in)
 
@@ -164,11 +164,11 @@ The `dev` stage creates completely isolated resources:
 
 | Resource | Production | Development |
 |----------|------------|-------------|
-| API Gateway | `api.booklub.shop` | Auto-generated URL |
-| Cognito User Pool | `booklub` | `bookclub-app-dev-dev` |
+| API Gateway | `api.townwink.com` | Auto-generated URL |
+| Cognito User Pool | `townwink` | `bookclub-app-dev-dev` |
 | DynamoDB Tables | `bookclub-app-*-prod` | `bookclub-app-*-dev` |
 | S3 Bucket | `bookclub-app-prod-frontend` | `bookclub-app-dev-frontend` |
-| Frontend Domain | `booklub.shop` | `dev.booklub.shop` |
+| Frontend Domain | `townwink.com` | `dev.townwink.com` |
 
 ## Testing the Dev Environment
 
@@ -180,14 +180,14 @@ After deployment, verify:
    ```
 
 2. **Frontend Loading**:
-   Open `https://dev.booklub.shop` in browser
+   Open `https://dev.townwink.com` in browser
 
 3. **Authentication Flow**:
    - Click Sign In → should redirect to Cognito
-   - After login → should redirect back to `dev.booklub.shop/auth/callback`
+   - After login → should redirect back to `dev.townwink.com/auth/callback`
 
 4. **Subdomain Testing**:
-   Test club subdomains by creating a club and accessing `https://<club-slug>.dev.booklub.shop`
+   Test club subdomains by creating a club and accessing `https://<club-slug>.dev.townwink.com`
 
 ## Troubleshooting
 
@@ -201,7 +201,7 @@ Invalidate the cache: `aws cloudfront create-invalidation --distribution-id <ID>
 Verify callback URLs in Cognito App client settings match exactly (including trailing slashes).
 
 ### CORS Errors
-Ensure API Gateway CORS settings allow `https://dev.booklub.shop` as an origin.
+Ensure API Gateway CORS settings allow `https://dev.townwink.com` as an origin.
 
 ## Cost Considerations
 

@@ -1,32 +1,21 @@
-const { success, error } = require('../../lib/response');
-const User = require('../../models/user');
-const DM = require('../../models/dm');
+const { z } = require('zod');
+const response = require('../../lib/response');
+const DMService = require('../../services/dm-service');
+const { withAuth } = require('../../lib/middleware');
 
-exports.handler = async (event) => {
-  try {
-    const claims = event?.requestContext?.authorizer?.claims;
-    let userId = claims?.sub;
+const ListConversationsSchema = z.object({
+  limit: z.preprocess((val) => parseInt(val, 10), z.number().int().min(1).max(100).default(20)),
+}).strict();
 
-    // Fallback to manual token validation for compatibility with tests/offline
-    if (!userId) {
-      const authHeader = (event.headers && (event.headers.Authorization || event.headers.authorization)) || '';
-      const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : authHeader || null;
-      if (!token) return error('Authorization token is required', 401);
-      try {
-        const currentUser = await User.getCurrentUser(token);
-        if (!currentUser) return error('User not found', 401);
-        userId = currentUser.userId;
-      } catch {
-        return error('Invalid or expired token', 401);
-      }
-    }
+/**
+ * Handler for listing user conversations.
+ */
+const handler = async (event) => {
+  const qs = event.queryStringParameters || {};
+  const { limit } = ListConversationsSchema.parse(qs);
 
-    const limit = event.queryStringParameters?.limit ? parseInt(event.queryStringParameters.limit, 10) : 20;
-    const list = await DM.listConversationsForUser(userId, Math.min(Math.max(limit, 1), 100));
-    return success(list);
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('Error listing conversations:', e);
-    return error(e.message || 'Failed to list conversations', 500);
-  }
+  const list = await DMService.listConversations(event.userId, limit);
+  return response.success(list);
 };
+
+module.exports.handler = withAuth(handler);

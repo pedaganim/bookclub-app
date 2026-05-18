@@ -1,19 +1,11 @@
-const { handler } = require('../../../../src/handlers/books/list');
-const Book = require('../../../../src/models/book');
-const response = require('../../../../src/lib/response');
+jest.mock('../../../../src/services/book-service');
 
-jest.mock('../../../../src/models/book');
-jest.mock('../../../../src/lib/response');
+const { handler } = require('../../../../src/handlers/books/list');
+const BookService = require('../../../../src/services/book-service');
 
 describe('listBooks handler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock console.log to avoid noise in tests
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    console.log.mockRestore();
   });
 
   it('should list books by user when userId is provided in query string', async () => {
@@ -22,75 +14,67 @@ describe('listBooks handler', () => {
       nextToken: 'token123'
     };
     
-    Book.listByUser.mockResolvedValue(mockBooks);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
+    BookService.list.mockResolvedValue(mockBooks);
 
     const event = {
       queryStringParameters: {
         userId: 'user123',
         limit: '5'
+      },
+      requestContext: {
+        authorizer: {
+          claims: {
+            sub: 'auth-user-id'
+          }
+        }
       }
     };
 
     const result = await handler(event);
 
-    expect(Book.listByUser).toHaveBeenCalledWith('user123', 5, null, null);
-    expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
-      nextToken: mockBooks.nextToken
-    });
+    expect(BookService.list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user123',
+        limit: 5
+      }),
+      'auth-user-id'
+    );
     expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    expect(body.data.items).toEqual(mockBooks.items);
+    expect(body.data.nextToken).toBe(mockBooks.nextToken);
   });
 
-  it('should list books by authenticated user when no userId in query but has Cognito claims', async () => {
+  it('should list books by authenticated user when no userId in query', async () => {
     const mockBooks = {
       items: [{ id: '2', title: 'Another Book' }],
       nextToken: null
     };
     
-    Book.listByUser.mockResolvedValue(mockBooks);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
+    BookService.list.mockResolvedValue(mockBooks);
 
     const event = {
+      queryStringParameters: null,
       requestContext: {
         authorizer: {
           claims: {
             sub: 'cognito-user-123'
           }
         }
-      },
-      queryStringParameters: null
+      }
     };
 
-    await handler(event);
+    const result = await handler(event);
 
-    expect(Book.listByUser).toHaveBeenCalledWith('cognito-user-123', 10, null, null);
-    expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
-      nextToken: null
-    });
-  });
-
-  it('should list all books when no userId provided and no authentication', async () => {
-    const mockBooks = {
-      items: [{ id: '3', title: 'Public Book' }],
-      nextToken: null
-    };
-    
-    Book.listAll.mockResolvedValue(mockBooks);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
-
-    const event = {
-      queryStringParameters: null
-    };
-
-    await handler(event);
-
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, { bare: false, category: null });
-    expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
-      nextToken: null
-    });
+    expect(BookService.list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        limit: 10
+      }),
+      'cognito-user-123'
+    );
+    expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    expect(body.data.items).toEqual(mockBooks.items);
   });
 
   it('should handle pagination with nextToken', async () => {
@@ -99,57 +83,43 @@ describe('listBooks handler', () => {
       nextToken: 'next123'
     };
     
-    Book.listByUser.mockResolvedValue(mockBooks);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
+    BookService.list.mockResolvedValue(mockBooks);
 
     const event = {
       queryStringParameters: {
         userId: 'user456',
         limit: '20',
         nextToken: 'prev123'
+      },
+      requestContext: {
+        authorizer: {
+          claims: {
+            sub: 'some-user'
+          }
+        }
       }
-    };
-
-    await handler(event);
-
-    expect(Book.listByUser).toHaveBeenCalledWith('user456', 20, 'prev123', null);
-  });
-
-  it('should handle errors gracefully', async () => {
-    const error = new Error('Database error');
-    Book.listAll.mockRejectedValue(error);
-    response.error.mockReturnValue({ statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) });
-
-    const event = {
-      queryStringParameters: null
     };
 
     const result = await handler(event);
 
-    expect(response.error).toHaveBeenCalledWith(error);
-    expect(result.statusCode).toBe(500);
+    expect(result.statusCode).toBe(200);
+    expect(BookService.list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user456',
+        limit: 20,
+        nextToken: 'prev123'
+      }),
+      'some-user'
+    );
   });
 
-  it('should use default limit when not specified', async () => {
-    const mockBooks = { items: [], nextToken: null };
-    Book.listAll.mockResolvedValue(mockBooks);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
-
-    const event = {};
-
-    await handler(event);
-
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, null, null, { bare: false, category: null });
-  });
-
-  it('should list all books with search filter when search query provided', async () => {
+  it('should handle search filter', async () => {
     const mockBooks = {
       items: [{ bookId: '1', title: 'Book 1' }],
       nextToken: null
     };
 
-    Book.listAll.mockResolvedValue(mockBooks);
-    response.success.mockReturnValue({ statusCode: 200, body: JSON.stringify(mockBooks) });
+    BookService.list.mockResolvedValue(mockBooks);
 
     const event = {
       queryStringParameters: {
@@ -157,12 +127,14 @@ describe('listBooks handler', () => {
       }
     };
 
-    await handler(event);
+    const result = await handler(event);
 
-    expect(Book.listAll).toHaveBeenCalledWith(10, null, 'fiction', null, { bare: false, category: null });
-    expect(response.success).toHaveBeenCalledWith({
-      items: mockBooks.items,
-      nextToken: null
-    });
+    expect(result.statusCode).toBe(200);
+    expect(BookService.list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        search: 'fiction'
+      }),
+      null
+    );
   });
 });

@@ -3,11 +3,11 @@
   "apiCustomDomain": "",
   "userPoolDomainPrefix": "bookclub-app-dev",
   "oauth": {
-    "redirectSignIn": "https://dev.booklub.shop/auth/callback",
-    "redirectSignOut": "https://dev.booklub.shop/"
+    "redirectSignIn": "https://dev.townwink.com/auth/callback",
+    "redirectSignOut": "https://dev.townwink.com/"
   },
   "frontend": {
-    "domain": "dev.booklub.shop",
+    "domain": "dev.townwink.com",
     "bucketName": "bookclub-app-dev-frontend"
   }
 }

@@ -3,14 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useUploadModal } from '../contexts/UploadModalContext';
 import { apiService } from '../services/api';
-import { useSubdomain } from '../hooks/useSubdomain';
+import { useBrand } from '../contexts/BrandContext';
 import { config } from '../config';
 
 import MobileTabBar from './MobileTabBar';
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
-  const { isSubdomain, club } = useSubdomain();
+  const { name: brandName } = useBrand();
   const { openModal } = useUploadModal();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -88,22 +88,11 @@ const Navbar: React.FC = () => {
             <div className="flex items-center flex-shrink-0 gap-3">
               <Link to="/" className="flex items-center flex-shrink-0">
                 <img
-                  src={`${process.env.PUBLIC_URL || ''}/logo.png`}
-                  alt="Community Library"
+                  src={`${process.env.PUBLIC_URL || ''}/townwink-logo.png`}
+                  alt="TownWink"
                   className="h-8 w-auto"
                 />
               </Link>
-              {isSubdomain && club && (
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-gray-900 leading-tight">{club.name}</span>
-                  <a 
-                    href={config.apiBaseUrl.replace('api.', '')} 
-                    className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    ← Global Hub
-                  </a>
-                </div>
-              )}
             </div>
 
             {/* Desktop Nav */}

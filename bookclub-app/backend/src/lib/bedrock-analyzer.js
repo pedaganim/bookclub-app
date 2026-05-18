@@ -106,6 +106,82 @@ function normalizeMetadata(obj = {}) {
   };
 }
 
+async function analyzeCoverImage({ bucket, key, contentType = 'image/jpeg', modelId }) {
+  modelId = modelId || process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
+  const client = getBedrockClient();
+  let bytes = await getS3ObjectBytes(bucket, key);
+  let mediaType = contentType;
+
+  // Bedrock image limit guard
+  const BASE64_MAX = 5 * 1024 * 1024;
+  try {
+    const overLimit = () => estimateBase64Length(bytes.length) > BASE64_MAX;
+    if (overLimit()) {
+      let width = 1600;
+      let quality = 80;
+      for (let i = 0; i < 8; i++) {
+        const out = await sharp(bytes, { failOnError: false })
+          .resize({ width: Math.max(640, Math.floor(width)), withoutEnlargement: true })
+          .jpeg({ quality: Math.max(40, Math.floor(quality)), mozjpeg: true })
+          .toBuffer();
+        bytes = out;
+        mediaType = 'image/jpeg';
+        if (estimateBase64Length(out.length) <= BASE64_MAX) break;
+        width = width * 0.8;
+        quality = quality * 0.85;
+      }
+    }
+  } catch (e) {
+    console.warn('[Bedrock] Image compression failed:', e?.message);
+  }
+
+  const systemPrompt =
+    'You are a professional librarian AI. Your task is to analyze an image of a book cover and extract high-quality metadata. ' +
+    'Extract title candidates, author candidates, categories, age group, audience, themes, and content warnings. ' +
+    'CRITICAL SAFETY RULE: If the image is primarily of a human person, a face, or contains personal identifying information of a person (and is not a book cover), ' +
+    'OR if the image contains pornographic, sexually explicit, or inappropriate adult content, ' +
+    'set "title_candidates" to [{"value": "SAFETY_ERROR", "confidence": 1}] and "description" to "INAPPROPRIATE_CONTENT_DETECTED" (use "PERSON_DETECTED" if it is just a person). ' +
+    'Return ONLY strict JSON with this shape: ' +
+    '{"title_candidates":[{"value":"string","confidence":number}],"author_candidates":[{"value":"string","confidence":number}],"categories":["string"],"age_group":"string","audience":["string"],"themes":["string"],"content_warnings":["string"],"language_guess":"string","description":"string"}.';
+
+  const body = JSON.stringify({
+    anthropic_version: 'bedrock-2023-05-31',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: systemPrompt },
+          toBase64Image(bytes, mediaType),
+        ],
+      },
+    ],
+  });
+
+  const cmd = new InvokeModelCommand({
+    modelId,
+    contentType: 'application/json',
+    accept: 'application/json',
+    body,
+  });
+
+  const res = await withRetry(() => client.send(cmd));
+  const json = JSON.parse(new TextDecoder().decode(res.body));
+  const text = Array.isArray(json.content) && json.content[0]?.text ? json.content[0].text : '';
+
+  let parsed = {};
+  try {
+    const clean = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    parsed = JSON.parse(clean);
+  } catch (e) {
+    try {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    } catch (_) {}
+  }
+
+  return normalizeMetadata(parsed);
+}
 
 async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpeg', instruction, modelId }) {
   modelId = modelId || process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
@@ -138,10 +214,11 @@ async function analyzeUniversalItemImage({ bucket, key, contentType = 'image/jpe
 
   const systemPrompt =
     'You are a universal community library assistant. Your task is to analyze an image of an item (book, toy, tool, game, clothing, etc.) and extract metadata. ' +
-    'FIRST, identify the category of the item from this list: [book, toy, tool, game, clothing, event_hire, other]. ' +
+    'FIRST, identify the category of the item from this list: [book, toy, tool, game, clothing, other]. ' +
     'SECOND, extract the title and a 1-3 sentence description. ' +
     'THIRD, CRITICAL SAFETY RULE: If the image is primarily of a human person, a face, or contains personal identifying information of a person (and is not an item for the library), ' +
-    'set the "category" to "person_error" and "description" to "PERSON_DETECTED". ' +
+    'OR if the image contains pornographic, sexually explicit, or inappropriate adult content, ' +
+    'set the "category" to "safety_error" and "description" to "INAPPROPRIATE_CONTENT_DETECTED" (use "PERSON_DETECTED" if it is just a person). ' +
     'Return ONLY strict JSON (no commentary) with this shape: ' +
     '{"category":"string","title":"string","description":"string","author":"string|null","ageRange":"string|null"}. ' +
     'Rules: ' +
@@ -230,7 +307,8 @@ async function analyzeLostFoundImage({ bucket, key, contentType = 'image/jpeg', 
     'You are an AI assistant helping a community club manage their lost & found. Your task is to analyze an image of a found item. ' +
     'Extract a concise title, a detailed description, classify the item type (book, toy, tool, game, clothing, or other), and note any visible location hints in the background (where it might have been found). ' +
     'CRITICAL SAFETY RULE: If the image is primarily of a human person, a face, or contains personal identifying information, ' +
-    'set "itemType" to "person_error" and "description" to "PERSON_DETECTED". ' +
+    'OR if the image contains pornographic, sexually explicit, or inappropriate adult content, ' +
+    'set "itemType" to "safety_error" and "description" to "INAPPROPRIATE_CONTENT_DETECTED" (use "PERSON_DETECTED" if it is just a person). ' +
     'Return ONLY strict JSON (no commentary) with this shape: ' +
     '{"title":"string","description":"string","itemType":"string","foundLocation":"string"}. ' +
     'Rules: ' +
@@ -283,6 +361,7 @@ async function analyzeLostFoundImage({ bucket, key, contentType = 'image/jpeg', 
 }
 
 module.exports = {
+  analyzeCoverImage,
   analyzeUniversalItemImage,
   analyzeLostFoundImage,
 };
