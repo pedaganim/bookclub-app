@@ -1,0 +1,297 @@
+{
+  "users": [
+    {
+      "userId": "local-user",
+      "email": "local@dev",
+      "name": "Local Dev",
+      "password": "local",
+      "bio": "Local development account",
+      "profilePicture": null,
+      "timezone": "Asia/Kolkata",
+      "createdAtOffsetMinutes": 1440,
+      "updatedAtOffsetMinutes": 60
+    },
+    {
+      "userId": "user-alice",
+      "email": "alice@example.com",
+      "name": "Alice Johnson",
+      "password": "password123",
+      "bio": "Shares books and board games with the community.",
+      "profilePicture": null,
+      "timezone": "Asia/Kolkata",
+      "createdAtOffsetMinutes": 1440,
+      "updatedAtOffsetMinutes": 120
+    },
+    {
+      "userId": "user-madhukar",
+      "email": "madhukar@example.com",
+      "name": "Madhukar Rao",
+      "password": "password123",
+      "bio": "Weekend reader and tool borrower.",
+      "profilePicture": null,
+      "timezone": "Asia/Kolkata",
+      "createdAtOffsetMinutes": 1440,
+      "updatedAtOffsetMinutes": 90
+    },
+    {
+      "userId": "user-kalyan",
+      "email": "kalyan@example.com",
+      "name": "Kalyan Kumar",
+      "password": "password123",
+      "bio": "Shares kids books, toys, and sports gear.",
+      "profilePicture": null,
+      "timezone": "Asia/Kolkata",
+      "createdAtOffsetMinutes": 1440,
+      "updatedAtOffsetMinutes": 80
+    }
+  ],
+  "clubs": [
+    {
+      "clubId": "club-sobha-windsor",
+      "name": "Sobha Windsor book club",
+      "slug": "sobha-windsor-book-club",
+      "description": "Neighbors sharing books, toys, tools, and useful household items.",
+      "location": "Sobha Windsor, Whitefield",
+      "createdBy": "local-user",
+      "inviteCode": "SOBHA123",
+      "isPrivate": false,
+      "memberLimit": 250,
+      "memberCount": 0,
+      "createdAtOffsetMinutes": 1440,
+      "updatedAtOffsetMinutes": 30
+    },
+    {
+      "clubId": "club-greenwood",
+      "name": "Greenwood Readers Circle",
+      "slug": "greenwood-readers-circle",
+      "description": "A public sample club used for browse and search testing.",
+      "location": "Greenwood Apartments",
+      "createdBy": "user-alice",
+      "inviteCode": "GREEN123",
+      "isPrivate": false,
+      "memberLimit": 100,
+      "memberCount": 0,
+      "createdAtOffsetMinutes": 1300,
+      "updatedAtOffsetMinutes": 35
+    },
+    {
+      "clubId": "club-lakeview",
+      "name": "Lakeview Family Library",
+      "slug": "lakeview-family-library",
+      "description": "Sample club with family books, puzzles, and weekend games.",
+      "location": "Lakeview Enclave",
+      "createdBy": "user-kalyan",
+      "inviteCode": "LAKE123",
+      "isPrivate": false,
+      "memberLimit": 150,
+      "memberCount": 0,
+      "createdAtOffsetMinutes": 1200,
+      "updatedAtOffsetMinutes": 40
+    }
+  ],
+  "clubMembers": [
+    {
+      "clubId": "club-sobha-windsor",
+      "userId": "local-user",
+      "role": "admin",
+      "status": "active",
+      "joinedAtOffsetMinutes": 1440,
+      "createdAtOffsetMinutes": 1440,
+      "updatedAtOffsetMinutes": 60
+    },
+    {
+      "clubId": "club-sobha-windsor",
+      "userId": "user-alice",
+      "role": "member",
+      "status": "active",
+      "joinedAtOffsetMinutes": 1300,
+      "createdAtOffsetMinutes": 1300,
+      "updatedAtOffsetMinutes": 60
+    },
+    {
+      "clubId": "club-sobha-windsor",
+      "userId": "user-madhukar",
+      "role": "member",
+      "status": "active",
+      "joinedAtOffsetMinutes": 1250,
+      "createdAtOffsetMinutes": 1250,
+      "updatedAtOffsetMinutes": 60
+    },
+    {
+      "clubId": "club-sobha-windsor",
+      "userId": "user-kalyan",
+      "role": "member",
+      "status": "active",
+      "joinedAtOffsetMinutes": 1100,
+      "createdAtOffsetMinutes": 1100,
+      "updatedAtOffsetMinutes": 60
+    },
+    {
+      "clubId": "club-greenwood",
+      "userId": "user-alice",
+      "role": "admin",
+      "status": "active",
+      "joinedAtOffsetMinutes": 1200,
+      "createdAtOffsetMinutes": 1200,
+      "updatedAtOffsetMinutes": 60
+    },
+    {
+      "clubId": "club-lakeview",
+      "userId": "user-kalyan",
+      "role": "admin",
+      "status": "active",
+      "joinedAtOffsetMinutes": 1150,
+      "createdAtOffsetMinutes": 1150,
+      "updatedAtOffsetMinutes": 60
+    }
+  ],
+  "books": [
+    {
+      "bookId": "book-atomic-habits",
+      "userId": "user-alice",
+      "clubId": "club-sobha-windsor",
+      "title": "Atomic Habits",
+      "author": "James Clear",
+      "description": "A practical guide to building better habits through small changes.",
+      "coverImage": "https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg",
+      "status": "available",
+      "category": "book",
+      "isbn13": "9780735211292",
+      "publisher": "Avery",
+      "createdAtOffsetMinutes": 800,
+      "updatedAtOffsetMinutes": 40
+    },
+    {
+      "bookId": "book-psychology-money",
+      "userId": "user-madhukar",
+      "clubId": "club-sobha-windsor",
+      "title": "The Psychology of Money",
+      "author": "Morgan Housel",
+      "description": "Short stories about money, behavior, and long-term thinking.",
+      "coverImage": "https://covers.openlibrary.org/b/isbn/9780857197689-L.jpg",
+      "status": "available",
+      "category": "book",
+      "isbn13": "9780857197689",
+      "publisher": "Harriman House",
+      "createdAtOffsetMinutes": 760,
+      "updatedAtOffsetMinutes": 35
+    },
+    {
+      "bookId": "book-local-shareable",
+      "userId": "local-user",
+      "clubId": "club-sobha-windsor",
+      "title": "The Almanack of Naval Ravikant",
+      "author": "Eric Jorgenson",
+      "description": "A local-user-owned sample listing for My Shareables.",
+      "coverImage": "https://covers.openlibrary.org/b/isbn/9781544514215-L.jpg",
+      "status": "available",
+      "category": "book",
+      "isbn13": "9781544514215",
+      "createdAtOffsetMinutes": 720,
+      "updatedAtOffsetMinutes": 30
+    },
+    {
+      "bookId": "toy-building-blocks",
+      "userId": "user-kalyan",
+      "clubId": "club-sobha-windsor",
+      "title": "Wooden Building Blocks",
+      "author": "",
+      "description": "A box of colorful wooden blocks for toddlers.",
+      "coverImage": null,
+      "status": "available",
+      "category": "toy",
+      "ageRange": "3-6",
+      "createdAtOffsetMinutes": 680,
+      "updatedAtOffsetMinutes": 25
+    },
+    {
+      "bookId": "tool-cordless-drill",
+      "userId": "user-madhukar",
+      "clubId": "club-sobha-windsor",
+      "title": "Cordless Drill",
+      "author": "",
+      "description": "Battery drill for small household fixes.",
+      "coverImage": null,
+      "status": "available",
+      "category": "tool",
+      "createdAtOffsetMinutes": 640,
+      "updatedAtOffsetMinutes": 24
+    },
+    {
+      "bookId": "game-catan",
+      "userId": "user-alice",
+      "clubId": "club-sobha-windsor",
+      "title": "Catan Board Game",
+      "author": "",
+      "description": "Classic family board game for weekend game nights.",
+      "coverImage": null,
+      "status": "available",
+      "category": "game",
+      "createdAtOffsetMinutes": 610,
+      "updatedAtOffsetMinutes": 22
+    },
+    {
+      "bookId": "book-greenwood-clean-code",
+      "userId": "user-alice",
+      "clubId": "club-greenwood",
+      "title": "Clean Code",
+      "author": "Robert C. Martin",
+      "description": "Sample item in another public club for browse/search testing.",
+      "coverImage": "https://covers.openlibrary.org/b/isbn/9780132350884-L.jpg",
+      "status": "available",
+      "category": "book",
+      "isbn13": "9780132350884",
+      "createdAtOffsetMinutes": 500,
+      "updatedAtOffsetMinutes": 20
+    }
+  ],
+  "posts": [
+    {
+      "postId": "post-atomic-habits-request",
+      "clubId": "club-sobha-windsor",
+      "authorId": "local-user",
+      "text": "Does anyone have Atomic Habits available this weekend? I can pick it up from the clubhouse.",
+      "images": [],
+      "createdAtOffsetMinutes": 12,
+      "updatedAtOffsetMinutes": 12
+    },
+    {
+      "postId": "post-money-book-share",
+      "clubId": "club-sobha-windsor",
+      "authorId": "user-madhukar",
+      "text": "I can bring The Psychology of Money to the clubhouse tomorrow evening if anyone wants to borrow it.",
+      "images": [],
+      "createdAtOffsetMinutes": 55,
+      "updatedAtOffsetMinutes": 55
+    },
+    {
+      "postId": "post-kids-books",
+      "clubId": "club-sobha-windsor",
+      "authorId": "user-kalyan",
+      "text": "Looking for early-reader books for a 6 year old. Happy to swap with puzzles or board games.",
+      "images": [],
+      "createdAtOffsetMinutes": 180,
+      "updatedAtOffsetMinutes": 180
+    }
+  ],
+  "comments": [
+    {
+      "commentId": "comment-atomic-habits-1",
+      "postId": "post-atomic-habits-request",
+      "userId": "user-alice",
+      "text": "I have a copy. You can borrow it after 6 PM.",
+      "images": [],
+      "createdAtOffsetMinutes": 8,
+      "updatedAtOffsetMinutes": 8
+    },
+    {
+      "commentId": "comment-kids-books-1",
+      "postId": "post-kids-books",
+      "userId": "user-alice",
+      "text": "I added a few early-reader books to the shared library.",
+      "images": [],
+      "createdAtOffsetMinutes": 120,
+      "updatedAtOffsetMinutes": 120
+    }
+  ]
+}

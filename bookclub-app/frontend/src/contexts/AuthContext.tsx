@@ -74,6 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
 
       localStorage.setItem('accessToken', 'local-token-local-user');
+      localStorage.setItem('idToken', 'local-token-local-user');
       localStorage.setItem('user', JSON.stringify(dummyUser));
       setUser(dummyUser);
       setLoading(false);

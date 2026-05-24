@@ -55,5 +55,49 @@
     "name": "Eve Online",
     "createdAt": "2026-04-25T09:38:22.502Z",
     "updatedAt": "2026-04-25T09:38:22.502Z"
+  },
+  "local@dev": {
+    "userId": "local-user",
+    "email": "local@dev",
+    "name": "Local Dev",
+    "password": "local",
+    "bio": "Local development account",
+    "profilePicture": null,
+    "timezone": "Asia/Kolkata",
+    "createdAt": "2026-05-22T10:17:17.409Z",
+    "updatedAt": "2026-05-23T09:17:17.410Z"
+  },
+  "alice@example.com": {
+    "userId": "user-alice",
+    "email": "alice@example.com",
+    "name": "Alice Johnson",
+    "password": "password123",
+    "bio": "Shares books and board games with the community.",
+    "profilePicture": null,
+    "timezone": "Asia/Kolkata",
+    "createdAt": "2026-05-22T10:17:17.412Z",
+    "updatedAt": "2026-05-23T08:17:17.412Z"
+  },
+  "madhukar@example.com": {
+    "userId": "user-madhukar",
+    "email": "madhukar@example.com",
+    "name": "Madhukar Rao",
+    "password": "password123",
+    "bio": "Weekend reader and tool borrower.",
+    "profilePicture": null,
+    "timezone": "Asia/Kolkata",
+    "createdAt": "2026-05-22T10:17:17.412Z",
+    "updatedAt": "2026-05-23T08:47:17.412Z"
+  },
+  "kalyan@example.com": {
+    "userId": "user-kalyan",
+    "email": "kalyan@example.com",
+    "name": "Kalyan Kumar",
+    "password": "password123",
+    "bio": "Shares kids books, toys, and sports gear.",
+    "profilePicture": null,
+    "timezone": "Asia/Kolkata",
+    "createdAt": "2026-05-22T10:17:17.412Z",
+    "updatedAt": "2026-05-23T08:57:17.412Z"
   }
 }

@@ -34,6 +34,7 @@ import MyItemsPage from './pages/MyItemsPage';
 import ClubRequests from './pages/ClubRequests';
 import ClubMembers from './pages/ClubMembers';
 import ClubBooks from './pages/ClubBooks';
+import Discussions from './pages/Discussions';
 import LostFoundHub from './pages/LostFoundHub';
 import LostFoundDetails from './pages/LostFoundDetails';
 import MyLostFound from './pages/MyLostFound';
@@ -160,6 +161,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Messages />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/discussions"
+                  element={
+                    <ProtectedRoute>
+                      <Discussions />
                     </ProtectedRoute>
                   }
                 />

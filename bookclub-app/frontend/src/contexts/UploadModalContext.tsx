@@ -9,7 +9,7 @@ export const GENERIC_UPLOAD_CONFIG: LibraryConfig = {
   emoji: '📦',
   tagline: '',
   description: '',
-  postLabel: 'Add to Library',
+  postLabel: 'Share Items',
   itemLabel: 'Item',
   itemLabelPlural: 'Items',
   emptyBrowseText: '',

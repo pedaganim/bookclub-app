@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
                     : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                Browse Library
+                Browse
               </Link>
 
               {isAuthenticated && (
@@ -126,7 +126,7 @@ const Navbar: React.FC = () => {
                     isActive('/my-library') && !isLostFoundPath ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  My Library
+                  My Items
                 </Link>
               )}
 
@@ -150,6 +150,14 @@ const Navbar: React.FC = () => {
 
               {isAuthenticated && (
                 <>
+                  <Link
+                    to="/discussions"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive('/discussions') ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    Discussions
+                  </Link>
                   <div className="w-px h-4 bg-gray-200 mx-1" />
                   <button
                     onClick={openModal}
@@ -158,7 +166,7 @@ const Navbar: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add to Library
+                    Share Items
                   </button>
                   <MessagesLinkWithUnread />
                 </>

@@ -68,6 +68,11 @@ const MobileTabBar: React.FC = () => {
         <path d="M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h10.5A2.25 2.25 0 0 1 19.5 6.75v6A2.25 2.25 0 0 1 17.25 15H9l-3.75 3V6.75z" />
       </svg>
     ),
+    Discussions: () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isActive('/discussions') ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3h6m-9.75 7.5 3-3h10.5A2.25 2.25 0 0 0 19.5 13.5V6.75A2.25 2.25 0 0 0 17.25 4.5H6.75A2.25 2.25 0 0 0 4.5 6.75v6.75A2.25 2.25 0 0 0 6.75 15.75h.75v3Z" />
+      </svg>
+    ),
     Users: () => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isActive('/clubs') ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
         <path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
@@ -77,7 +82,7 @@ const MobileTabBar: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-inner md:hidden z-40">
-      <div className="max-w-7xl mx-auto grid grid-cols-5 text-[10px]">
+      <div className="max-w-7xl mx-auto grid grid-cols-6 text-[10px]">
         <Link
           to="/library"
           className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/library') && !isLostFoundPath ? 'text-indigo-700' : 'text-gray-600'}`}
@@ -94,11 +99,19 @@ const MobileTabBar: React.FC = () => {
           <span className={isLostFoundPath ? 'font-medium' : ''}>Lost & Found</span>
         </Link>
 
+        <Link
+          to="/discussions"
+          className={`flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${isActive('/discussions') ? 'text-indigo-700' : 'text-gray-600'}`}
+        >
+          <Icon.Discussions />
+          <span className={isActive('/discussions') ? 'font-medium' : ''}>Discuss</span>
+        </Link>
+
         {isAuthenticated && (
           <button
             onClick={openModal}
             className="flex flex-col items-center justify-center py-1 gap-0.5 text-indigo-600"
-            aria-label="Add to Library"
+            aria-label="Share Items"
           >
             <div className="bg-indigo-600 text-white rounded-full p-2.5 shadow-lg -mt-4 transform hover:scale-105 active:scale-95 transition-all">
               <Icon.Plus />

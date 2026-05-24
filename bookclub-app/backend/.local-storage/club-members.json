@@ -5,5 +5,59 @@
     "role": "admin",
     "joinedAt": "2026-05-08T01:46:54.546Z",
     "status": "active"
+  },
+  "club-sobha-windsor:local-user": {
+    "clubId": "club-sobha-windsor",
+    "userId": "local-user",
+    "role": "admin",
+    "status": "active",
+    "joinedAt": "2026-05-22T10:17:17.414Z",
+    "createdAt": "2026-05-22T10:17:17.414Z",
+    "updatedAt": "2026-05-23T09:17:17.414Z"
+  },
+  "club-sobha-windsor:user-alice": {
+    "clubId": "club-sobha-windsor",
+    "userId": "user-alice",
+    "role": "member",
+    "status": "active",
+    "joinedAt": "2026-05-22T12:37:17.415Z",
+    "createdAt": "2026-05-22T12:37:17.415Z",
+    "updatedAt": "2026-05-23T09:17:17.415Z"
+  },
+  "club-sobha-windsor:user-madhukar": {
+    "clubId": "club-sobha-windsor",
+    "userId": "user-madhukar",
+    "role": "member",
+    "status": "active",
+    "joinedAt": "2026-05-22T13:27:17.415Z",
+    "createdAt": "2026-05-22T13:27:17.415Z",
+    "updatedAt": "2026-05-23T09:17:17.415Z"
+  },
+  "club-sobha-windsor:user-kalyan": {
+    "clubId": "club-sobha-windsor",
+    "userId": "user-kalyan",
+    "role": "member",
+    "status": "active",
+    "joinedAt": "2026-05-22T15:57:17.415Z",
+    "createdAt": "2026-05-22T15:57:17.415Z",
+    "updatedAt": "2026-05-23T09:17:17.415Z"
+  },
+  "club-greenwood:user-alice": {
+    "clubId": "club-greenwood",
+    "userId": "user-alice",
+    "role": "admin",
+    "status": "active",
+    "joinedAt": "2026-05-22T14:17:17.415Z",
+    "createdAt": "2026-05-22T14:17:17.415Z",
+    "updatedAt": "2026-05-23T09:17:17.415Z"
+  },
+  "club-lakeview:user-kalyan": {
+    "clubId": "club-lakeview",
+    "userId": "user-kalyan",
+    "role": "admin",
+    "status": "active",
+    "joinedAt": "2026-05-22T15:07:17.416Z",
+    "createdAt": "2026-05-22T15:07:17.416Z",
+    "updatedAt": "2026-05-23T09:17:17.416Z"
   }
 }

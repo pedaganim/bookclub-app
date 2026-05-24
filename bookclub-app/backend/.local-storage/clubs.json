@@ -11,5 +11,47 @@
     "memberCount": 1,
     "createdAt": "2026-05-08T01:46:54.546Z",
     "updatedAt": "2026-05-08T01:46:54.547Z"
+  },
+  "club-sobha-windsor": {
+    "clubId": "club-sobha-windsor",
+    "name": "Sobha Windsor book club",
+    "slug": "sobha-windsor-book-club",
+    "description": "Neighbors sharing books, toys, tools, and useful household items.",
+    "location": "Sobha Windsor, Whitefield",
+    "createdBy": "local-user",
+    "inviteCode": "SOBHA123",
+    "isPrivate": false,
+    "memberLimit": 250,
+    "memberCount": 4,
+    "createdAt": "2026-05-22T10:17:17.413Z",
+    "updatedAt": "2026-05-23T09:47:17.413Z"
+  },
+  "club-greenwood": {
+    "clubId": "club-greenwood",
+    "name": "Greenwood Readers Circle",
+    "slug": "greenwood-readers-circle",
+    "description": "A public sample club used for browse and search testing.",
+    "location": "Greenwood Apartments",
+    "createdBy": "user-alice",
+    "inviteCode": "GREEN123",
+    "isPrivate": false,
+    "memberLimit": 100,
+    "memberCount": 1,
+    "createdAt": "2026-05-22T12:37:17.414Z",
+    "updatedAt": "2026-05-23T09:42:17.414Z"
+  },
+  "club-lakeview": {
+    "clubId": "club-lakeview",
+    "name": "Lakeview Family Library",
+    "slug": "lakeview-family-library",
+    "description": "Sample club with family books, puzzles, and weekend games.",
+    "location": "Lakeview Enclave",
+    "createdBy": "user-kalyan",
+    "inviteCode": "LAKE123",
+    "isPrivate": false,
+    "memberLimit": 150,
+    "memberCount": 1,
+    "createdAt": "2026-05-22T14:17:17.414Z",
+    "updatedAt": "2026-05-23T09:37:17.414Z"
   }
 }

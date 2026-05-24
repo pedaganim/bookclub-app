@@ -167,7 +167,7 @@ const MyItemsPage: React.FC<MyItemsPageProps> = ({ categorySlugOverride }) => {
             to="/my-library"
             className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors mb-4"
           >
-            <ChevronLeftIcon className="h-4 w-4" /> Back to My Library
+            <ChevronLeftIcon className="h-4 w-4" /> Back to My Items
           </Link>
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

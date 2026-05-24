@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList, LostFoundItem, LostFoundListResponse, LostFoundStatus, LostFoundItemType } from '../types';
+import { ApiResponse, Book, BookListResponse, User, UploadUrlResponse, ProfileUpdateData, BookMetadata, BookClub, BookClubListResponse, ClubComment, ClubPost, ClubPostListResponse, ExtractedMetadata, DMConversation, DMConversationList, DMMessage, DMMessageList, LostFoundItem, LostFoundListResponse, LostFoundStatus, LostFoundItemType } from '../types';
 import { config } from '../config';
 import { getCookie, setCookie, getBaseDomain } from '../utils/cookies';
 
@@ -19,7 +19,13 @@ class ApiService {
     });
 
     // Add request interceptor to include auth token
-    this.api.interceptors.request.use((config) => {
+    this.api.interceptors.request.use((requestConfig) => {
+      if (config.skipAuth && (this.baseURL.includes('localhost') || this.baseURL.includes('127.0.0.1'))) {
+        requestConfig.headers.Authorization = 'Bearer local-token-local-user';
+        requestConfig.headers['X-Access-Token'] = 'local-token-local-user';
+        return requestConfig;
+      }
+
       // Use ID Token for API Gateway Cognito Authorizers.
       // Fall back to Access Token if ID token is missing.
       let idToken = localStorage.getItem('idToken');
@@ -34,14 +40,14 @@ class ApiService {
       if (token) {
         // Most API Gateway configurations (including custom authorizers or certain 
         // Cognito setups) expect the 'Bearer ' prefix.
-        config.headers.Authorization = `Bearer ${token}`;
+        requestConfig.headers.Authorization = `Bearer ${token}`;
       }
       
       // Also send Access Token in a separate header for backend Cognito API calls
       if (accessToken) {
-        config.headers['X-Access-Token'] = accessToken;
+        requestConfig.headers['X-Access-Token'] = accessToken;
       }
-      return config;
+      return requestConfig;
     });
 
     // Add response interceptor to handle errors and detect auth failures
@@ -670,6 +676,49 @@ class ApiService {
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Failed to revoke invite');
     }
+  }
+
+  async listPostsFeed(): Promise<ClubPostListResponse> {
+    const response: AxiosResponse<ApiResponse<ClubPostListResponse>> = await this.api.get('/posts/feed');
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to load discussions');
+    }
+    return response.data.data!;
+  }
+
+  async listClubPosts(clubId: string, params?: { limit?: number; nextToken?: string }): Promise<ClubPostListResponse> {
+    const query = new URLSearchParams();
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.nextToken) query.append('nextToken', params.nextToken);
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const response: AxiosResponse<ApiResponse<ClubPostListResponse>> = await this.api.get(`/clubs/${clubId}/posts${suffix}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to load club discussions');
+    }
+    return response.data.data!;
+  }
+
+  async createPost(payload: { clubId: string; text: string; images?: string[] }): Promise<ClubPost> {
+    const response: AxiosResponse<ApiResponse<ClubPost>> = await this.api.post('/posts', {
+      clubId: payload.clubId,
+      text: payload.text,
+      images: payload.images || [],
+    });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to create post');
+    }
+    return response.data.data!;
+  }
+
+  async createComment(postId: string, payload: { text: string; images?: string[] }): Promise<ClubComment> {
+    const response: AxiosResponse<ApiResponse<ClubComment>> = await this.api.post(`/posts/${encodeURIComponent(postId)}/comments`, {
+      text: payload.text,
+      images: payload.images || [],
+    });
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Failed to create comment');
+    }
+    return response.data.data!;
   }
 
   // Member Management

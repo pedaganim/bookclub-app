@@ -91,7 +91,7 @@ const MyLibraryHub: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO
-        title="My Library — Manage My Items"
+        title="My Items - Manage Shared Items"
         description="Manage your books, toys, tools, and other shared items in one place."
       />
 
@@ -100,7 +100,7 @@ const MyLibraryHub: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">My Library</h1>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">My Items</h1>
               <p className="text-sm text-gray-500 mt-1 font-medium">Everything you're sharing with the community</p>
             </div>
             <button
@@ -110,7 +110,7 @@ const MyLibraryHub: React.FC = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              Add to Library
+              Share Items
             </button>
           </div>
         </div>
@@ -206,7 +206,7 @@ const MyLibraryHub: React.FC = () => {
               onClick={openModal}
               className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              Add to Library
+              Share Items
             </button>
           </div>
         ) : (

@@ -139,6 +139,38 @@ export interface BookClubListResponse {
   count: number;
 }
 
+export interface ClubComment {
+  commentId: string;
+  postId: string;
+  userId: string;
+  text: string;
+  images?: string[];
+  createdAt: string;
+  updatedAt: string;
+  userName?: string | null;
+  isOwner?: boolean;
+}
+
+export interface ClubPost {
+  postId: string;
+  clubId: string;
+  authorId: string;
+  text: string;
+  images?: string[];
+  createdAt: string;
+  updatedAt: string;
+  authorName?: string | null;
+  isOwner?: boolean;
+  comments?: ClubComment[];
+  commentCount?: number;
+}
+
+export interface ClubPostListResponse {
+  items: ClubPost[];
+  count: number;
+  nextToken?: string | null;
+}
+
 export interface ExtractedMetadata {
   metadata: {
     title?: string;
@@ -238,4 +270,3 @@ export interface LostFoundListResponse {
   nextToken?: string | null;
   count: number;
 }
-
