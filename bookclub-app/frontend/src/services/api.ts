@@ -1012,7 +1012,7 @@ class ApiService {
   }
 
   async downloadEventIcs(clubId: string, eventId: string, suggestedName = 'event'): Promise<void> {
-    const response = await this.api.get(`/clubs/${clubId}/events/${eventId}.ics`, {
+    const response = await this.api.get(`/clubs/${clubId}/events/${eventId}/ics`, {
       responseType: 'blob',
       headers: { Accept: 'text/calendar' },
     });

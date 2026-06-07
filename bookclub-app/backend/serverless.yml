@@ -1399,7 +1399,7 @@ functions:
     events:
       - http:
           method: GET
-          path: /clubs/{clubId}/events/{eventId}.ics
+          path: /clubs/{clubId}/events/{eventId}/ics
           cors:
             origin: '*'
             headers:
