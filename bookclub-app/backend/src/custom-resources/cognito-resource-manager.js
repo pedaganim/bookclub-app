@@ -138,6 +138,21 @@ exports.handler = async (event, context) => {
   const { RequestType, ResourceProperties } = event;
   const { Action, UserPoolId, ProviderName, ProviderType, ProviderDetails, AttributeMapping } = ResourceProperties;
 
+  // Intercept and patch empty/placeholder configs for OIDC providers
+  if (RequestType === 'Create' || RequestType === 'Update') {
+    if (ProviderType === 'OIDC' && ProviderDetails) {
+      const clientId = ProviderDetails.client_id;
+      const issuer = ProviderDetails.oidc_issuer;
+      if (!clientId || clientId === '' || !issuer || issuer.includes('us-east-1_placeholder') || issuer === '') {
+        console.log(`[CognitoResourceManager] Placeholder or empty config detected for OIDC provider ${ProviderName}.`);
+        console.log('[CognitoResourceManager] Overriding with safe dummy OIDC issuer (accounts.google.com) to prevent deployment errors.');
+        ProviderDetails.client_id = 'dummy-client-id';
+        ProviderDetails.client_secret = 'dummy-client-secret';
+        ProviderDetails.oidc_issuer = 'https://accounts.google.com';
+      }
+    }
+  }
+
   try {
     let result;
     const physicalResourceId = `${UserPoolId}-${ProviderName}`;

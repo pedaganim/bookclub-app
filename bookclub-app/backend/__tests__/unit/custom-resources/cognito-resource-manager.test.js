@@ -310,4 +310,69 @@ describe('Cognito Resource Manager Custom Resource', () => {
       expect(responseBody.PhysicalResourceId).toBe('us-east-1_EXAMPLE-Google');
     });
   });
+
+  describe('OIDC configuration patching', () => {
+    const createMockOIDCEvent = (requestType, clientId, issuer) => ({
+      RequestType: requestType,
+      ResponseURL: 'https://test-url.com',
+      StackId: 'test-stack-id',
+      RequestId: 'test-request-id',
+      LogicalResourceId: 'BookClubIdentityProvider',
+      ResourceProperties: {
+        Action: 'CreateOrUpdateIdentityProvider',
+        UserPoolId: 'us-east-1_EXAMPLE',
+        ProviderName: 'BookClub',
+        ProviderType: 'OIDC',
+        ProviderDetails: {
+          client_id: clientId,
+          client_secret: 'some-secret',
+          oidc_issuer: issuer,
+          authorize_scopes: 'openid email profile'
+        },
+        AttributeMapping: {
+          email: 'email',
+          name: 'name',
+          username: 'sub'
+        }
+      }
+    });
+
+    test('should patch placeholders with accounts.google.com dummy config', async () => {
+      const event = createMockOIDCEvent('Create', '', 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_placeholder');
+      
+      mockCognitoIdpPromise
+        .mockRejectedValueOnce({ code: 'ResourceNotFoundException' }) // describe fails
+        .mockResolvedValueOnce({ IdentityProvider: { ProviderName: 'BookClub' } }); // create succeeds
+
+      await cognitoResourceManager.handler(event, mockContext);
+
+      expect(mockCognitoIdp.createIdentityProvider).toHaveBeenCalledWith(expect.objectContaining({
+        ProviderDetails: {
+          client_id: 'dummy-client-id',
+          client_secret: 'dummy-client-secret',
+          oidc_issuer: 'https://accounts.google.com',
+          authorize_scopes: 'openid email profile'
+        }
+      }));
+    });
+
+    test('should NOT patch valid OIDC configuration', async () => {
+      const event = createMockOIDCEvent('Create', 'valid-client-id', 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_realpool');
+      
+      mockCognitoIdpPromise
+        .mockRejectedValueOnce({ code: 'ResourceNotFoundException' }) // describe fails
+        .mockResolvedValueOnce({ IdentityProvider: { ProviderName: 'BookClub' } }); // create succeeds
+
+      await cognitoResourceManager.handler(event, mockContext);
+
+      expect(mockCognitoIdp.createIdentityProvider).toHaveBeenCalledWith(expect.objectContaining({
+        ProviderDetails: {
+          client_id: 'valid-client-id',
+          client_secret: 'some-secret',
+          oidc_issuer: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_realpool',
+          authorize_scopes: 'openid email profile'
+        }
+      }));
+    });
+  });
 });
