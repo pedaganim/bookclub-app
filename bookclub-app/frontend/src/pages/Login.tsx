@@ -64,10 +64,9 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Sign-In Options */}
+        {/* Google Sign-In */}
         {config.cognito.domain && config.cognito.userPoolClientId && (
           <div className="space-y-3">
-            {/* Google Sign-In */}
             <button
               type="button"
               onClick={async () => {
@@ -100,38 +99,6 @@ const Login: React.FC = () => {
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.343,6.053,28.878,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,14,24,14c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.343,6.053,28.878,4,24,4C17.091,4,10.922,7.613,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c4.743,0,9.106-1.811,12.432-4.771l-5.747-4.853C28.614,35.188,26.393,36,24,36 c-5.202,0-9.619-3.317-11.277-7.953l-6.548,5.047C10.771,40.556,16.926,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.158-4.109,5.575 c0.001-0.001,0.002-0.001,0.003-0.002l6.571,4.819C35.64,40.245,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
               <span>Continue with Google</span>
-            </button>
-
-            {/* BookClub Federated Sign-In */}
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  const { code_verifier, code_challenge } = await createPkcePair();
-                  sessionStorage.setItem('pkce_code_verifier', code_verifier);
-                  try {
-                    localStorage.setItem('pkce_code_verifier', code_verifier);
-                    localStorage.setItem('pkce_code_verifier_ts', String(Date.now()));
-                  } catch (_) {}
-                  const params = new URLSearchParams({
-                    response_type: config.cognito.responseType,
-                    client_id: config.cognito.userPoolClientId,
-                    redirect_uri: config.cognito.redirectSignIn,
-                    scope: config.cognito.scopes.join(' '),
-                    code_challenge,
-                    code_challenge_method: 'S256',
-                    identity_provider: 'BookClub',
-                  });
-                  const url = `https://${config.cognito.domain}/oauth2/authorize?${params.toString()}`;
-                  window.location.href = url;
-                } catch (e) {
-                  setError('Failed to start BookClub sign-in. Please try again.');
-                }
-              }}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-medium text-base touch-manipulation"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-              <span>Continue with BookClub</span>
             </button>
           </div>
         )}

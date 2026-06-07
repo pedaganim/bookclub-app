@@ -13,8 +13,16 @@ provider:
         file: Dockerfile
   environment:
     STAGE: ${self:provider.stage}
-    COGNITO_USER_POOL_ID: !Ref UserPool
-    COGNITO_CLIENT_ID: !Ref UserPoolClient
+    COGNITO_USER_POOL_ID:
+      Fn::If:
+        - CreateCognitoResources
+        - !Ref UserPool
+        - ${env:COGNITO_USER_POOL_ID, 'us-east-1_placeholder'}
+    COGNITO_CLIENT_ID:
+      Fn::If:
+        - CreateCognitoResources
+        - !Ref UserPoolClient
+        - ${env:COGNITO_CLIENT_ID, 'placeholder'}
     BOOK_COVERS_BUCKET: ${ssm:/${self:service}/${self:provider.stage}/book_covers_bucket_name}
     NOTIFY_FROM_EMAIL: ${self:custom.appConfig.NOTIFY_FROM_EMAIL}
     ADMIN_NOTIFY_EMAIL: ${env:ADMIN_NOTIFY_EMAIL, 'madhukar.pedagani@gmail.com,kalyan.kaykk@gmail.com,puneet.khanna0404@gmail.com'}
@@ -102,7 +110,11 @@ provider:
             - cognito-idp:AdminConfirmSignUp
             - cognito-idp:AdminDeleteUser
             - cognito-idp:GetUser
-          Resource: !GetAtt UserPool.Arn
+          Resource:
+            Fn::If:
+              - CreateCognitoResources
+              - !GetAtt UserPool.Arn
+              - ${env:COGNITO_USER_POOL_ARN, 'arn:aws:cognito-idp:us-east-1:967438331002:userpool/us-east-1_placeholder'}
         - Effect: Allow
           Action:
             - textract:DetectDocumentText
@@ -1625,6 +1637,11 @@ functions:
               - X-Amz-Security-Token
 
 resources:
+  Conditions:
+    CreateCognitoResources:
+      Fn::Equals:
+        - ${self:provider.region}
+        - us-east-1
   Resources:
     CleanDescriptionDLQ:
       Type: AWS::SQS::Queue
@@ -1855,6 +1872,7 @@ resources:
 
     UserPool:
       Type: AWS::Cognito::UserPool
+      Condition: CreateCognitoResources
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -1875,9 +1893,9 @@ resources:
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
+      Condition: CreateCognitoResources
       DependsOn:
         - GoogleIdentityProvider
-        - BookClubIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -1896,7 +1914,6 @@ resources:
           - openid
           - profile
         SupportedIdentityProviders:
-          - BookClub
           - Google
         AccessTokenValidity: 1
         IdTokenValidity: 1
@@ -1912,6 +1929,7 @@ resources:
 
     GoogleIdentityProvider:
       Type: AWS::CloudFormation::CustomResource
+      Condition: CreateCognitoResources
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -1931,29 +1949,9 @@ resources:
           name: name
           username: sub
 
-    BookClubIdentityProvider:
-      Type: AWS::CloudFormation::CustomResource
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
-      Properties:
-        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
-        Action: CreateOrUpdateIdentityProvider
-        UserPoolId: !Ref UserPool
-        ProviderName: BookClub
-        ProviderType: OIDC
-        ProviderDetails:
-          client_id: ${env:BOOKCLUB_CLIENT_ID, ''}
-          client_secret: ${env:BOOKCLUB_CLIENT_SECRET, ''}
-          attributes_request_method: GET
-          oidc_issuer: https://cognito-idp.us-east-1.amazonaws.com/${env:BOOKCLUB_USER_POOL_ID, 'us-east-1_placeholder'}
-          authorize_scopes: "openid email profile"
-        AttributeMapping:
-          email: email
-          name: name
-          username: sub
-
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
+      Condition: CreateCognitoResources
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -1968,7 +1966,10 @@ resources:
         IdentitySource: method.request.header.Authorization
         RestApiId: !Ref ApiGatewayRestApi
         ProviderARNs:
-          - !GetAtt UserPool.Arn
+          - Fn::If:
+              - CreateCognitoResources
+              - !GetAtt UserPool.Arn
+              - ${env:COGNITO_USER_POOL_ARN, 'arn:aws:cognito-idp:us-east-1:967438331002:userpool/us-east-1_placeholder'}
 
     GatewayResponseDefault4XX:
       Type: 'AWS::ApiGateway::GatewayResponse'
@@ -2425,11 +2426,19 @@ resources:
 
   Outputs:
     UserPoolId:
-      Value: !Ref UserPool
+      Value:
+        Fn::If:
+          - CreateCognitoResources
+          - !Ref UserPool
+          - ${env:COGNITO_USER_POOL_ID, 'us-east-1_placeholder'}
       Export:
         Name: ${self:service}-${self:provider.stage}-UserPoolId
     UserPoolClientId:
-      Value: !Ref UserPoolClient
+      Value:
+        Fn::If:
+          - CreateCognitoResources
+          - !Ref UserPoolClient
+          - ${env:COGNITO_CLIENT_ID, 'placeholder'}
       Export:
         Name: ${self:service}-${self:provider.stage}-UserPoolClientId
     RestApiId:
