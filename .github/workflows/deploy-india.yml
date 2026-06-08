@@ -56,6 +56,9 @@ jobs:
           DEPLOY_TARGET: india
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          COGNITO_USER_POOL_ID: ${{ vars.COGNITO_USER_POOL_ID || secrets.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ vars.COGNITO_CLIENT_ID || secrets.COGNITO_CLIENT_ID }}
+          COGNITO_USER_POOL_ARN: ${{ vars.COGNITO_USER_POOL_ARN || secrets.COGNITO_USER_POOL_ARN }}
         run: |
           npm install
           npx serverless deploy --stage prod --region ap-south-1
@@ -65,21 +68,29 @@ jobs:
         env:
           DEPLOY_TARGET: india
           CI: false
+          COGNITO_USER_POOL_ID: ${{ vars.COGNITO_USER_POOL_ID || secrets.COGNITO_USER_POOL_ID }}
+          COGNITO_CLIENT_ID: ${{ vars.COGNITO_CLIENT_ID || secrets.COGNITO_CLIENT_ID }}
+          COGNITO_DOMAIN: ${{ vars.COGNITO_DOMAIN || secrets.COGNITO_DOMAIN }}
+          COGNITO_REGION: ${{ vars.COGNITO_REGION || secrets.COGNITO_REGION }}
         run: |
-          # Fetch dynamic values from serverless output
+          # Fetch dynamic values from serverless output, falling back to environment variables
           cd ../backend
-          USER_POOL_ID=$(npx serverless info --stage prod --verbose | grep "UserPoolId:" | awk '{print $2}')
-          USER_POOL_CLIENT_ID=$(npx serverless info --stage prod --verbose | grep "UserPoolClientId:" | awk '{print $2}')
+          USER_POOL_ID=${COGNITO_USER_POOL_ID:-$(npx serverless info --stage prod --verbose | grep "UserPoolId:" | awk '{print $2}')}
+          USER_POOL_CLIENT_ID=${COGNITO_CLIENT_ID:-$(npx serverless info --stage prod --verbose | grep "UserPoolClientId:" | awk '{print $2}')}
           cd ../frontend
+          
+          # Default to us-east-1 defaults or provided overrides
+          COGNITO_REGION_VAL=${COGNITO_REGION:-"us-east-1"}
+          COGNITO_DOMAIN_VAL=${COGNITO_DOMAIN:-"booklub-au-prod.auth.us-east-1.amazoncognito.com"}
           
           # Create .env.production
           cat > .env.production << EOF
           REACT_APP_BRAND_NAME=TownWink
           REACT_APP_API_URL=https://api.townwink.com
-          REACT_APP_COGNITO_REGION=ap-south-1
+          REACT_APP_COGNITO_REGION=$COGNITO_REGION_VAL
           REACT_APP_COGNITO_USER_POOL_ID=$USER_POOL_ID
           REACT_APP_COGNITO_CLIENT_ID=$USER_POOL_CLIENT_ID
-          REACT_APP_COGNITO_DOMAIN=townwink-india-prod.auth.ap-south-1.amazoncognito.com
+          REACT_APP_COGNITO_DOMAIN=$COGNITO_DOMAIN_VAL
           REACT_APP_OAUTH_REDIRECT_SIGNIN=https://townwink.com/auth/callback
           REACT_APP_OAUTH_REDIRECT_SIGNOUT=https://townwink.com/
           REACT_APP_DOMAIN=townwink.com
