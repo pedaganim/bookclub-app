@@ -180,10 +180,15 @@ if [ "$RUN_FRONTEND" = true ]; then
   # Fetch Cognito outputs from backend
   cd backend
   export DEPLOY_TARGET=$ENV
-  USER_POOL_ID=$(serverless info --stage prod --verbose | grep "UserPoolId:" | awk '{print $2}')
-  USER_POOL_CLIENT_ID=$(serverless info --stage prod --verbose | grep "UserPoolClientId:" | awk '{print $2}')
+  
+  # Allow overriding Cognito configuration via env vars for cross-region setups
+  USER_POOL_ID=${COGNITO_USER_POOL_ID:-$(serverless info --stage prod --verbose | grep "UserPoolId:" | awk '{print $2}')}
+  USER_POOL_CLIENT_ID=${COGNITO_CLIENT_ID:-$(serverless info --stage prod --verbose | grep "UserPoolClientId:" | awk '{print $2}')}
+  
   DOMAIN_PREFIX=$(cat config/app.$ENV.json | grep 'userPoolDomainPrefix' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
-  COGNITO_DOMAIN="${DOMAIN_PREFIX}.auth.${REGION}.amazoncognito.com"
+  COGNITO_DOMAIN_VAL=${COGNITO_DOMAIN:-"${DOMAIN_PREFIX}.auth.${REGION}.amazoncognito.com"}
+  COGNITO_REGION_VAL=${COGNITO_REGION:-$REGION}
+  
   REDIRECT_SIGNIN=$(cat config/app.$ENV.json | grep 'redirectSignIn' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
   REDIRECT_SIGNOUT=$(cat config/app.$ENV.json | grep 'redirectSignOut' | sed -E 's/.*:\s*"([^"]+)".*/\1/' | tr -d ',')
   cd ..
@@ -192,10 +197,10 @@ if [ "$RUN_FRONTEND" = true ]; then
   cat > .env.$ENV << EOF
 REACT_APP_BRAND_NAME=$BRAND
 REACT_APP_API_URL=https://api.$DOMAIN
-REACT_APP_COGNITO_REGION=$REGION
+REACT_APP_COGNITO_REGION=$COGNITO_REGION_VAL
 REACT_APP_COGNITO_USER_POOL_ID=$USER_POOL_ID
 REACT_APP_COGNITO_CLIENT_ID=$USER_POOL_CLIENT_ID
-REACT_APP_COGNITO_DOMAIN=$COGNITO_DOMAIN
+REACT_APP_COGNITO_DOMAIN=$COGNITO_DOMAIN_VAL
 REACT_APP_OAUTH_REDIRECT_SIGNIN=$REDIRECT_SIGNIN
 REACT_APP_OAUTH_REDIRECT_SIGNOUT=$REDIRECT_SIGNOUT
 REACT_APP_DOMAIN=$DOMAIN
