@@ -99,6 +99,10 @@ provider:
           Resource: "*"
         - Effect: Allow
           Action:
+            - sns:Publish
+          Resource: "*"
+        - Effect: Allow
+          Action:
             - cognito-idp:AdminConfirmSignUp
             - cognito-idp:AdminDeleteUser
             - cognito-idp:GetUser
@@ -1624,6 +1628,19 @@ functions:
               - X-Api-Key
               - X-Amz-Security-Token
 
+  # Cognito passwordless SMS triggers
+  defineAuthChallenge:
+    handler: src/handlers/auth-triggers/defineChallenge.handler
+
+  createAuthChallenge:
+    handler: src/handlers/auth-triggers/createChallenge.handler
+
+  verifyAuthChallenge:
+    handler: src/handlers/auth-triggers/verifyChallenge.handler
+
+  preSignUp:
+    handler: src/handlers/auth-triggers/preSignUp.handler
+
 resources:
   Resources:
     CleanDescriptionDLQ:
@@ -1859,9 +1876,15 @@ resources:
       UpdateReplacePolicy: Retain
       Properties:
         UserPoolName: ${self:service}-user-pool-${self:provider.stage}
+        UsernameAttributes:
+          - email
+          - phone_number
         Schema:
           - Name: email
             Required: true
+            Mutable: true
+          - Name: phone_number
+            Required: false
             Mutable: true
         Policies:
           PasswordPolicy:
@@ -1872,10 +1895,17 @@ resources:
             RequireSymbols: true
         AutoVerifiedAttributes:
           - email
+        LambdaConfig:
+          DefineAuthChallenge: !GetAtt DefineAuthChallengeLambdaFunction.Arn
+          CreateAuthChallenge: !GetAtt CreateAuthChallengeLambdaFunction.Arn
+          VerifyAuthChallengeResponse: !GetAtt VerifyAuthChallengeResponseLambdaFunction.Arn
+          PreSignUp: !GetAtt PreSignUpLambdaFunction.Arn
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
-      DependsOn: GoogleIdentityProvider
+      DependsOn:
+        - GoogleIdentityProvider
+        - FacebookIdentityProvider
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
@@ -1885,6 +1915,7 @@ resources:
         ExplicitAuthFlows:
           - ALLOW_USER_PASSWORD_AUTH
           - ALLOW_USER_SRP_AUTH
+          - ALLOW_CUSTOM_AUTH
         PreventUserExistenceErrors: ENABLED
         AllowedOAuthFlowsUserPoolClient: true
         AllowedOAuthFlows:
@@ -1895,6 +1926,8 @@ resources:
           - profile
         SupportedIdentityProviders:
           - Google
+          - Facebook
+          - COGNITO
         AccessTokenValidity: 1
         IdTokenValidity: 1
         RefreshTokenValidity: 365
@@ -1927,6 +1960,57 @@ resources:
           family_name: family_name
           name: name
           username: sub
+
+    FacebookIdentityProvider:
+      Type: AWS::CloudFormation::CustomResource
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        ServiceToken: !GetAtt CognitoResourceManagerLambdaFunction.Arn
+        Action: CreateOrUpdateIdentityProvider
+        UserPoolId: !Ref UserPool
+        ProviderName: Facebook
+        ProviderType: Facebook
+        ProviderDetails:
+          client_id: ${env:FACEBOOK_CLIENT_ID, ''}
+          client_secret: ${env:FACEBOOK_CLIENT_SECRET, ''}
+          authorize_scopes: "email,public_profile"
+        AttributeMapping:
+          email: email
+          name: name
+          username: id
+
+    CognitoDefineAuthTriggerPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref DefineAuthChallengeLambdaFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt UserPool.Arn
+
+    CognitoCreateAuthTriggerPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref CreateAuthChallengeLambdaFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt UserPool.Arn
+
+    CognitoVerifyAuthTriggerPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref VerifyAuthChallengeResponseLambdaFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt UserPool.Arn
+
+    CognitoPreSignUpTriggerPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref PreSignUpLambdaFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt UserPool.Arn
 
     UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
