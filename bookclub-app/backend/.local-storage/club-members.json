@@ -5,5 +5,13 @@
     "role": "admin",
     "joinedAt": "2026-05-08T01:46:54.546Z",
     "status": "active"
+  },
+  "598b5685-e31b-46f8-bd44-96c037cce53d:local-user": {
+    "clubId": "598b5685-e31b-46f8-bd44-96c037cce53d",
+    "userId": "local-user",
+    "role": "member",
+    "joinedAt": null,
+    "status": "pending",
+    "requestedAt": "2026-05-10T02:35:52.777Z"
   }
 }

@@ -4,8 +4,9 @@ import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import { useAuth } from '../contexts/AuthContext';
-import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import InviteByEmailModal from '../components/InviteByEmailModal';
+import ClubInviteQRCode from '../components/ClubInviteQRCode';
 
 const ClubBooks: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -21,6 +22,7 @@ const ClubBooks: React.FC = () => {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [showInvite, setShowInvite] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const scrollRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Resolve slug → clubId on mount
@@ -214,13 +216,22 @@ const ClubBooks: React.FC = () => {
               )}
 
               {club && (club.userRole === 'admin' || club.createdBy === user?.userId) && (
-                <button
-                  onClick={() => setShowInvite(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
-                >
-                  <EnvelopeIcon className="h-4 w-4" />
-                  Invite Members
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowQR(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-white text-indigo-700 border border-indigo-100 hover:bg-indigo-50 transition-colors shadow-sm"
+                  >
+                    <QrCodeIcon className="h-4 w-4" />
+                    Share QR
+                  </button>
+                  <button
+                    onClick={() => setShowInvite(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
+                  >
+                    <EnvelopeIcon className="h-4 w-4" />
+                    Invite Members
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -339,9 +350,29 @@ const ClubBooks: React.FC = () => {
           onClose={() => setShowInvite(false)}
         />
       )}
+
+      {showQR && clubId && club && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl transform transition-all overflow-hidden">
+            <div className="relative">
+              <button 
+                onClick={() => setShowQR(false)}
+                className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-10"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+              
+              <ClubInviteQRCode 
+                clubId={clubId}
+                slug={club.slug}
+                clubName={club.name}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 
 export default ClubBooks;
