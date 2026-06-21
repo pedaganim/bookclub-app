@@ -4,8 +4,10 @@ import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import PublicBookCard from '../components/PublicBookCard';
 import { useAuth } from '../contexts/AuthContext';
-import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { ArchiveBoxIcon, UserPlusIcon, UsersIcon, EnvelopeIcon, InboxArrowDownIcon } from '@heroicons/react/24/outline';
 import InviteByEmailModal from '../components/InviteByEmailModal';
+import ClubJoinRequests from '../components/ClubJoinRequests';
+import ClubMembersSection from '../components/ClubMembersSection';
 
 const ClubBooks: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -214,24 +216,82 @@ const ClubBooks: React.FC = () => {
               )}
 
               {club && (club.userRole === 'admin' || club.createdBy === user?.userId) && (
-                <button
-                  onClick={() => setShowInvite(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
-                >
-                  <EnvelopeIcon className="h-4 w-4" />
-                  Invite Members
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate(`/clubs/${clubId}/requests`)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 transition-colors shadow-sm"
+                  >
+                    <InboxArrowDownIcon className="h-4 w-4" />
+                    Manage Requests
+                  </button>
+                  <button
+                    onClick={() => setShowInvite(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
+                  >
+                    <EnvelopeIcon className="h-4 w-4" />
+                    Invite Members
+                  </button>
+                </>
               )}
             </div>
           </div>
         </div>
 
         {joinError && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-100">
+          <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-100 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-sm text-red-700">{joinError}</p>
           </div>
         )}
 
+        {/* Admin: Pending Requests Section */}
+        {club?.userRole === 'admin' && clubId && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-amber-100 rounded-xl">
+                  <InboxArrowDownIcon className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-amber-900">Pending Join Requests</h2>
+                  <p className="text-sm text-amber-700">Review users who want to join your club.</p>
+                </div>
+              </div>
+              
+              <ClubJoinRequests 
+                clubId={clubId} 
+                variant="compact" 
+                onStatusChange={fetchClub}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 space-y-0"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Admin: Manage Members Section */}
+        {club?.userRole === 'admin' && clubId && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-indigo-50 rounded-xl">
+                  <UsersIcon className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Manage Members</h2>
+                  <p className="text-sm text-gray-500">View and audit all club members.</p>
+                </div>
+              </div>
+              
+              <ClubMembersSection 
+                clubId={clubId} 
+                isAdmin={true} 
+                createdBy={club?.createdBy} 
+                onStatusChange={fetchClub}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Content */}
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 border border-red-100">
             <div className="flex items-center gap-2 text-red-700">
