@@ -17,86 +17,49 @@ evals:
 
 Use this skill when you need to add or modify a user interface view, page, or reusable component in the React Single-Page Application (SPA). The frontend is built on **React**, **TypeScript**, **Tailwind CSS**, and **React Testing Library**.
 
-## When to Use This Skill
-
-- Use this when adding new UI pages under `src/pages/`.
-- Use this when developing reusable subcomponents under `src/components/`.
-- Use this when styling components to ensure consistent layouts.
-
-## Trigger Points
-
-This skill is automatically activated when:
-1. The user asks to: `"add component"`, `"create a page"`, `"build UI"`, or `"new frontend view"`.
-2. A file is created or modified under `bookclub-app/frontend/src/components/` or `bookclub-app/frontend/src/pages/`.
-
 ## Workflow Steps
 
-### Step 1: Declare Types
-If the component handles custom data models (e.g. reviews, ratings, group events), define the corresponding TypeScript interfaces in `bookclub-app/frontend/src/types/index.ts` first.
+### Step 1: Initialize Git Branch (Use `branch_workflow` Skill)
+Before creating any styling or code structure:
+1. Invoke the **[branch_workflow](file:///Users/maddy/.gemini/config/skills/git/branch_workflow/SKILL.md)** skill to checkout a descriptive task branch derived from the latest release code.
 
-### Step 2: Implement the Component
-Create the component file:
-- **Pages (routes)**: Place them in `bookclub-app/frontend/src/pages/` (e.g. `src/pages/BookDetails.tsx`).
-- **Reusable widgets/views**: Place them in `bookclub-app/frontend/src/components/` (e.g. `src/components/BookCard.tsx`).
+---
 
-Ensure you adhere to the following design system practices:
-1. **Touch Targets**: Apply the custom `touch` spacing classes for interactive elements to ensure mobile friendliness:
-   ```tsx
-   <button className="h-touch px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded">
-     Submit
-   </button>
-   ```
-2. **Teal Branding**: The tailwind config maps `indigo` to the custom `teal` scale. Use `bg-indigo-600` / `hover:bg-indigo-700` for primary actions, and `indigo-900` for dark themes.
-3. **Responsive Layouts**: Design with mobile-first screens in mind using Tailwind prefixes (e.g. `grid grid-cols-1 md:grid-cols-3`).
+### Step 2: Implement Component & Declare Types
+1. Declare TypeScript models in `bookclub-app/frontend/src/types/index.ts` first if custom interfaces are required.
+2. Implement components under the correct workspace paths:
+   - **Pages**: `bookclub-app/frontend/src/pages/`
+   - **Reusable Components**: `bookclub-app/frontend/src/components/`
+3. Style layout with Tailwind CSS. Apply mobile touch target spacing (touch targets at least `h-touch`) and the custom teal color schemes (`bg-indigo-600` / `indigo-900`).
 
 ---
 
 ### Step 3: Interface with the Backend API
-For remote server operations (fetching or pushing data):
-1. Use the pre-configured `ApiService` instance by importing it from `src/services/api`:
-   ```typescript
-   import { apiService } from '../services/api';
-   ```
-2. If adding a new query or command, declare it inside the `ApiService` class in `src/services/api.ts` using Axios.
+Connect your UI component to the server:
+1. Import `apiService` from `src/services/api` to query or submit updates to Lambda functions.
+2. If new endpoints are needed, configure them on the Axios `ApiService` instance first.
 
 ---
 
-### Step 4: Write Component Tests
-Create a test file under `bookclub-app/frontend/src/__tests__/components/` or `bookclub-app/frontend/src/__tests__/pages/` matching the component path:
-1. Mock any external service calls:
-   ```typescript
-   import { render, screen, fireEvent } from '@testing-library/react';
-   import { apiService } from '../../services/api';
-   
-   jest.mock('../../services/api');
-   ```
-2. Wrap components with contexts if they depend on Auth or Brand context:
-   ```tsx
-   import { AuthContext } from '../../contexts/AuthContext';
-   
-   render(
-     <AuthContext.Provider value={mockAuthValue}>
-       <MyComponent />
-     </AuthContext.Provider>
-   );
-   ```
+### Step 4: Write Component Tests (Use `add_tests` Skill)
+Verify component state rendering and interaction handlers:
+1. Use the **[add_tests](file:///Users/maddy/.gemini/config/skills/quality/add_tests/SKILL.md)** skill to create a test file inside `src/__tests__/components/` or `src/__tests__/pages/`.
+2. Mock the `ApiService` backend queries to keep rendering verification fast and isolated.
 
 ---
 
-### Step 5: Validate and Compile
-Verify the code quality:
-1. Run local tests:
-   ```bash
-   cd bookclub-app/frontend && npm test
-   ```
-2. Run the linter:
-   ```bash
-   cd bookclub-app/frontend && npm run lint
-   ```
-3. Start the local server (port 3000):
-   ```bash
-   cd bookclub-app/frontend && npm start
-   ```
+### Step 5: Validate and Compile (Use `run_tests` Skill)
+Compile files and verify code logic:
+1. Invoke the **[run_tests](file:///Users/maddy/.gemini/config/skills/quality/run_tests/SKILL.md)** skill to run frontend tests.
+2. Confirm there are no compilation, console, or linting errors by running the linter (`npm run lint`).
+3. Boot the local React server via `npm start` (port 3000) for visual layout checks.
+
+---
+
+### Step 6: Code Review & PR Preparation (Use `code_review` Skill)
+Verify guidelines compliance:
+1. Execute the **[code_review](file:///Users/maddy/.gemini/config/skills/quality/code_review/SKILL.md)** skill.
+2. Self-inspect the git diff, resolve any formatting issues, and generate a code review summary.
 
 ## Evals
 

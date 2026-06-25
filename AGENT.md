@@ -60,10 +60,13 @@ To maintain repository quality, all AI agents (including Devin, Antigravity, Cur
 
 ### 3. Backend Route Additions
 When adding a new API endpoint to the backend, adhere to the project architecture:
+0. Checkout a new task branch off the latest release code (follow **Git Branching Workflow** guidelines).
 1. Define the routing and event structure under `functions:` in `bookclub-app/backend/serverless.yml`.
 2. Implement the API handler inside `bookclub-app/backend/src/handlers/<resource>/<action>.js` using standard middlewares (e.g. `withErrorHandler`) and response helpers (e.g. `response.success`, `response.validationError`).
 3. Integrate business logic in `src/services/` and database client logic in `src/models/` (DynamoDB).
-4. Write a handler unit test under `bookclub-app/backend/__tests__/unit/handlers/<resource>/<action>.test.js` using Jest and service mocks.
+4. Write a handler unit test under `bookclub-app/backend/__tests__/unit/handlers/<resource>/<action>.test.js` (follow **Quality Assurance: Add tests** rules).
+5. Verify changes by executing the test suite (follow **Quality Assurance: Run tests** rules).
+6. Complete static linting checks and review checklists (follow **Quality Assurance: Code Review** rules).
 - **Evals**:
   - Verify that the new function config is defined under `functions` in `serverless.yml`.
   - Verify that the handler wrapper `withErrorHandler(handler)` is exported.
@@ -71,11 +74,14 @@ When adding a new API endpoint to the backend, adhere to the project architectur
 
 ### 4. Frontend Component & Page Additions
 When adding or modifying frontend components or pages in the React SPA:
+0. Checkout a new task branch off the latest release code (follow **Git Branching Workflow** guidelines).
 1. Define custom TypeScript models in `bookclub-app/frontend/src/types/index.ts`.
 2. Place page views in `src/pages/` and reusable subcomponents in `src/components/`.
 3. Apply styling using Tailwind CSS. Use the touch-target spacing (`touch` height target) for interactive buttons/inputs and custom `indigo` teal branding colors.
 4. Interface with backend routes by invoking functions on the shared `apiService` from `src/services/api.ts`.
-5. Create component tests under `src/__tests__/` (e.g. `__tests__/components/` or `__tests__/pages/`) mocking API responses using Jest.
+5. Create component tests under `src/__tests__/` mocking API responses using Jest (follow **Quality Assurance: Add tests** rules).
+6. Verify layout and test execution (follow **Quality Assurance: Run tests** rules).
+7. Complete static checks and review checklists (follow **Quality Assurance: Code Review** rules).
 - **Evals**:
   - Verify compile checks pass without syntax/TypeScript errors.
   - Verify buttons, forms, and inputs use mobile-friendly touch class spacing.

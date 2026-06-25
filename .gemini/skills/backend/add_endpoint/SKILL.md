@@ -17,21 +17,15 @@ evals:
 
 Use this skill when you need to add a new API endpoint or event handler to the backend. This project is built on **Node.js (v18.x)**, **Serverless Framework**, **AWS Lambda**, **DynamoDB**, and **Cognito**.
 
-## When to Use This Skill
-
-- Use this whenever a new backend API feature or route is requested.
-- Use this when modifying backend routing rules.
-
-## Trigger Points
-
-This skill is automatically activated when:
-1. The user asks to: `"add endpoint"`, `"create lambda"`, `"new api route"`, `"new handler"`, `"add API"`, or `"add backend route"`.
-2. A file is created or modified under `bookclub-app/backend/src/handlers/`.
-3. `bookclub-app/backend/serverless.yml` functions block is modified.
-
 ## Workflow Steps
 
-### Step 1: Configure the Lambda in `serverless.yml`
+### Step 1: Initialize Git Branch (Use `branch_workflow` Skill)
+Before adding any files or configurations, checkout a clean branch off the latest release:
+1. Trigger the **[branch_workflow](file:///Users/maddy/.gemini/config/skills/git/branch_workflow/SKILL.md)** skill to pull remote updates and checkout a descriptive feature/bugfix branch.
+
+---
+
+### Step 2: Configure the Lambda in `serverless.yml`
 Open `bookclub-app/backend/serverless.yml` and declare the new function under the `functions:` block. Use the following structure:
 
 ```yaml
@@ -57,39 +51,28 @@ Open `bookclub-app/backend/serverless.yml` and declare the new function under th
               Ref: ApiGatewayAuthorizer
 ```
 
-*Note: If the endpoint is unauthenticated, omit the `authorizer` key (similar to `loginUser` or `registerUser`).*
-
 ---
 
-### Step 2: Implement the Lambda Handler
+### Step 3: Implement the Lambda Handler
 Create the file at `bookclub-app/backend/src/handlers/<domain>/<action>.js`. Wrap the handler in the standard `withErrorHandler` middleware and use the predefined response utility:
 
 ```javascript
 const response = require('../../lib/response');
-// Import corresponding service
 const <Domain>Service = require('../../services/<domain>-service');
 const { withErrorHandler } = require('../../lib/middleware');
 
-/**
- * Handler for <Endpoint Description>
- */
 const handler = async (event) => {
-  // 1. Parameter extraction (from body, pathParameters, or queryStringParameters)
-  const { <param1> } = event.pathParameters || {};
+  const { paramId } = event.pathParameters || {};
   let body = {};
   if (event.body) {
     body = JSON.parse(event.body);
   }
 
-  // 2. Validation
-  if (!<param1>) {
-    return response.validationError({ <param1>: '<param1> is required' });
+  if (!paramId) {
+    return response.validationError({ paramId: 'Parameter is required' });
   }
 
-  // 3. Service Invocation
-  const result = await <Domain>Service.<methodName>(<param1>, body);
-
-  // 4. Return success response
+  const result = await <Domain>Service.execute(paramId, body);
   return response.success(result);
 };
 
@@ -98,69 +81,31 @@ module.exports.handler = withErrorHandler(handler);
 
 ---
 
-### Step 3: Extend Services and Models
+### Step 4: Extend Services and Models
 Integrate data processing logic and database interactions:
-1. **Service Layer (`src/services/<domain>-service.js`)**: Contain business logic, construct inputs, format outputs, and call model methods.
-2. **Model Layer (`src/models/<domain>.js`)**: Handle DynamoDB database queries. Note that local runs write mock database files to `backend/.local-storage/`.
-   - Query: `await DynamoDB.query(...)`
-   - Put: `await DynamoDB.put(...)`
-   - Update: `await DynamoDB.update(...)`
+1. **Service Layer (`src/services/<domain>-service.js`)**: Contain business logic and call model methods.
+2. **Model Layer (`src/models/<domain>.js`)**: Handle DynamoDB database queries.
 
 ---
 
-### Step 4: Write Jest Handler Unit Tests
-Create a test file at `bookclub-app/backend/__tests__/unit/handlers/<domain>/<action>.test.js`. Mock the service layer to isolate handler logic:
-
-```javascript
-const { handler } = require('../../../../src/handlers/<domain>/<action>');
-const <Domain>Service = require('../../../../src/services/<domain>-service');
-
-jest.mock('../../../../src/services/<domain>-service');
-
-describe('<action> handler', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should return 200 and data on success', async () => {
-    const mockResult = { success: true };
-    <Domain>Service.<methodName>.mockResolvedValue(mockResult);
-
-    const event = {
-      pathParameters: { <param1>: 'value123' },
-      body: JSON.stringify({ key: 'val' })
-    };
-
-    const result = await handler(event);
-
-    expect(<Domain>Service.<methodName>).toHaveBeenCalledWith('value123', { key: 'val' });
-    expect(result.statusCode).toBe(200);
-    expect(JSON.parse(result.body).data).toEqual(mockResult);
-  });
-
-  it('should return 400 validation error if parameter is missing', async () => {
-    const event = { pathParameters: {} };
-    const result = await handler(event);
-    expect(result.statusCode).toBe(400);
-  });
-});
-```
+### Step 5: Write Handler Unit Tests (Use `add_tests` Skill)
+Create a unit test suite to test your handler in isolation:
+1. Follow the **[add_tests](file:///Users/maddy/.gemini/config/skills/quality/add_tests/SKILL.md)** skill to create a test file under `bookclub-app/backend/__tests__/unit/handlers/<domain>/<action>.test.js`.
+2. Mock the service layer and assert success, missing parameters, and database error states.
 
 ---
 
-### Step 5: Test Locally
-1. Run backend unit tests:
-   ```bash
-   cd bookclub-app/backend && npm test
-   ```
-2. Start the Serverless Offline local development server (port 4000):
-   ```bash
-   cd bookclub-app/backend && npm run dev
-   ```
-3. Send a request to the local API endpoint (e.g. using `curl`):
-   ```bash
-   curl -X POST http://localhost:4000/dev/<route> -H "Content-Type: application/json" -d '{"key": "val"}'
-   ```
+### Step 6: Validate and Verify (Use `run_tests` Skill)
+Ensure your changes do not introduce regressions:
+1. Run backend unit tests and integrations using the **[run_tests](file:///Users/maddy/.gemini/config/skills/quality/run_tests/SKILL.md)** skill.
+2. Test the API locally using `serverless-offline` (run `npm run dev`) and Curl commands.
+
+---
+
+### Step 7: Code Review & PR Preparation (Use `code_review` Skill)
+Prior to committing and opening a Pull Request:
+1. Trigger the **[code_review](file:///Users/maddy/.gemini/config/skills/quality/code_review/SKILL.md)** skill.
+2. Verify code quality, check for leftover console logs, execute linting checks, and output a PR markdown summary.
 
 ## Evals
 
