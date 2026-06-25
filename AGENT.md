@@ -29,3 +29,66 @@ BookClub is a serverless application enabling users to catalog their physical bo
 ## 📉 Technical Debt & Migration Plans
 - **Auth Local Mocking**: In local development (`offline` / `dev` scripts), authentication is bypassed and simulated via mock users. Always verify that real AWS Cognito flows work in staging (`dev` branch) before deploying to production.
 - **Local Database Mocking**: Local runs write books data to JSON files in `backend/.local-storage/`. Do not commit this folder to version control.
+
+## 🤖 AI Agent Guidelines & Workflows
+
+To maintain repository quality, all AI agents (including Devin, Antigravity, Cursor, etc.) working on this codebase MUST follow these standardized guidelines:
+
+### 1. Git Branching Workflow
+- For any new task, always checkout a new branch off the latest from the `release` branch.
+- Fetch and pull the remote `release` branch first:
+  ```bash
+  git checkout release && git pull origin release
+  ```
+  Then create your task branch:
+  ```bash
+  git checkout -b <branch-name>
+  ```
+- **Evals**:
+  - Verify you are on the correct branch using `git branch --show-current`.
+  - Check that the remote release commits are incorporated: `git log -1 release` must show in the task branch's git history.
+
+### 2. Quality Assurance & Test Verification
+- **Run tests**: Always run tests once changes are complete.
+  - Backend: `npm test` under `bookclub-app/backend/`
+  - Frontend: `npm test` under `bookclub-app/frontend/`
+- **Add tests**: Always add unit/integration tests for new handlers, services, models, helpers, or frontend components where applicable (under `__tests__/` directories).
+- **Code Review**: Run a code review checklist (syntax, unused console logs, clean logic, security, and passing tests) before declaring the task complete or creating a Pull Request.
+- **Evals**:
+  - Verify that the test runner execution exits successfully (exit code 0).
+  - Verify the presence of updated test files under `__tests__/` for any modified handler/component logic.
+
+### 3. Backend Route Additions
+When adding a new API endpoint to the backend, adhere to the project architecture:
+0. Checkout a new task branch off the latest release code (follow **Git Branching Workflow** guidelines).
+1. Define the routing and event structure under `functions:` in `bookclub-app/backend/serverless.yml`.
+2. Implement the API handler inside `bookclub-app/backend/src/handlers/<resource>/<action>.js` using standard middlewares (e.g. `withErrorHandler`) and response helpers (e.g. `response.success`, `response.validationError`).
+3. Integrate business logic in `src/services/` and database client logic in `src/models/` (DynamoDB).
+4. Write a handler unit test under `bookclub-app/backend/__tests__/unit/handlers/<resource>/<action>.test.js` (follow **Quality Assurance: Add tests** rules).
+5. Verify changes by executing the test suite (follow **Quality Assurance: Run tests** rules).
+6. Complete static linting checks and review checklists (follow **Quality Assurance: Code Review** rules).
+- **Evals**:
+  - Verify that the new function config is defined under `functions` in `serverless.yml`.
+  - Verify that the handler wrapper `withErrorHandler(handler)` is exported.
+  - Verify that the unit test file runs and passes.
+
+### 4. Frontend Component & Page Additions
+When adding or modifying frontend components or pages in the React SPA:
+0. Checkout a new task branch off the latest release code (follow **Git Branching Workflow** guidelines).
+1. Define custom TypeScript models in `bookclub-app/frontend/src/types/index.ts`.
+2. Place page views in `src/pages/` and reusable subcomponents in `src/components/`.
+3. Apply styling using Tailwind CSS. Use the touch-target spacing (`touch` height target) for interactive buttons/inputs and custom `indigo` teal branding colors.
+4. Interface with backend routes by invoking functions on the shared `apiService` from `src/services/api.ts`.
+5. Create component tests under `src/__tests__/` mocking API responses using Jest (follow **Quality Assurance: Add tests** rules).
+6. Verify layout and test execution (follow **Quality Assurance: Run tests** rules).
+7. Complete static checks and review checklists (follow **Quality Assurance: Code Review** rules).
+- **Evals**:
+  - Verify compile checks pass without syntax/TypeScript errors.
+  - Verify buttons, forms, and inputs use mobile-friendly touch class spacing.
+  - Verify matching Jest unit tests exist and run to completion with successful results.
+
+### 5. Permissions Guard & Safeguards
+- For "Bigger Changes" (e.g. editing `serverless.yml`, database schemas, Terraform configurations, deleting files, modifying package dependencies), the agent must create an implementation plan and explicitly request user permission before editing.
+- For simple bash/git command executions, recommend using fast/cost-efficient models (e.g. Gemini 3.5 Flash) to optimize token costs.
+- **Evals**:
+  - Assert that no infrastructure files (`serverless.yml`, `*.tf`) or package dependencies were edited without prior plan generation and user permission checks.
