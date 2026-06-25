@@ -44,6 +44,9 @@ To maintain repository quality, all AI agents (including Devin, Antigravity, Cur
   ```bash
   git checkout -b <branch-name>
   ```
+- **Evals**:
+  - Verify you are on the correct branch using `git branch --show-current`.
+  - Check that the remote release commits are incorporated: `git log -1 release` must show in the task branch's git history.
 
 ### 2. Quality Assurance & Test Verification
 - **Run tests**: Always run tests once changes are complete.
@@ -51,6 +54,9 @@ To maintain repository quality, all AI agents (including Devin, Antigravity, Cur
   - Frontend: `npm test` under `bookclub-app/frontend/`
 - **Add tests**: Always add unit/integration tests for new handlers, services, models, helpers, or frontend components where applicable (under `__tests__/` directories).
 - **Code Review**: Run a code review checklist (syntax, unused console logs, clean logic, security, and passing tests) before declaring the task complete or creating a Pull Request.
+- **Evals**:
+  - Verify that the test runner execution exits successfully (exit code 0).
+  - Verify the presence of updated test files under `__tests__/` for any modified handler/component logic.
 
 ### 3. Backend Route Additions
 When adding a new API endpoint to the backend, adhere to the project architecture:
@@ -58,7 +64,13 @@ When adding a new API endpoint to the backend, adhere to the project architectur
 2. Implement the API handler inside `bookclub-app/backend/src/handlers/<resource>/<action>.js` using standard middlewares (e.g. `withErrorHandler`) and response helpers (e.g. `response.success`, `response.validationError`).
 3. Integrate business logic in `src/services/` and database client logic in `src/models/` (DynamoDB).
 4. Write a handler unit test under `bookclub-app/backend/__tests__/unit/handlers/<resource>/<action>.test.js` using Jest and service mocks.
+- **Evals**:
+  - Verify that the new function config is defined under `functions` in `serverless.yml`.
+  - Verify that the handler wrapper `withErrorHandler(handler)` is exported.
+  - Verify that the unit test file runs and passes.
 
 ### 4. Permissions Guard & Safeguards
 - For "Bigger Changes" (e.g. editing `serverless.yml`, database schemas, Terraform configurations, deleting files, modifying package dependencies), the agent must create an implementation plan and explicitly request user permission before editing.
 - For simple bash/git command executions, recommend using fast/cost-efficient models (e.g. Gemini 3.5 Flash) to optimize token costs.
+- **Evals**:
+  - Assert that no infrastructure files (`serverless.yml`, `*.tf`) or package dependencies were edited without prior plan generation and user permission checks.
