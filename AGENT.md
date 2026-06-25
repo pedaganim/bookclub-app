@@ -69,7 +69,19 @@ When adding a new API endpoint to the backend, adhere to the project architectur
   - Verify that the handler wrapper `withErrorHandler(handler)` is exported.
   - Verify that the unit test file runs and passes.
 
-### 4. Permissions Guard & Safeguards
+### 4. Frontend Component & Page Additions
+When adding or modifying frontend components or pages in the React SPA:
+1. Define custom TypeScript models in `bookclub-app/frontend/src/types/index.ts`.
+2. Place page views in `src/pages/` and reusable subcomponents in `src/components/`.
+3. Apply styling using Tailwind CSS. Use the touch-target spacing (`touch` height target) for interactive buttons/inputs and custom `indigo` teal branding colors.
+4. Interface with backend routes by invoking functions on the shared `apiService` from `src/services/api.ts`.
+5. Create component tests under `src/__tests__/` (e.g. `__tests__/components/` or `__tests__/pages/`) mocking API responses using Jest.
+- **Evals**:
+  - Verify compile checks pass without syntax/TypeScript errors.
+  - Verify buttons, forms, and inputs use mobile-friendly touch class spacing.
+  - Verify matching Jest unit tests exist and run to completion with successful results.
+
+### 5. Permissions Guard & Safeguards
 - For "Bigger Changes" (e.g. editing `serverless.yml`, database schemas, Terraform configurations, deleting files, modifying package dependencies), the agent must create an implementation plan and explicitly request user permission before editing.
 - For simple bash/git command executions, recommend using fast/cost-efficient models (e.g. Gemini 3.5 Flash) to optimize token costs.
 - **Evals**:
