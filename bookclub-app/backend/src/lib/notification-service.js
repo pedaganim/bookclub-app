@@ -13,6 +13,7 @@ const DEFAULT_PREFS = {
   new_member_in_your_club: true,
   club_announcement: true,
   dm_message_received: true,
+  club_join_approved: true,
 };
 
 async function getUserPrefs(userId) {
@@ -50,6 +51,14 @@ function renderTemplate(templateId, templateData) {
       const subject = `Join request for ${clubName}`;
       const text = `${requesterName}${requesterEmail ? ' <' + requesterEmail + '>' : ''} requested to join ${clubName}.\n\nReview and approve/reject: ${reviewUrl}`;
       const html = `<p><strong>${requesterName}</strong>${requesterEmail ? ' &lt;' + requesterEmail + '&gt;' : ''} requested to join <strong>${clubName}</strong>.</p>\n<p><a href="${reviewUrl}">Review and approve/reject</a></p>`;
+      return { subject, text, html };
+    }
+    case 'club_join_approved': {
+      const { clubName = 'a book club', clubUrl = '' } = templateData || {};
+      const brand = process.env.BRAND_NAME || 'BookClub';
+      const subject = `Your request to join "${clubName}" has been approved`;
+      const text = `Great news! Your request to join the book club "${clubName}" on ${brand} has been approved. You can now access the club.${clubUrl ? '\n\nVisit the club: ' + clubUrl : ''}`;
+      const html = `<p>Great news! Your request to join the book club <strong>${clubName}</strong> on ${brand} has been approved.</p><p>You can now access the club.${clubUrl ? ' <a href="' + clubUrl + '">Visit the club</a>' : ''}</p>`;
       return { subject, text, html };
     }
     case 'dm_message_received': {
