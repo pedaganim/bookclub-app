@@ -141,7 +141,7 @@ describe('ClubCard', () => {
       />
     );
 
-    expect(screen.getByText('Join Club')).toBeInTheDocument();
+    expect(screen.getByText(/join (club|neighbourhood)/i)).toBeInTheDocument();
   });
 
   it('should show edit and delete buttons for creator', () => {

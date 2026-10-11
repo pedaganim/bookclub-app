@@ -111,7 +111,7 @@ describe('Clubs page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('You have no clubs yet')).toBeInTheDocument();
+      expect(screen.getByText('You have no neighbourhoods yet')).toBeInTheDocument();
     });
 
     expect(screen.queryByText('Create Club')).not.toBeInTheDocument();

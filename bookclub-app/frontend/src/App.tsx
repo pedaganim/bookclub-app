@@ -166,8 +166,21 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                {/* Primary Activities & Neighbourhoods Routes */}
                 <Route
-                  path="/clubs"
+                  path="/"
+                  element={<Home />}
+                />
+                <Route
+                  path="/activities"
+                  element={
+                    <ClubProtectedRoute>
+                      <ClubEvents />
+                    </ClubProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/neighbourhoods"
                   element={
                     <ClubProtectedRoute>
                       <Clubs />
@@ -175,11 +188,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/"
-                  element={<Navigate to="/library" replace />}
-                />
-                <Route
-                  path="/clubs/browse"
+                  path="/neighbourhoods/browse"
                   element={
                     <ClubProtectedRoute>
                       <BrowseClubs />
@@ -187,7 +196,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/clubs/:clubId/requests"
+                  path="/neighbourhoods/:clubId/requests"
                   element={
                     <ClubProtectedRoute>
                       <ClubRequests />
@@ -195,7 +204,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/clubs/:clubId/members"
+                  path="/neighbourhoods/:clubId/members"
                   element={
                     <ClubProtectedRoute>
                       <ClubMembers />
@@ -203,7 +212,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/clubs/:slug/explore"
+                  path="/neighbourhoods/:slug/explore"
                   element={
                     <ClubProtectedRoute>
                       <ClubBooks />
@@ -211,23 +220,28 @@ function App() {
                   }
                 />
                 <Route
-                  path="/events"
+                  path="/neighbourhoods/:slug/activities"
                   element={
                     <ClubProtectedRoute>
                       <ClubEvents />
                     </ClubProtectedRoute>
                   }
                 />
-                <Route
-                  path="/clubs/:slug/events"
-                  element={
-                    <ClubProtectedRoute>
-                      <ClubEvents />
-                    </ClubProtectedRoute>
-                  }
-                />
+
+                {/* Backward Compatibility Redirects for Clubs & Events */}
+                <Route path="/events" element={<Navigate to="/activities" replace />} />
+                <Route path="/clubs" element={<Navigate to="/neighbourhoods" replace />} />
+                <Route path="/clubs/browse" element={<Navigate to="/neighbourhoods/browse" replace />} />
+                <Route path="/clubs/:clubId/requests" element={<Navigate to="/neighbourhoods" replace />} />
+                <Route path="/clubs/:clubId/members" element={<Navigate to="/neighbourhoods" replace />} />
+                <Route path="/clubs/:slug/explore" element={<Navigate to="/neighbourhoods" replace />} />
+                <Route path="/clubs/:slug/events" element={<Navigate to="/activities" replace />} />
                 <Route
                   path="/clubs/:clubId/join-qr"
+                  element={<ClubJoinQr />}
+                />
+                <Route
+                  path="/neighbourhoods/:clubId/join-qr"
                   element={<ClubJoinQr />}
                 />
                 <Route

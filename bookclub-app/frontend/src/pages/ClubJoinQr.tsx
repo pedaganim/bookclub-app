@@ -214,10 +214,10 @@ const ClubJoinQr: React.FC = () => {
                   You are already an active member of <strong>{club.name}</strong>. Enjoy exploring books, toys, and other shared items!
                 </p>
                 <button
-                  onClick={() => navigate(`/clubs/${club.slug || club.clubId}/explore`)}
+                  onClick={() => navigate(`/neighbourhoods/${club.slug || club.clubId}/explore`)}
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-indigo-600/10"
                 >
-                  Explore Club Library
+                  Explore Neighbourhood Library
                   <ArrowRightIcon className="h-4 w-4" />
                 </button>
               </div>

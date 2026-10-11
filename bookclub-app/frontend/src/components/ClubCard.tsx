@@ -52,7 +52,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const exploreUrl = `/clubs/${club.slug || club.clubId}/explore`;
+  const exploreUrl = `/neighbourhoods/${club.slug || club.clubId}/explore`;
 
   const handleAction = (e: React.MouseEvent, callback?: () => void) => {
     e.stopPropagation();
@@ -121,7 +121,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
         <button
           onClick={(e) => handleAction(e, () => navigate(exploreUrl))}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
-          title="Explore Club"
+          title="Explore Neighbourhood"
         >
           <MagnifyingGlassIcon className="h-3.5 w-3.5" />
           Explore
@@ -134,7 +134,7 @@ const ClubCard: React.FC<ClubCardProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <UserPlusIcon className="h-3.5 w-3.5" />
-            {isJoining ? 'Joining...' : 'Join Club'}
+            {isJoining ? 'Joining...' : 'Join Neighbourhood'}
           </button>
         )}
 
