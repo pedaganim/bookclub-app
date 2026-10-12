@@ -122,7 +122,7 @@ describe('ClubEvents Page Component', () => {
     );
 
     // Verify club name and title
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
     
     // Find event card and click it to open details view
     const eventCard = await screen.findByText('Reading Dune: Part 1');
@@ -146,7 +146,7 @@ describe('ClubEvents Page Component', () => {
       </TestWrapper>
     );
 
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
 
     const select = screen.getByRole('combobox');
     expect(select).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('ClubEvents Page Component', () => {
 
     fireEvent.change(select, { target: { value: 'club-scifi-002' } });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/clubs/club-scifi-002/events');
+    expect(mockNavigate).toHaveBeenCalledWith('/neighbourhoods/club-scifi-002/activities');
   });
 
   it('allows user to submit an RSVP status', async () => {
@@ -200,7 +200,7 @@ describe('ClubEvents Page Component', () => {
     );
 
     // Wait for event data
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
 
     // Click the event card to open details
     const eventCard = await screen.findByText('Reading Dune: Part 1');
@@ -231,7 +231,7 @@ describe('ClubEvents Page Component', () => {
       </TestWrapper>
     );
 
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
 
     // Click the event card to open details
     const eventCard = await screen.findByText('Reading Dune: Part 1');
@@ -259,7 +259,7 @@ describe('ClubEvents Page Component', () => {
     );
 
     // Verify header renders first
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
 
     // Verify calendar header is visible
     expect(screen.getByText('Event Calendar')).toBeInTheDocument();
@@ -295,7 +295,7 @@ describe('ClubEvents Page Component', () => {
     );
 
     // Verify header renders first
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
 
     // The calendar day button title should list both events separated by comma
     const calDayBtn = await screen.findByTitle('Reading Dune: Part 1, Reading Dune: Part 2');
@@ -333,7 +333,7 @@ describe('ClubEvents Page Component', () => {
       </TestWrapper>
     );
 
-    expect(await screen.findByText('Fiction Lovers Gatherings')).toBeInTheDocument();
+    expect(await screen.findByText('Fiction Lovers Activities')).toBeInTheDocument();
     expect(screen.getByText('Event Calendar')).toBeInTheDocument();
 
     const dayButtons = screen.getAllByRole('button').filter(btn =>
@@ -345,7 +345,7 @@ describe('ClubEvents Page Component', () => {
 
     expect(await screen.findByText('Selected Date')).toBeInTheDocument();
 
-    const scheduleButtons = screen.getAllByRole('button', { name: /schedule event/i });
+    const scheduleButtons = screen.getAllByRole('button', { name: /host an activity/i });
     expect(scheduleButtons.length).toBe(2);
     fireEvent.click(scheduleButtons[1]);
 
@@ -501,7 +501,7 @@ describe('ClubEvents Page Component', () => {
       expect(apiService.deleteEvent).toHaveBeenCalledWith('club-fiction-001', 'evt-100', false);
     });
 
-    expect(screen.queryByText('Back to All Gatherings')).not.toBeInTheDocument();
+    expect(screen.queryByText('Back to All Activities')).not.toBeInTheDocument();
   });
 });
 

@@ -3,14 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useUploadModal } from '../contexts/UploadModalContext';
 import { apiService } from '../services/api';
-import { useBrand } from '../contexts/BrandContext';
 import { config } from '../config';
 
 import MobileTabBar from './MobileTabBar';
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout, canAccessClubs } = useAuth();
-  const { name: brandName } = useBrand();
   const { openModal } = useUploadModal();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -79,12 +77,31 @@ const Navbar: React.FC = () => {
     || location.pathname.startsWith('/library/lost-found/')
     || location.pathname === '/my-lost-and-found';
 
-  const isEventsActive = location.pathname === '/events'
-    || location.pathname.startsWith('/events/')
-    || location.pathname.endsWith('/events')
-    || location.pathname.includes('/events/');
+  const isHomeActive = location.pathname === '/';
 
-  const isClubsActive = isActive('/clubs') && !isEventsActive;
+  const isActivitiesActive = location.pathname === '/activities'
+    || location.pathname.startsWith('/activities/')
+    || location.pathname.endsWith('/activities')
+    || location.pathname.includes('/activities/')
+    || location.pathname === '/events'
+    || location.pathname.startsWith('/events/');
+
+  const isNeighbourhoodsActive = (isActive('/neighbourhoods') || isActive('/clubs')) && !isActivitiesActive;
+
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (createMenuRef.current && !createMenuRef.current.contains(e.target as Node)) {
+        setCreateMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => { setCreateMenuOpen(false); }, [location.pathname]);
 
   return (
     <>
@@ -105,31 +122,44 @@ const Navbar: React.FC = () => {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
               <Link
+                to="/"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isHomeActive
+                    ? 'text-indigo-700 bg-indigo-50 font-semibold'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Home
+              </Link>
+
+              {canAccessClubs && (
+                <Link
+                  to="/activities"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActivitiesActive
+                      ? 'text-indigo-700 bg-indigo-50 font-semibold'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  Activities
+                </Link>
+              )}
+
+              <Link
                 to="/library"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive('/library') && !isLostFoundPath
-                    ? 'text-indigo-700 bg-indigo-50'
+                    ? 'text-indigo-700 bg-indigo-50 font-semibold'
                     : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 Browse Library
               </Link>
 
-              {isAuthenticated && (
-                <Link
-                  to="/my-library"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/my-library') && !isLostFoundPath ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  My Library
-                </Link>
-              )}
-
               <Link
                 to="/library/lost-found"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isLostFoundPath ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  isLostFoundPath ? 'text-indigo-700 bg-indigo-50 font-semibold' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 🧾 Lost & Found
@@ -137,38 +167,77 @@ const Navbar: React.FC = () => {
 
               {canAccessClubs && (
                 <Link
-                  to="/clubs"
+                  to="/neighbourhoods"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isClubsActive ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    isNeighbourhoodsActive ? 'text-indigo-700 bg-indigo-50 font-semibold' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  Clubs
-                </Link>
-              )}
-
-              {canAccessClubs && (
-                <Link
-                  to="/events"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isEventsActive ? 'text-indigo-700 bg-indigo-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  Events
+                  Neighbourhoods
                 </Link>
               )}
 
               {isAuthenticated && (
                 <>
                   <div className="w-px h-4 bg-gray-200 mx-1" />
-                  <button
-                    onClick={openModal}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add to Library
-                  </button>
+                  
+                  {/* + Create Dropdown Menu */}
+                  <div ref={createMenuRef} className="relative">
+                    <button
+                      onClick={() => setCreateMenuOpen(prev => !prev)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Create
+                      <span className={`transition-transform duration-200 text-indigo-400 ${createMenuOpen ? 'rotate-180' : ''}`}>
+                        <Icon.ChevronDown />
+                      </span>
+                    </button>
+
+                    {createMenuOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                        {canAccessClubs && (
+                          <Link
+                            to="/activities"
+                            onClick={() => setCreateMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                          >
+                            <span className="text-base">☀️</span>
+                            <div>
+                              <div className="font-semibold text-gray-900">Host an Activity</div>
+                              <div className="text-xs text-gray-500">Bring local families together</div>
+                            </div>
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => {
+                            setCreateMenuOpen(false);
+                            openModal();
+                          }}
+                          className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        >
+                          <span className="text-base">♻️</span>
+                          <div>
+                            <div className="font-semibold text-gray-900">Share an Item</div>
+                            <div className="text-xs text-gray-500">Add a book, toy, or tool to borrow</div>
+                          </div>
+                        </button>
+                        <Link
+                          to="/library/lost-found"
+                          onClick={() => setCreateMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        >
+                          <span className="text-base">🔎</span>
+                          <div>
+                            <div className="font-semibold text-gray-900">Post Lost & Found</div>
+                            <div className="text-xs text-gray-500">Help items find their way home</div>
+                          </div>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
                   <MessagesLinkWithUnread />
                 </>
               )}

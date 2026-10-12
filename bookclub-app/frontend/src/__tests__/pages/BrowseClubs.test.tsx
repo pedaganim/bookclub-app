@@ -66,7 +66,7 @@ describe('BrowseClubs page', () => {
     });
 
     // type into search bar
-    const input = screen.getByPlaceholderText(/search clubs/i);
+    const input = screen.getByPlaceholderText(/search (clubs|neighbourhoods)/i);
     fireEvent.change(input, { target: { value: 'beta' } });
 
     // advance debounce
@@ -125,7 +125,7 @@ describe('BrowseClubs page', () => {
       expect(screen.getByText('Alpha Club')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/join club/i));
+    fireEvent.click(screen.getByText(/join (club|neighbourhood)/i));
 
     await waitFor(() => {
       expect(apiService.requestClubJoin).toHaveBeenCalledWith('c1');
@@ -147,7 +147,7 @@ describe('BrowseClubs page', () => {
       expect(screen.getByText('Alpha Club')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/join club/i));
+    fireEvent.click(screen.getByText(/join (club|neighbourhood)/i));
 
     await waitFor(() => {
       expect(localStorage.getItem('pendingClubJoin')).toBe('c1');

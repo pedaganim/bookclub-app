@@ -148,6 +148,6 @@ describe('ClubJoinQr landing page', () => {
     );
 
     expect(await screen.findByText('Already a Member')).toBeInTheDocument();
-    expect(screen.getByText('Explore Club Library')).toBeInTheDocument();
+    expect(screen.getByText(/explore (club|neighbourhood) library/i)).toBeInTheDocument();
   });
 });

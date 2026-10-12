@@ -163,10 +163,10 @@ const ClubBooks: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate(isAuthenticated ? '/clubs' : '/clubs/browse')}
+            onClick={() => navigate(isAuthenticated ? '/neighbourhoods' : '/neighbourhoods/browse')}
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-4 inline-flex items-center gap-1 group transition-colors"
           >
-            <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Clubs
+            <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Neighbourhoods
           </button>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
@@ -205,18 +205,18 @@ const ClubBooks: React.FC = () => {
               {club && (club.isMember || club.userRole === 'admin') && (
                 <>
                   <button
-                    onClick={() => navigate(`/clubs/${clubId}/members`)}
+                    onClick={() => navigate(`/neighbourhoods/${clubId}/members`)}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     <UsersIcon className="h-4 w-4 text-gray-400" />
                     {club.userRole === 'admin' ? 'Manage Members' : 'View Members'}
                   </button>
                   <button
-                    onClick={() => navigate(`/clubs/${slug}/events`)}
+                    onClick={() => navigate(`/neighbourhoods/${slug}/activities`)}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     <CalendarIcon className="h-4 w-4 text-gray-400" />
-                    Events
+                    Activities
                   </button>
                 </>
               )}

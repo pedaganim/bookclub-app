@@ -101,12 +101,12 @@ const LibraryHub: React.FC = () => {
         {noClubs ? (
           <div className="text-center py-24">
             <p className="text-5xl mb-4">🏛️</p>
-            <p className="font-bold text-gray-700 text-lg">You're not in any clubs yet</p>
-            <p className="text-sm text-gray-400 mt-2">Join a club to browse its shared library</p>
+            <p className="font-bold text-gray-700 text-lg">You're not in any neighbourhoods yet</p>
+            <p className="text-sm text-gray-400 mt-2">Join a neighbourhood to browse its shared library</p>
           </div>
         ) : (
           <>
-            {/* Search + Club selector */}
+            {/* Search + Neighbourhood selector */}
             <div className="flex items-center gap-2 mb-4">
               <SearchBar
                 onSearch={setSearch}
@@ -116,7 +116,7 @@ const LibraryHub: React.FC = () => {
               />
               {isAuthenticated && (
                 <div className="flex-shrink-0 flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap hidden sm:block">Club</span>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap hidden sm:block">Neighbourhood</span>
                   {clubsLoading ? (
                     <div className="h-[38px] w-36 bg-gray-100 animate-pulse rounded-md" />
                   ) : userClubs.length > 1 ? (

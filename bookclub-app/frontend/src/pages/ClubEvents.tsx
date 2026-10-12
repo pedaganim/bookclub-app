@@ -161,10 +161,10 @@ const ClubEvents: React.FC = () => {
       .then((res: any) => {
         const active: BookClub[] = (res.items || []).filter((c: any) => c.userStatus === 'active');
         setUserClubs(active);
-        // If there's no slug in the URL, redirect to the first active club
+        // If there's no slug in the URL, redirect to the first active neighbourhood
         if (!slug) {
           if (active.length > 0) {
-            navigate(`/clubs/${active[0].slug}/events`, { replace: true });
+            navigate(`/neighbourhoods/${active[0].slug}/activities`, { replace: true });
           } else {
             setLoading(false);
           }
@@ -567,7 +567,7 @@ const ClubEvents: React.FC = () => {
   const handleClubChange = (newClubId: string) => {
     const selected = userClubs.find(c => c.clubId === newClubId);
     if (selected) {
-      navigate(`/clubs/${selected.slug}/events`);
+      navigate(`/neighbourhoods/${selected.slug}/activities`);
     }
   };
 
@@ -634,8 +634,8 @@ const ClubEvents: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans selection:bg-indigo-500 selection:text-white">
       <SEO
-        title={club ? `${club.name} Gatherings — Community Library` : "Club Gatherings — Community Library"}
-        description={club ? `View and participate in upcoming events, volunteer tasks, and discussions for ${club.name}.` : "View and participate in book club events, volunteer tasks, and discussions."}
+        title={club ? `${club.name} Activities — Community` : "Neighbourhood Activities — Community"}
+        description={club ? `View and participate in upcoming activities, volunteer tasks, and discussions for ${club.name}.` : "View and participate in neighbourhood activities, volunteer tasks, and discussions."}
       />
 
       {/* Page Header */}
@@ -645,26 +645,26 @@ const ClubEvents: React.FC = () => {
             <div>
               {slug && (
                 <button
-                  onClick={() => navigate(`/clubs/${slug}/explore`)}
+                  onClick={() => navigate(`/neighbourhoods/${slug}/explore`)}
                   className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-wider mb-2 group"
                 >
                   <ArrowLeftIcon className="h-3.5 w-3.5 transform group-hover:-translate-x-1 transition-transform" />
-                  Back to Club Library
+                  Back to Neighbourhood
                 </button>
               )}
               <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">
-                {club ? `${club.name} Gatherings` : 'Club Gatherings'}
+                {club ? `${club.name} Activities` : 'Neighbourhood Activities'}
               </h1>
               <p className="text-sm text-gray-500 mt-1 font-medium">
-                Plan meetings, coordinate volunteers, and discuss your next reading adventure.
+                Plan activities, coordinate with neighbours, and bring local families together.
               </p>
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
-              {/* Club Selector Dropdown */}
+              {/* Neighbourhood Selector Dropdown */}
               {isAuthenticated && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap hidden sm:block">Club</span>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap hidden sm:block">Neighbourhood</span>
                   {clubsLoading ? (
                     <div className="h-[38px] w-36 bg-gray-100 animate-pulse rounded-md" />
                   ) : userClubs.length > 1 ? (
@@ -691,7 +691,7 @@ const ClubEvents: React.FC = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors"
                 >
                   <PlusIcon className="h-4 w-4" />
-                  Schedule Event
+                  Host an Activity
                 </button>
               )}
             </div>
@@ -725,24 +725,24 @@ const ClubEvents: React.FC = () => {
         {noClubs ? (
           <div className="text-center py-24 bg-white rounded-lg border border-gray-200 shadow-sm">
             <p className="text-5xl mb-4">📅</p>
-            <p className="font-bold text-gray-700 text-lg">You're not in any clubs yet</p>
-            <p className="text-sm text-gray-400 mt-2">Join a club to view or schedule events</p>
+            <p className="font-bold text-gray-700 text-lg">You're not in any neighbourhoods yet</p>
+            <p className="text-sm text-gray-400 mt-2">Join a neighbourhood to view or host activities</p>
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-lg border border-gray-200 shadow-sm">
             <CalendarIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-bold text-gray-700">No events scheduled yet</h3>
+            <h3 className="text-lg font-bold text-gray-700">No activities scheduled yet</h3>
             <p className="text-gray-500 mt-2 max-w-sm mx-auto text-sm">
-              Get the discussion started! Click "Schedule Event" to create the club's first gathering.
+              Get things started! Click "Host an Activity" to create your neighbourhood's first gathering.
             </p>
           </div>
         ) : !selectedEventId ? (
-          // Two-column layout: Gatherings List & Calendar Depiction
+          // Two-column layout: Activities List & Calendar Depiction
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left Column: Gatherings List */}
+            {/* Left Column: Activities List */}
             <div className="lg:col-span-8 space-y-6">
               <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 px-1 flex items-center gap-1.5">
-                Upcoming Gatherings ({events.length})
+                Upcoming Activities ({events.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {events.map((evt) => {
@@ -954,7 +954,7 @@ const ClubEvents: React.FC = () => {
                       className="w-full mt-4 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
                     >
                       <PlusIcon className="h-3.5 w-3.5" />
-                      Schedule Event
+                      Host an Activity
                     </button>
                   )}
                 </div>
@@ -975,7 +975,7 @@ const ClubEvents: React.FC = () => {
                 className="inline-flex items-center gap-2 text-xs font-bold text-indigo-650 hover:text-indigo-800 uppercase tracking-wider mb-2 group"
               >
                 <ArrowLeftIcon className="h-3.5 w-3.5 transform group-hover:-translate-x-1 transition-transform" />
-                Back to All Gatherings
+                Back to All Activities
               </button>
             </div>
             

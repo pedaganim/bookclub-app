@@ -157,7 +157,7 @@ const BrowseClubs: React.FC = () => {
       return (
         <div className="py-12 text-center bg-white border border-gray-200 rounded-xl shadow-sm">
           <p className="text-gray-500">
-            {isAuthenticated ? "You're already a member of all clubs here." : 'No clubs found matching your search.'}
+            {isAuthenticated ? "You're already a member of all neighbourhoods here." : 'No neighbourhoods found matching your search.'}
           </p>
         </div>
       );
@@ -175,8 +175,8 @@ const BrowseClubs: React.FC = () => {
             isRequested={requestedClubIds.has(club.clubId)}
             onJoin={() => handleRequestJoin(club)}
             isJoining={requestingId === club.clubId}
-            onManageRequests={() => navigate(`/clubs/${club.clubId}/requests`)}
-            onManageMembers={() => navigate(`/clubs/${club.clubId}/members`)}
+            onManageRequests={() => navigate(`/neighbourhoods/${club.clubId}/requests`)}
+            onManageMembers={() => navigate(`/neighbourhoods/${club.clubId}/members`)}
           />
         ))}
       </div>
@@ -188,8 +188,8 @@ const BrowseClubs: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
-            <p className="mt-1 text-sm text-gray-500">Manage your communities or discover new ones.</p>
+            <h1 className="text-3xl font-bold text-gray-900">Neighbourhoods</h1>
+            <p className="mt-1 text-sm text-gray-500">Manage your local communities or discover new neighbourhoods.</p>
           </div>
         </div>
 
@@ -198,7 +198,7 @@ const BrowseClubs: React.FC = () => {
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {isAuthenticated && (
               <NavLink
-                to="/clubs"
+                to="/neighbourhoods"
                 end
                 className={({ isActive }) =>
                   `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
@@ -208,11 +208,11 @@ const BrowseClubs: React.FC = () => {
                   }`
                 }
               >
-                My Clubs
+                My Neighbourhoods
               </NavLink>
             )}
             <NavLink
-              to="/clubs/browse"
+              to="/neighbourhoods/browse"
               className={({ isActive }) =>
                 `whitespace-nowrap py-3 px-1 border-b-2 text-sm font-semibold transition-colors ${
                   isActive
@@ -221,14 +221,14 @@ const BrowseClubs: React.FC = () => {
                 }`
               }
             >
-              Browse Clubs
+              Browse Neighbourhoods
             </NavLink>
           </nav>
         </div>
 
         <SearchBar 
           onSearch={onSearch} 
-          placeholder="Search clubs by name, description, location…" 
+          placeholder="Search neighbourhoods by name, description, location…" 
           className="mb-8 shadow-sm" 
         />
 
@@ -244,8 +244,8 @@ const BrowseClubs: React.FC = () => {
             onPreviousPage={handlePrevious}
             currentItemsCount={clubs?.length || 0}
             isLoading={loading}
-            itemLabelSingular="club"
-            itemLabelPlural="clubs"
+            itemLabelSingular="neighbourhood"
+            itemLabelPlural="neighbourhoods"
           />
         </div>
 
