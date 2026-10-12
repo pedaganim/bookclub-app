@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ClubCard from '../../components/ClubCard';
 import { BookClub } from '../../types';
-import { BrowserRouter } from 'react-router-dom';
 
 // Mock react-router-dom to avoid requiring Router context in unit tests
 const mockNavigate = jest.fn();

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Book, BookClub, ClubEvent } from '../types';
+import { Book, BookClub } from '../types';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useBrand } from '../contexts/BrandContext';
