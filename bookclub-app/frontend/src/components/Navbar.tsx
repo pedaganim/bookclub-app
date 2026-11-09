@@ -165,6 +165,19 @@ const Navbar: React.FC = () => {
                 🧾 Lost & Found
               </Link>
 
+              {isAuthenticated && (
+                <Link
+                  to="/my-library"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/my-library')
+                      ? 'text-indigo-700 bg-indigo-50 font-semibold'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  My Items
+                </Link>
+              )}
+
               {canAccessClubs && (
                 <Link
                   to="/neighbourhoods"
